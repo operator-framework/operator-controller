@@ -88,8 +88,8 @@ In OLM v0, the configuration engine could not plumb arbitrary resource contents 
 **Documentation impact:**
 - The [derive-service-account guide](../../howto/derive-service-account.md) should be archived/removed.
 - The [permission model concept doc](../../concepts/permission-model.md) should be rewritten.
-- The [preflight permissions check guide](../howto/rbac-permissions-checking.md) should be archived/removed.
-- The [synthetic permissions guide](../howto/use-synthetic-permissions.md) should be archived/removed.
+- The preflight permissions check guide should be archived/removed.
+- The synthetic permissions guide should be archived/removed.
 - Tutorials and getting-started guides should be simplified to remove ServiceAccount creation steps.
 
 ### 2. Remove SingleNamespace and OwnNamespace install mode support
@@ -106,7 +106,7 @@ In OLM v0, the configuration engine could not plumb arbitrary resource contents 
 - The `installModes` concept is an OLM v0 artifact that will not exist in future bundle format versions.
 
 **Documentation impact:**
-- The [SingleNamespace/OwnNamespace install guide](../howto/single-ownnamespace-install.md) should be archived/removed.
+- The SingleNamespace/OwnNamespace install guide should be archived/removed.
 - The [limitations doc](../../project/olmv1_limitations.md) should be updated to remove the note about SingleNamespace/OwnNamespace support.
 
 ### 3. Change `ClusterExtension.spec.namespace` to optional with automatic namespace management

@@ -37,7 +37,7 @@ In other words, `suggested-namespace` controls naming and `suggested-namespace-t
 
 - The installation namespace is a **managed object** of the ClusterExtension. It follows the same ownership rules as all other managed objects:
   - It is created by operator-controller if it does not exist.
-  - A pre-existing namespace results in a conflict error, consistent with the [single-owner objects](../../concepts/single-owner-objects.md) design.
+  - A pre-existing namespace results in a conflict error, consistent with the [single-owner objects](../../../concepts/single-owner-objects.md) design.
   - It is deleted when the ClusterExtension is deleted (along with all other managed objects).
 - The immutability constraint on `spec.namespace` is retained — once set (explicitly or by auto-determination), the namespace cannot be changed.
 

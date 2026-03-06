@@ -3,7 +3,6 @@ package applier_test
 import (
 	"context"
 	"errors"
-	"io"
 	"io/fs"
 	"os"
 	"testing"
@@ -14,17 +13,13 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 )
@@ -48,14 +43,6 @@ func (m *mockManagedContentCacheManager) Close() error {
 type mockPreflight struct {
 	installErr error
 	upgradeErr error
-}
-
-type mockPreAuthorizer struct {
-	fn func(context.Context, user.Info, io.Reader, ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error)
-}
-
-func (p *mockPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-	return p.fn(ctx, manifestManager, manifestReader, additionalRequiredPerms...)
 }
 
 func (mp *mockPreflight) Install(context.Context, []client.Object) error {
@@ -181,33 +168,6 @@ spec:
 	}
 	testObjectLabels  = map[string]string{"object": "label"}
 	testStorageLabels = map[string]string{"storage": "label"}
-	errPreAuth        = errors.New("problem running preauthorization")
-	missingRBAC       = []authorization.ScopedPolicyRules{
-		{
-			Namespace: "",
-			MissingRules: []rbacv1.PolicyRule{
-				{
-					Verbs:           []string{"list", "watch"},
-					APIGroups:       []string{""},
-					Resources:       []string{"services"},
-					ResourceNames:   []string(nil),
-					NonResourceURLs: []string(nil)},
-			},
-		},
-		{
-			Namespace: "test-namespace",
-			MissingRules: []rbacv1.PolicyRule{
-				{
-					Verbs:     []string{"create"},
-					APIGroups: []string{"*"},
-					Resources: []string{"certificates"}},
-			},
-		},
-	}
-
-	errMissingRBAC = `pre-authorization failed: service account requires the following permissions to manage cluster extension:
-  Namespace:"" APIGroups:[] Resources:[services] Verbs:[list,watch]
-  Namespace:"test-namespace" APIGroups:[*] Resources:[certificates] Verbs:[create]`
 )
 
 func TestApply_Base(t *testing.T) {
@@ -321,193 +281,6 @@ func TestApply_Installation(t *testing.T) {
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
-		require.NoError(t, err)
-		require.Empty(t, installStatus)
-		require.True(t, installSucceeded)
-	})
-}
-
-func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
-	t.Run("preauthorizer called with correct parameters", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
-			getClientErr: driver.ErrReleaseNotFound,
-			installErr:   errors.New("failed installing chart"),
-			desiredRel: &release.Release{
-				Info:     &release.Info{Status: release.StatusDeployed},
-				Manifest: validManifest,
-			},
-		}
-		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
-		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			Preflights:         []applier.Preflight{mockPf},
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					t.Log("has correct user")
-					require.Equal(t, "system:serviceaccount:olmv1-system:operator-controller-controller-manager", user.GetName())
-					require.Empty(t, user.GetUID())
-					require.Nil(t, user.GetExtra())
-					require.Empty(t, user.GetGroups())
-
-					t.Log("has correct additional permissions")
-					require.Len(t, additionalRequiredPerms, 1)
-					perms := additionalRequiredPerms[0](user)
-
-					require.Len(t, perms, 1)
-					require.Equal(t, authorizer.AttributesRecord{
-						User:            user,
-						Name:            "test-ext",
-						APIGroup:        "olm.operatorframework.io",
-						APIVersion:      "v1",
-						Resource:        "clusterextensions/finalizers",
-						ResourceRequest: true,
-						Verb:            "update",
-					}, perms[0])
-					return nil, nil
-				},
-			},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-		}
-
-		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
-		require.Error(t, err)
-	})
-
-	t.Run("fails during dry-run installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
-			getClientErr:     driver.ErrReleaseNotFound,
-			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
-		}
-		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			HelmChartProvider:  DummyHelmChartProvider,
-		}
-
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "attempting to dry-run install chart")
-		require.False(t, installSucceeded)
-		require.Empty(t, installStatus)
-	})
-
-	t.Run("fails during pre-flight installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
-			getClientErr: driver.ErrReleaseNotFound,
-			installErr:   errors.New("failed installing chart"),
-			desiredRel: &release.Release{
-				Info:     &release.Info{Status: release.StatusDeployed},
-				Manifest: validManifest,
-			},
-		}
-		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
-		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			Preflights:         []applier.Preflight{mockPf},
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					return nil, nil
-				},
-			},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-		}
-
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "install pre-flight check")
-		require.False(t, installSucceeded)
-		require.Empty(t, installStatus)
-	})
-
-	t.Run("fails during installation because of pre-authorization failure", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
-			getClientErr: driver.ErrReleaseNotFound,
-			desiredRel: &release.Release{
-				Info:     &release.Info{Status: release.StatusDeployed},
-				Manifest: validManifest,
-			},
-		}
-		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					return nil, errPreAuth
-				},
-			},
-			HelmChartProvider: DummyHelmChartProvider,
-		}
-		// Use a ClusterExtension with valid Spec fields.
-		validCE := &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "default",
-			},
-		}
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "problem running preauthorization")
-		require.False(t, installSucceeded)
-		require.Empty(t, installStatus)
-	})
-
-	t.Run("fails during installation due to missing RBAC rules", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
-			getClientErr: driver.ErrReleaseNotFound,
-			desiredRel: &release.Release{
-				Info:     &release.Info{Status: release.StatusDeployed},
-				Manifest: validManifest,
-			},
-		}
-		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					return missingRBAC, nil
-				},
-			},
-			HelmChartProvider: DummyHelmChartProvider,
-		}
-		// Use a ClusterExtension with valid Spec fields.
-		validCE := &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "default",
-			},
-		}
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
-		require.Error(t, err)
-		require.ErrorContains(t, err, errMissingRBAC)
-		require.False(t, installSucceeded)
-		require.Empty(t, installStatus)
-	})
-
-	t.Run("successful installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
-			getClientErr: driver.ErrReleaseNotFound,
-			desiredRel: &release.Release{
-				Info:     &release.Info{Status: release.StatusDeployed},
-				Manifest: validManifest,
-			},
-		}
-		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					return nil, nil
-				},
-			},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-			Manager:                       &mockManagedContentCacheManager{},
-		}
-
-		// Use a ClusterExtension with valid Spec fields.
-		validCE := &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "default",
-			},
-		}
-
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
 		require.Empty(t, installStatus)
 		require.True(t, installSucceeded)

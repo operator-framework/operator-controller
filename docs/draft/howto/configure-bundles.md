@@ -147,6 +147,8 @@ metadata:
 spec:
   namespace: operators
   # No config provided = Operator watches the entire cluster (AllNamespaces)
+  serviceAccount:
+    name: global-operator-installer
   source:
     sourceType: Catalog
     catalog:

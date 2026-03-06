@@ -107,7 +107,8 @@ Feature: Install ClusterExtension
 
   @SingleOwnNamespaceInstallSupport
   Scenario: watchNamespace config is required for extension supporting single namespace
-    Given resource is applied
+    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    And resource is applied
       """
       apiVersion: v1
       kind: Namespace
@@ -122,6 +123,8 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
         source:
           sourceType: Catalog
           catalog:
@@ -143,6 +146,8 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -161,7 +166,8 @@ Feature: Install ClusterExtension
 
   @SingleOwnNamespaceInstallSupport
   Scenario: watchNamespace config is required for extension supporting own namespace
-    Given ClusterExtension is applied without the watchNamespace configuration
+    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    And ClusterExtension is applied without the watchNamespace configuration
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterExtension
@@ -169,6 +175,8 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
         source:
           sourceType: Catalog
           catalog:
@@ -191,6 +199,8 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -219,6 +229,8 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -301,6 +313,7 @@ Feature: Install ClusterExtension
 
   @SingleOwnNamespaceInstallSupport
   Scenario: Report failure when watchNamespace has invalid DNS-1123 name
+    Given ServiceAccount "olm-admin" in test namespace is cluster admin
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -309,6 +322,8 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -329,6 +344,7 @@ Feature: Install ClusterExtension
   @SingleOwnNamespaceInstallSupport
   @WebhookProviderCertManager
   Scenario: Reject watchNamespace for operator that does not support Single/OwnNamespace install modes
+    Given ServiceAccount "olm-admin" in test namespace is cluster admin
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -337,6 +353,8 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
         config:
           configType: Inline
           inline:
