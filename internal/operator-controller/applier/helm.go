@@ -405,8 +405,10 @@ func formatPreAuthorizerOutput(missingRules []authorization.ScopedPolicyRules, a
 	return nil
 }
 
-func getUserInfo(ext *ocv1.ClusterExtension) user.Info {
-	return &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}
+func getUserInfo(_ *ocv1.ClusterExtension) user.Info {
+	// operator-controller now uses its own ServiceAccount (cluster-admin) for all operations.
+	// PreflightPermissions checks will always pass with cluster-admin.
+	return &user.DefaultInfo{Name: "system:serviceaccount:olmv1-system:operator-controller-controller-manager"}
 }
 
 func extManagementPerms(ext *ocv1.ClusterExtension) func(user.Info) []authorizer.AttributesRecord {

@@ -20,7 +20,10 @@ package v1
 // ServiceAccountReferenceApplyConfiguration represents a declarative configuration of the ServiceAccountReference type for use
 // with apply.
 //
-// ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
+// ServiceAccountReference identifies the serviceAccount used to install a ClusterExtension.
+//
+// Deprecated: This type is deprecated and will be removed in a future API version.
+// operator-controller now uses its own ServiceAccount for all operations.
 type ServiceAccountReferenceApplyConfiguration struct {
 	// name is a required, immutable reference to the name of the ServiceAccount used for installation
 	// and management of the content for the package specified in the packageName field.

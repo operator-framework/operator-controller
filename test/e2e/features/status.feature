@@ -6,7 +6,6 @@ Feature: Report status of the managed ClusterExtension workload
   Background:
     Given OLM is available
     And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -15,8 +14,6 @@ Feature: Report status of the managed ClusterExtension workload
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:

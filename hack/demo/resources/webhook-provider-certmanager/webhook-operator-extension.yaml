@@ -4,8 +4,6 @@ metadata:
   name: webhook-operator
 spec:
   namespace: webhook-operator
-  serviceAccount:
-    name: webhook-operator-installer
   source:
     catalog:
       packageName: webhook-operator

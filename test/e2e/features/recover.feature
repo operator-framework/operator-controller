@@ -5,8 +5,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     And ClusterCatalog "test" serves bundles
 
   Scenario: Restore removed resource
-    Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
-    And ClusterExtension is applied
+    Given ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterExtension
@@ -14,8 +13,6 @@ Feature: Recover cluster extension from errors that might occur during its lifet
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -29,33 +26,8 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     When resource "configmap/test-configmap" is removed
     Then resource "configmap/test-configmap" is eventually restored
 
-  Scenario: Install ClusterExtension after target namespace becomes available
-    Given ClusterExtension is applied
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: test
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    And ClusterExtension reports Progressing as True with Reason Retrying
-    When ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
-    Then ClusterExtension is available
-    And ClusterExtension reports Progressing as True with Reason Succeeded
-
   Scenario: Install ClusterExtension after conflicting resource is removed
-    Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
-    And resource is applied
+    Given resource is applied
       """
       apiVersion: apps/v1
       kind: Deployment
@@ -98,8 +70,6 @@ Feature: Recover cluster extension from errors that might occur during its lifet
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -115,43 +85,8 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     And ClusterExtension reports Progressing as True with Reason Succeeded
     And ClusterExtension reports Installed as True
 
-  @PreflightPermissions
-  Scenario: ClusterExtension installation succeeds after service account gets the required missing permissions to
-    manage the bundle's resources
-    Given ServiceAccount "olm-sa" is available in ${TEST_NAMESPACE}
-    And ClusterExtension is applied
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: test
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    And ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
-      """
-      error for resolved bundle "test-operator.1.2.0" with version "1.2.0": creating new Revision: pre-authorization failed: service account requires the following permissions to manage cluster extension:
-      """
-    And ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
-      """
-      Namespace:"" APIGroups:[apiextensions.k8s.io] Resources:[customresourcedefinitions] ResourceNames:[olme2etests.olm.operatorframework.io] Verbs:[delete,get,patch,update]
-      """
-    When ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
-    Then ClusterExtension is available
-    And ClusterExtension reports Progressing as True with Reason Succeeded
-    And ClusterExtension reports Installed as True
-
   # CATALOG DELETION RESILIENCE SCENARIOS
-  
+
   Scenario: Auto-healing continues working after catalog deletion
     # This test proves that extensions continue to auto-heal (restore deleted resources) even when
     # their source catalog is unavailable. We verify this by:
@@ -163,8 +98,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     # - If the controller stopped reconciling, the configmap would stay deleted
     # - Resource restoration is an observable event that PROVES active reconciliation
     # - The deployment staying healthy proves the workload continues running
-    Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
-    And ClusterExtension is applied
+    Given ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterExtension
@@ -172,8 +106,6 @@ Feature: Recover cluster extension from errors that might occur during its lifet
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -203,8 +135,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     # - Reconciliation completing (observedGeneration == generation) proves the spec was processed
     # - Progressing=Succeeded proves the controller didn't block on missing catalog
     # - Extension staying Available proves workload continues running
-    Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
-    And ClusterExtension is applied
+    Given ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterExtension
@@ -212,8 +143,6 @@ Feature: Recover cluster extension from errors that might occur during its lifet
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -233,8 +162,6 @@ Feature: Recover cluster extension from errors that might occur during its lifet
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         install:
           preflight:
             crdUpgradeSafety:

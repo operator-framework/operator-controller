@@ -91,10 +91,6 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is eventually restored$`, ResourceRestored)
 	sc.Step(`^(?i)resource "([^"]+)" matches$`, ResourceMatches)
 
-	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
-	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
-	sc.Step(`^(?i)ServiceAccount "([^"]*)" is available in \${TEST_NAMESPACE}$`, ServiceAccountIsAvailableInNamespace)
-	sc.Step(`^(?i)ServiceAccount "([^"]*)" in test namespace is cluster admin$`, ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" in test namespace has permissions to fetch "([^"]+)" metrics$`, ServiceAccountWithFetchMetricsPermissions)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" sends request to "([^"]+)" endpoint of "([^"]+)" service$`, SendMetricsRequest)
 
@@ -775,79 +771,26 @@ func ResourceRestored(ctx context.Context, resource string) error {
 	return nil
 }
 
-func applyServiceAccount(ctx context.Context, serviceAccount string) error {
-	sc := scenarioCtx(ctx)
-	vars := extendMap(map[string]string{
-		"TEST_NAMESPACE":       sc.namespace,
-		"SERVICE_ACCOUNT_NAME": serviceAccount,
-		"SERVICEACCOUNT_NAME":  serviceAccount,
-	})
-
-	yaml, err := templateYaml(filepath.Join("steps", "testdata", "serviceaccount-template.yaml"), vars)
-	if err != nil {
-		return fmt.Errorf("failed to template ServiceAccount yaml: %v", err)
-	}
-
-	// Apply the ServiceAccount configuration
-	_, err = k8scliWithInput(yaml, "apply", "-f", "-")
-	if err != nil {
-		return fmt.Errorf("failed to apply ServiceAccount configuration: %v: %s", err, stderrOutput(err))
-	}
-
-	return nil
-}
-
-func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacTemplate string, keyValue ...string) error {
-	sc := scenarioCtx(ctx)
-	if err := applyServiceAccount(ctx, serviceAccount); err != nil {
-		return err
-	}
-	vars := extendMap(map[string]string{
-		"TEST_NAMESPACE":         sc.namespace,
-		"SERVICE_ACCOUNT_NAME":   serviceAccount,
-		"SERVICEACCOUNT_NAME":    serviceAccount,
-		"CLUSTER_EXTENSION_NAME": sc.clusterExtensionName,
-		"CLUSTEREXTENSION_NAME":  sc.clusterExtensionName,
-	}, keyValue...)
-
-	yaml, err := templateYaml(filepath.Join("steps", "testdata", rbacTemplate), vars)
-	if err != nil {
-		return fmt.Errorf("failed to template RBAC yaml: %v", err)
-	}
-
-	// Apply the RBAC configuration
-	_, err = k8scliWithInput(yaml, "apply", "-f", "-")
-	if err != nil {
-		return fmt.Errorf("failed to apply RBAC configuration: %v: %s", err, stderrOutput(err))
-	}
-
-	return nil
-}
-
-// ServiceAccountIsAvailableInNamespace creates a ServiceAccount in the test namespace without RBAC permissions.
-func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
-	return applyServiceAccount(ctx, serviceAccount)
-}
-
-// ServiceAccountWithNeededPermissionsIsAvailableInNamespace creates a ServiceAccount and applies standard RBAC permissions.
-// The RBAC template is selected based on the service account and BoxcutterRuntime feature gate: <service-account>-<helm|boxcutter>-rbac-template.yaml
-func ServiceAccountWithNeededPermissionsIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
-	kernel := "helm"
-	if enabled, found := featureGates[features.BoxcutterRuntime]; found && enabled {
-		kernel = "boxcutter"
-	}
-	rbacTemplate := fmt.Sprintf("%s-%s-rbac-template.yaml", serviceAccount, kernel)
-	return applyPermissionsToServiceAccount(ctx, serviceAccount, rbacTemplate)
-}
-
-// ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace creates a ServiceAccount and applies cluster-admin RBAC.
-func ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
-	return applyPermissionsToServiceAccount(ctx, serviceAccount, "cluster-admin-rbac-template.yaml")
-}
-
 // ServiceAccountWithFetchMetricsPermissions creates a ServiceAccount and applies metrics-reader RBAC for the specified controller.
 func ServiceAccountWithFetchMetricsPermissions(ctx context.Context, serviceAccount string, controllerName string) error {
-	return applyPermissionsToServiceAccount(ctx, serviceAccount, "metrics-reader-rbac-template.yaml", "CONTROLLER_NAME", controllerName)
+	sc := scenarioCtx(ctx)
+	vars := extendMap(map[string]string{
+		"TEST_NAMESPACE":      sc.namespace,
+		"SERVICEACCOUNT_NAME": serviceAccount,
+		"CONTROLLER_NAME":     controllerName,
+	})
+
+	yaml, err := templateYaml(filepath.Join("steps", "testdata", "metrics-reader-rbac-template.yaml"), vars)
+	if err != nil {
+		return fmt.Errorf("failed to template metrics-reader RBAC yaml: %v", err)
+	}
+
+	_, err = k8scliWithInput(yaml, "apply", "-f", "-")
+	if err != nil {
+		return fmt.Errorf("failed to apply metrics-reader RBAC: %v: %s", err, stderrOutput(err))
+	}
+
+	return nil
 }
 
 func httpGet(url string, token string) (*http.Response, error) {

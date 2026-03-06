@@ -45,9 +45,6 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 						},
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
-						Name: "default",
-					},
 				}))
 			}
 			if tc.unionField == "" {
@@ -56,9 +53,6 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 						SourceType: tc.sourceType,
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
-						Name: "default",
-					},
 				}))
 			}
 
@@ -123,9 +117,6 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for package name %q: %w", tc.pkgName, err)
@@ -221,9 +212,6 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for version %q: %w", tc.version, err)
@@ -276,9 +264,6 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for channel %q: %w", tc.channels, err)
@@ -329,9 +314,6 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 					},
 				},
 				Namespace: tc.namespace,
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for namespace %q: %w", tc.namespace, err)
@@ -357,7 +339,6 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		{"dot-separated", "dotted.name", ""},
 		{"longest valid service account name", strings.Repeat("x", 253), ""},
 		{"too long service account name", strings.Repeat("x", 254), tooLongError},
-		{"no service account name", "", regexMismatchError},
 		{"spaces", "spaces spaces", regexMismatchError},
 		{"capitalized", "Capitalized", regexMismatchError},
 		{"camel case", "camelCase", regexMismatchError},
@@ -383,7 +364,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 					Name: tc.serviceAccount,
 				},
 			}))
@@ -442,10 +423,7 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
-				Install: tc.installConfig,
+				Install:   tc.installConfig,
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for install configuration %v: %w", tc.installConfig, err)
@@ -494,9 +472,6 @@ func Test_ClusterExtensionAdmissionInlineConfig(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 				Config: &ocv1.ClusterExtensionConfig{
 					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
 					Inline: &apiextensionsv1.JSON{

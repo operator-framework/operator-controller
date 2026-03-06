@@ -6,7 +6,6 @@ Feature: Update ClusterExtension
   Background:
     Given OLM is available
     And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
 
   Scenario: Update to a successor version
     Given ClusterExtension is applied
@@ -17,8 +16,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -44,8 +41,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -65,8 +60,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -90,8 +83,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -111,8 +102,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -137,8 +126,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -152,7 +139,7 @@ Feature: Update ClusterExtension
     And bundle "test-operator.1.2.0" is installed in version "1.2.0"
     When ClusterCatalog "test" is updated to version "v2"
     Then bundle "test-operator.1.3.0" is installed in version "1.3.0"
-  
+
   Scenario: Auto update when new version becomes available in the same catalog image ref
     Given "test" catalog image version "v1" is also tagged as "latest"
     And ClusterCatalog "test" is updated to version "latest"
@@ -164,8 +151,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -190,8 +175,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -224,8 +207,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -242,4 +223,3 @@ Feature: Update ClusterExtension
     Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
     And ClusterExtensionRevision "${NAME}-2" reports Progressing as True with Reason RollingOut
     And ClusterExtensionRevision "${NAME}-2" reports Available as False with Reason ProbeFailure
-

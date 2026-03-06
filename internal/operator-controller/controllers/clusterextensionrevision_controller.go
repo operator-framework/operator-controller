@@ -47,10 +47,10 @@ const (
 // ClusterExtensionRevisionReconciler actions individual snapshots of ClusterExtensions,
 // as part of the boxcutter integration.
 type ClusterExtensionRevisionReconciler struct {
-	Client                client.Client
-	RevisionEngineFactory RevisionEngineFactory
-	TrackingCache         trackingCache
-	Clock                 clock.Clock
+	Client         client.Client
+	RevisionEngine RevisionEngine
+	TrackingCache  trackingCache
+	Clock          clock.Clock
 }
 
 type trackingCache interface {
@@ -148,12 +148,6 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
 	}
 
-	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cer)
-	if err != nil {
-		setRetryingConditions(cer, err.Error())
-		return ctrl.Result{}, fmt.Errorf("failed to create revision engine: %v", err)
-	}
-
 	revision := boxcutter.NewRevisionWithOwner(
 		cer.Name,
 		cer.Spec.Revision,
@@ -167,7 +161,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 			markAsAvailableUnknown(cer, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
 			return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 		}
-		return c.archive(ctx, revisionEngine, cer, revision)
+		return c.archive(ctx, c.RevisionEngine, cer, revision)
 	}
 
 	if err := c.ensureFinalizer(ctx, cer, clusterExtensionRevisionTeardownFinalizer); err != nil {
@@ -180,7 +174,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		return ctrl.Result{}, werr
 	}
 
-	rres, err := revisionEngine.Reconcile(ctx, revision, opts...)
+	rres, err := c.RevisionEngine.Reconcile(ctx, revision, opts...)
 	if err != nil {
 		if rres != nil {
 			// Log detailed reconcile reports only in debug mode (V(1)) to reduce verbosity.

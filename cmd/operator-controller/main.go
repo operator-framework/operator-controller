@@ -40,6 +40,7 @@ import (
 	"k8s.io/client-go/discovery/cached/memory"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter/managedcache"
@@ -59,7 +60,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
@@ -630,9 +630,6 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 	}
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
-		controllers.ValidateClusterExtension(
-			controllers.ServiceAccountValidator(coreClient),
-		),
 		controllers.MigrateStorage(storageMigrator),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
@@ -662,29 +659,19 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		return fmt.Errorf("unable to add tracking cache to manager: %v", err)
 	}
 
-	cerCoreClient, err := corev1client.NewForConfig(c.mgr.GetConfig())
-	if err != nil {
-		return fmt.Errorf("unable to create client for ClusterExtensionRevision controller: %w", err)
-	}
-	cerTokenGetter := authentication.NewTokenGetter(cerCoreClient, authentication.WithExpirationDuration(1*time.Hour))
-
-	revisionEngineFactory, err := controllers.NewDefaultRevisionEngineFactory(
+	revisionEngine := controllers.NewRevisionEngine(
 		c.mgr.GetScheme(),
 		trackingCache,
 		discoveryClient,
 		c.mgr.GetRESTMapper(),
 		fieldOwnerPrefix,
-		c.mgr.GetConfig(),
-		cerTokenGetter,
+		c.mgr.GetClient(),
 	)
-	if err != nil {
-		return fmt.Errorf("unable to create revision engine factory: %w", err)
-	}
 
 	if err = (&controllers.ClusterExtensionRevisionReconciler{
-		Client:                c.mgr.GetClient(),
-		RevisionEngineFactory: revisionEngineFactory,
-		TrackingCache:         trackingCache,
+		Client:         c.mgr.GetClient(),
+		RevisionEngine: revisionEngine,
+		TrackingCache:  trackingCache,
 	}).SetupWithManager(c.mgr); err != nil {
 		return fmt.Errorf("unable to setup ClusterExtensionRevision controller: %w", err)
 	}
@@ -696,11 +683,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 	if err != nil {
 		return fmt.Errorf("unable to create core client: %w", err)
 	}
-	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
-	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
-	if features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions) {
-		clientRestConfigMapper = action.SyntheticUserRestConfigMapper(clientRestConfigMapper)
-	}
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(c.mgr.GetConfig(), c.mgr.GetRESTMapper(),
 		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, c.mgr.GetAPIReader(), cfg.systemNamespace)),
@@ -708,7 +690,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 			ext := obj.(*ocv1.ClusterExtension)
 			return ext.Spec.Namespace, nil
 		}),
-		helmclient.ClientRestConfigMapper(clientRestConfigMapper),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create helm action config getter: %w", err)
@@ -732,7 +713,9 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		)
 	}
 
-	cm := contentmanager.NewManager(clientRestConfigMapper, c.mgr.GetConfig(), c.mgr.GetRESTMapper())
+	cm := contentmanager.NewManager(func(_ context.Context, _ client.Object, cfg *rest.Config) (*rest.Config, error) {
+		return cfg, nil
+	}, c.mgr.GetConfig(), c.mgr.GetRESTMapper())
 	err = c.finalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		ext := obj.(*ocv1.ClusterExtension)
 		err := cm.Delete(ext)
@@ -758,9 +741,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 	revisionStatesGetter := &controllers.HelmRevisionStatesGetter{ActionClientGetter: acg}
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
-		controllers.ValidateClusterExtension(
-			controllers.ServiceAccountValidator(coreClient),
-		),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
