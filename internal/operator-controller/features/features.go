@@ -19,7 +19,7 @@ const (
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
 	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
 	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
-	ReleaseVersionPriority       featuregate.Feature = "ReleaseVersionPriority"
+	ReleaseVersionPriority            featuregate.Feature = "ReleaseVersionPriority"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
