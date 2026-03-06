@@ -60,7 +60,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
@@ -599,12 +598,6 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		return err
 	}
 
-	// determine if PreAuthorizer should be enabled based on feature gate
-	var preAuth authorization.PreAuthorizer
-	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		preAuth = authorization.NewRBACPreAuthorizer(c.mgr.GetClient())
-	}
-
 	// TODO: better scheme handling - which types do we want to support?
 	_ = apiextensionsv1.AddToScheme(c.mgr.GetScheme())
 	rg := &applier.SimpleRevisionGenerator{
@@ -617,7 +610,6 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		Scheme:            c.mgr.GetScheme(),
 		RevisionGenerator: rg,
 		Preflights:        c.preflights,
-		PreAuthorizer:     preAuth,
 		FieldOwner:        fieldOwner,
 	}
 	revisionStatesGetter := &controllers.BoxcutterRevisionStatesGetter{Reader: c.mgr.GetClient()}
@@ -721,17 +713,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		return fmt.Errorf("unable to create helm action client getter: %w", err)
 	}
 
-	// determine if PreAuthorizer should be enabled based on feature gate
-	var preAuth authorization.PreAuthorizer
-	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		preAuth = authorization.NewRBACPreAuthorizer(
-			c.mgr.GetClient(),
-			// Additional verbs / bundle manifest that are expected by the content manager to watch those resources
-			authorization.WithClusterCollectionVerbs("list", "watch"),
-			authorization.WithNamespacedCollectionVerbs("create"),
-		)
-	}
-
 	cm := contentmanager.NewManager(clientRestConfigMapper, c.mgr.GetConfig(), c.mgr.GetRESTMapper())
 	err = c.finalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		ext := obj.(*ocv1.ClusterExtension)
@@ -743,7 +724,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		return err
 	}
 
-	// now initialize the helmApplier, assigning the potentially nil preAuth
 	appl := &applier.Helm{
 		ActionClientGetter: acg,
 		Preflights:         c.preflights,
@@ -751,7 +731,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 			ManifestProvider: c.regv1ManifestProvider,
 		},
 		HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
-		PreAuthorizer:                 preAuth,
 		Watcher:                       c.watcher,
 		Manager:                       cm,
 	}
