@@ -11,7 +11,6 @@ import (
 const (
 	// Add new feature gates constants (strings)
 	// Ex: SomeFeature featuregate.Feature = "SomeFeature"
-	PreflightPermissions              featuregate.Feature = "PreflightPermissions"
 	SingleOwnNamespaceInstallSupport  featuregate.Feature = "SingleOwnNamespaceInstallSupport"
 	SyntheticPermissions              featuregate.Feature = "SyntheticPermissions"
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
@@ -24,11 +23,6 @@ const (
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Add new feature gate definitions
 	// Ex: SomeFeature: {...}
-	PreflightPermissions: {
-		Default:       false,
-		PreRelease:    featuregate.Alpha,
-		LockToDefault: false,
-	},
 
 	// SingleOwnNamespaceInstallSupport enables support for installing
 	// registry+v1 cluster extensions with single or own namespaces modes
