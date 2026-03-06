@@ -246,6 +246,13 @@ func TestLegacySuccessor(t *testing.T) {
 // TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateDisabled verifies higher releases
 // are NOT successors when ReleaseVersionPriority gate is disabled (testing the default behavior).
 func TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateDisabled(t *testing.T) {
+	// Explicitly disable the feature gate for this test
+	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.ReleaseVersionPriority)
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.ReleaseVersionPriority)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.ReleaseVersionPriority, prevEnabled)))
+	})
+
 	channel := declcfg.Channel{
 		Entries: []declcfg.ChannelEntry{
 			{Name: "test-package.v1.0.0+1"},
@@ -279,9 +286,10 @@ func TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateDisabled(t *testing.
 // as valid successors when ReleaseVersionPriority gate is enabled.
 func TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateEnabled(t *testing.T) {
 	// Enable the feature gate for this test
+	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.ReleaseVersionPriority)
 	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.ReleaseVersionPriority)))
 	t.Cleanup(func() {
-		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.ReleaseVersionPriority)))
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.ReleaseVersionPriority, prevEnabled)))
 	})
 
 	channel := declcfg.Channel{
