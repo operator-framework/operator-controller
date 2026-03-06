@@ -40,7 +40,6 @@ import (
 	"k8s.io/client-go/discovery/cached/memory"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter/managedcache"
@@ -708,13 +707,14 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		preAuth = authorization.NewRBACPreAuthorizer(c.mgr.GetClient())
 	}
 
-	cm := contentmanager.NewManager(func(_ context.Context, _ client.Object, cfg *rest.Config) (*rest.Config, error) {
-		return cfg, nil
-	}, c.mgr.GetConfig(), c.mgr.GetRESTMapper())
+	cm, err := contentmanager.NewManager(c.mgr.GetConfig(), c.mgr.GetRESTMapper())
+	if err != nil {
+		setupLog.Error(err, "unable to create content manager")
+		return err
+	}
 	err = c.finalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		ext := obj.(*ocv1.ClusterExtension)
-		err := cm.Delete(ext)
-		return crfinalizer.Result{}, err
+		cm.Delete(ctx, obj.GetName())
+		return crfinalizer.Result{}, nil
 	}))
 	if err != nil {
 		setupLog.Error(err, "unable to register content manager cleanup finalizer")

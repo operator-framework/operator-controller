@@ -29,7 +29,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
+	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -67,7 +67,7 @@ type Helm struct {
 	HelmReleaseToObjectsConverter HelmReleaseToObjectsConverterInterface
 
 	Manager contentmanager.Manager
-	Watcher cache.Watcher
+	Watcher cmcache.Watcher
 }
 
 // runPreAuthorizationChecks performs pre-authorization checks for a Helm release
@@ -176,12 +176,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		return true, "", err
 	}
 	klog.FromContext(ctx).Info("watching managed objects")
-	cache, err := h.Manager.Get(ctx, ext)
-	if err != nil {
-		return true, "", err
-	}
-
-	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
+	if err := h.Manager.Watch(ctx, ext.Name, h.Watcher, relObjects...); err != nil {
 		return true, "", err
 	}
 
@@ -226,17 +221,11 @@ func (h *Helm) reconcileExistingRelease(ctx context.Context, ac helmclient.Actio
 		logger.Error(fmt.Errorf("manager is nil"), "Manager not initialized, cannot set up drift detection watches (resources are applied but drift detection disabled)")
 		return true, "", nil
 	}
-	cache, err := h.Manager.Get(ctx, ext)
-	if err != nil {
-		logger.Error(err, "failed to get managed content cache, cannot set up drift detection watches (resources are applied but drift detection disabled)")
-		return true, "", nil
-	}
-
 	if h.Watcher == nil {
 		logger.Error(fmt.Errorf("watcher is nil"), "Watcher not initialized, cannot set up drift detection watches (resources are applied but drift detection disabled)")
 		return true, "", nil
 	}
-	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
+	if err := h.Manager.Watch(ctx, ext.Name, h.Watcher, relObjects...); err != nil {
 		logger.Error(err, "failed to set up drift detection watches (resources are applied but drift detection disabled)")
 		return true, "", nil
 	}
