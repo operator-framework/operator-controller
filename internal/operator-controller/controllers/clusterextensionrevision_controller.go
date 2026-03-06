@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -462,10 +463,13 @@ func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Con
 		previousObjs[i] = rev
 	}
 
+	if err = initializeProbes(); err != nil {
+		return nil, nil, err
+	}
 	opts := []boxcutter.RevisionReconcileOption{
 		boxcutter.WithPreviousOwners(previousObjs),
 		boxcutter.WithProbe(boxcutter.ProgressProbeType, probing.And{
-			deploymentProbe, statefulSetProbe, crdProbe, issuerProbe, certProbe,
+			&namespaceActiveProbe, deploymentProbe, statefulSetProbe, crdProbe, issuerProbe, certProbe, &pvcBoundProbe,
 		}),
 	}
 
@@ -511,6 +515,28 @@ func EffectiveCollisionProtection(cp ...ocv1.CollisionProtection) ocv1.Collision
 	return ecp
 }
 
+// initializeProbes is used to initialize CEL probes once, so we don't recreate them on every reconcile
+var initializeProbes = sync.OnceValue(func() error {
+	nsCEL, err := probing.NewCELProbe(namespaceActiveCEL, `namespace phase must be "Active"`)
+	if err != nil {
+		return fmt.Errorf("initializing namespace CEL probe: %w", err)
+	}
+	pvcCEL, err := probing.NewCELProbe(pvcBoundCEL, `persistentvolumeclaim phase must be "Bound"`)
+	if err != nil {
+		return fmt.Errorf("initializing PVC CEL probe: %w", err)
+	}
+	namespaceActiveProbe = probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: corev1.GroupName, Kind: "Namespace"},
+		Prober:    nsCEL,
+	}
+	pvcBoundProbe = probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: corev1.GroupName, Kind: "PersistentVolumeClaim"},
+		Prober:    pvcCEL,
+	}
+
+	return nil
+})
+
 var (
 	deploymentProbe = &probing.GroupKindSelector{
 		GroupKind: schema.GroupKind{Group: appsv1.GroupName, Kind: "Deployment"},
@@ -541,6 +567,14 @@ var (
 			Prober: readyConditionProbe,
 		},
 	}
+
+	// namespaceActiveCEL is a CEL rule which asserts that the namespace is in "Active" phase
+	namespaceActiveCEL   = `self.status.phase == "Active"`
+	namespaceActiveProbe probing.GroupKindSelector
+
+	// pvcBoundCEL is a CEL rule which asserts that the PVC is in "Bound" phase
+	pvcBoundCEL   = `self.status.phase == "Bound"`
+	pvcBoundProbe probing.GroupKindSelector
 
 	// deplStaefulSetProbe probes Deployment, StatefulSet objects.
 	deplStatefulSetProbe = &probing.ObservedGenerationProbe{

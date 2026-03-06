@@ -71,7 +71,9 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutReason)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionRevisionReportsConditionWithoutMsg)
+	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterExtensionRevisionReportsConditionWithMsg)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
+	sc.Step(`^(?i)ClusterExtensionRevision is applied(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" is archived$`, ClusterExtensionRevisionIsArchived)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterExtensionRevisionHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterExtensionRevisionHasLabelWithValue)
@@ -80,7 +82,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is removed$`, ResourceRemoved)
-	sc.Step(`^(?i)resource "([^"]+)" is eventually not found$`, ResourceEventuallyNotFound)
+	sc.Step(`^(?i)resource "([^"]+)" is (?:eventually not found|not installed)$`, ResourceEventuallyNotFound)
 	sc.Step(`^(?i)resource "([^"]+)" exists$`, ResourceAvailable)
 	sc.Step(`^(?i)resource is applied$`, ResourceIsApplied)
 	sc.Step(`^(?i)resource "deployment/test-operator" reports as (not ready|ready)$`, MarkTestOperatorNotReady)
@@ -186,6 +188,7 @@ func substituteScenarioVars(content string, sc *scenarioContext) string {
 	vars := map[string]string{
 		"TEST_NAMESPACE": sc.namespace,
 		"NAME":           sc.clusterExtensionName,
+		"CER_NAME":       sc.clusterExtensionRevisionName,
 		"CATALOG_IMG":    "docker-registry.operator-controller-e2e.svc.cluster.local:5000/e2e/test-catalog:v1",
 	}
 	if v, found := os.LookupEnv("CATALOG_IMG"); found {
@@ -235,8 +238,8 @@ func ClusterExtensionVersionUpdate(ctx context.Context, version string) error {
 	return err
 }
 
-// ResourceIsApplied applies the provided YAML resource to the cluster and in case of ClusterExtension it captures its name in the test context
-// so that it can be referred to in later steps with ${NAME}
+// ResourceIsApplied applies the provided YAML resource to the cluster and in case of ClusterExtension or ClusterExtensionRevision it captures
+// its name in the test context so that it can be referred to in later steps with ${NAME} or ${CER_NAME}, respectively
 func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error {
 	sc := scenarioCtx(ctx)
 	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
@@ -246,10 +249,12 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 	}
 	out, err := k8scliWithInput(yamlContent, "apply", "-f", "-")
 	if err != nil {
-		return fmt.Errorf("failed to apply resource %v %w", out, err)
+		return fmt.Errorf("failed to apply resource %v; err: %w; stderr: %s", out, err, stderrOutput(err))
 	}
 	if res.GetKind() == "ClusterExtension" {
 		sc.clusterExtensionName = res.GetName()
+	} else if res.GetKind() == "ClusterExtensionRevision" {
+		sc.clusterExtensionRevisionName = res.GetName()
 	}
 	return nil
 }
@@ -378,6 +383,17 @@ type msgMatchFn func(string) bool
 
 func alwaysMatch(_ string) bool { return true }
 
+func messageComparison(ctx context.Context, msg *godog.DocString) msgMatchFn {
+	msgCmp := alwaysMatch
+	if msg != nil {
+		expectedMsg := substituteScenarioVars(strings.Join(strings.Fields(msg.Content), " "), scenarioCtx(ctx))
+		msgCmp = func(actual string) bool {
+			return actual == expectedMsg
+		}
+	}
+	return msgCmp
+}
+
 func waitForCondition(ctx context.Context, resourceType, resourceName, conditionType, conditionStatus string, conditionReason *string, msgCmp msgMatchFn) error {
 	require.Eventually(godog.T(ctx), func() bool {
 		v, err := k8sClient("get", resourceType, resourceName, "-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
@@ -412,14 +428,7 @@ func waitForExtensionCondition(ctx context.Context, conditionType, conditionStat
 // ClusterExtensionReportsCondition waits for the ClusterExtension to have a condition matching the specified type,
 // status, reason, and exact message. Polls with timeout.
 func ClusterExtensionReportsCondition(ctx context.Context, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
-	msgCmp := alwaysMatch
-	if msg != nil {
-		expectedMsg := substituteScenarioVars(strings.Join(strings.Fields(msg.Content), " "), scenarioCtx(ctx))
-		msgCmp = func(actual string) bool {
-			return actual == expectedMsg
-		}
-	}
-	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, msgCmp)
+	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, messageComparison(ctx, msg))
 }
 
 // ClusterExtensionReportsConditionWithMessageFragment waits for the ClusterExtension to have a condition matching
@@ -510,6 +519,12 @@ func ClusterExtensionReportsActiveRevisions(ctx context.Context, rawRevisionName
 // matching type, status, and reason. Polls with timeout.
 func ClusterExtensionRevisionReportsConditionWithoutMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string) error {
 	return waitForCondition(ctx, "clusterextensionrevision", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, nil)
+}
+
+// ClusterExtensionRevisionReportsConditionWithMsg waits for the named ClusterExtensionRevision to have a condition
+// matching type, status, reason, and message. Polls with timeout.
+func ClusterExtensionRevisionReportsConditionWithMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
+	return waitForCondition(ctx, "clusterextensionrevision", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageComparison(ctx, msg))
 }
 
 // ClusterExtensionRevisionIsArchived waits for the named ClusterExtensionRevision to have Progressing=False

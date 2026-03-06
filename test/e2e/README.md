@@ -199,6 +199,7 @@ Leverage existing steps for common operations:
 Use these variables in YAML templates:
 
 - `${NAME}`: Scenario-specific ClusterExtension name (e.g., `ce-123`)
+- `${CER_NAME}`: Scenario-specific ClusterExtensionRevision name (e.g., `cer-123`; for applying CERs directly)
 - `${TEST_NAMESPACE}`: Scenario-specific namespace (e.g., `ns-123`)
 - `${CATALOG_IMG}`: Catalog image reference (defaults to in-cluster registry, overridable via `CATALOG_IMG` env var)
 

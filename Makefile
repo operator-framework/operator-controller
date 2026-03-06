@@ -243,9 +243,10 @@ verify-crd-compatibility: $(CRD_DIFF) manifests
 .PHONY: test
 test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run all tests.
 
+E2E_TIMEOUT ?= 10m
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
-	go test -count=1 -v ./test/e2e/features_test.go
+	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT)
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
@@ -317,6 +318,7 @@ test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-experimental-e2e: PROMETHEUS_VALUES := helm/prom_experimental.yaml
+test-experimental-e2e: E2E_TIMEOUT := 15m
 test-experimental-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
