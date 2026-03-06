@@ -53,167 +53,8 @@ func CreateNamespace(ctx context.Context, name string) (*corev1.Namespace, error
 	return ns, nil
 }
 
-func CreateServiceAccount(ctx context.Context, name types.NamespacedName, clusterExtensionName string) (*corev1.ServiceAccount, error) {
-	sa := &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name.Name,
-			Namespace: name.Namespace,
-		},
-	}
-	err := c.Create(ctx, sa)
-	if err != nil {
-		return nil, err
-	}
-
-	return sa, CreateClusterRoleAndBindingForSA(ctx, name.Name, sa, clusterExtensionName)
-}
-
-func CreateClusterRoleAndBindingForSA(ctx context.Context, name string, sa *corev1.ServiceAccount, clusterExtensionName string) error {
-	cr := &rbacv1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{
-					"olm.operatorframework.io",
-				},
-				Resources: []string{
-					"clusterextensions/finalizers",
-				},
-				Verbs: []string{
-					"update",
-				},
-				ResourceNames: []string{clusterExtensionName},
-			},
-			{
-				APIGroups: []string{
-					"",
-				},
-				Resources: []string{
-					"configmaps",
-					"secrets", // for helm
-					"services",
-					"serviceaccounts",
-				},
-				Verbs: []string{
-					"create",
-					"update",
-					"delete",
-					"patch",
-					"get",
-					"list",
-					"watch",
-				},
-			},
-			{
-				APIGroups: []string{
-					"apiextensions.k8s.io",
-				},
-				Resources: []string{
-					"customresourcedefinitions",
-				},
-				Verbs: []string{
-					"create",
-					"update",
-					"delete",
-					"patch",
-					"get",
-					"list",
-					"watch",
-				},
-			},
-			{
-				APIGroups: []string{
-					"apps",
-				},
-				Resources: []string{
-					"deployments",
-				},
-				Verbs: []string{
-					"create",
-					"update",
-					"delete",
-					"patch",
-					"get",
-					"list",
-					"watch",
-				},
-			},
-			{
-				APIGroups: []string{
-					"rbac.authorization.k8s.io",
-				},
-				Resources: []string{
-					"clusterroles",
-					"roles",
-					"clusterrolebindings",
-					"rolebindings",
-				},
-				Verbs: []string{
-					"create",
-					"update",
-					"delete",
-					"patch",
-					"get",
-					"list",
-					"watch",
-					"bind",
-					"escalate",
-				},
-			},
-			{
-				APIGroups: []string{
-					"networking.k8s.io",
-				},
-				Resources: []string{
-					"networkpolicies",
-				},
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-			},
-		},
-	}
-	err := c.Create(ctx, cr)
-	if err != nil {
-		return err
-	}
-	crb := &rbacv1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Subjects: []rbacv1.Subject{
-			{
-				Kind:      "ServiceAccount",
-				Name:      sa.Name,
-				Namespace: sa.Namespace,
-			},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     name,
-		},
-	}
-	err = c.Create(ctx, crb)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func TestInit(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog, *corev1.ServiceAccount, *corev1.Namespace) {
-	ce, cc := TestInitClusterExtensionClusterCatalog(t)
-	sa, ns := TestInitServiceAccountNamespace(t, ce.Name)
-	return ce, cc, sa, ns
+func TestInit(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog) {
+	return TestInitClusterExtensionClusterCatalog(t)
 }
 
 func TestInitClusterExtensionClusterCatalog(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog) {
@@ -232,23 +73,6 @@ func TestInitClusterExtensionClusterCatalog(t *testing.T) (*ocv1.ClusterExtensio
 	ValidateCatalogUnpackWithName(t, catalogName)
 
 	return ce, cc
-}
-
-func TestInitServiceAccountNamespace(t *testing.T, clusterExtensionName string) (*corev1.ServiceAccount, *corev1.Namespace) {
-	var err error
-
-	ns, err := CreateNamespace(context.Background(), clusterExtensionName)
-	require.NoError(t, err)
-
-	name := types.NamespacedName{
-		Name:      clusterExtensionName,
-		Namespace: ns.GetName(),
-	}
-
-	sa, err := CreateServiceAccount(context.Background(), name, clusterExtensionName)
-	require.NoError(t, err)
-
-	return sa, ns
 }
 
 // ValidateCatalogUnpack validates that the test catalog with the default name has unpacked successfully.
@@ -316,7 +140,7 @@ func EnsureNoExtensionResources(t *testing.T, clusterExtensionName string) {
 	}, 2*pollDuration, pollInterval)
 }
 
-func TestCleanup(t *testing.T, cat *ocv1.ClusterCatalog, clusterExtension *ocv1.ClusterExtension, sa *corev1.ServiceAccount, ns *corev1.Namespace) {
+func TestCleanup(t *testing.T, cat *ocv1.ClusterCatalog, clusterExtension *ocv1.ClusterExtension, ns *corev1.Namespace) {
 	if cat != nil {
 		t.Logf("By deleting ClusterCatalog %q", cat.Name)
 		require.NoError(t, c.Delete(context.Background(), cat))
@@ -334,15 +158,6 @@ func TestCleanup(t *testing.T, cat *ocv1.ClusterCatalog, clusterExtension *ocv1.
 			return errors.IsNotFound(err)
 		}, pollDuration, pollInterval)
 		EnsureNoExtensionResources(t, clusterExtension.Name)
-	}
-
-	if sa != nil {
-		t.Logf("By deleting ServiceAccount %q", sa.Name)
-		require.NoError(t, c.Delete(context.Background(), sa))
-		require.Eventually(t, func() bool {
-			err := c.Get(context.Background(), types.NamespacedName{Name: sa.Name, Namespace: sa.Namespace}, &corev1.ServiceAccount{})
-			return errors.IsNotFound(err)
-		}, pollDuration, pollInterval)
 	}
 
 	if ns != nil {

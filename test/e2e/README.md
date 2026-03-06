@@ -33,8 +33,6 @@ test/e2e/
     ├── steps.go                # Step definition implementations
     ├── hooks.go                # Test hooks and scenario context
     └── testdata/               # Test data (RBAC templates, catalogs)
-        ├── rbac-template.yaml
-        ├── cluster-admin-rbac-template.yaml
         ├── metrics-reader-rbac-template.yaml
         ├── test-catalog-template.yaml
         ├── extra-catalog-template.yaml
@@ -75,7 +73,6 @@ Feature: Install ClusterExtension
   Background:
     Given OLM is available
     And "test" catalog serves bundles
-    And Service account "olm-sa" with needed permissions is available in test namespace
 
   Scenario: Install latest available version from the default channel
     When ClusterExtension is applied
@@ -86,8 +83,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -95,7 +90,6 @@ Feature: Install ClusterExtension
             selector:
               matchLabels:
                 "olm.operatorframework.io/metadata.name": test-catalog
-        ...
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available

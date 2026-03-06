@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://operator-framework.io/schemas/registry-v1-bundle-config.json",
   "title": "Registry+v1 Bundle Configuration",
-  "description": "Configuration schema for registry+v1 bundles. Includes watchNamespace for controlling operator scope and deploymentConfig for customizing operator deployment (environment variables, resource scheduling, storage, and pod placement). The deploymentConfig follows the same structure and behavior as OLM v0's SubscriptionConfig. Note: The 'selector' field from v0's SubscriptionConfig is not included as it was never used.",
+  "description": "Configuration schema for registry+v1 bundles. Includes deploymentConfig for customizing operator deployment (environment variables, resource scheduling, storage, and pod placement). The deploymentConfig follows the same structure and behavior as OLM v0's SubscriptionConfig. Note: The 'selector' field from v0's SubscriptionConfig is not included as it was never used.",
   "type": "object",
   "properties": {
     "deploymentConfig": {
@@ -59,17 +59,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "watchNamespace": {
-      "description": "The namespace that the operator should watch for custom resources. The meaning and validation of this field depends on the operator's install modes. This field may be optional or required, and may have format constraints, based on the operator's supported install modes.",
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
     }
   },
   "additionalProperties": false,

@@ -27,39 +27,17 @@ import (
 var _ contentmanager.Manager = (*mockManagedContentCacheManager)(nil)
 
 type mockManagedContentCacheManager struct {
-	err   error
-	cache cmcache.Cache
-}
-
-func (m *mockManagedContentCacheManager) Get(_ context.Context, _ *ocv1.ClusterExtension) (cmcache.Cache, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	return m.cache, nil
-}
-
-func (m *mockManagedContentCacheManager) Delete(_ *ocv1.ClusterExtension) error {
-	return m.err
-}
-
-type mockManagedContentCache struct {
 	err error
 }
 
-var _ cmcache.Cache = (*mockManagedContentCache)(nil)
-
-func (m *mockManagedContentCache) Close() error {
-	if m.err != nil {
-		return m.err
-	}
-	return nil
+func (m *mockManagedContentCacheManager) Watch(_ context.Context, _ string, _ cmcache.Watcher, _ ...client.Object) error {
+	return m.err
 }
 
-func (m *mockManagedContentCache) Watch(_ context.Context, _ cmcache.Watcher, _ ...client.Object) error {
-	if m.err != nil {
-		return m.err
-	}
-	return nil
+func (m *mockManagedContentCacheManager) Delete(_ context.Context, _ string) {}
+
+func (m *mockManagedContentCacheManager) Close() error {
+	return m.err
 }
 
 type mockPreflight struct {
@@ -186,9 +164,6 @@ spec:
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: "test-namespace",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "test-sa",
-			},
 		},
 	}
 	testObjectLabels  = map[string]string{"object": "label"}
@@ -302,9 +277,7 @@ func TestApply_Installation(t *testing.T) {
 			ActionClientGetter:            mockAcg,
 			HelmChartProvider:             DummyHelmChartProvider,
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			Manager:                       &mockManagedContentCacheManager{},
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -418,9 +391,7 @@ func TestApply_Upgrade(t *testing.T) {
 			ActionClientGetter:            mockAcg,
 			HelmChartProvider:             DummyHelmChartProvider,
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			Manager:                       &mockManagedContentCacheManager{},
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -447,9 +418,7 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 				},
 			},
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			Manager:                       &mockManagedContentCacheManager{},
 		}
 
 		_, _, _ = helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -469,9 +438,7 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 					return nil, errors.New("some error")
 				},
 			},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			Manager: &mockManagedContentCacheManager{},
 		}
 
 		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)

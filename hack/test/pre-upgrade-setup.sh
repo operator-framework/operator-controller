@@ -32,6 +32,9 @@ spec:
       pollIntervalMinutes: 1440
 EOF
 
+# The ServiceAccount, ClusterRole, and ClusterRoleBinding below are required
+# for backward compatibility: this script runs against the OLD version's CRD
+# during upgrade tests, which still requires spec.serviceAccount.
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: ServiceAccount

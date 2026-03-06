@@ -198,9 +198,6 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	annotations[labels.ServiceAccountNameKey] = ext.Spec.ServiceAccount.Name
-	annotations[labels.ServiceAccountNamespaceKey] = ext.Spec.Namespace
-
 	phases := PhaseSort(objects)
 
 	spec := ocv1ac.ClusterExtensionRevisionSpec().

@@ -61,7 +61,6 @@ func main() {
 	for _, tc := range []struct {
 		name             string
 		installNamespace string
-		watchNamespace   string
 		bundle           string
 		testCaseName     string
 		deploymentConfig *config.DeploymentConfig
@@ -71,18 +70,6 @@ func main() {
 			installNamespace: "argocd-system",
 			bundle:           "argocd-operator.v0.6.0",
 			testCaseName:     "all-namespaces",
-		}, {
-			name:             "SingleNamespaces",
-			installNamespace: "argocd-system",
-			watchNamespace:   "argocd-watch",
-			bundle:           "argocd-operator.v0.6.0",
-			testCaseName:     "single-namespace",
-		}, {
-			name:             "OwnNamespaces",
-			installNamespace: "argocd-system",
-			watchNamespace:   "argocd-system",
-			bundle:           "argocd-operator.v0.6.0",
-			testCaseName:     "own-namespace",
 		}, {
 			name:             "Webhooks",
 			installNamespace: "webhook-system",
@@ -241,14 +228,14 @@ func main() {
 	} {
 		bundlePath := filepath.Join(bundleRootDir, tc.bundle)
 		generatedManifestPath := filepath.Join(*outputRootDir, tc.bundle, tc.testCaseName)
-		if err := generateManifests(generatedManifestPath, bundlePath, tc.installNamespace, tc.watchNamespace, tc.deploymentConfig); err != nil {
+		if err := generateManifests(generatedManifestPath, bundlePath, tc.installNamespace, tc.deploymentConfig); err != nil {
 			fmt.Printf("Error generating manifests: %v", err)
 			os.Exit(1)
 		}
 	}
 }
 
-func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace string, deploymentConfig *config.DeploymentConfig) error {
+func generateManifests(outputPath, bundleDir, installNamespace string, deploymentConfig *config.DeploymentConfig) error {
 	// Parse bundleFS into RegistryV1
 	regv1, err := source.FromFS(os.DirFS(bundleDir)).GetBundle()
 	if err != nil {
@@ -256,8 +243,13 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 		os.Exit(1)
 	}
 
-	// Convert RegistryV1 to plain manifests
-	opts := []render.Option{render.WithTargetNamespaces(watchNamespace)}
+	// All registry+v1 bundles are rendered to watch all namespaces regardless of their
+	// stated supported install modes in order to align with OLMv1's single-tenant
+	// cluster-scoped philosophy.
+	opts := []render.Option{
+		render.WithTargetNamespaces(corev1.NamespaceAll),
+		render.WithSkipInstallModeValidation(),
+	}
 	if deploymentConfig != nil {
 		opts = append(opts, render.WithDeploymentConfig(deploymentConfig))
 	}

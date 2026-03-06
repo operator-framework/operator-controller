@@ -396,8 +396,6 @@ In addition to the OCI registry, you will need a ClusterCatalog in the Kubernete
       namespace: metrics-server-system
     spec:
       namespace: metrics-server-system
-      serviceAccount:
-        name: metrics-server-installer
       source:
         sourceType: Catalog
         catalog:

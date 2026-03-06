@@ -66,6 +66,10 @@ type Options struct {
 	// DeploymentConfig contains optional customizations to apply to CSV deployments.
 	// If nil, no customizations are applied.
 	DeploymentConfig *config.DeploymentConfig
+	// SkipInstallModeValidation skips validation of target namespaces against
+	// the bundle's declared install mode support. When true, the caller takes
+	// responsibility for ensuring the target namespaces are appropriate.
+	SkipInstallModeValidation bool
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -82,8 +86,10 @@ func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 	if o.UniqueNameGenerator == nil {
 		errs = append(errs, errors.New("unique name generator must be specified"))
 	}
-	if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
-		errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
+	if !o.SkipInstallModeValidation {
+		if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
+			errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
+		}
 	}
 	return o, errs
 }
@@ -118,6 +124,16 @@ func WithCertificateProvider(provider CertificateProvider) Option {
 func WithDeploymentConfig(deploymentConfig *config.DeploymentConfig) Option {
 	return func(o *Options) {
 		o.DeploymentConfig = deploymentConfig
+	}
+}
+
+// WithSkipInstallModeValidation skips validation of target namespaces against
+// the bundle's declared install mode support. This is useful when the caller
+// wants to force a specific target namespace configuration regardless of what
+// install modes the bundle declares.
+func WithSkipInstallModeValidation() Option {
+	return func(o *Options) {
+		o.SkipInstallModeValidation = true
 	}
 }
 
