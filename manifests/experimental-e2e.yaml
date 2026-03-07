@@ -1123,11 +1123,11 @@ spec:
                 type: integer
               serviceAccount:
                 description: |-
-                  serviceAccount specifies a ServiceAccount used to perform all interactions with the cluster
-                  that are required to manage the extension.
-                  The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-                  The ServiceAccount must exist in the namespace referenced in the spec.
-                  The serviceAccount field is required.
+                  serviceAccount was previously used to specify a ServiceAccount for managing the extension.
+                  This field is now deprecated and ignored. operator-controller uses its own ServiceAccount
+                  for all Kubernetes API interactions.
+
+                  Deprecated: This field is ignored. It will be removed in a future API version.
                 properties:
                   name:
                     description: |-
@@ -1441,7 +1441,6 @@ spec:
                     has(self.catalog) : !has(self.catalog)'
             required:
             - namespace
-            - serviceAccount
             - source
             type: object
           status:
@@ -1806,95 +1805,15 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
 rules:
   - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts/token
-    verbs:
-      - create
-  - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts
-    verbs:
-      - get
-  - apiGroups:
-      - apiextensions.k8s.io
-    resources:
-      - customresourcedefinitions
-    verbs:
-      - get
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clustercatalogs
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions
-    verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions/status
-    verbs:
-      - patch
-      - update
-  - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
-      - clusterrolebindings
-      - clusterroles
-      - rolebindings
-      - roles
-    verbs:
-      - list
-      - watch
-  - apiGroups:
       - "*"
     resources:
       - "*"
     verbs:
-      - list
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensionrevisions
+      - "*"
+  - nonResourceURLs:
+      - "*"
     verbs:
-      - create
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensionrevisions/status
-    verbs:
-      - patch
-      - update
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensionrevisions/finalizers
-    verbs:
-      - update
+      - "*"
 ---
 # Source: olmv1/templates/rbac/clusterrolebinding-catalogd-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1962,7 +1881,7 @@ metadata:
   labels:
     app.kubernetes.io/name: operator-controller
     app.kubernetes.io/part-of: olm
-  name: operator-controller-manager-admin-rolebinding
+  name: operator-controller-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -2451,7 +2370,6 @@ spec:
             - --metrics-bind-address=:8443
             - --pprof-bind-address=:6060
             - --leader-elect
-            - --feature-gates=PreflightPermissions=true
             - --feature-gates=HelmChartSupport=true
             - --feature-gates=BoxcutterRuntime=true
             - --feature-gates=DeploymentConfig=true

@@ -8,8 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetBundleConfigSchemaMap(t *testing.T) {
-	schema, err := getBundleConfigSchemaMap()
+func TestGetConfigSchema(t *testing.T) {
+	rv1 := &RegistryV1{}
+	schema, err := rv1.GetConfigSchema()
 	require.NoError(t, err, "should successfully get bundle config schema")
 	require.NotNil(t, schema, "schema should not be nil")
 
@@ -22,24 +23,11 @@ func TestGetBundleConfigSchemaMap(t *testing.T) {
 		assert.Equal(t, false, schema["additionalProperties"])
 	})
 
-	t.Run("schema includes watchNamespace and deploymentConfig properties", func(t *testing.T) {
+	t.Run("schema includes deploymentConfig property", func(t *testing.T) {
 		properties, ok := schema["properties"].(map[string]any)
 		require.True(t, ok, "schema should have properties")
 
-		assert.Contains(t, properties, "watchNamespace")
 		assert.Contains(t, properties, "deploymentConfig")
-	})
-
-	t.Run("watchNamespace has anyOf with null and string", func(t *testing.T) {
-		properties, ok := schema["properties"].(map[string]any)
-		require.True(t, ok)
-
-		watchNamespace, ok := properties["watchNamespace"].(map[string]any)
-		require.True(t, ok, "watchNamespace should be present")
-
-		anyOf, ok := watchNamespace["anyOf"].([]any)
-		require.True(t, ok, "watchNamespace should have anyOf")
-		assert.Len(t, anyOf, 2, "watchNamespace anyOf should have 2 options")
 	})
 
 	t.Run("deploymentConfig has expected structure", func(t *testing.T) {
@@ -102,8 +90,8 @@ func TestGetBundleConfigSchemaMap(t *testing.T) {
 // by a JSON schema validator without errors. This catches broken $ref targets
 // and other structural issues.
 func TestSchemaCompilation(t *testing.T) {
-	// Get the schema as a map (same as how config package uses it)
-	schemaMap, err := getBundleConfigSchemaMap()
+	rv1 := &RegistryV1{}
+	schemaMap, err := rv1.GetConfigSchema()
 	require.NoError(t, err, "should successfully get bundle config schema")
 
 	// Compile the schema using the same library used by config package

@@ -125,34 +125,23 @@ Example:
 
 #### generate-manifests
 
-Generate RBAC or installation manifests for a bundle. The generated manifests can be templates or fully rendered manifests.
+Generate installation manifests for a bundle. The generated manifests can be templates or fully rendered manifests.
 
 The following options can be used to override resource naming defaults:
   -n <namespace> Namespace where the extension is installed
   -e <cluster-extension-name> - Name of the extension
-  -cr <cluster-role-name> - Name of the cluster role
-  -r <role-name> - Name of the role
-  -s <service-account-name> - Name of the service account
   --template - Generate template manifests
 
 Default resource name format:
   * Namespace: <cluster-extension-name>-system
   * Extension name: <package-name>
-  * ClusterRole name: <service-account-name>-cluster-role
-  * Role name: <service-account-name>-installer-role
-  * ServiceAccount name: <package-name>-installer
-  * ClusterRoleBinding name: <cluster-role-name>-binding
-  * RoleBinding name: <role-name>-binding
 
-Use `--template` to generate templated manifests that can be customized before applying to the cluster. 
+Use `--template` to generate templated manifests that can be customized before applying to the cluster.
 Template manifests will contain the following template variables:
 
 Template Variables:
 * `${NAMESPACE}` - Namespace where the extension is installed
 * `${EXTENSION_NAME}` - Name of the extension
-* `${CLUSTER_ROLE_NAME}` - Name of the cluster role
-* `${ROLE_NAME}` - Name of the role
-* `${SERVICE_ACCOUNT_NAME}` - Name of the service account
 
 Examples:
 
@@ -164,14 +153,4 @@ Examples:
   ``` terminal
   # Generate templated installation manifests for the argocd-operator v0.6.0 bundle from the operatorhubio catalog
   generate-manifests install argocd-operator 0.6.0 --template < operatorhubio-catalog.json
-  ```
-
-  ``` terminal
-  # Generate RBAC manifests for the argocd-operator v0.6.0 bundle from the operatorhubio catalog
-  generate-manifests rbac argocd-operator 0.6.0 < operatorhubio-catalog.json
-  ```
-
-  ``` terminal
-  # Generate templated RBAC manifests for the argocd-operator v0.6.0 bundle from the operatorhubio catalog
-  generate-manifests rbac argocd-operator 0.6.0 --template < operatorhubio-catalog.json
   ```

@@ -24,8 +24,6 @@ metadata:
   name: argocd
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:
@@ -50,8 +48,6 @@ metadata:
   name: argocd
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:
@@ -72,8 +68,6 @@ metadata:
   name: argocd
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:
@@ -102,8 +96,6 @@ metadata:
   name: argocd
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:
@@ -127,8 +119,6 @@ metadata:
   name: argocd
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:
@@ -226,8 +216,6 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
       name: install-my-operator
     spec:
       namespace: my-operator-ns
-      serviceAccount:
-        name: my-operator-installer
       source:
         sourceType: Catalog
         catalog:

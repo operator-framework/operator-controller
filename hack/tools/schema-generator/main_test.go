@@ -149,16 +149,6 @@ func TestGenerateBundleConfigSchema(t *testing.T) {
 		assert.False(t, schema.AdditionalProperties)
 	})
 
-	t.Run("includes watchNamespace property", func(t *testing.T) {
-		require.Contains(t, schema.Properties, "watchNamespace")
-
-		watchNS := schema.Properties["watchNamespace"]
-		require.NotNil(t, watchNS)
-
-		assert.NotEmpty(t, watchNS.Description)
-		assert.Len(t, watchNS.AnyOf, 2, "watchNamespace should have anyOf with null and string")
-	})
-
 	t.Run("includes deploymentConfig property", func(t *testing.T) {
 		require.Contains(t, schema.Properties, "deploymentConfig")
 
@@ -309,7 +299,6 @@ func TestGeneratedSchemaMatchesActualOutput(t *testing.T) {
 	props, ok := schemaFromFile["properties"].(map[string]interface{})
 	require.True(t, ok)
 
-	assert.Contains(t, props, "watchNamespace")
 	assert.Contains(t, props, "deploymentConfig")
 
 	// Verify deploymentConfig has expected fields

@@ -26,20 +26,6 @@ const (
 	// ClusterExtensionRevision.
 	BundleReferenceKey = "olm.operatorframework.io/bundle-reference"
 
-	// ServiceAccountNameKey is the annotation key used to record the name of
-	// the ServiceAccount configured on the owning ClusterExtension. It is
-	// applied as an annotation on ClusterExtensionRevision resources to
-	// capture which ServiceAccount was used for their lifecycle operations.
-	ServiceAccountNameKey = "olm.operatorframework.io/service-account-name"
-
-	// ServiceAccountNamespaceKey is the annotation key used to record the
-	// namespace of the ServiceAccount configured on the owning
-	// ClusterExtension. It is applied as an annotation on
-	// ClusterExtensionRevision resources together with ServiceAccountNameKey
-	// so that the effective ServiceAccount identity used for
-	// ClusterExtensionRevision operations is preserved.
-	ServiceAccountNamespaceKey = "olm.operatorframework.io/service-account-namespace"
-
 	// MigratedFromHelmKey is the label key used to mark ClusterExtensionRevisions
 	// that were created during migration from Helm releases. This label is used
 	// to distinguish migrated revisions from those created by normal Boxcutter operation.

@@ -153,10 +153,6 @@ lint-custom: custom-linter-build #EXHELP Call custom linter for the project
 lint-api-diff: $(GOLANGCI_LINT) #HELP Validate API changes using kube-api-linter with diff-aware analysis
 	hack/api-lint-diff/run.sh
 
-.PHONY: k8s-pin
-k8s-pin: #EXHELP Pin k8s staging modules based on k8s.io/kubernetes version (in go.mod or from K8S_IO_K8S_VERSION env var) and run go mod tidy.
-	K8S_IO_K8S_VERSION='$(K8S_IO_K8S_VERSION)' go run hack/tools/k8smaintainer/main.go
-
 .PHONY: tidy #HELP Run go mod tidy.
 tidy:
 	go mod tidy
@@ -204,7 +200,7 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: k8s-pin kind-verify-versions fmt generate manifests update-tls-profiles crd-ref-docs update-registryv1-bundle-schema verify-bingo #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
+verify: tidy kind-verify-versions fmt generate manifests update-tls-profiles crd-ref-docs update-registryv1-bundle-schema verify-bingo #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
 .PHONY: verify-bingo

@@ -7,10 +7,8 @@ import (
 	"io/fs"
 
 	"helm.sh/helm/v3/pkg/chart"
-	"k8s.io/apimachinery/pkg/util/sets"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
@@ -29,11 +27,10 @@ type ManifestProvider interface {
 // RegistryV1ManifestProvider generates the manifests that should be installed for a registry+v1 bundle
 // given the user specified configuration given by the ClusterExtension API surface
 type RegistryV1ManifestProvider struct {
-	BundleRenderer              render.BundleRenderer
-	CertificateProvider         render.CertificateProvider
-	IsWebhookSupportEnabled     bool
-	IsSingleOwnNamespaceEnabled bool
-	IsDeploymentConfigEnabled   bool
+	BundleRenderer            render.BundleRenderer
+	CertificateProvider       render.CertificateProvider
+	IsWebhookSupportEnabled   bool
+	IsDeploymentConfigEnabled bool
 }
 
 func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -54,39 +51,24 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		}
 	}
 
-	installModes := sets.New(rv1.CSV.Spec.InstallModes...)
-	if !r.IsSingleOwnNamespaceEnabled && !installModes.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true}) {
-		return nil, fmt.Errorf("unsupported bundle: bundle does not support AllNamespaces install mode")
+	configOpts, err := r.extractBundleConfigOptions(&rv1, ext)
+	if err != nil {
+		return nil, err
 	}
 
-	if !installModes.HasAny(
-		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
-		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
-		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-	) {
-		return nil, fmt.Errorf("unsupported bundle: bundle must support at least one of [AllNamespaces SingleNamespace OwnNamespace] install modes")
-	}
-
-	opts := []render.Option{
+	// All registry+v1 bundles are rendered to watch all namespaces regardless of their
+	// stated supported install modes in order to align with OLMv1's single-tenant
+	// cluster-scoped philosophy.
+	opts := append([]render.Option{
+		render.WithTargetNamespaces(corev1.NamespaceAll),
+		render.WithSkipInstallModeValidation(),
 		render.WithCertificateProvider(r.CertificateProvider),
-	}
-
-	// Always validate inline config when present so that disabled features produce
-	// a clear error rather than being silently ignored. When IsSingleOwnNamespaceEnabled
-	// is true we also call this with no config to validate required fields (e.g.
-	// watchNamespace for OwnNamespace-only bundles).
-	if r.IsSingleOwnNamespaceEnabled || ext.Spec.Config != nil {
-		configOpts, err := r.extractBundleConfigOptions(&rv1, ext)
-		if err != nil {
-			return nil, err
-		}
-		opts = append(opts, configOpts...)
-	}
+	}, configOpts...)
 	return r.BundleRenderer.Render(rv1, ext.Spec.Namespace, opts...)
 }
 
 // extractBundleConfigOptions extracts and validates configuration options from a ClusterExtension.
-// Returns render options for watchNamespace and deploymentConfig if present in the extension's configuration.
+// Returns render options for deploymentConfig if present in the extension's configuration.
 func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.RegistryV1, ext *ocv1.ClusterExtension) ([]render.Option, error) {
 	schema, err := rv1.GetConfigSchema()
 	if err != nil {
@@ -102,16 +84,12 @@ func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.Regi
 	}
 
 	bundleConfigBytes := extensionConfigBytes(ext)
-	bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, ext.Spec.Namespace)
+	bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema)
 	if err != nil {
 		return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid ClusterExtension configuration: %w", err))
 	}
 
 	var opts []render.Option
-	if watchNS := bundleConfig.GetWatchNamespace(); watchNS != nil {
-		opts = append(opts, render.WithTargetNamespaces(*watchNS))
-	}
-
 	// Extract and convert deploymentConfig if present and the feature gate is enabled.
 	if r.IsDeploymentConfigEnabled {
 		if deploymentConfigMap := bundleConfig.GetDeploymentConfig(); deploymentConfigMap != nil {

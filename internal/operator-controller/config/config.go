@@ -41,13 +41,6 @@ const (
 	// configSchemaID is a name we use to identify the config schema when compiling it.
 	// Think of it like a file name - it just needs to be consistent.
 	configSchemaID = "config-schema.json"
-
-	// FormatOwnNamespaceInstallMode defines the format check to ensure that
-	// the watchNamespace must equal install namespace
-	FormatOwnNamespaceInstallMode = "ownNamespaceInstallMode"
-	// FormatSingleNamespaceInstallMode defines the format check to ensure that
-	// the watchNamespace must differ from install namespace
-	FormatSingleNamespaceInstallMode = "singleNamespaceInstallMode"
 )
 
 // DeploymentConfig is a type alias for v1alpha1.SubscriptionConfig
@@ -83,26 +76,6 @@ type Config map[string]any
 func newConfig(data map[string]any) *Config {
 	cfg := Config(data)
 	return &cfg
-}
-
-// GetWatchNamespace returns the watchNamespace value if present in the configuration.
-// Returns nil if watchNamespace is not set or is explicitly set to null.
-func (c *Config) GetWatchNamespace() *string {
-	if c == nil || *c == nil {
-		return nil
-	}
-	val, exists := (*c)["watchNamespace"]
-	if !exists {
-		return nil
-	}
-	// User set watchNamespace: null - treat as "not configured"
-	if val == nil {
-		return nil
-	}
-	// Convert value to string. Schema validation ensures this is a string,
-	// but fmt.Sprintf handles edge cases defensively.
-	str := fmt.Sprintf("%v", val)
-	return &str
 }
 
 // GetDeploymentConfig returns the deploymentConfig value if present in the configuration.
@@ -157,13 +130,7 @@ func (c *Config) GetDeploymentConfig() map[string]any {
 // Parameters:
 //   - bytes: the user's configuration in YAML or JSON. If nil, we treat it as empty ({})
 //   - schema: describes what configuration is valid. If nil, we skip validation
-//   - installNamespace: the namespace where the operator will be installed. We use this
-//     to validate namespace constraints (e.g., OwnNamespace mode requires watchNamespace
-//     to equal installNamespace)
-//
-// If the user doesn't provide any configuration but the package format type requires some fields
-// (like watchNamespace), validation will fail with a helpful error.
-func UnmarshalConfig(bytes []byte, schema map[string]any, installNamespace string) (*Config, error) {
+func UnmarshalConfig(bytes []byte, schema map[string]any) (*Config, error) {
 	// nil config becomes {} so we can validate required fields
 	if bytes == nil {
 		bytes = []byte("{}")
@@ -171,7 +138,7 @@ func UnmarshalConfig(bytes []byte, schema map[string]any, installNamespace strin
 
 	// Step 1: Validate against the schema if provided
 	if schema != nil {
-		if err := validateConfigWithSchema(bytes, schema, installNamespace); err != nil {
+		if err := validateConfigWithSchema(bytes, schema); err != nil {
 			return nil, fmt.Errorf("invalid configuration: %w", err)
 		}
 	}
@@ -188,58 +155,13 @@ func UnmarshalConfig(bytes []byte, schema map[string]any, installNamespace strin
 }
 
 // validateConfigWithSchema checks if the user's config matches the schema.
-//
-// We create a fresh validator each time because the namespace constraints depend on
-// which namespace this specific ClusterExtension is being installed into. Each
-// ClusterExtension might have a different installNamespace, so we can't reuse validators.
-func validateConfigWithSchema(configBytes []byte, schema map[string]any, installNamespace string) error {
+func validateConfigWithSchema(configBytes []byte, schema map[string]any) error {
 	var configData interface{}
 	if err := yaml.Unmarshal(configBytes, &configData); err != nil {
 		return formatUnmarshalError(err)
 	}
 
 	compiler := jsonschema.NewCompiler()
-
-	compiler.RegisterFormat(&jsonschema.Format{
-		Name: FormatOwnNamespaceInstallMode,
-		Validate: func(value interface{}) error {
-			// Check it equals install namespace (if installNamespace is set)
-			// If installNamespace is empty, we can't validate the constraint properly,
-			// so we skip validation and accept any value. This is a fallback for edge
-			// cases where the install namespace isn't known yet.
-			if installNamespace == "" {
-				return nil
-			}
-			str, ok := value.(string)
-			if !ok {
-				return fmt.Errorf("value must be a string")
-			}
-			if str != installNamespace {
-				return fmt.Errorf("invalid value %q: must be %q (the namespace where the operator is installed) because this operator only supports OwnNamespace install mode", str, installNamespace)
-			}
-			return nil
-		},
-	})
-	compiler.RegisterFormat(&jsonschema.Format{
-		Name: FormatSingleNamespaceInstallMode,
-		Validate: func(value interface{}) error {
-			// Check it does NOT equal install namespace (if installNamespace is set)
-			// If installNamespace is empty, we can't validate the constraint properly,
-			// so we skip validation and accept any value. This is a fallback for edge
-			// cases where the install namespace isn't known yet.
-			if installNamespace == "" {
-				return nil
-			}
-			str, ok := value.(string)
-			if !ok {
-				return fmt.Errorf("value must be a string")
-			}
-			if str == installNamespace {
-				return fmt.Errorf("invalid value %q: must be different from %q (the install namespace) because this operator uses SingleNamespace install mode to watch a different namespace", str, installNamespace)
-			}
-			return nil
-		},
-	})
 
 	if err := compiler.AddResource(configSchemaID, schema); err != nil {
 		return fmt.Errorf("failed to load schema: %w", err)
@@ -380,7 +302,7 @@ func formatSingleError(errUnit jsonschema.OutputUnit) string {
 }
 
 // extractFieldNameFromMessage extracts the field name from error messages.
-// Example: "missing property 'watchNamespace'" -> "watchNamespace"
+// Example: "missing property 'requiredField'" -> "requiredField"
 // Example: "additional properties 'unknownField' not allowed" -> "unknownField"
 func extractFieldNameFromMessage(errOutput *jsonschema.OutputError) string {
 	if errOutput == nil {
@@ -400,10 +322,10 @@ func extractFieldNameFromMessage(errOutput *jsonschema.OutputError) string {
 }
 
 // buildFieldPath constructs a field path from instance location array.
-// Example: ["watchNamespace"] -> "watchNamespace"
+// Example: ["fieldName"] -> "fieldName"
 // Example: ["spec", "namespace"] -> "spec.namespace"
 func buildFieldPath(location string) string {
-	// Instance location comes as a JSON pointer like "/watchNamespace"
+	// Instance location comes as a JSON pointer like "/fieldName"
 	if location == "" || location == "/" {
 		return ""
 	}

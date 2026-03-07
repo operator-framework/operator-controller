@@ -37,8 +37,6 @@ metadata:
   name: example-extension
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   install:
     preflight:
       crdUpgradeSafety:
@@ -75,8 +73,6 @@ metadata:
   name: example-extension
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   install:
     preflight:
       crdUpgradeSafety:
@@ -120,8 +116,6 @@ Once the CRD safety checks are disabled and upgrade constraints are set, you can
       name: example-extension
     spec:
       namespace: argocd
-      serviceAccount:
-        name: argocd-installer
       install:
         preflight:
           crdUpgradeSafety:
