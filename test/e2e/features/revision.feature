@@ -5,16 +5,16 @@ Feature: Install ClusterExtensionRevision
 
   Background:
     Given OLM is available
-    And ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
 
-  Scenario: Probe failure for PersistentVolumeClaim halts phase progression 
+  Scenario: Probe failure for PersistentVolumeClaim halts phase progression
+    Given ServiceAccount "pvc-probe-sa" with needed permissions is available in test namespace
     When ClusterExtensionRevision is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterExtensionRevision
       metadata:
         annotations:
-          olm.operatorframework.io/service-account-name: olm-sa
+          olm.operatorframework.io/service-account-name: pvc-probe-sa
           olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${CER_NAME}
       spec:
@@ -59,13 +59,14 @@ Feature: Install ClusterExtensionRevision
     And resource "configmap/test-configmap" is not installed
 
   Scenario: Phases progress when PersistentVolumeClaim becomes "Bound"
+    Given ServiceAccount "pvc-probe-sa" with needed permissions is available in test namespace
     When ClusterExtensionRevision is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterExtensionRevision
       metadata:
         annotations:
-          olm.operatorframework.io/service-account-name: olm-sa
+          olm.operatorframework.io/service-account-name: pvc-probe-sa
           olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${CER_NAME}
       spec:
