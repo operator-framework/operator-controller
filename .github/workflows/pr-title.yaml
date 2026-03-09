@@ -6,8 +6,12 @@ jobs:
   pr-title:
     runs-on: ubuntu-latest
     name: Verify PR title
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - name: Verify PR title
+        shell: bash
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
@@ -18,7 +22,7 @@ jobs:
           EMOJI_SEEDLING=$'\U0001F331'
 
           # Normalize GitHub-style emoji shortcodes to actual emojis
-          title=$(echo "$PR_TITLE" | sed -E "s/:warning:/${EMOJI_WARNING}/g; s/:sparkles:/${EMOJI_SPARKLES}/g; s/:bug:/${EMOJI_BUG}/g; s/:book:/${EMOJI_BOOK}/g; s/:seedling:/${EMOJI_SEEDLING}/g")
+          title=$(sed -E "s/:warning:/${EMOJI_WARNING}/g; s/:sparkles:/${EMOJI_SPARKLES}/g; s/:bug:/${EMOJI_BUG}/g; s/:book:/${EMOJI_BOOK}/g; s/:seedling:/${EMOJI_SEEDLING}/g" <<<"$PR_TITLE")
 
           # Check PR type prefix
           if ! [[ "$title" =~ ^(${EMOJI_WARNING}|${EMOJI_SPARKLES}|${EMOJI_BUG}|${EMOJI_BOOK}|${EMOJI_SEEDLING}) ]]; then
