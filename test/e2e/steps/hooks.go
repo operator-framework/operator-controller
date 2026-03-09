@@ -27,12 +27,13 @@ type resource struct {
 }
 
 type scenarioContext struct {
-	id                   string
-	namespace            string
-	clusterExtensionName string
-	removedResources     []unstructured.Unstructured
-	backGroundCmds       []*exec.Cmd
-	metricsResponse      map[string]string
+	id                           string
+	namespace                    string
+	clusterExtensionName         string
+	clusterExtensionRevisionName string
+	removedResources             []unstructured.Unstructured
+	backGroundCmds               []*exec.Cmd
+	metricsResponse              map[string]string
 
 	extensionObjects []client.Object
 }
@@ -142,9 +143,10 @@ func CheckFeatureTags(ctx context.Context, sc *godog.Scenario) (context.Context,
 
 func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	scCtx := &scenarioContext{
-		id:                   sc.Id,
-		namespace:            fmt.Sprintf("ns-%s", sc.Id),
-		clusterExtensionName: fmt.Sprintf("ce-%s", sc.Id),
+		id:                           sc.Id,
+		namespace:                    fmt.Sprintf("ns-%s", sc.Id),
+		clusterExtensionName:         fmt.Sprintf("ce-%s", sc.Id),
+		clusterExtensionRevisionName: fmt.Sprintf("cer-%s", sc.Id),
 	}
 	return context.WithValue(ctx, scenarioContextKey, scCtx), nil
 }
@@ -176,13 +178,16 @@ func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context
 	if sc.clusterExtensionName != "" {
 		forDeletion = append(forDeletion, resource{name: sc.clusterExtensionName, kind: "clusterextension"})
 	}
+	if sc.clusterExtensionRevisionName != "" {
+		forDeletion = append(forDeletion, resource{name: sc.clusterExtensionRevisionName, kind: "clusterextensionrevision"})
+	}
 	forDeletion = append(forDeletion, resource{name: sc.namespace, kind: "namespace"})
-	go func() {
-		for _, r := range forDeletion {
-			if _, err := k8sClient("delete", r.kind, r.name, "--ignore-not-found=true"); err != nil {
-				logger.Info("Error deleting resource", "name", r.name, "namespace", sc.namespace, "stderr", stderrOutput(err))
+	for _, r := range forDeletion {
+		go func(res resource) {
+			if _, err := k8sClient("delete", res.kind, res.name, "--ignore-not-found=true"); err != nil {
+				logger.Info("Error deleting resource", "name", res.name, "namespace", sc.namespace, "stderr", stderrOutput(err))
 			}
-		}
-	}()
+		}(r)
+	}
 	return ctx, nil
 }
