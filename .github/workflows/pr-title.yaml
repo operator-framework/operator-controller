@@ -7,7 +7,36 @@ jobs:
     runs-on: ubuntu-latest
     name: Verify PR title
     steps:
-    - name: Verify PR title
-      uses: kubernetes-sigs/kubebuilder-release-tools@v0.4.3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          EMOJI_WARNING=$'\u26A0'
+          EMOJI_SPARKLES=$'\u2728'
+          EMOJI_BUG=$'\U0001F41B'
+          EMOJI_BOOK=$'\U0001F4D6'
+          EMOJI_SEEDLING=$'\U0001F331'
+
+          # Normalize GitHub-style emoji shortcodes to actual emojis
+          title=$(echo "$PR_TITLE" | sed -E "s/:warning:/${EMOJI_WARNING}/g; s/:sparkles:/${EMOJI_SPARKLES}/g; s/:bug:/${EMOJI_BUG}/g; s/:book:/${EMOJI_BOOK}/g; s/:seedling:/${EMOJI_SEEDLING}/g")
+
+          # Check PR type prefix
+          if ! [[ "$title" =~ ^(${EMOJI_WARNING}|${EMOJI_SPARKLES}|${EMOJI_BUG}|${EMOJI_BOOK}|${EMOJI_SEEDLING}) ]]; then
+            echo "Error: No matching PR type indicator found in title."
+            echo "You need to have one of these as the prefix of your PR title:"
+            echo "- Breaking change: ${EMOJI_WARNING} (:warning:)"
+            echo "- Non-breaking feature: ${EMOJI_SPARKLES} (:sparkles:)"
+            echo "- Patch fix: ${EMOJI_BUG} (:bug:)"
+            echo "- Docs: ${EMOJI_BOOK} (:book:)"
+            echo "- Infra/Tests/Other: ${EMOJI_SEEDLING} (:seedling:)"
+            exit 1
+          fi
+
+          # Check that PR title does not contain issue or PR number
+          if [[ "$title" =~ \#[0-9]+ ]]; then
+            echo "Error: PR title should not contain issue or PR number."
+            echo "Issue numbers belong in the PR body as either \"Fixes #XYZ\" (if it closes the issue or PR), or something like \"Related to #XYZ\" (if it's just related)."
+            exit 1
+          fi
+
+          echo "PR title is valid: $title"
