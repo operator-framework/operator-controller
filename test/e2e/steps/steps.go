@@ -44,9 +44,6 @@ const (
 	olmDeploymentName = "operator-controller-controller-manager"
 	timeout           = 5 * time.Minute
 	tick              = 1 * time.Second
-
-	helmRBACTemplate      = "rbac-template.yaml"
-	boxcutterRBACTemplate = "boxcutter-rbac-template.yaml"
 )
 
 var (
@@ -833,13 +830,13 @@ func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount st
 }
 
 // ServiceAccountWithNeededPermissionsIsAvailableInNamespace creates a ServiceAccount and applies standard RBAC permissions.
-// The RBAC template is selected based on the BoxcutterRuntime feature gate: the boxcutter applier does not require
-// cluster-scoped list/watch permissions, so a narrower template is used when BoxcutterRuntime is enabled.
+// The RBAC template is selected based on the service account and BoxcutterRuntime feature gate: <service-account>-<helm|boxcutter>-rbac-template.yaml
 func ServiceAccountWithNeededPermissionsIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
-	rbacTemplate := helmRBACTemplate
+	kernel := "helm"
 	if enabled, found := featureGates[features.BoxcutterRuntime]; found && enabled {
-		rbacTemplate = boxcutterRBACTemplate
+		kernel = "boxcutter"
 	}
+	rbacTemplate := fmt.Sprintf("%s-%s-rbac-template.yaml", serviceAccount, kernel)
 	return applyPermissionsToServiceAccount(ctx, serviceAccount, rbacTemplate)
 }
 

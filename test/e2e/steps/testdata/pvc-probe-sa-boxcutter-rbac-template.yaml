@@ -1,0 +1,51 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-clusterrole
+rules:
+  - apiGroups: [olm.operatorframework.io]
+    resources: [clusterextensionrevisions/finalizers]
+    verbs: [update]
+  - apiGroups: [""]
+    resources: [persistentvolumes]
+    verbs: [create, update, get, delete, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-role
+  namespace: ${TEST_NAMESPACE}
+rules:
+  - apiGroups: [""]
+    resources: [persistentvolumeclaims]
+    verbs: [create, update, get, delete, patch]
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [create, update, get, delete, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: ${SERVICEACCOUNT_NAME}
+    namespace: ${TEST_NAMESPACE}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-binding
+  namespace: ${TEST_NAMESPACE}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-role
+subjects:
+  - kind: ServiceAccount
+    name: ${SERVICEACCOUNT_NAME}
+    namespace: ${TEST_NAMESPACE}
