@@ -25,7 +25,11 @@ var _ manager.Runnable = (*GarbageCollector)(nil)
 // that no longer exist. This should only clean up cache entries that
 // were missed by the handling of a DELETE event on a Catalog resource.
 type GarbageCollector struct {
-	CachePath      string
+	// CachePaths is the list of directories to garbage-collect. Each directory
+	// is expected to contain only subdirectories named after existing ClusterCatalogs;
+	// any entry whose name does not match a known ClusterCatalog — including orphaned
+	// temporary directories left by interrupted operations — is removed.
+	CachePaths     []string
 	Logger         logr.Logger
 	MetadataClient metadata.Interface
 	Interval       time.Duration
@@ -37,13 +41,7 @@ type GarbageCollector struct {
 // supplied garbage collection interval.
 func (gc *GarbageCollector) Start(ctx context.Context) error {
 	// Run once on startup
-	removed, err := runGarbageCollection(ctx, gc.CachePath, gc.MetadataClient)
-	if err != nil {
-		gc.Logger.Error(err, "running garbage collection")
-	}
-	if len(removed) > 0 {
-		gc.Logger.Info("removed stale cache entries", "removed entries", removed)
-	}
+	gc.runAndLog(ctx)
 
 	// Loop until context is canceled, running garbage collection
 	// at the configured interval
@@ -52,13 +50,19 @@ func (gc *GarbageCollector) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-time.After(gc.Interval):
-			removed, err := runGarbageCollection(ctx, gc.CachePath, gc.MetadataClient)
-			if err != nil {
-				gc.Logger.Error(err, "running garbage collection")
-			}
-			if len(removed) > 0 {
-				gc.Logger.Info("removed stale cache entries", "removed entries", removed)
-			}
+			gc.runAndLog(ctx)
+		}
+	}
+}
+
+func (gc *GarbageCollector) runAndLog(ctx context.Context) {
+	for _, path := range gc.CachePaths {
+		removed, err := runGarbageCollection(ctx, path, gc.MetadataClient)
+		if err != nil {
+			gc.Logger.Error(err, "running garbage collection", "path", path)
+		}
+		if len(removed) > 0 {
+			gc.Logger.Info("removed stale cache entries", "path", path, "removed entries", removed)
 		}
 	}
 }
