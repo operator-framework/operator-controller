@@ -1877,6 +1877,7 @@ rules:
       - clusterextensionrevisions
     verbs:
       - create
+      - delete
       - get
       - list
       - patch
