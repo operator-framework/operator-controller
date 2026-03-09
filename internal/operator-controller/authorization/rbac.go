@@ -29,7 +29,7 @@ import (
 	rbacv1helpers "k8s.io/kubernetes/pkg/apis/rbac/v1"
 	rbacregistry "k8s.io/kubernetes/pkg/registry/rbac"
 	"k8s.io/kubernetes/pkg/registry/rbac/validation"
-	rbac "k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
+	"k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -59,26 +59,42 @@ type ScopedPolicyRules struct {
 
 var objectVerbs = []string{"get", "patch", "update", "delete"}
 
-// Here we are splitting collection verbs based on required scope
-// NB: this split is tightly coupled to the requirements of the contentmanager, specifically
-// its need for cluster-scoped list/watch permissions.
-// TODO: We are accepting this coupling for now, but plan to decouple
-// TODO: link for above https://github.com/operator-framework/operator-controller/issues/1911
-var namespacedCollectionVerbs = []string{"create"}
-var clusterCollectionVerbs = []string{"list", "watch"}
+type RBACPreAuthorizerOption func(*rbacPreAuthorizer)
 
-type rbacPreAuthorizer struct {
-	authorizer   authorizer.Authorizer
-	ruleResolver validation.AuthorizationRuleResolver
-	restMapper   meta.RESTMapper
+// WithClusterCollectionVerbs configures cluster-scoped collection verbs (e.g. list, watch)
+// that are checked in addition to object and namespaced collection verbs.
+func WithClusterCollectionVerbs(verbs ...string) RBACPreAuthorizerOption {
+	return func(a *rbacPreAuthorizer) {
+		a.clusterCollectionVerbs = slices.Clone(verbs)
+	}
 }
 
-func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
-	return &rbacPreAuthorizer{
+// WithNamespacedCollectionVerbs configures namespaced collection verbs (e.g. create)
+// that are checked for each unique namespace across all objects in a GVR.
+func WithNamespacedCollectionVerbs(verbs ...string) RBACPreAuthorizerOption {
+	return func(a *rbacPreAuthorizer) {
+		a.namespacedCollectionVerbs = slices.Clone(verbs)
+	}
+}
+
+type rbacPreAuthorizer struct {
+	authorizer                authorizer.Authorizer
+	ruleResolver              validation.AuthorizationRuleResolver
+	restMapper                meta.RESTMapper
+	clusterCollectionVerbs    []string
+	namespacedCollectionVerbs []string
+}
+
+func NewRBACPreAuthorizer(cl client.Client, opts ...RBACPreAuthorizerOption) PreAuthorizer {
+	a := &rbacPreAuthorizer{
 		authorizer:   newRBACAuthorizer(cl),
 		ruleResolver: newRBACRulesResolver(cl),
 		restMapper:   cl.RESTMapper(),
 	}
+	for _, opt := range opts {
+		opt(a)
+	}
+	return a
 }
 
 func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, user user.Info, manifestReader io.Reader, additionalRequiredPerms ...UserAuthorizerAttributesFactory) ([]ScopedPolicyRules, error) {
@@ -88,7 +104,7 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, user user.Info, ma
 	}
 
 	// derive manifest related attributes records
-	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(user)
+	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(user, a.clusterCollectionVerbs, a.namespacedCollectionVerbs)
 
 	// append additional required perms
 	for _, fn := range additionalRequiredPerms {
@@ -324,7 +340,7 @@ func (dm *decodedManifest) rbacObjects() []client.Object {
 	return objects
 }
 
-func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info) []authorizer.AttributesRecord {
+func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info, clusterCollectionVerbs, namespacedCollectionVerbs []string) []authorizer.AttributesRecord {
 	// Calculate initial capacity as an upper-bound estimate:
 	// - For each key: len(objectVerbs) records (4)
 	// - For unique namespaces: len(namespacedCollectionVerbs) records (1 per unique namespace across all keys in a GVR)
@@ -369,7 +385,7 @@ func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManag
 				})
 			}
 		}
-		// generate records for cluster-scoped collection verbs (list, watch) required by contentmanager
+		// generate records for cluster-scoped collection verbs (e.g. list, watch)
 		for _, v := range clusterCollectionVerbs {
 			attributeRecords = append(attributeRecords, authorizer.AttributesRecord{
 				User:            manifestManager,
