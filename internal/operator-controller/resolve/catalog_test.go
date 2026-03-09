@@ -19,7 +19,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 )
 
 func TestInvalidClusterExtensionVersionRange(t *testing.T) {
@@ -90,7 +89,7 @@ func TestPackageExists(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "3.0.0"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("3.0.0")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("3.0.0"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -157,7 +156,7 @@ func TestVersionExists(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "1.0.2"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("1.0.2")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("1.0.2"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -198,7 +197,7 @@ func TestChannelExists(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "1.0.2"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("1.0.2")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("1.0.2"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -258,7 +257,7 @@ func TestChannelAndVersionExist(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "0.1.0"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("0.1.0")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("0.1.0"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -280,7 +279,7 @@ func TestPreferNonDeprecated(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "0.1.0"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("0.1.0")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("0.1.0"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -302,7 +301,7 @@ func TestAcceptDeprecated(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "1.0.1"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("1.0.1")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("1.0.1"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -386,7 +385,7 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 		require.NoError(t, err)
 		// We choose the only non-deprecated package
 		assert.Equal(t, genBundle(pkgName, "1.0.2").Name, gotBundle.Name)
-		assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("1.0.2")}, *gotVersion)
+		assert.Equal(t, bsemver.MustParse("1.0.2"), *gotVersion)
 		assert.Equal(t, (*declcfg.Deprecation)(nil), gotDeprecation)
 	})
 
@@ -418,7 +417,7 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 		require.NoError(t, err)
 		// Bundles within one catalog for a package will be sorted by semver and deprecation and the best is returned
 		assert.Equal(t, genBundle(pkgName, "1.0.5").Name, gotBundle.Name)
-		assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("1.0.5")}, *gotVersion)
+		assert.Equal(t, bsemver.MustParse("1.0.5"), *gotVersion)
 		assert.Equal(t, (*declcfg.Deprecation)(nil), gotDeprecation)
 	})
 }
@@ -446,7 +445,7 @@ func TestUpgradeFoundLegacy(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, installedBundle)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "1.0.2"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("1.0.2")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("1.0.2"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -498,7 +497,7 @@ func TestDowngradeFound(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, installedBundle)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "0.1.0"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("0.1.0")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("0.1.0"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -855,7 +854,7 @@ func TestUnequalPriority(t *testing.T) {
 	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1.UpgradeConstraintPolicyCatalogProvided)
 	_, gotVersion, _, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
-	require.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("1.0.0")}, *gotVersion)
+	require.Equal(t, bsemver.MustParse("1.0.0"), *gotVersion)
 }
 
 func TestMultiplePriority(t *testing.T) {
@@ -900,7 +899,7 @@ func TestMultipleChannels(t *testing.T) {
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "2.0.0"), *gotBundle)
-	assert.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("2.0.0")}, *gotVersion)
+	assert.Equal(t, bsemver.MustParse("2.0.0"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -973,5 +972,5 @@ func TestSomeCatalogsDisabled(t *testing.T) {
 	gotBundle, gotVersion, _, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	require.NotNil(t, gotBundle)
-	require.Equal(t, bundle.VersionRelease{Version: bsemver.MustParse("3.0.0")}, *gotVersion)
+	require.Equal(t, bsemver.MustParse("3.0.0"), *gotVersion)
 }

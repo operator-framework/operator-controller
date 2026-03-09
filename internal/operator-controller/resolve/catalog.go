@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -17,12 +18,10 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/filter"
 	filterutil "github.com/operator-framework/operator-controller/internal/shared/util/filter"
-	slicesutil "github.com/operator-framework/operator-controller/internal/shared/util/slices"
 )
 
 type ValidationFunc func(*declcfg.Bundle) error
@@ -39,7 +38,7 @@ type foundBundle struct {
 }
 
 // Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
-func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 	l := log.FromContext(ctx)
 	packageName := ext.Spec.Source.Catalog.PackageName
 	versionRange := ext.Spec.Source.Catalog.Version
@@ -59,9 +58,9 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		}
 	}
 
-	var versionRangeConstraints bsemver.Range
+	var versionRangeConstraints *mmsemver.Constraints
 	if versionRange != "" {
-		versionRangeConstraints, err = compare.NewVersionRange(versionRange)
+		versionRangeConstraints, err = mmsemver.NewConstraint(versionRange)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("desired version range %q is invalid: %w", versionRange, err)
 		}
@@ -107,7 +106,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		}
 
 		if versionRangeConstraints != nil {
-			predicates = append(predicates, filter.InSemverRange(versionRangeConstraints))
+			predicates = append(predicates, filter.InMastermindsSemverRange(versionRangeConstraints))
 		}
 
 		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1.UpgradeConstraintPolicySelfCertified && installedBundle != nil {
@@ -141,7 +140,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 			if lessDep := byDeprecation(a, b); lessDep != 0 {
 				return lessDep
 			}
-			return compare.ByVersionAndRelease(a, b)
+			return compare.ByVersion(a, b)
 		})
 
 		thisBundle := packageFBC.Bundles[0]
@@ -190,7 +189,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		}
 	}
 	resolvedBundle := resolvedBundles[0].bundle
-	resolvedBundleVersion, err := bundleutil.GetVersionAndRelease(*resolvedBundle)
+	resolvedBundleVersion, err := bundleutil.GetVersion(*resolvedBundle)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error getting resolved bundle version for bundle %q: %w", resolvedBundle.Name, err)
 	}
@@ -283,7 +282,7 @@ func CatalogWalker(
 			return false
 		})
 
-		availableCatalogNames := slicesutil.Map(catalogs, func(c ocv1.ClusterCatalog) string { return c.Name })
+		availableCatalogNames := mapSlice(catalogs, func(c ocv1.ClusterCatalog) string { return c.Name })
 		l.Info("using ClusterCatalogs for resolution", "catalogs", availableCatalogNames)
 
 		for i := range catalogs {
@@ -306,4 +305,12 @@ func isFBCEmpty(fbc *declcfg.DeclarativeConfig) bool {
 		return true
 	}
 	return len(fbc.Packages) == 0 && len(fbc.Channels) == 0 && len(fbc.Bundles) == 0 && len(fbc.Deprecations) == 0 && len(fbc.Others) == 0
+}
+
+func mapSlice[I any, O any](in []I, f func(I) O) []O {
+	out := make([]O, len(in))
+	for i := range in {
+		out[i] = f(in[i])
+	}
+	return out
 }

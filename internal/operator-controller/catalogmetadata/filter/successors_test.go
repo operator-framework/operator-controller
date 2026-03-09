@@ -36,7 +36,6 @@ func TestSuccessorsPredicate(t *testing.T) {
 				{
 					Name:     "test-package.v2.2.0",
 					Replaces: "test-package.v2.1.0",
-					Skips:    []string{"test-package.v2.0.0+1"},
 				},
 				{
 					Name: "test-package.v2.2.1",
@@ -63,14 +62,6 @@ func TestSuccessorsPredicate(t *testing.T) {
 			Image:   "registry.io/repo/test-package@v2.0.0",
 			Properties: []property.Property{
 				property.MustBuildPackage(testPackageName, "2.0.0"),
-			},
-		},
-		"test-package.v2.0.0+1": {
-			Name:    "test-package.v2.0.0+1",
-			Package: testPackageName,
-			Image:   "registry.io/repo/test-package@v2.0.0+1",
-			Properties: []property.Property{
-				property.MustBuildPackage(testPackageName, "2.0.0+1"),
 			},
 		},
 		"test-package.v2.1.0": {
@@ -154,22 +145,6 @@ func TestSuccessorsPredicate(t *testing.T) {
 			},
 		},
 		{
-			name:            "installed bundle matcher is exact",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0+1", bsemver.MustParse("2.0.0+1")),
-			expectedResult: []declcfg.Bundle{
-				// Must only have two bundle:
-				//   - the one which is skips the current version
-				//   - the current version (to allow to stay on the current version)
-				//
-				// We specifically _do not_ want to see test-package.v2.1.0 here because:
-				//   - the successor determination is based on an exact match of the version, including build metadata if present
-				//   - 2.1.0 updates from 2.0.0, not 2.0.0+1. Semver would say that both of these are the same. In our case,
-				//     for registry+v1 only, they are not the same.
-				bundleSet["test-package.v2.2.0"],
-				bundleSet["test-package.v2.0.0+1"],
-			},
-		},
-		{
 			name: "installed bundle not found",
 			installedBundle: ocv1.BundleMetadata{
 				Name:    "test-package.v9.0.0",
@@ -189,7 +164,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 			result := filter.InPlace(allBundles, successors)
 
 			// sort before comparison for stable order
-			slices.SortFunc(result, compare.ByVersionAndRelease)
+			slices.SortFunc(result, compare.ByVersion)
 
 			gocmpopts := []cmp.Option{
 				cmpopts.IgnoreUnexported(declcfg.Bundle{}),

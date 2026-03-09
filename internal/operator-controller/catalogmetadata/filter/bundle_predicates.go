@@ -1,38 +1,29 @@
 package filter
 
 import (
-	bsemver "github.com/blang/semver/v4"
+	mmsemver "github.com/Masterminds/semver/v3"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
-// ExactVersionRelease returns a predicate that matches bundles with an exact
-// version and release match. Both the semver version and the release must match
-// exactly for the predicate to return true.
-func ExactVersionRelease(expect bundle.VersionRelease) filter.Predicate[declcfg.Bundle] {
+func InMastermindsSemverRange(semverRange *mmsemver.Constraints) filter.Predicate[declcfg.Bundle] {
 	return func(b declcfg.Bundle) bool {
-		actual, err := bundleutil.GetVersionAndRelease(b)
+		bVersion, err := bundleutil.GetVersion(b)
 		if err != nil {
 			return false
 		}
-		return expect.Compare(*actual) == 0
-	}
-}
-
-// InSemverRange returns a predicate that matches bundles whose version falls within
-// the provided semver range. The range is applied only to the semver version portion,
-// ignoring the release metadata.
-func InSemverRange(versionRange bsemver.Range) filter.Predicate[declcfg.Bundle] {
-	return func(b declcfg.Bundle) bool {
-		vr, err := bundleutil.GetVersionAndRelease(b)
+		// No error should occur here because the simple version was successfully parsed by blang
+		// We are unaware of any tests cases that would cause one to fail but not the other
+		// This will cause code coverage to drop for this line. We don't ignore the error because
+		// there might be that one extreme edge case that might cause one to fail but not the other
+		mVersion, err := mmsemver.NewVersion(bVersion.String())
 		if err != nil {
 			return false
 		}
-		return versionRange(vr.Version)
+		return semverRange.Check(mVersion)
 	}
 }
 
