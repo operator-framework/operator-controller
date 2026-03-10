@@ -40,6 +40,9 @@ import (
 
 const (
 	ClusterExtensionRevisionRetentionLimit = 5
+
+	maxBundleConfigAnnotationBytes = 50 * 1024 // 50KB
+	bundleConfigTruncatedSuffix    = "<truncated due to size limit>"
 )
 
 type ClusterExtensionRevisionGenerator interface {
@@ -207,7 +210,11 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	annotations[labels.ServiceAccountNameKey] = ext.Spec.ServiceAccount.Name
 	annotations[labels.ServiceAccountNamespaceKey] = ext.Spec.Namespace
 	if ext.Spec.Config != nil && ext.Spec.Config.Inline != nil {
-		annotations[labels.BundleConfigKey] = string(ext.Spec.Config.Inline.Raw)
+		value := string(ext.Spec.Config.Inline.Raw)
+		if len(value) > maxBundleConfigAnnotationBytes {
+			value = value[:maxBundleConfigAnnotationBytes] + bundleConfigTruncatedSuffix
+		}
+		annotations[labels.BundleConfigKey] = value
 	}
 
 	phases := PhaseSort(objects)

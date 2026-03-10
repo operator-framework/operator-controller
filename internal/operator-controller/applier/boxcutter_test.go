@@ -517,6 +517,14 @@ func Test_SimpleRevisionGenerator_BundleConfigAnnotation(t *testing.T) {
 			},
 			wantAnnot: false,
 		},
+		"annotation is truncated when inline config exceeds 50KB": {
+			config: &ocv1.ClusterExtensionConfig{
+				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+				Inline:     &apiextensionsv1.JSON{Raw: []byte(`{"key":"` + strings.Repeat("x", 50*1024) + `"}`)},
+			},
+			wantAnnot: true,
+			wantValue: (`{"key":"` + strings.Repeat("x", 50*1024))[:50*1024] + "<truncated due to size limit>",
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			ext := &ocv1.ClusterExtension{
