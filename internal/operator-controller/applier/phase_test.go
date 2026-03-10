@@ -3,9 +3,14 @@ package applier_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
+	"pkg.package-operator.run/boxcutter/probing"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
@@ -1028,6 +1033,85 @@ func Test_PhaseSort(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, applier.PhaseSort(tt.objs))
+		})
+	}
+}
+
+func Test_FieldValueProbe(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		obj            client.Object
+		probe          applier.FieldValueProbe
+		expectedResult probing.Result
+	}{
+		{
+			name: "True result with found key and equal value",
+			obj: &corev1.Service{
+				TypeMeta:   metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
+				ObjectMeta: metav1.ObjectMeta{Name: "my-service", Namespace: "my-namespace"},
+			},
+			probe: applier.FieldValueProbe{
+				FieldPath: "metadata.name",
+				Value:     "my-service",
+			},
+			expectedResult: probing.Result{
+				Status: probing.StatusTrue,
+				Messages: []string{
+					`value at key "metadata.name" == "my-service"`,
+				},
+			},
+		},
+		{
+			name: "False result with unfound key",
+			obj: &corev1.Service{
+				TypeMeta:   metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
+				ObjectMeta: metav1.ObjectMeta{Name: "my-service", Namespace: "my-namespace"},
+			},
+			probe: applier.FieldValueProbe{
+				FieldPath: "spec.foo",
+				Value:     "my-service",
+			},
+			expectedResult: probing.Result{
+				Status: probing.StatusFalse,
+				Messages: []string{
+					`missing key: "spec.foo"`,
+				},
+			},
+		},
+		{
+			name: "False result with found key and unequal value",
+			obj: &corev1.Service{
+				TypeMeta:   metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
+				ObjectMeta: metav1.ObjectMeta{Name: "my-service", Namespace: "my-namespace"},
+			},
+			probe: applier.FieldValueProbe{
+				FieldPath: "metadata.namespace",
+				Value:     "bar",
+			},
+			expectedResult: probing.Result{
+				Status: probing.StatusFalse,
+				Messages: []string{
+					`value at key "metadata.namespace" != "bar"; expected: "bar" got: "my-namespace"`,
+				},
+			},
+		},
+		{
+			name: "Unknown result unstructured conversion failure",
+			obj:  nil,
+			probe: applier.FieldValueProbe{
+				FieldPath: "metadata.name",
+				Value:     "my-service",
+			},
+			expectedResult: probing.Result{
+				Status: probing.StatusUnknown,
+				Messages: []string{
+					"failed to convert to unstructured: object is nil",
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedResult, tc.probe.Probe(tc.obj))
 		})
 	}
 }
