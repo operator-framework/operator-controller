@@ -516,13 +516,11 @@ Feature: Install ClusterExtension
         config:
           configType: Inline
           inline:
-            deploymentConfig:
-              nodeSelector:
-                kubernetes.io/os: linux
+            watchNamespace: ${TEST_NAMESPACE}
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: own-namespace-operator
             selector:
               matchLabels:
                 "olm.operatorframework.io/metadata.name": test-catalog
@@ -530,7 +528,7 @@ Feature: Install ClusterExtension
     Then ClusterExtension is rolled out
     And ClusterExtensionRevision "${NAME}-1" contains annotation "olm.operatorframework.io/bundle-config" with value
       """
-      {"deploymentConfig":{"nodeSelector":{"kubernetes.io/os":"linux"}}}
+      {"watchNamespace":"${TEST_NAMESPACE}"}
       """
 
   @DeploymentConfig

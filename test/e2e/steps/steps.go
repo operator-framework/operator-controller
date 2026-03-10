@@ -540,7 +540,7 @@ func ClusterExtensionRevisionHasAnnotationWithValue(ctx context.Context, revisio
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
 	expectedValue := ""
 	if annotationValue != nil {
-		expectedValue = annotationValue.Content
+		expectedValue = substituteScenarioVars(strings.TrimSpace(annotationValue.Content), sc)
 	}
 	waitFor(ctx, func() bool {
 		obj, err := getResource("clusterextensionrevision", revisionName, "")

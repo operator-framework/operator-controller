@@ -44,6 +44,7 @@ const (
 	// configuration from the owning ClusterExtension. It is applied as an
 	// annotation on ClusterExtensionRevision resources when the ClusterExtension
 	// has .spec.config.inline set. The value is a JSON string of the configuration.
+	// Values over 50KB are truncated to avoid overrunning metadata size.
 	BundleConfigKey = "olm.operatorframework.io/bundle-config"
 
 	// MigratedFromHelmKey is the label key used to mark ClusterExtensionRevisions

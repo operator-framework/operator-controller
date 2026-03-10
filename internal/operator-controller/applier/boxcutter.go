@@ -11,6 +11,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -212,7 +213,11 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	if ext.Spec.Config != nil && ext.Spec.Config.Inline != nil {
 		value := string(ext.Spec.Config.Inline.Raw)
 		if len(value) > maxBundleConfigAnnotationBytes {
-			value = value[:maxBundleConfigAnnotationBytes] + bundleConfigTruncatedSuffix
+			maxContent := maxBundleConfigAnnotationBytes - len(bundleConfigTruncatedSuffix)
+			for maxContent > 0 && !utf8.RuneStart(value[maxContent]) {
+				maxContent--
+			}
+			value = value[:maxContent] + bundleConfigTruncatedSuffix
 		}
 		annotations[labels.BundleConfigKey] = value
 	}

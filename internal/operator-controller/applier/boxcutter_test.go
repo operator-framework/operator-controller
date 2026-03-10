@@ -523,7 +523,7 @@ func Test_SimpleRevisionGenerator_BundleConfigAnnotation(t *testing.T) {
 				Inline:     &apiextensionsv1.JSON{Raw: []byte(`{"key":"` + strings.Repeat("x", 50*1024) + `"}`)},
 			},
 			wantAnnot: true,
-			wantValue: (`{"key":"` + strings.Repeat("x", 50*1024))[:50*1024] + "<truncated due to size limit>",
+			wantValue: (`{"key":"` + strings.Repeat("x", 50*1024))[:50*1024-len("<truncated due to size limit>")] + "<truncated due to size limit>",
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -544,6 +544,7 @@ func Test_SimpleRevisionGenerator_BundleConfigAnnotation(t *testing.T) {
 			if tc.wantAnnot {
 				require.True(t, ok, "expected bundle-config annotation to be present")
 				require.Equal(t, tc.wantValue, val)
+				require.LessOrEqual(t, len(val), 50*1024, "annotation value must not exceed 50KB")
 			} else {
 				require.False(t, ok, "expected bundle-config annotation to not be present")
 			}
