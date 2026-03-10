@@ -206,6 +206,9 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	}
 	annotations[labels.ServiceAccountNameKey] = ext.Spec.ServiceAccount.Name
 	annotations[labels.ServiceAccountNamespaceKey] = ext.Spec.Namespace
+	if ext.Spec.Config != nil && ext.Spec.Config.Inline != nil {
+		annotations[labels.BundleConfigKey] = string(ext.Spec.Config.Inline.Raw)
+	}
 
 	phases := PhaseSort(objects)
 

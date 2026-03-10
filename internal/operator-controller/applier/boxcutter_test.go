@@ -18,6 +18,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -477,6 +478,67 @@ func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T
 			rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, empty, empty)
 			require.NoError(t, err)
 			require.Equal(t, tc.want.progressDeadlineMinutes, rev.Spec.ProgressDeadlineMinutes)
+		})
+	}
+}
+
+func Test_SimpleRevisionGenerator_BundleConfigAnnotation(t *testing.T) {
+	r := &FakeManifestProvider{
+		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
+			return []client.Object{}, nil
+		},
+	}
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
+	}
+
+	for name, tc := range map[string]struct {
+		config    *ocv1.ClusterExtensionConfig
+		wantAnnot bool
+		wantValue string
+	}{
+		"annotation set when inline config is present": {
+			config: &ocv1.ClusterExtensionConfig{
+				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+				Inline:     &apiextensionsv1.JSON{Raw: []byte(`{"watchNamespace":"ns1"}`)},
+			},
+			wantAnnot: true,
+			wantValue: `{"watchNamespace":"ns1"}`,
+		},
+		"annotation not set when config is nil": {
+			config:    nil,
+			wantAnnot: false,
+		},
+		"annotation not set when inline is nil": {
+			config: &ocv1.ClusterExtensionConfig{
+				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+			},
+			wantAnnot: false,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ext := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-extension",
+				},
+				Spec: ocv1.ClusterExtensionSpec{
+					Namespace:      "test-namespace",
+					ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+					Config:         tc.config,
+				},
+			}
+			rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{})
+			require.NoError(t, err)
+
+			val, ok := rev.Annotations[labels.BundleConfigKey]
+			if tc.wantAnnot {
+				require.True(t, ok, "expected bundle-config annotation to be present")
+				require.Equal(t, tc.wantValue, val)
+			} else {
+				require.False(t, ok, "expected bundle-config annotation to not be present")
+			}
 		})
 	}
 }

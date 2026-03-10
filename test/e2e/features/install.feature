@@ -501,6 +501,38 @@ Feature: Install ClusterExtension
     And ClusterExtensionRevision "${NAME}-1" has label "olm.operatorframework.io/owner-kind" with value "ClusterExtension"
     And ClusterExtensionRevision "${NAME}-1" has label "olm.operatorframework.io/owner-name" with value "${NAME}"
 
+  @BoxcutterRuntime
+  Scenario: ClusterExtensionRevision is annotated with bundle config when inline config is set
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        config:
+          configType: Inline
+          inline:
+            deploymentConfig:
+              nodeSelector:
+                kubernetes.io/os: linux
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension is rolled out
+    And ClusterExtensionRevision "${NAME}-1" contains annotation "olm.operatorframework.io/bundle-config" with value
+      """
+      {"deploymentConfig":{"nodeSelector":{"kubernetes.io/os":"linux"}}}
+      """
+
   @DeploymentConfig
   Scenario: deploymentConfig nodeSelector is applied to the operator deployment
     When ClusterExtension is applied
