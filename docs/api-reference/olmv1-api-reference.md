@@ -16,6 +16,25 @@ Package v1 contains API Schema definitions for the olm v1 API group
 
 
 
+#### Assertion
+
+
+
+Assertion is a discriminated union which defines the probe type and definition used as an assertion.
+
+
+
+_Appears in:_
+- [ProgressionProbe](#progressionprobe)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `type` _[ProbeType](#probetype)_ | type is a required field which specifies the type of probe to use.<br />The allowed probe types are "ConditionEqual", "FieldsEqual", and "FieldValue".<br />When set to "ConditionEqual", the probe checks objects that have reached a condition of specified type and status.<br />When set to "FieldsEqual", the probe checks that the values found at two provided field paths are matching.<br />When set to "FieldValue", the probe checks that the value found at the provided field path matches what was specified.<br /><opcon:experimental> |  | Enum: [ConditionEqual FieldsEqual FieldValue] <br />Required: \{\} <br /> |
+| `conditionEqual` _[ConditionEqualProbe](#conditionequalprobe)_ | conditionEqual contains the expected condition type and status.<br /><opcon:experimental> |  | Optional: \{\} <br /> |
+| `fieldsEqual` _[FieldsEqualProbe](#fieldsequalprobe)_ | fieldsEqual contains the two field paths whose values are expected to match.<br /><opcon:experimental> |  | Optional: \{\} <br /> |
+| `fieldValue` _[FieldValueProbe](#fieldvalueprobe)_ | fieldValue contains the expected field path and value found within.<br /><opcon:experimental> |  | Optional: \{\} <br /> |
+
+
 #### AvailabilityMode
 
 _Underlying type:_ _string_
@@ -367,6 +386,57 @@ _Appears in:_
 
 
 
+#### ConditionEqualProbe
+
+
+
+ConditionEqualProbe defines the condition type and status required for the probe to succeed.
+
+
+
+_Appears in:_
+- [Assertion](#assertion)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `type` _string_ | type sets the expected condition type, i.e. "Ready".<br /><opcon:experimental> |  | MaxLength: 200 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `status` _string_ | status sets the expected condition status.<br />Allowed values are "True" and "False".<br /><opcon:experimental> |  | Enum: [True False] <br />Required: \{\} <br /> |
+
+
+#### FieldValueProbe
+
+
+
+FieldValueProbe defines the path and value expected within for the probe to succeed.
+
+
+
+_Appears in:_
+- [Assertion](#assertion)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `fieldPath` _string_ | fieldPath sets the field path for the field to check, i.e. "status.phase". The probe will fail<br />if the path does not exist.<br /><opcon:experimental> |  | MaxLength: 200 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `value` _string_ | value sets the expected value found at fieldPath, i.e. "Bound".<br /><opcon:experimental> |  | MaxLength: 200 <br />MinLength: 1 <br />Required: \{\} <br /> |
+
+
+#### FieldsEqualProbe
+
+
+
+FieldsEqualProbe defines the paths of the two fields required to match for the probe to succeed.
+
+
+
+_Appears in:_
+- [Assertion](#assertion)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `fieldA` _string_ | fieldA sets the field path for the first field, i.e. "spec.replicas". The probe will fail<br />if the path does not exist.<br /><opcon:experimental> |  | MaxLength: 200 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `fieldB` _string_ | fieldB sets the field path for the second field, i.e. "status.readyReplicas". The probe will fail<br />if the path does not exist.<br /><opcon:experimental> |  | MaxLength: 200 <br />MinLength: 1 <br />Required: \{\} <br /> |
+
+
 #### ImageSource
 
 
@@ -387,6 +457,24 @@ _Appears in:_
 | `pollIntervalMinutes` _integer_ | pollIntervalMinutes is an optional field that sets the interval, in minutes, at which the image source is polled for new content.<br />You cannot specify pollIntervalMinutes when ref is a digest-based reference.<br />When omitted, the image is not polled for new content. |  | Minimum: 1 <br />Optional: \{\} <br /> |
 
 
+#### ObjectSelector
+
+
+
+ObjectSelector is a discriminated union which defines the method by which we select objects to make assertions against.
+
+
+
+_Appears in:_
+- [ProgressionProbe](#progressionprobe)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `type` _[SelectorType](#selectortype)_ | type is a required field which specifies the type of selector to use.<br />The allowed selector types are "GroupKind" and "Label".<br />When set to "GroupKind", all objects which match the specified group and kind will be selected.<br />When set to "Label", all objects which match the specified labels and/or expressions will be selected.<br /><opcon:experimental> |  | Enum: [GroupKind Label] <br />Required: \{\} <br /> |
+| `groupKind` _[GroupKind](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#groupkind-v1-meta)_ | groupKind specifies the group and kind of objects to select.<br />Required when type is "GroupKind".<br />Uses the Kubernetes format specified here:<br />https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#GroupKind<br /><opcon:experimental> |  | Optional: \{\} <br /> |
+| `label` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#labelselector-v1-meta)_ | label is the label selector definition.<br />Required when type is "Label".<br />A probe using a Label selector will be executed against every object matching the labels or expressions; you must use care<br />when using this type of selector. For example, if multiple Kind objects are selected via labels then the probe is<br />likely to fail because the values of different Kind objects rarely share the same schema.<br />The LabelSelector field uses the following Kubernetes format:<br />https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector<br />Requires exactly one of matchLabels or matchExpressions.<br /><opcon:experimental> |  | Optional: \{\} <br /> |
+
+
 #### PreflightConfig
 
 
@@ -401,6 +489,26 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `crdUpgradeSafety` _[CRDUpgradeSafetyPreflightConfig](#crdupgradesafetypreflightconfig)_ | crdUpgradeSafety configures the CRD Upgrade Safety pre-flight checks that run<br />before upgrades of installed content.<br />The CRD Upgrade Safety pre-flight check safeguards from unintended consequences of upgrading a CRD,<br />such as data loss. |  |  |
+
+
+#### ProbeType
+
+_Underlying type:_ _string_
+
+ProbeType defines the type of probe used as an assertion.
+
+
+
+_Appears in:_
+- [Assertion](#assertion)
+
+| Field | Description |
+| --- | --- |
+| `ConditionEqual` |  |
+| `FieldsEqual` |  |
+| `FieldValue` |  |
+
+
 
 
 #### ResolvedCatalogSource
@@ -452,6 +560,23 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `name` _string_ | name of the ClusterExtensionRevision resource |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions optionally expose Progressing and Available condition of the revision,<br />in case when it is not yet marked as successfully installed (condition Succeeded is not set to True).<br />Given that a ClusterExtension should remain available during upgrades, an observer may use these conditions<br />to get more insights about reasons for its current state. |  | Optional: \{\} <br /> |
+
+
+#### SelectorType
+
+_Underlying type:_ _string_
+
+SelectorType defines the type of selector used for progressionProbes.
+
+
+
+_Appears in:_
+- [ObjectSelector](#objectselector)
+
+| Field | Description |
+| --- | --- |
+| `GroupKind` |  |
+| `Label` |  |
 
 
 #### ServiceAccountReference

@@ -2,11 +2,19 @@ package applier
 
 import (
 	"cmp"
+	"encoding/json"
+	"fmt"
 	"slices"
+	"strings"
 
+	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"pkg.package-operator.run/boxcutter/probing"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
 // The following, with modifications, is taken from:
@@ -197,4 +205,59 @@ func PhaseSort(unsortedObjs []ocv1ac.ClusterExtensionRevisionObjectApplyConfigur
 	}
 
 	return phasesSorted
+}
+
+// FieldValueProbe checks if the value found at FieldPath matches the provided Value
+type FieldValueProbe struct {
+	FieldPath, Value string
+}
+
+var _ probing.Prober = (*FieldValueProbe)(nil)
+
+// Probe executes the probe.
+func (fe *FieldValueProbe) Probe(obj client.Object) probing.Result {
+	uMap, err := util.ToUnstructured(obj)
+	if err != nil {
+		return probing.UnknownResult(fmt.Sprintf("failed to convert to unstructured: %v", err))
+	}
+	return fe.probe(uMap)
+}
+
+func (fv *FieldValueProbe) probe(obj *unstructured.Unstructured) probing.Result {
+	fieldPath := strings.Split(strings.Trim(fv.FieldPath, "."), ".")
+
+	fieldVal, ok, err := unstructured.NestedFieldCopy(obj.Object, fieldPath...)
+	if err != nil {
+		return probing.Result{
+			Status:   probing.StatusFalse,
+			Messages: []string{fmt.Sprintf(`error locating key %q; %v`, fv.FieldPath, err)},
+		}
+	}
+	if !ok {
+		return probing.Result{
+			Status:   probing.StatusFalse,
+			Messages: []string{fmt.Sprintf(`missing key: %q`, fv.FieldPath)},
+		}
+	}
+
+	if !equality.Semantic.DeepEqual(fieldVal, fv.Value) {
+		foundJSON, err := json.Marshal(fieldVal)
+		if err != nil {
+			foundJSON = []byte("<value marshal failed>")
+		}
+		expectedJSON, err := json.Marshal(fv.Value)
+		if err != nil {
+			expectedJSON = []byte("<value marshal failed>")
+		}
+
+		return probing.Result{
+			Status:   probing.StatusFalse,
+			Messages: []string{fmt.Sprintf(`value at key %q != %q; expected: %s got: %s`, fv.FieldPath, fv.Value, expectedJSON, foundJSON)},
+		}
+	}
+
+	return probing.Result{
+		Status:   probing.StatusTrue,
+		Messages: []string{fmt.Sprintf(`value at key %q == %q`, fv.FieldPath, fv.Value)},
+	}
 }

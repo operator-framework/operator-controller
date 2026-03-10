@@ -82,7 +82,9 @@ linters:
         description: "Kube API Linter plugin"
         original-url: "sigs.k8s.io/kube-api-linter"
         settings:
-          linters: {}
+          linters: 
+            disable:
+            - nonpointerstructs
           lintersConfig:
             optionalfields:
               pointers:

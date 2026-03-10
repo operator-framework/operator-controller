@@ -31,6 +31,8 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=olm.operatorframework.io, Version=v1
+	case v1.SchemeGroupVersion.WithKind("Assertion"):
+		return &apiv1.AssertionApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("BundleMetadata"):
 		return &apiv1.BundleMetadataApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("CatalogFilter"):
@@ -67,12 +69,22 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1.ClusterExtensionSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ClusterExtensionStatus"):
 		return &apiv1.ClusterExtensionStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ConditionEqualProbe"):
+		return &apiv1.ConditionEqualProbeApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("CRDUpgradeSafetyPreflightConfig"):
 		return &apiv1.CRDUpgradeSafetyPreflightConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("FieldsEqualProbe"):
+		return &apiv1.FieldsEqualProbeApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("FieldValueProbe"):
+		return &apiv1.FieldValueProbeApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ImageSource"):
 		return &apiv1.ImageSourceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ObjectSelector"):
+		return &apiv1.ObjectSelectorApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("PreflightConfig"):
 		return &apiv1.PreflightConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ProgressionProbe"):
+		return &apiv1.ProgressionProbeApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ResolvedCatalogSource"):
 		return &apiv1.ResolvedCatalogSourceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ResolvedImageSource"):

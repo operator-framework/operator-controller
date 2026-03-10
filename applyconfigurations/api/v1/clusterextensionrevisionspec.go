@@ -71,6 +71,20 @@ type ClusterExtensionRevisionSpecApplyConfiguration struct {
 	//
 	// <opcon:experimental>
 	ProgressDeadlineMinutes *int32 `json:"progressDeadlineMinutes,omitempty"`
+	// progressionProbes is an optional field which provides the ability to define custom readiness probes
+	// for objects defined within spec.phases. As documented in that field, most kubernetes-native objects
+	// within the phases already have some kind of readiness check built-in, but this field allows for checks
+	// which are tailored to the objects being rolled out - particularly custom resources.
+	//
+	// Probes defined within the progressionProbes list will apply to every phase in the revision. However, the probes will only
+	// execute against phase objects which are a match for the provided selector type. For instance, a probe using a GroupKind selector
+	// for ConfigMaps will automatically be considered to have passed for any non-ConfigMap object, but will halt any phase containing
+	// a ConfigMap if that particular object does not pass the probe check.
+	//
+	// The maximum number of probes is 20.
+	//
+	// <opcon:experimental>
+	ProgressionProbes []ProgressionProbeApplyConfiguration `json:"progressionProbes,omitempty"`
 	// collisionProtection specifies the default collision protection strategy for all objects
 	// in this revision. Individual phases or objects can override this value.
 	//
@@ -121,6 +135,19 @@ func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithPhases(values ...*C
 // If called multiple times, the ProgressDeadlineMinutes field is set to the value of the last call.
 func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithProgressDeadlineMinutes(value int32) *ClusterExtensionRevisionSpecApplyConfiguration {
 	b.ProgressDeadlineMinutes = &value
+	return b
+}
+
+// WithProgressionProbes adds the given value to the ProgressionProbes field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ProgressionProbes field.
+func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithProgressionProbes(values ...*ProgressionProbeApplyConfiguration) *ClusterExtensionRevisionSpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithProgressionProbes")
+		}
+		b.ProgressionProbes = append(b.ProgressionProbes, *values[i])
+	}
 	return b
 }
 
