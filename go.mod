@@ -20,7 +20,7 @@ require (
 	github.com/klauspost/compress v1.18.4
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/operator-framework/api v0.39.0
+	github.com/operator-framework/api v0.40.0
 	github.com/operator-framework/helm-operator-plugins v0.8.0
 	github.com/operator-framework/operator-registry v1.63.0
 	github.com/prometheus/client_golang v1.23.2
@@ -35,13 +35,13 @@ require (
 	golang.org/x/sync v0.20.0
 	golang.org/x/tools v0.42.0
 	helm.sh/helm/v3 v3.20.0
-	k8s.io/api v0.35.0
-	k8s.io/apiextensions-apiserver v0.35.0
-	k8s.io/apimachinery v0.35.0
-	k8s.io/apiserver v0.35.0
+	k8s.io/api v0.35.1
+	k8s.io/apiextensions-apiserver v0.35.1
+	k8s.io/apimachinery v0.35.1
+	k8s.io/apiserver v0.35.1
 	k8s.io/cli-runtime v0.35.0
-	k8s.io/client-go v0.35.0
-	k8s.io/component-base v0.35.0
+	k8s.io/client-go v0.35.1
+	k8s.io/component-base v0.35.1
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubernetes v1.35.0
 	k8s.io/utils v0.0.0-20260108192941-914a6e750570
