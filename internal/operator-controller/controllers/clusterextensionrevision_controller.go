@@ -41,6 +41,7 @@ import (
 
 const (
 	clusterExtensionRevisionTeardownFinalizer = "olm.operatorframework.io/teardown"
+	defaultRequeueAfter                       = 10 * time.Second
 )
 
 // ClusterExtensionRevisionReconciler actions individual snapshots of ClusterExtensions,
@@ -186,14 +187,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
 		setRetryingConditions(cer, fmt.Sprintf("revision validation error: %s", verr))
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: defaultRequeueAfter}, nil
 	}
 
 	for i, pres := range rres.GetPhases() {
 		if verr := pres.GetValidationError(); verr != nil {
 			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", i)
 			setRetryingConditions(cer, fmt.Sprintf("phase %d validation error: %s", i, verr))
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			return ctrl.Result{RequeueAfter: defaultRequeueAfter}, nil
 		}
 
 		var collidingObjs []string
@@ -206,7 +207,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		if len(collidingObjs) > 0 {
 			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", i, "collisions", collidingObjs)
 			setRetryingConditions(cer, fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")))
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			return ctrl.Result{RequeueAfter: defaultRequeueAfter}, nil
 		}
 	}
 
@@ -280,6 +281,10 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		if meta.FindStatusCondition(cer.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing) == nil {
 			markAsProgressing(cer, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
 		}
+		// Requeue to periodically re-evaluate probes. While the TrackingCache watches
+		// managed objects and triggers reconciliation on status changes, this requeue
+		// acts as a safety net for cases where watch events are delayed or missed.
+		return ctrl.Result{RequeueAfter: defaultRequeueAfter}, nil
 	}
 
 	return ctrl.Result{}, nil

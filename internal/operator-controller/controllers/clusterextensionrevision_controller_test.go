@@ -46,12 +46,14 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 		existingObjs            func() []client.Object
 		revisionResult          machinery.RevisionResult
 		revisionReconcileErr    error
+		expectedResult          ctrl.Result
 		validate                func(*testing.T, client.Client)
 	}{
 		{
 			name:                    "sets teardown finalizer",
 			reconcilingRevisionName: clusterExtensionRevisionName,
 			revisionResult:          mockRevisionResult{},
+			expectedResult:          ctrl.Result{RequeueAfter: 10 * time.Second},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
@@ -120,6 +122,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 		{
 			name:                    "set Available:False:RollingOut status condition during rollout when no probe failures are detected",
 			reconcilingRevisionName: clusterExtensionRevisionName,
+			expectedResult:          ctrl.Result{RequeueAfter: 10 * time.Second},
 			revisionResult:          mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -143,6 +146,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 		{
 			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is in transition",
 			reconcilingRevisionName: clusterExtensionRevisionName,
+			expectedResult:          ctrl.Result{RequeueAfter: 10 * time.Second},
 			revisionResult: mockRevisionResult{
 				inTransition: true,
 				isComplete:   false,
@@ -234,6 +238,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 		{
 			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is not in transition",
 			reconcilingRevisionName: clusterExtensionRevisionName,
+			expectedResult:          ctrl.Result{RequeueAfter: 10 * time.Second},
 			revisionResult: mockRevisionResult{
 				inTransition: false,
 				isComplete:   false,
@@ -346,7 +351,8 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			},
 		},
 		{
-			name: "set Progressing:True:RollingOut condition while revision is transitioning",
+			name:           "set Progressing:True:RollingOut condition while revision is transitioning",
+			expectedResult: ctrl.Result{RequeueAfter: 10 * time.Second},
 			revisionResult: mockRevisionResult{
 				inTransition: true,
 			},
@@ -501,8 +507,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 				},
 			})
 
-			// reconcile cluster extension revision
-			require.Equal(t, ctrl.Result{}, result)
+			require.Equal(t, tc.expectedResult, result)
 			if tc.revisionReconcileErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -652,6 +657,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 		{
 			name:           "teardown finalizer is removed",
 			revisionResult: mockRevisionResult{},
+			expectedResult: ctrl.Result{RequeueAfter: 10 * time.Second},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
@@ -1021,6 +1027,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 				})
 				return []client.Object{rev1, ext}
 			},
+			reconcileResult: ctrl.Result{RequeueAfter: 10 * time.Second},
 			revisionResult: &mockRevisionResult{
 				inTransition: true,
 			},
