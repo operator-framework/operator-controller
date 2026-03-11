@@ -21,7 +21,6 @@ import (
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
 	"pkg.package-operator.run/boxcutter/managedcache"
-	"pkg.package-operator.run/boxcutter/ownerhandling"
 	"pkg.package-operator.run/boxcutter/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -69,8 +68,7 @@ func (f *defaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, r
 		machinery.NewPhaseEngine(
 			machinery.NewObjectEngine(
 				f.Scheme, f.TrackingCache, scopedClient,
-				ownerhandling.NewNative(f.Scheme),
-				machinery.NewComparator(ownerhandling.NewNative(f.Scheme), f.DiscoveryClient, f.Scheme, f.FieldOwnerPrefix),
+				machinery.NewComparator(f.DiscoveryClient, f.Scheme, f.FieldOwnerPrefix),
 				f.FieldOwnerPrefix, f.FieldOwnerPrefix,
 			),
 			validation.NewClusterPhaseValidator(f.RESTMapper, scopedClient),

@@ -1405,6 +1405,7 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 		rev := &ocv1.ClusterExtensionRevision{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   "test-rev-1",
+				UID:    types.UID("test-rev-1"),
 				Labels: map[string]string{},
 				Annotations: map[string]string{
 					labels.ServiceAccountNameKey:      "test-sa",
