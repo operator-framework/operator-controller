@@ -45,7 +45,7 @@ require (
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubernetes v1.35.0
 	k8s.io/utils v0.0.0-20260108192941-914a6e750570
-	pkg.package-operator.run/boxcutter v0.10.0
+	pkg.package-operator.run/boxcutter v0.11.0
 	sigs.k8s.io/controller-runtime v0.23.1
 	sigs.k8s.io/controller-tools v0.20.1
 	sigs.k8s.io/crdify v0.5.0

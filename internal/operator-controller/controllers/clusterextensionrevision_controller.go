@@ -24,6 +24,7 @@ import (
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
+	"pkg.package-operator.run/boxcutter/ownerhandling"
 	"pkg.package-operator.run/boxcutter/probing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -141,7 +142,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		return c.delete(ctx, cer)
 	}
 
-	revision, opts, err := c.toBoxcutterRevision(ctx, cer)
+	phases, opts, err := c.buildBoxcutterPhases(ctx, cer)
 	if err != nil {
 		setRetryingConditions(cer, err.Error())
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
@@ -152,6 +153,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		setRetryingConditions(cer, err.Error())
 		return ctrl.Result{}, fmt.Errorf("failed to create revision engine: %v", err)
 	}
+
+	revision := boxcutter.NewRevisionWithOwner(
+		cer.Name,
+		cer.Spec.Revision,
+		phases,
+		cer,
+		ownerhandling.NewNative(c.Client.Scheme()),
+	)
 
 	if cer.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
 		if err := c.TrackingCache.Free(ctx, cer); err != nil {
@@ -171,7 +180,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		return ctrl.Result{}, werr
 	}
 
-	rres, err := revisionEngine.Reconcile(ctx, *revision, opts...)
+	rres, err := revisionEngine.Reconcile(ctx, revision, opts...)
 	if err != nil {
 		if rres != nil {
 			// Log detailed reconcile reports only in debug mode (V(1)) to reduce verbosity.
@@ -296,8 +305,8 @@ func (c *ClusterExtensionRevisionReconciler) delete(ctx context.Context, cer *oc
 	return ctrl.Result{}, nil
 }
 
-func (c *ClusterExtensionRevisionReconciler) archive(ctx context.Context, revisionEngine RevisionEngine, cer *ocv1.ClusterExtensionRevision, revision *boxcutter.Revision) (ctrl.Result, error) {
-	tdres, err := revisionEngine.Teardown(ctx, *revision)
+func (c *ClusterExtensionRevisionReconciler) archive(ctx context.Context, revisionEngine RevisionEngine, cer *ocv1.ClusterExtensionRevision, revision boxcutter.RevisionBuilder) (ctrl.Result, error) {
+	tdres, err := revisionEngine.Teardown(ctx, revision)
 	if err != nil {
 		err = fmt.Errorf("error archiving revision: %v", err)
 		setRetryingConditions(cer, err.Error())
@@ -356,11 +365,11 @@ func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) 
 		Complete(c)
 }
 
-func (c *ClusterExtensionRevisionReconciler) establishWatch(ctx context.Context, cer *ocv1.ClusterExtensionRevision, revision *boxcutter.Revision) error {
+func (c *ClusterExtensionRevisionReconciler) establishWatch(ctx context.Context, cer *ocv1.ClusterExtensionRevision, revision boxcutter.RevisionBuilder) error {
 	gvks := sets.New[schema.GroupVersionKind]()
-	for _, phase := range revision.Phases {
-		for _, obj := range phase.Objects {
-			gvks.Insert(obj.GroupVersionKind())
+	for _, phase := range revision.GetPhases() {
+		for _, obj := range phase.GetObjects() {
+			gvks.Insert(obj.GetObjectKind().GroupVersionKind())
 		}
 	}
 
@@ -451,7 +460,7 @@ func (c *ClusterExtensionRevisionReconciler) listPreviousRevisions(ctx context.C
 	return previous, nil
 }
 
-func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Context, cer *ocv1.ClusterExtensionRevision) (*boxcutter.Revision, []boxcutter.RevisionReconcileOption, error) {
+func (c *ClusterExtensionRevisionReconciler) buildBoxcutterPhases(ctx context.Context, cer *ocv1.ClusterExtensionRevision) ([]boxcutter.Phase, []boxcutter.RevisionReconcileOption, error) {
 	previous, err := c.listPreviousRevisions(ctx, cer)
 	if err != nil {
 		return nil, nil, fmt.Errorf("listing previous revisions: %w", err)
@@ -473,13 +482,9 @@ func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Con
 		}),
 	}
 
-	r := &boxcutter.Revision{
-		Name:     cer.Name,
-		Owner:    cer,
-		Revision: cer.Spec.Revision,
-	}
+	phases := make([]boxcutter.Phase, 0)
 	for _, specPhase := range cer.Spec.Phases {
-		phase := boxcutter.Phase{Name: specPhase.Name}
+		objs := make([]client.Object, 0)
 		for _, specObj := range specPhase.Objects {
 			obj := specObj.Object.DeepCopy()
 
@@ -496,11 +501,11 @@ func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Con
 					obj, boxcutter.WithCollisionProtection(cp)))
 			}
 
-			phase.Objects = append(phase.Objects, *obj)
+			objs = append(objs, obj)
 		}
-		r.Phases = append(r.Phases, phase)
+		phases = append(phases, boxcutter.NewPhase(specPhase.Name, objs))
 	}
-	return r, opts, nil
+	return phases, opts, nil
 }
 
 // EffectiveCollisionProtection resolves the collision protection value using

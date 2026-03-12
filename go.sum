@@ -796,8 +796,8 @@ k8s.io/utils v0.0.0-20260108192941-914a6e750570 h1:JT4W8lsdrGENg9W+YwwdLJxklIuKW
 k8s.io/utils v0.0.0-20260108192941-914a6e750570/go.mod h1:xDxuJ0whA3d0I4mf/C4ppKHxXynQ+fxnkmQH0vTHnuk=
 oras.land/oras-go/v2 v2.6.0 h1:X4ELRsiGkrbeox69+9tzTu492FMUu7zJQW6eJU+I2oc=
 oras.land/oras-go/v2 v2.6.0/go.mod h1:magiQDfG6H1O9APp+rOsvCPcW1GD2MM7vgnKY0Y+u1o=
-pkg.package-operator.run/boxcutter v0.10.0 h1:ToohW6jmcSHKqJJgN6cbIQ5UFG/BkYIp0mXxzfH3ZFU=
-pkg.package-operator.run/boxcutter v0.10.0/go.mod h1:uBJIZiMgUt1SaZJyRp06L6s2kqL+JLNVOts470+k8Mw=
+pkg.package-operator.run/boxcutter v0.11.0 h1:VhIQ7baW7ad2mFDYQ2ybk/NqZo6BX0LfO/vI0usHj9U=
+pkg.package-operator.run/boxcutter v0.11.0/go.mod h1:t/51lJTnGkpGKfNDSkycAjAeZTP214VyNIcyJOB5Nhw=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 h1:hSfpvjjTQXQY2Fol2CS0QHMNs/WI1MOSGzCm1KhM5ec=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0/go.mod h1:Ve9uj1L+deCXFrPOk1LpFXqTg7LCFzFso6PA48q/XZw=
 sigs.k8s.io/controller-runtime v0.23.1 h1:TjJSM80Nf43Mg21+RCy3J70aj/W6KyvDtOlpKf+PupE=
