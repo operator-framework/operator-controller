@@ -19,6 +19,7 @@ const (
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
 	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
 	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
+	CompositeVersionComparison        featuregate.Feature = "CompositeVersionComparison"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -85,6 +86,15 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// DeploymentConfig enables support for customizing operator deployments
 	// via spec.config.inline.deploymentConfig in ClusterExtension resources.
 	DeploymentConfig: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// CompositeVersionComparison enables using the declcfg.Bundle.Compare method
+	// which properly handles both semantic version and release metadata when
+	// comparing bundle versions during resolution.
+	CompositeVersionComparison: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,

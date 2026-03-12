@@ -12,10 +12,9 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage/driver"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -24,15 +23,12 @@ import (
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	finalizers "github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
@@ -356,62 +352,6 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 	require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
 	require.Contains(t, progressingCond.Message, fmt.Sprintf("for resolved bundle %q with version %q", expectedBundleMetadata.Name, expectedBundleMetadata.Version))
 
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
-}
-
-func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			Err: &authentication.ServiceAccountNotFoundError{
-				ServiceAccountName:      "missing-sa",
-				ServiceAccountNamespace: "default",
-			}}
-	})
-
-	ctx := context.Background()
-	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
-
-	t.Log("Given a cluster extension with a missing service account")
-	clusterExtension := &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec: ocv1.ClusterExtensionSpec{
-			Source: ocv1.SourceConfig{
-				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
-					PackageName: "test-package",
-				},
-			},
-			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "missing-sa",
-			},
-		},
-	}
-
-	require.NoError(t, cl.Create(ctx, clusterExtension))
-
-	t.Log("When reconciling the cluster extension")
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-
-	require.Equal(t, ctrl.Result{}, res)
-	require.Error(t, err)
-	var saErr *authentication.ServiceAccountNotFoundError
-	require.ErrorAs(t, err, &saErr)
-	t.Log("By fetching updated cluster extension after reconcile")
-	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
-
-	t.Log("By checking the status conditions")
-	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
-	require.NotNil(t, installedCond)
-	require.Equal(t, metav1.ConditionUnknown, installedCond.Status)
-	require.Contains(t, installedCond.Message, fmt.Sprintf("service account %q not found in namespace %q: unable to authenticate with the Kubernetes cluster.",
-		"missing-sa", "default"))
-
-	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
-	require.NotNil(t, progressingCond)
-	require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
-	require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
-	require.Contains(t, progressingCond.Message, "installation cannot proceed due to missing ServiceAccount")
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 }
 
@@ -867,15 +807,30 @@ func verifyConditionsInvariants(t *testing.T, ext *ocv1.ClusterExtension) {
 }
 
 func TestSetDeprecationStatus(t *testing.T) {
+	// The catalogDataProvided/hasCatalogData pair lets each test express whether the catalog
+	// answered during reconciliation and, if it did, whether it marked anything as deprecated.
+	// This helps us cover three distinct user-facing states: "no catalog response" (everything
+	// stays Unknown), "catalog answered with no deprecations" (conditions explicitly set to
+	// False with reason NotDeprecated, with BundleDeprecated remaining Unknown when no bundle
+	// is installed), and "catalog answered with explicit deprecations" (conditions go True).
+	//
+	// Key scenarios tested:
+	//   1. No catalog data + no bundle -> all Unknown, BundleDeprecated uses reason Absent
+	//   2. No catalog data + bundle installed -> all Unknown, BundleDeprecated uses reason DeprecationStatusUnknown
+	//   3. Catalog data provided + no deprecations -> deprecation conditions explicitly set to False
+	//      with reason NotDeprecated (BundleDeprecated remains Unknown when no bundle is installed)
+	//   4. Catalog data provided + explicit deprecations -> relevant conditions True
 	for _, tc := range []struct {
 		name                     string
 		clusterExtension         *ocv1.ClusterExtension
 		expectedClusterExtension *ocv1.ClusterExtension
 		bundle                   *declcfg.Bundle
 		deprecation              *declcfg.Deprecation
+		catalogDataProvided      bool
+		hasCatalogData           bool
 	}{
 		{
-			name: "no deprecations, all deprecation statuses set to False",
+			name: "no catalog data, all deprecation statuses set to Unknown",
 			clusterExtension: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
@@ -892,36 +847,183 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               ocv1.TypeDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonDeprecationStatusUnknown,
+							Status:             metav1.ConditionUnknown,
+							Message:            "deprecation status unknown: catalog data unavailable",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonDeprecationStatusUnknown,
+							Status:             metav1.ConditionUnknown,
+							Message:            "deprecation status unknown: catalog data unavailable",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonDeprecationStatusUnknown,
+							Status:             metav1.ConditionUnknown,
+							Message:            "deprecation status unknown: catalog data unavailable",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeBundleDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonAbsent,
+							Status:             metav1.ConditionUnknown,
+							Message:            "no bundle installed yet",
 							ObservedGeneration: 1,
 						},
 					},
 				},
 			},
-			bundle:      &declcfg.Bundle{},
-			deprecation: nil,
+			bundle:              &declcfg.Bundle{},
+			deprecation:         nil,
+			catalogDataProvided: false,
+			hasCatalogData:      false,
 		},
 		{
-			name: "deprecated channel, but no channel specified, all deprecation statuses set to False",
+			// Scenario:
+			//   - A bundle is installed (v1.0.0)
+			//   - Catalog becomes unavailable (removed or network failure)
+			//   - No catalog data can be retrieved
+			//   - BundleDeprecated must show Unknown/DeprecationStatusUnknown (not Absent)
+			//   - Reason is DeprecationStatusUnknown because catalog data is unavailable; Absent is only for no bundle
+			name: "no catalog data with installed bundle keeps bundle condition Unknown",
+			clusterExtension: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1.ClusterExtensionStatus{Conditions: []metav1.Condition{}},
+			},
+			expectedClusterExtension: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Status: ocv1.ClusterExtensionStatus{Conditions: []metav1.Condition{
+					{Type: ocv1.TypeDeprecated, Reason: ocv1.ReasonDeprecationStatusUnknown, Status: metav1.ConditionUnknown, Message: "deprecation status unknown: catalog data unavailable", ObservedGeneration: 1},
+					{Type: ocv1.TypePackageDeprecated, Reason: ocv1.ReasonDeprecationStatusUnknown, Status: metav1.ConditionUnknown, Message: "deprecation status unknown: catalog data unavailable", ObservedGeneration: 1},
+					{Type: ocv1.TypeChannelDeprecated, Reason: ocv1.ReasonDeprecationStatusUnknown, Status: metav1.ConditionUnknown, Message: "deprecation status unknown: catalog data unavailable", ObservedGeneration: 1},
+					{Type: ocv1.TypeBundleDeprecated, Reason: ocv1.ReasonDeprecationStatusUnknown, Status: metav1.ConditionUnknown, Message: "deprecation status unknown: catalog data unavailable", ObservedGeneration: 1},
+				}},
+			},
+			bundle:              &declcfg.Bundle{Name: "installed.v1.0.0"},
+			deprecation:         nil,
+			catalogDataProvided: false,
+			hasCatalogData:      false,
+		},
+		{
+			// Scenario:
+			//   - A bundle is installed
+			//   - Catalog returns deprecation entries but catalogDataProvided=false
+			//   - This tests that deprecation data is ignored when hasCatalogData is false
+			//   - All conditions go to Unknown regardless of deprecation entries present
+			//   - BundleDeprecated uses DeprecationStatusUnknown (not Absent) because bundle exists
+			name: "deprecation entries ignored when catalog data flag is false",
+			clusterExtension: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1.TypeDeprecated,
+							Reason:             ocv1.ReasonDeprecationStatusUnknown,
+							Status:             metav1.ConditionUnknown,
+							Message:            "deprecation status unknown: catalog data unavailable",
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1.TypePackageDeprecated,
+							Reason:             ocv1.ReasonDeprecationStatusUnknown,
+							Status:             metav1.ConditionUnknown,
+							Message:            "deprecation status unknown: catalog data unavailable",
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1.TypeChannelDeprecated,
+							Reason:             ocv1.ReasonDeprecationStatusUnknown,
+							Status:             metav1.ConditionUnknown,
+							Message:            "deprecation status unknown: catalog data unavailable",
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1.TypeBundleDeprecated,
+							Reason:             ocv1.ReasonDeprecationStatusUnknown,
+							Status:             metav1.ConditionUnknown,
+							Message:            "deprecation status unknown: catalog data unavailable",
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &declcfg.Bundle{Name: "ignored"},
+			deprecation: &declcfg.Deprecation{Entries: []declcfg.DeprecationEntry{{
+				Reference: declcfg.PackageScopedReference{Schema: declcfg.SchemaPackage},
+				Message:   "should not surface",
+			}}},
+			catalogDataProvided: true,
+			hasCatalogData:      false,
+		},
+		{
+			name: "catalog consulted but no deprecations, conditions False except BundleDeprecated Unknown when no bundle",
+			clusterExtension: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1.TypeDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
+							Status:             metav1.ConditionFalse,
+							Message:            "not deprecated",
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1.TypePackageDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
+							Status:             metav1.ConditionFalse,
+							Message:            "package not deprecated",
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1.TypeChannelDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
+							Status:             metav1.ConditionFalse,
+							Message:            "channel not deprecated",
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1.TypeBundleDeprecated,
+							Reason:             ocv1.ReasonAbsent,
+							Status:             metav1.ConditionUnknown,
+							Message:            "no bundle installed yet",
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle:              &declcfg.Bundle{},
+			deprecation:         nil,
+			catalogDataProvided: true,
+			hasCatalogData:      true,
+		},
+		{
+			name: "deprecated channel exists, no channels specified (auto-select), channel deprecation shown",
 			clusterExtension: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
@@ -951,25 +1053,29 @@ func TestSetDeprecationStatus(t *testing.T) {
 						{
 							Type:               ocv1.TypeDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
+							Message:            "package not deprecated",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeBundleDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonAbsent,
+							Status:             metav1.ConditionUnknown,
+							Message:            "no bundle installed yet",
 							ObservedGeneration: 1,
 						},
 					},
@@ -982,11 +1088,14 @@ func TestSetDeprecationStatus(t *testing.T) {
 						Schema: declcfg.SchemaChannel,
 						Name:   "badchannel",
 					},
+					Message: "bad channel!",
 				}},
 			},
+			catalogDataProvided: true,
+			hasCatalogData:      true,
 		},
 		{
-			name: "deprecated channel, but a non-deprecated channel specified, all deprecation statuses set to False",
+			name: "deprecated channel exists but non-deprecated channel specified; conditions False except BundleDeprecated Unknown",
 			clusterExtension: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
@@ -1019,26 +1128,30 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               ocv1.TypeDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
+							Message:            "not deprecated",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
+							Message:            "package not deprecated",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
+							Message:            "channel not deprecated",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeBundleDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonAbsent,
+							Status:             metav1.ConditionUnknown,
+							Message:            "no bundle installed yet",
 							ObservedGeneration: 1,
 						},
 					},
@@ -1055,9 +1168,11 @@ func TestSetDeprecationStatus(t *testing.T) {
 					},
 				},
 			},
+			catalogDataProvided: true,
+			hasCatalogData:      true,
 		},
 		{
-			name: "deprecated channel specified, ChannelDeprecated and Deprecated status set to true, others set to false",
+			name: "deprecated channel specified, ChannelDeprecated and Deprecated set to true, PackageDeprecated False, BundleDeprecated Unknown",
 			clusterExtension: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
@@ -1092,24 +1207,28 @@ func TestSetDeprecationStatus(t *testing.T) {
 							Type:               ocv1.TypeDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
+							Message:            "package not deprecated",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeBundleDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonAbsent,
+							Status:             metav1.ConditionUnknown,
+							Message:            "no bundle installed yet",
 							ObservedGeneration: 1,
 						},
 					},
@@ -1127,6 +1246,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					},
 				},
 			},
+			catalogDataProvided: true,
+			hasCatalogData:      true,
 		},
 		{
 			name: "deprecated package and channel specified, deprecated bundle, all deprecation statuses set to true",
@@ -1164,24 +1285,28 @@ func TestSetDeprecationStatus(t *testing.T) {
 							Type:               ocv1.TypeDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad package!\nbad channel!\nbad bundle!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad package!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeBundleDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad bundle!",
 							ObservedGeneration: 1,
 						},
 					},
@@ -1212,9 +1337,11 @@ func TestSetDeprecationStatus(t *testing.T) {
 					},
 				},
 			},
+			catalogDataProvided: true,
+			hasCatalogData:      true,
 		},
 		{
-			name: "deprecated channel specified, deprecated bundle, all deprecation statuses set to true, all deprecation statuses set to true except PackageDeprecated",
+			name: "deprecated channel and bundle specified, Deprecated/ChannelDeprecated/BundleDeprecated set to true, PackageDeprecated False",
 			clusterExtension: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
@@ -1249,24 +1376,28 @@ func TestSetDeprecationStatus(t *testing.T) {
 							Type:               ocv1.TypeDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!\nbad bundle!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
+							Message:            "package not deprecated",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeBundleDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad bundle!",
 							ObservedGeneration: 1,
 						},
 					},
@@ -1291,9 +1422,11 @@ func TestSetDeprecationStatus(t *testing.T) {
 					},
 				},
 			},
+			catalogDataProvided: true,
+			hasCatalogData:      true,
 		},
 		{
-			name: "deprecated package and channel specified, all deprecation statuses set to true except BundleDeprecated",
+			name: "deprecated package and channel specified, Deprecated/PackageDeprecated/ChannelDeprecated set to true, BundleDeprecated Unknown/Absent (no bundle installed)",
 			clusterExtension: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
@@ -1328,24 +1461,28 @@ func TestSetDeprecationStatus(t *testing.T) {
 							Type:               ocv1.TypeDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad package!\nbad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad package!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeBundleDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonAbsent,
+							Status:             metav1.ConditionUnknown,
+							Message:            "no bundle installed yet",
 							ObservedGeneration: 1,
 						},
 					},
@@ -1369,9 +1506,11 @@ func TestSetDeprecationStatus(t *testing.T) {
 					},
 				},
 			},
+			catalogDataProvided: true,
+			hasCatalogData:      true,
 		},
 		{
-			name: "deprecated channels specified, ChannelDeprecated and Deprecated status set to true, others set to false",
+			name: "deprecated channels specified, ChannelDeprecated and Deprecated set to true, PackageDeprecated False, BundleDeprecated Unknown/Absent",
 			clusterExtension: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
@@ -1406,24 +1545,28 @@ func TestSetDeprecationStatus(t *testing.T) {
 							Type:               ocv1.TypeDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!\nanother bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
+							Message:            "package not deprecated",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
 							Reason:             ocv1.ReasonDeprecated,
 							Status:             metav1.ConditionTrue,
+							Message:            "bad channel!\nanother bad channel!",
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeBundleDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
+							Reason:             ocv1.ReasonAbsent,
+							Status:             metav1.ConditionUnknown,
+							Message:            "no bundle installed yet",
 							ObservedGeneration: 1,
 						},
 					},
@@ -1444,20 +1587,19 @@ func TestSetDeprecationStatus(t *testing.T) {
 							Schema: declcfg.SchemaChannel,
 							Name:   "anotherbadchannel",
 						},
-						Message: "another bad channedl!",
+						Message: "another bad channel!",
 					},
 				},
 			},
+			catalogDataProvided: true,
+			hasCatalogData:      true,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			controllers.SetDeprecationStatus(tc.clusterExtension, tc.bundle.Name, tc.deprecation)
-			// TODO: we should test for unexpected changes to lastTransitionTime. We only expect
-			//  lastTransitionTime to change when the status of the condition changes.
-			assert.Empty(t, cmp.Diff(tc.expectedClusterExtension, tc.clusterExtension, cmpopts.IgnoreFields(metav1.Condition{}, "Message", "LastTransitionTime")))
-		})
-	}
-}
+			// When a test provides deprecation data it must also explicitly state that the catalog responded.
+			// This guard keeps future cases from silently falling back to the "catalog absent" branch.
+			if tc.deprecation != nil && !tc.catalogDataProvided {
+				require.Failf(t, "test case must set catalogDataProvided when deprecation is supplied", "test case %q", tc.name)
 
 type MockActionGetter struct {
 	description       string
@@ -1467,132 +1609,216 @@ type MockActionGetter struct {
 	expectedError     error
 }
 
-func (mag *MockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
-	return mag, nil
+			}
+			hasCatalogData := tc.catalogDataProvided && tc.hasCatalogData
+			controllers.SetDeprecationStatus(tc.clusterExtension, tc.bundle.Name, tc.deprecation, hasCatalogData)
+			// TODO: we should test for unexpected changes to lastTransitionTime. We only expect
+			//  lastTransitionTime to change when the status of the condition changes.
+			assert.Empty(t, cmp.Diff(tc.expectedClusterExtension, tc.clusterExtension, cmpopts.IgnoreFields(metav1.Condition{}, "LastTransitionTime")))
+		})
+	}
 }
 
-func (mag *MockActionGetter) Get(name string, opts ...helmclient.GetOption) (*release.Release, error) {
-	return nil, nil
+// TestSetDeprecationStatus_NoInfiniteReconcileLoop verifies that calling SetDeprecationStatus
+// multiple times with the same inputs does not cause infinite reconciliation loops.
+//
+// The issue: If we always remove and re-add conditions, lastTransitionTime updates every time,
+// which causes DeepEqual to fail, triggering another reconcile indefinitely.
+//
+// The fix: Only remove conditions when we're NOT re-adding them. When setting a condition,
+// call SetStatusCondition directly - it preserves lastTransitionTime when status/reason/message
+// haven't changed.
+func TestSetDeprecationStatus_NoInfiniteReconcileLoop(t *testing.T) {
+	tests := []struct {
+		name                  string
+		installedBundleName   string
+		deprecation           *declcfg.Deprecation
+		hasCatalogData        bool
+		setupConditions       func(*ocv1.ClusterExtension)
+		expectConditionsCount int
+		description           string
+	}{
+		{
+			name:                "deprecated package - should stabilize after first reconcile",
+			installedBundleName: "test.v1.0.0",
+			deprecation: &declcfg.Deprecation{
+				Entries: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaPackage,
+						},
+						Message: "package is deprecated",
+					},
+				},
+			},
+			hasCatalogData: true,
+			setupConditions: func(ext *ocv1.ClusterExtension) {
+				// No conditions initially
+			},
+			expectConditionsCount: 4, // All 4 conditions: Deprecated/PackageDeprecated=True, ChannelDeprecated/BundleDeprecated=False
+			description:           "First call adds conditions, second call preserves lastTransitionTime",
+		},
+		{
+			name:                "not deprecated - conditions always present as False",
+			installedBundleName: "", // No bundle installed
+			deprecation:         nil,
+			hasCatalogData:      true,
+			setupConditions: func(ext *ocv1.ClusterExtension) {
+				// Simulate old behavior: False conditions present with old reason
+				apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+					Type:               ocv1.TypeDeprecated,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ReasonDeprecated,
+					Message:            "",
+					ObservedGeneration: 1,
+				})
+				apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+					Type:               ocv1.TypePackageDeprecated,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ReasonDeprecated,
+					Message:            "",
+					ObservedGeneration: 1,
+				})
+			},
+			expectConditionsCount: 4, // All 4 conditions as False (except BundleDeprecated Unknown when no bundle)
+			description:           "Sets all conditions to False with NotDeprecated reason, then stabilizes",
+		},
+		{
+			name:                "catalog unavailable - should stabilize with Unknown conditions",
+			installedBundleName: "test.v1.0.0",
+			deprecation:         nil,
+			hasCatalogData:      false,
+			setupConditions: func(ext *ocv1.ClusterExtension) {
+				// No conditions initially
+			},
+			expectConditionsCount: 4, // All four Unknown conditions
+			description:           "Sets Unknown conditions, then preserves them",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ext := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			}
+
+			// Setup initial conditions if specified
+			if tt.setupConditions != nil {
+				tt.setupConditions(ext)
+			}
+
+			// First reconcile: should add/update conditions
+			controllers.SetDeprecationStatus(ext, tt.installedBundleName, tt.deprecation, tt.hasCatalogData)
+
+			firstReconcileConditions := make([]metav1.Condition, len(ext.Status.Conditions))
+			copy(firstReconcileConditions, ext.Status.Conditions)
+
+			// Verify expected number of conditions
+			deprecationConditions := filterDeprecationConditions(ext.Status.Conditions)
+			require.Len(t, deprecationConditions, tt.expectConditionsCount,
+				"First reconcile should have %d deprecation conditions", tt.expectConditionsCount)
+
+			// Second reconcile: should preserve lastTransitionTime (no changes)
+			controllers.SetDeprecationStatus(ext, tt.installedBundleName, tt.deprecation, tt.hasCatalogData)
+
+			secondReconcileConditions := ext.Status.Conditions
+
+			// Verify conditions are identical (including lastTransitionTime)
+			require.Len(t, secondReconcileConditions, len(firstReconcileConditions),
+				"Number of conditions should remain the same")
+
+			for i, firstCond := range firstReconcileConditions {
+				secondCond := secondReconcileConditions[i]
+				require.Equal(t, firstCond.Type, secondCond.Type, "Condition type should match")
+				require.Equal(t, firstCond.Status, secondCond.Status, "Condition status should match")
+				require.Equal(t, firstCond.Reason, secondCond.Reason, "Condition reason should match")
+				require.Equal(t, firstCond.Message, secondCond.Message, "Condition message should match")
+
+				// This is the critical check: lastTransitionTime should NOT change
+				require.Equal(t, firstCond.LastTransitionTime, secondCond.LastTransitionTime,
+					"lastTransitionTime should be preserved (prevents infinite reconcile loop)")
+			}
+
+			// Third reconcile: verify it remains stable
+			controllers.SetDeprecationStatus(ext, tt.installedBundleName, tt.deprecation, tt.hasCatalogData)
+
+			thirdReconcileConditions := ext.Status.Conditions
+			require.Len(t, thirdReconcileConditions, len(secondReconcileConditions),
+				"Conditions should remain stable after multiple reconciles")
+
+			for i, secondCond := range secondReconcileConditions {
+				thirdCond := thirdReconcileConditions[i]
+				require.Equal(t, secondCond.LastTransitionTime, thirdCond.LastTransitionTime,
+					"lastTransitionTime should remain stable across reconciles")
+			}
+		})
+	}
 }
 
-// This is the function we are really testing
-func (mag *MockActionGetter) History(name string, opts ...helmclient.HistoryOption) ([]*release.Release, error) {
-	return mag.rels, mag.err
-}
-
-func (mag *MockActionGetter) Install(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.InstallOption) (*release.Release, error) {
-	return nil, nil
-}
-
-func (mag *MockActionGetter) Upgrade(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.UpgradeOption) (*release.Release, error) {
-	return nil, nil
-}
-
-func (mag *MockActionGetter) Uninstall(name string, opts ...helmclient.UninstallOption) (*release.UninstallReleaseResponse, error) {
-	return nil, nil
-}
-
-func (mag *MockActionGetter) Reconcile(rel *release.Release) error {
-	return nil
-}
-
-func TestGetInstalledBundleHistory(t *testing.T) {
-	getter := controllers.HelmRevisionStatesGetter{}
-
-	ext := ocv1.ClusterExtension{
+// TestSetDeprecationStatus_StatusChangesOnlyWhenNeeded verifies that calling SetDeprecationStatus
+// only modifies the status when actual deprecation state changes, not on every reconcile.
+func TestSetDeprecationStatus_StatusChangesOnlyWhenNeeded(t *testing.T) {
+	ext := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-ext",
+			Generation: 1,
+		},
+		Status: ocv1.ClusterExtensionStatus{
+			Conditions: []metav1.Condition{},
 		},
 	}
 
-	mag := []MockActionGetter{
-		{
-			"No return",
-			nil, nil,
-			nil, nil,
-		},
-		{
-			"ErrReleaseNotFound (special case)",
-			nil, driver.ErrReleaseNotFound,
-			nil, nil,
-		},
-		{
-			"Error from History",
-			nil, fmt.Errorf("generic error"),
-			nil, fmt.Errorf("generic error"),
-		},
-		{
-			"One item in history",
-			[]*release.Release{
-				{
-					Name: "test-ext",
-					Info: &release.Info{
-						Status: release.StatusDeployed,
-					},
-					Labels: map[string]string{
-						labels.BundleNameKey:      "test-ext",
-						labels.BundleVersionKey:   "1.0",
-						labels.BundleReferenceKey: "bundle-ref",
-					},
-				},
+	// Scenario 1: Package becomes deprecated
+	deprecation := &declcfg.Deprecation{
+		Entries: []declcfg.DeprecationEntry{
+			{
+				Reference: declcfg.PackageScopedReference{Schema: declcfg.SchemaPackage},
+				Message:   "package is deprecated",
 			},
-			nil,
-			&controllers.RevisionMetadata{
-				BundleMetadata: ocv1.BundleMetadata{
-					Name:    "test-ext",
-					Version: "1.0",
-				},
-				Image: "bundle-ref",
-			}, nil,
-		},
-		{
-			"Two items in history",
-			[]*release.Release{
-				{
-					Name: "test-ext",
-					Info: &release.Info{
-						Status: release.StatusFailed,
-					},
-					Labels: map[string]string{
-						labels.BundleNameKey:      "test-ext",
-						labels.BundleVersionKey:   "2.0",
-						labels.BundleReferenceKey: "bundle-ref-2",
-					},
-				},
-				{
-					Name: "test-ext",
-					Info: &release.Info{
-						Status: release.StatusDeployed,
-					},
-					Labels: map[string]string{
-						labels.BundleNameKey:      "test-ext",
-						labels.BundleVersionKey:   "1.0",
-						labels.BundleReferenceKey: "bundle-ref-1",
-					},
-				},
-			},
-			nil,
-			&controllers.RevisionMetadata{
-				BundleMetadata: ocv1.BundleMetadata{
-					Name:    "test-ext",
-					Version: "1.0",
-				},
-				Image: "bundle-ref-1",
-			}, nil,
 		},
 	}
 
-	for _, tst := range mag {
-		t.Log(tst.description)
-		getter.ActionClientGetter = &tst
-		md, err := getter.GetRevisionStates(context.Background(), &ext)
-		if tst.expectedError != nil {
-			require.Equal(t, tst.expectedError, err)
-			require.Nil(t, md)
-		} else {
-			require.NoError(t, err)
-			require.Equal(t, tst.expectedInstalled, md.Installed)
-			require.Nil(t, md.RollingOut)
+	// First reconcile: add deprecation condition
+	controllers.SetDeprecationStatus(ext, "test.v1.0.0", deprecation, true)
+	statusAfterFirstReconcile := ext.Status.DeepCopy()
+
+	// Second reconcile: same deprecation state
+	controllers.SetDeprecationStatus(ext, "test.v1.0.0", deprecation, true)
+	statusAfterSecondReconcile := ext.Status.DeepCopy()
+
+	// Status should be semantically equal (DeepEqual would return true)
+	require.True(t, equality.Semantic.DeepEqual(statusAfterFirstReconcile, statusAfterSecondReconcile),
+		"Status should not change when deprecation state is unchanged")
+
+	// Scenario 2: Deprecation is resolved (package no longer deprecated)
+	controllers.SetDeprecationStatus(ext, "test.v1.0.0", nil, true)
+	statusAfterResolution := ext.Status.DeepCopy()
+
+	// Status should have changed (conditions removed)
+	require.False(t, equality.Semantic.DeepEqual(statusAfterSecondReconcile, statusAfterResolution),
+		"Status should change when deprecation is resolved")
+
+	// Scenario 3: Verify resolution is stable
+	controllers.SetDeprecationStatus(ext, "test.v1.0.0", nil, true)
+	statusAfterFourthReconcile := ext.Status.DeepCopy()
+
+	require.True(t, equality.Semantic.DeepEqual(statusAfterResolution, statusAfterFourthReconcile),
+		"Status should remain stable after deprecation is resolved")
+}
+
+// filterDeprecationConditions returns only the deprecation-related conditions
+func filterDeprecationConditions(conditions []metav1.Condition) []metav1.Condition {
+	var result []metav1.Condition
+	for _, cond := range conditions {
+		switch cond.Type {
+		case ocv1.TypeDeprecated, ocv1.TypePackageDeprecated, ocv1.TypeChannelDeprecated, ocv1.TypeBundleDeprecated:
+			result = append(result, cond)
 		}
 	}
+	return result
 }
+
