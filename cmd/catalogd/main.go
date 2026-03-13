@@ -134,7 +134,7 @@ func init() {
 	flags.StringVar(&cfg.certFile, "tls-cert", "", "Certificate file for TLS")
 	flags.StringVar(&cfg.keyFile, "tls-key", "", "Key file for TLS")
 	flags.IntVar(&cfg.webhookPort, "webhook-server-port", 9443, "Webhook server port")
-	flag.StringVar(&cfg.pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authoritiess to use for verifying HTTPS copullCasDirnnections to image registries.")
+	flags.StringVar(&cfg.pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to image registries.")
 	flags.StringVar(&cfg.globalPullSecret, "global-pull-secret", "", "Global pull secret (<namespace>/<name>)")
 
 	// adds version subcommand
