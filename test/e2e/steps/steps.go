@@ -90,6 +90,12 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource apply fails with error msg containing "([^"]+)"$`, ResourceApplyFails)
 	sc.Step(`^(?i)resource "([^"]+)" is eventually restored$`, ResourceRestored)
 	sc.Step(`^(?i)resource "([^"]+)" matches$`, ResourceMatches)
+	sc.Step(`^(?i)user performs rollout restart on "([^"]+)"$`, UserPerformsRolloutRestart)
+	sc.Step(`^(?i)deployment "([^"]+)" has restart annotation$`, DeploymentHasRestartAnnotation)
+	sc.Step(`^(?i)deployment "([^"]+)" rollout is progressing$`, DeploymentRolloutIsProgressing)
+	sc.Step(`^(?i)deployment "([^"]+)" rollout is complete$`, DeploymentRolloutIsComplete)
+	sc.Step(`^(?i)deployment "([^"]+)" has (\d+) replica sets?$`, DeploymentHasReplicaSets)
+	sc.Step(`^(?i)ClusterExtension reconciliation is triggered$`, TriggerClusterExtensionReconciliation)
 
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
@@ -1308,4 +1314,201 @@ func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterExtensionRev
 	}
 
 	return latest, nil
+}
+
+// UserPerformsRolloutRestart simulates a user running "kubectl rollout restart deployment/<name>".
+// This adds a restart annotation to trigger a rolling restart of pods.
+// This is used to test the generic fix - OLM should not undo ANY user-added annotations.
+// In OLMv0, OLM would undo this change. In OLMv1, it should stay because kubectl owns it.
+// See: https://github.com/operator-framework/operator-lifecycle-manager/issues/3392
+func UserPerformsRolloutRestart(ctx context.Context, resourceName string) error {
+	sc := scenarioCtx(ctx)
+	resourceName = substituteScenarioVars(resourceName, sc)
+
+	kind, deploymentName, ok := strings.Cut(resourceName, "/")
+	if !ok {
+		return fmt.Errorf("invalid resource name format: %q (expected kind/name)", resourceName)
+	}
+
+	if kind != "deployment" {
+		return fmt.Errorf("only deployment resources are supported for restart annotation, got: %q", kind)
+	}
+
+	// Run kubectl rollout restart to add the restart annotation.
+	// This is the real command users run, so we test actual user behavior.
+	out, err := k8sClient("rollout", "restart", resourceName, "-n", sc.namespace)
+	if err != nil {
+		return fmt.Errorf("failed to rollout restart %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
+	}
+
+	logger.V(1).Info("Rollout restart initiated", "deployment", deploymentName, "output", out)
+
+	return nil
+}
+
+// DeploymentHasRestartAnnotation waits for the deployment's pod template to have
+// the kubectl.kubernetes.io/restartedAt annotation. Uses JSON parsing to avoid
+// JSONPath issues with dots in annotation keys. Polls with timeout.
+func DeploymentHasRestartAnnotation(ctx context.Context, deploymentName string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	restartAnnotationKey := "kubectl.kubernetes.io/restartedAt"
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var d appsv1.Deployment
+		if err := json.Unmarshal([]byte(out), &d); err != nil {
+			return false
+		}
+		if v, found := d.Spec.Template.Annotations[restartAnnotationKey]; found {
+			logger.V(1).Info("Restart annotation found", "deployment", deploymentName, "restartedAt", v)
+			return true
+		}
+		logger.V(1).Info("Restart annotation not yet present", "deployment", deploymentName, "annotations", d.Spec.Template.Annotations)
+		return false
+	})
+	return nil
+}
+
+// TriggerClusterExtensionReconciliation patches the ClusterExtension spec to bump
+// its metadata generation, forcing the controller to run a full reconciliation loop.
+// Use with "ClusterExtension has been reconciled the latest generation" to confirm
+// the controller processed the change before asserting on the cluster state.
+func TriggerClusterExtensionReconciliation(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+	// Patch the spec with a harmless reconcileRequests entry that includes a
+	// unique timestamp. Any spec change will bump .metadata.generation, which
+	// the controller should observe and reconcile.
+	payload := fmt.Sprintf(`{"spec":{"reconcileRequests":[%d]}}`, time.Now().UnixNano())
+	_, err := k8sClient("patch", "clusterextension", sc.clusterExtensionName,
+		"--type=merge",
+		"-p", payload)
+	if err != nil {
+		return fmt.Errorf("failed to trigger reconciliation for ClusterExtension %s: %w; stderr: %s", sc.clusterExtensionName, err, stderrOutput(err))
+	}
+	return nil
+}
+
+// DeploymentRolloutIsProgressing verifies that a deployment rollout is in progress.
+// This checks that a new ReplicaSet has been created after the rollout restart.
+func DeploymentRolloutIsProgressing(ctx context.Context, deploymentName string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("rollout", "status", "deployment/"+deploymentName, "-n", sc.namespace, "--watch=false")
+		if err != nil {
+			return false
+		}
+		// Check if rollout is in progress (not complete yet)
+		if strings.Contains(out, "Waiting") || strings.Contains(out, "has been updated") {
+			logger.V(1).Info("Rollout is progressing", "deployment", deploymentName, "status", out)
+			return true
+		}
+		return false
+	})
+	return nil
+}
+
+// DeploymentRolloutIsComplete verifies that a deployment rollout has completed successfully.
+// This ensures the new ReplicaSet is fully scaled up and the old one is scaled down.
+func DeploymentRolloutIsComplete(ctx context.Context, deploymentName string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("rollout", "status", "deployment/"+deploymentName, "-n", sc.namespace, "--watch=false")
+		if err != nil {
+			logger.V(1).Info("Failed to get rollout status", "deployment", deploymentName, "error", err)
+			return false
+		}
+		// Successful rollout shows "successfully rolled out"
+		if strings.Contains(out, "successfully rolled out") {
+			logger.V(1).Info("Rollout completed successfully", "deployment", deploymentName)
+			return true
+		}
+		logger.V(1).Info("Rollout not yet complete", "deployment", deploymentName, "status", out)
+		return false
+	})
+	return nil
+}
+
+// DeploymentHasReplicaSets verifies that a deployment has the expected number of ReplicaSets
+// and that the latest one is active with pods running.
+func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expectedCountStr string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	expectedCount := 2 // Default to 2 (original + restarted)
+	if n, err := fmt.Sscanf(expectedCountStr, "%d", &expectedCount); err != nil || n != 1 {
+		logger.V(1).Info("Failed to parse expected count, using default", "input", expectedCountStr, "default", 2)
+		expectedCount = 2
+	}
+
+	waitFor(ctx, func() bool {
+		// First, get the deployment to find its selector labels
+		deploymentOut, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			logger.V(1).Info("Failed to get deployment", "deployment", deploymentName, "error", err)
+			return false
+		}
+
+		var deployment appsv1.Deployment
+		if err := json.Unmarshal([]byte(deploymentOut), &deployment); err != nil {
+			logger.V(1).Info("Failed to parse deployment", "error", err)
+			return false
+		}
+
+		// Get all ReplicaSets owned by this deployment using ownerReferences
+		out, err := k8sClient("get", "rs", "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			logger.V(1).Info("Failed to get ReplicaSets", "deployment", deploymentName, "error", err)
+			return false
+		}
+
+		var allRsList struct {
+			Items []appsv1.ReplicaSet `json:"items"`
+		}
+		if err := json.Unmarshal([]byte(out), &allRsList); err != nil {
+			logger.V(1).Info("Failed to parse ReplicaSets", "error", err)
+			return false
+		}
+
+		// Filter ReplicaSets owned by this deployment
+		var rsList []appsv1.ReplicaSet
+		for _, rs := range allRsList.Items {
+			for _, owner := range rs.OwnerReferences {
+				if owner.Kind == "Deployment" && owner.Name == deploymentName {
+					rsList = append(rsList, rs)
+					break
+				}
+			}
+		}
+
+		if len(rsList) < expectedCount {
+			logger.V(1).Info("Not enough ReplicaSets yet", "deployment", deploymentName, "current", len(rsList), "expected", expectedCount)
+			return false
+		}
+
+		// Verify at least one ReplicaSet has active replicas
+		hasActiveRS := false
+		for _, rs := range rsList {
+			if rs.Status.Replicas > 0 && rs.Status.ReadyReplicas > 0 {
+				hasActiveRS = true
+				logger.V(1).Info("Found active ReplicaSet", "name", rs.Name, "replicas", rs.Status.Replicas, "ready", rs.Status.ReadyReplicas)
+			}
+		}
+
+		if !hasActiveRS {
+			logger.V(1).Info("No active ReplicaSet found yet", "deployment", deploymentName)
+			return false
+		}
+
+		logger.V(1).Info("ReplicaSet verification passed", "deployment", deploymentName, "count", len(rsList))
+		return true
+	})
+	return nil
 }
