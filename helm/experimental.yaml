@@ -30,6 +30,7 @@ options:
     features:
       enabled:
         - APIV1MetasHandler
+        - GraphQLCatalogQueries
       disabled: []
 # This can be one of: standard or experimental
   featureSet: experimental

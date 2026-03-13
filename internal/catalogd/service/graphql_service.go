@@ -7,8 +7,11 @@ import (
 	"sync"
 
 	"github.com/graphql-go/graphql"
-	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
+	"golang.org/x/sync/singleflight"
+
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
+
+	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
 )
 
 // GraphQLService handles GraphQL schema generation and query execution for catalogs
@@ -27,6 +30,7 @@ type GraphQLService interface {
 type CachedGraphQLService struct {
 	schemaMux   sync.RWMutex
 	schemaCache map[string]*gql.DynamicSchema
+	buildGroup  singleflight.Group // Prevents duplicate concurrent schema builds
 }
 
 // NewCachedGraphQLService creates a new GraphQL service with caching
@@ -46,24 +50,40 @@ func (s *CachedGraphQLService) GetSchema(catalog string, catalogFS fs.FS) (*gql.
 	}
 	s.schemaMux.RUnlock()
 
-	// Schema not in cache, build it
-	dynamicSchema, err := buildSchemaFromFS(catalogFS)
+	// Use singleflight to prevent duplicate concurrent builds for the same catalog
+	result, err, _ := s.buildGroup.Do(catalog, func() (interface{}, error) {
+		// Double-check cache after acquiring singleflight lock
+		s.schemaMux.RLock()
+		if cachedSchema, ok := s.schemaCache[catalog]; ok {
+			s.schemaMux.RUnlock()
+			return cachedSchema, nil
+		}
+		s.schemaMux.RUnlock()
+
+		// Schema not in cache, build it
+		dynamicSchema, err := buildSchemaFromFS(catalogFS)
+		if err != nil {
+			return nil, err
+		}
+
+		// Cache the result (write lock)
+		s.schemaMux.Lock()
+		s.schemaCache[catalog] = dynamicSchema
+		s.schemaMux.Unlock()
+
+		return dynamicSchema, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	// Cache the result (write lock)
-	s.schemaMux.Lock()
-	s.schemaCache[catalog] = dynamicSchema
-	s.schemaMux.Unlock()
-
-	return dynamicSchema, nil
+	return result.(*gql.DynamicSchema), nil
 }
 
 // ExecuteQuery executes a GraphQL query against a catalog
 func (s *CachedGraphQLService) ExecuteQuery(catalog string, catalogFS fs.FS, query string) (*graphql.Result, error) {
-	// Get or build the schema
-	// TODO: prevent cache rebuild on this callpath
+	// Get or build the schema (uses cache and singleflight)
 	dynamicSchema, err := s.GetSchema(catalog, catalogFS)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get GraphQL schema: %w", err)
@@ -89,17 +109,29 @@ func (s *CachedGraphQLService) InvalidateCache(catalog string) {
 func buildSchemaFromFS(catalogFS fs.FS) (*gql.DynamicSchema, error) {
 	var metas []*declcfg.Meta
 	var metasMux sync.Mutex
+	var walkErr error
 
 	// Collect all metas from the catalog filesystem
-	// WalkMetasFS walks the filesystem concurrently, so we need to protect the metas slice
+	// WalkMetasFS walks the filesystem concurrently, so we need to protect the metas slice and error
 	err := declcfg.WalkMetasFS(context.Background(), catalogFS, func(path string, meta *declcfg.Meta, err error) error {
+		metasMux.Lock()
+		defer metasMux.Unlock()
+
 		if err != nil {
+			// Set shared error so other goroutines can check
+			if walkErr == nil {
+				walkErr = err
+			}
 			return err
 		}
+
+		// If an error has already occurred, skip further mutation
+		if walkErr != nil {
+			return walkErr
+		}
+
 		if meta != nil {
-			metasMux.Lock()
 			metas = append(metas, meta)
-			metasMux.Unlock()
 		}
 		return nil
 	})
