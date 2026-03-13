@@ -45,7 +45,7 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 	configDir := t.TempDir()
 	policyPath := filepath.Join(configDir, "policy.json")
 	insecurePolicy := `{"default":[{"type":"insecureAcceptAnything"}]}`
-	require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0644))
+	require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0600))
 
 	defaultContextFunc := func(context.Context) (*types.SystemContext, error) {
 		return &types.SystemContext{SignaturePolicyPath: policyPath}, nil
@@ -311,7 +311,7 @@ func buildSourceContextFunc(t *testing.T, ref reference.Named) func(context.Cont
 		// that might reject unsigned images
 		policyPath := filepath.Join(configDir, "policy.json")
 		insecurePolicy := `{"default":[{"type":"insecureAcceptAnything"}]}`
-		require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0644))
+		require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0600))
 
 		return &types.SystemContext{
 			SystemRegistriesConfPath: registriesConfPath,

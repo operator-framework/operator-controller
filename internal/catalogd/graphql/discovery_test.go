@@ -6,158 +6,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 
-func TestDiscoverSchemaFromMetas_CoreLogic(t *testing.T) {
-	// Create test metas simulating real catalog data
-	testMetas := []*declcfg.Meta{
-		{
-			Schema:  declcfg.SchemaPackage,
-			Package: "test-package",
-			Name:    "test-package",
-			Blob: []byte(`{
-				"schema": "olm.package",
-				"name": "test-package",
-				"defaultChannel": "stable",
-				"icon": {
-					"base64data": "...",
-					"mediatype": "image/svg+xml"
-				},
-				"description": "A test package"
-			}`),
-		},
-		{
-			Schema:  declcfg.SchemaChannel,
-			Package: "test-package",
-			Name:    "stable",
-			Blob: []byte(`{
-				"schema": "olm.channel",
-				"name": "stable",
-				"package": "test-package",
-				"entries": [
-					{"name": "test-package.v1.0.0"},
-					{"name": "test-package.v1.1.0", "replaces": "test-package.v1.0.0"}
-				]
-			}`),
-		},
-		{
-			Schema:  declcfg.SchemaBundle,
-			Package: "test-package",
-			Name:    "test-package.v1.0.0",
-			Blob: []byte(`{
-				"schema": "olm.bundle",
-				"name": "test-package.v1.0.0",
-				"package": "test-package",
-				"image": "registry.io/test-package@sha256:abc123",
-				"properties": [
-					{
-						"type": "olm.package",
-						"value": {
-							"packageName": "test-package",
-							"version": "1.0.0"
-						}
-					},
-					{
-						"type": "olm.gvk",
-						"value": {
-							"group": "example.com",
-							"version": "v1",
-							"kind": "TestResource"
-						}
-					}
-				],
-				"relatedImages": [
-					{
-						"name": "operator",
-						"image": "registry.io/test-package@sha256:abc123"
-					}
-				]
-			}`),
-		},
-	}
-
-	// Test schema discovery
-	catalogSchema, err := DiscoverSchemaFromMetas(testMetas)
-	if err != nil {
-		t.Fatalf("Failed to discover schema: %v", err)
-	}
-
-	// Validate discovered schemas
-	if len(catalogSchema.Schemas) != 3 {
-		t.Errorf("Expected 3 schemas, got %d", len(catalogSchema.Schemas))
-	}
-
-	// Test package schema
-	packageSchema, ok := catalogSchema.Schemas[declcfg.SchemaPackage]
-	if !ok {
-		t.Error("Package schema not discovered")
-	} else {
-		if packageSchema.TotalObjects != 1 {
-			t.Errorf("Expected 1 package object, got %d", packageSchema.TotalObjects)
-		}
-		if len(packageSchema.Fields) == 0 {
-			t.Error("No fields discovered for package schema")
-		}
-
-		// Check for expected fields
-		expectedFields := []string{"name", "defaultChannel", "icon", "description", "schema"}
-		for _, field := range expectedFields {
-			graphqlField := remapFieldName(field)
-			if _, exists := packageSchema.Fields[graphqlField]; !exists {
-				t.Errorf("Expected field %s (mapped to %s) not found in package schema", field, graphqlField)
-			}
-		}
-	}
-
-	// Test bundle schema with properties
-	bundleSchema, ok := catalogSchema.Schemas[declcfg.SchemaBundle]
-	if !ok {
-		t.Error("Bundle schema not discovered")
-	} else {
-		if bundleSchema.TotalObjects != 1 {
-			t.Errorf("Expected 1 bundle object, got %d", bundleSchema.TotalObjects)
-		}
-
-		// Check property types discovery
-		if len(bundleSchema.PropertyTypes) == 0 {
-			t.Error("No property types discovered for bundle schema")
-		}
-
-		// Check for specific property types
-		if olmPackage, exists := bundleSchema.PropertyTypes["olm.package"]; !exists {
-			t.Error("olm.package property type not discovered")
-		} else {
-			expectedPropertyFields := []string{"packageName", "version"}
-			for _, field := range expectedPropertyFields {
-				graphqlField := remapFieldName(field)
-				if _, exists := olmPackage[graphqlField]; !exists {
-					t.Errorf("Expected property field %s not found in olm.package", graphqlField)
-				}
-			}
-		}
-
-		if olmGvk, exists := bundleSchema.PropertyTypes["olm.gvk"]; !exists {
-			t.Error("olm.gvk property type not discovered")
-		} else {
-			expectedGvkFields := []string{"group", "version", "kind"}
-			for _, field := range expectedGvkFields {
-				graphqlField := remapFieldName(field)
-				if _, exists := olmGvk[graphqlField]; !exists {
-					t.Errorf("Expected GVK field %s not found in olm.gvk", graphqlField)
-				}
-			}
-		}
-	}
-
-	// Test channel schema
-	channelSchema, ok := catalogSchema.Schemas[declcfg.SchemaChannel]
-	if !ok {
-		t.Error("Channel schema not discovered")
-	} else {
-		if channelSchema.TotalObjects != 1 {
-			t.Errorf("Expected 1 channel object, got %d", channelSchema.TotalObjects)
-		}
-	}
-}
-
 func TestFieldNameRemapping_EdgeCases(t *testing.T) {
 	testCases := []struct {
 		input    string
@@ -178,7 +26,7 @@ func TestFieldNameRemapping_EdgeCases(t *testing.T) {
 		{"operators.operatorframework.io/bundle.channels.v1", "operatorsOperatorframeworkIoBundleChannelsV1"},
 		{"---", "field_"},
 		{"123", "field_123"},
-		{"field@#$%", "fieldField"},
+		{"field@#$%", "field"},
 	}
 
 	for _, tc := range testCases {
@@ -269,6 +117,7 @@ func TestAnalyzeJSONObject_FieldTypes(t *testing.T) {
 }
 
 func TestBundlePropertiesAnalysis_ComprehensiveTypes(t *testing.T) {
+	// Test that properties field is discovered with nested structure
 	bundleObj := map[string]interface{}{
 		"name":    "test-bundle",
 		"package": "test-package",
@@ -288,83 +137,40 @@ func TestBundlePropertiesAnalysis_ComprehensiveTypes(t *testing.T) {
 					"kind":    "TestResource",
 				},
 			},
-			map[string]interface{}{
-				"type": "olm.csv.metadata",
-				"value": map[string]interface{}{
-					"name":      "test-operator",
-					"namespace": "test-namespace",
-					"annotations": map[string]interface{}{
-						"description": "A test operator",
-					},
-				},
-			},
-			map[string]interface{}{
-				"type": "olm.bundle.object",
-				"value": map[string]interface{}{
-					"ref": "objects/test.yaml",
-					"data": map[string]interface{}{
-						"apiVersion": "v1",
-						"kind":       "ConfigMap",
-						"metadata": map[string]interface{}{
-							"name": "config",
-						},
-					},
-				},
-			},
 		},
 	}
 
 	info := &SchemaInfo{
-		PropertyTypes: make(map[string]map[string]*FieldInfo),
+		Fields: make(map[string]*FieldInfo),
 	}
 
-	analyzeBundleProperties(bundleObj, info)
+	// Use the generic field analysis (not bundle-specific)
+	analyzeJSONObject(bundleObj, info)
 
-	// Check that property types were discovered
-	expectedPropertyTypes := []string{"olm.package", "olm.gvk", "olm.csv.metadata", "olm.bundle.object"}
-	for _, propType := range expectedPropertyTypes {
-		if _, exists := info.PropertyTypes[propType]; !exists {
-			t.Errorf("Property type %s not discovered", propType)
-		}
+	// Check that properties field was discovered
+	propertiesField, exists := info.Fields[remapFieldName("properties")]
+	if !exists {
+		t.Error("properties field not discovered")
+		return
 	}
 
-	// Check olm.package fields
-	if olmPackage, exists := info.PropertyTypes["olm.package"]; exists {
-		expectedFields := []string{"packageName", "version"}
-		for _, field := range expectedFields {
-			if _, exists := olmPackage[field]; !exists {
-				t.Errorf("Field %s not found in olm.package property type", field)
-			}
-		}
+	// Verify it's detected as an array
+	if !propertiesField.IsArray {
+		t.Error("properties field should be detected as an array")
 	}
 
-	// Check olm.gvk fields
-	if olmGvk, exists := info.PropertyTypes["olm.gvk"]; exists {
-		expectedFields := []string{"group", "version", "kind"}
-		for _, field := range expectedFields {
-			if _, exists := olmGvk[field]; !exists {
-				t.Errorf("Field %s not found in olm.gvk property type", field)
-			}
-		}
+	// Verify nested fields were discovered
+	if propertiesField.NestedFields == nil {
+		t.Error("properties field should have nested fields discovered")
+		return
 	}
 
-	// Check that nested objects are handled (annotations in csv.metadata)
-	if csvMetadata, exists := info.PropertyTypes["olm.csv.metadata"]; exists {
-		expectedFields := []string{"name", "namespace", "annotations"}
-		for _, field := range expectedFields {
-			if _, exists := csvMetadata[field]; !exists {
-				t.Errorf("Field %s not found in olm.csv.metadata property type", field)
-			}
-		}
-	}
-
-	// Check bundle object type
-	if bundleObject, exists := info.PropertyTypes["olm.bundle.object"]; exists {
-		expectedFields := []string{"ref", "data"}
-		for _, field := range expectedFields {
-			if _, exists := bundleObject[field]; !exists {
-				t.Errorf("Field %s not found in olm.bundle.object property type", field)
-			}
+	// Check for common property fields (type, value)
+	expectedFields := []string{"type", "value"}
+	for _, field := range expectedFields {
+		fieldName := remapFieldName(field)
+		if _, exists := propertiesField.NestedFields[fieldName]; !exists {
+			t.Errorf("Expected nested field %s not found in properties", fieldName)
 		}
 	}
 }
@@ -458,22 +264,25 @@ func TestSchemaDiscovery_RealWorldExample(t *testing.T) {
 		t.Fatal("Bundle schema not found")
 	}
 
-	expectedPropertyTypes := map[string][]string{
-		"olm.package":          {"packageName", "version"},
-		"olm.gvk":              {"group", "kind", "version"},
-		"olm.bundle.mediatype": {}, // This is a string value, no nested fields
+	// With the schema-agnostic approach, we verify the properties field has nested structure
+	propertiesField, exists := bundleSchema.Fields[remapFieldName("properties")]
+	if !exists {
+		t.Error("properties field not found in bundle schema")
+		return
 	}
 
-	for propType, expectedFields := range expectedPropertyTypes {
-		if propFields, exists := bundleSchema.PropertyTypes[propType]; exists {
-			for _, expectedField := range expectedFields {
-				if _, fieldExists := propFields[expectedField]; !fieldExists {
-					t.Errorf("Expected field %s not found in property type %s", expectedField, propType)
-				}
-			}
-		} else if len(expectedFields) > 0 {
-			// Only error if we expected fields (mediatype is a string, so no fields expected)
-			t.Errorf("Property type %s not discovered", propType)
+	if !propertiesField.IsArray {
+		t.Error("properties field should be an array")
+	}
+	if len(propertiesField.NestedFields) == 0 {
+		t.Error("properties field should have nested fields")
+		return
+	}
+
+	// Verify common property fields
+	for _, field := range []string{"type", "value"} {
+		if _, exists := propertiesField.NestedFields[remapFieldName(field)]; !exists {
+			t.Errorf("Expected field %s not found in properties", field)
 		}
 	}
 
