@@ -15,10 +15,24 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
+	"k8s.io/klog/v2"
 
 	"github.com/operator-framework/operator-controller/internal/catalogd/server"
 	"github.com/operator-framework/operator-controller/internal/catalogd/service"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
+)
+
+// Re-export enum types and constants from server package for convenience
+type (
+	MetasHandlerMode   = server.MetasHandlerMode
+	GraphQLQueriesMode = server.GraphQLQueriesMode
+)
+
+const (
+	MetasHandlerDisabled   = server.MetasHandlerDisabled
+	MetasHandlerEnabled    = server.MetasHandlerEnabled
+	GraphQLQueriesDisabled = server.GraphQLQueriesDisabled
+	GraphQLQueriesEnabled  = server.GraphQLQueriesEnabled
 )
 
 // LocalDirV1 is a storage Instance. When Storing a new FBC contained in
@@ -27,9 +41,10 @@ import (
 // done so that clients accessing the content stored in RootDir/<catalogName>.json1
 // have an atomic view of the content for a catalog.
 type LocalDirV1 struct {
-	RootDir            string
-	RootURL            *url.URL
-	EnableMetasHandler bool
+	RootDir              string
+	RootURL              *url.URL
+	EnableMetasHandler   MetasHandlerMode
+	EnableGraphQLQueries GraphQLQueriesMode
 
 	m sync.RWMutex
 	// this singleflight Group is used in `GetIndex()` to handle concurrent HTTP requests
@@ -50,12 +65,13 @@ var (
 )
 
 // NewLocalDirV1 creates a new LocalDirV1 storage instance
-func NewLocalDirV1(rootDir string, rootURL *url.URL, enableMetasHandler bool) *LocalDirV1 {
+func NewLocalDirV1(rootDir string, rootURL *url.URL, enableMetasHandler MetasHandlerMode, enableGraphQLQueries GraphQLQueriesMode) *LocalDirV1 {
 	return &LocalDirV1{
-		RootDir:            rootDir,
-		RootURL:            rootURL,
-		EnableMetasHandler: enableMetasHandler,
-		graphqlSvc:         service.NewCachedGraphQLService(),
+		RootDir:              rootDir,
+		RootURL:              rootURL,
+		EnableMetasHandler:   enableMetasHandler,
+		EnableGraphQLQueries: enableGraphQLQueries,
+		graphqlSvc:           service.NewCachedGraphQLService(),
 	}
 }
 
@@ -129,12 +145,16 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 		return err
 	}
 
-	// Invalidate GraphQL schema cache for this catalog
-	s.graphqlSvc.InvalidateCache(catalog)
+	// Invalidate and pre-warm GraphQL schema cache if GraphQL service is enabled
+	if s.graphqlSvc != nil {
+		s.graphqlSvc.InvalidateCache(catalog)
 
-	// Pre-warm the GraphQL schema cache
-	if _, err := s.graphqlSvc.GetSchema(catalog, fsys); err != nil {
-		return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q, %v", catalog, err)
+		// Pre-warm the GraphQL schema cache using the newly created catalog directory
+		// Use the actual catalog directory filesystem, not the input fsys
+		catalogFS := os.DirFS(catalogDir)
+		if _, err := s.graphqlSvc.GetSchema(catalog, catalogFS); err != nil {
+			return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q: %w", catalog, err)
+		}
 	}
 
 	return nil
@@ -168,8 +188,10 @@ func (s *LocalDirV1) Delete(catalog string) error {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	// Invalidate GraphQL cache
-	s.graphqlSvc.InvalidateCache(catalog)
+	// Invalidate GraphQL cache if service is enabled
+	if s.graphqlSvc != nil {
+		s.graphqlSvc.InvalidateCache(catalog)
+	}
 
 	return os.RemoveAll(s.catalogDir(catalog))
 }
@@ -249,7 +271,7 @@ func (s *LocalDirV1) BaseURL(catalog string) string {
 // StorageServerHandler returns an HTTP handler for serving catalog content
 // This implements the Instance interface for backward compatibility
 func (s *LocalDirV1) StorageServerHandler() http.Handler {
-	handlers := server.NewCatalogHandlers(s, s.graphqlSvc, s.RootURL, s.EnableMetasHandler)
+	handlers := server.NewCatalogHandlers(s, s.graphqlSvc, s.RootURL, s.EnableMetasHandler, s.EnableGraphQLQueries)
 	return handlers.Handler()
 }
 
@@ -265,7 +287,9 @@ func (s *LocalDirV1) GetCatalogData(catalog string) (*os.File, os.FileInfo, erro
 	}
 	catalogFileStat, err := catalogFile.Stat()
 	if err != nil {
-		catalogFile.Close()
+		if closeErr := catalogFile.Close(); closeErr != nil {
+			klog.ErrorS(closeErr, "failed to close catalog file after stat error")
+		}
 		return nil, nil, err
 	}
 	return catalogFile, catalogFileStat, nil

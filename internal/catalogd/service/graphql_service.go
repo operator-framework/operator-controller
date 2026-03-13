@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"sync"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/graphql-go/graphql"
 	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -27,6 +29,7 @@ type GraphQLService interface {
 type CachedGraphQLService struct {
 	schemaMux   sync.RWMutex
 	schemaCache map[string]*gql.DynamicSchema
+	buildGroup  singleflight.Group // Prevents duplicate concurrent schema builds
 }
 
 // NewCachedGraphQLService creates a new GraphQL service with caching
@@ -46,24 +49,40 @@ func (s *CachedGraphQLService) GetSchema(catalog string, catalogFS fs.FS) (*gql.
 	}
 	s.schemaMux.RUnlock()
 
-	// Schema not in cache, build it
-	dynamicSchema, err := buildSchemaFromFS(catalogFS)
+	// Use singleflight to prevent duplicate concurrent builds for the same catalog
+	result, err, _ := s.buildGroup.Do(catalog, func() (interface{}, error) {
+		// Double-check cache after acquiring singleflight lock
+		s.schemaMux.RLock()
+		if cachedSchema, ok := s.schemaCache[catalog]; ok {
+			s.schemaMux.RUnlock()
+			return cachedSchema, nil
+		}
+		s.schemaMux.RUnlock()
+
+		// Schema not in cache, build it
+		dynamicSchema, err := buildSchemaFromFS(catalogFS)
+		if err != nil {
+			return nil, err
+		}
+
+		// Cache the result (write lock)
+		s.schemaMux.Lock()
+		s.schemaCache[catalog] = dynamicSchema
+		s.schemaMux.Unlock()
+
+		return dynamicSchema, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	// Cache the result (write lock)
-	s.schemaMux.Lock()
-	s.schemaCache[catalog] = dynamicSchema
-	s.schemaMux.Unlock()
-
-	return dynamicSchema, nil
+	return result.(*gql.DynamicSchema), nil
 }
 
 // ExecuteQuery executes a GraphQL query against a catalog
 func (s *CachedGraphQLService) ExecuteQuery(catalog string, catalogFS fs.FS, query string) (*graphql.Result, error) {
-	// Get or build the schema
-	// TODO: prevent cache rebuild on this callpath
+	// Get or build the schema (uses cache and singleflight)
 	dynamicSchema, err := s.GetSchema(catalog, catalogFS)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get GraphQL schema: %w", err)

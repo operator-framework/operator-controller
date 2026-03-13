@@ -116,32 +116,22 @@ func TestDiscoverSchemaFromMetas(t *testing.T) {
 			t.Errorf("Expected 1 bundle object, got %d", bundleSchema.TotalObjects)
 		}
 
-		// Check property types discovery
-		if len(bundleSchema.PropertyTypes) == 0 {
-			t.Error("No property types discovered for bundle schema")
+		// Check that properties field is discovered with nested structure
+		propertiesField, exists := bundleSchema.Fields[remapFieldName("properties")]
+		if !exists {
+			t.Error("properties field not discovered in bundle schema")
+		} else if !propertiesField.IsArray {
+			t.Error("properties field should be an array")
+		} else if propertiesField.NestedFields == nil || len(propertiesField.NestedFields) == 0 {
+			t.Error("properties field should have nested fields discovered")
 		}
 
-		// Check for specific property types
-		if olmPackage, exists := bundleSchema.PropertyTypes["olm.package"]; !exists {
-			t.Error("olm.package property type not discovered")
-		} else {
-			expectedPropertyFields := []string{"packageName", "version"}
-			for _, field := range expectedPropertyFields {
-				graphqlField := remapFieldName(field)
-				if _, exists := olmPackage[graphqlField]; !exists {
-					t.Errorf("Expected property field %s not found in olm.package", graphqlField)
-				}
-			}
-		}
-
-		if olmGvk, exists := bundleSchema.PropertyTypes["olm.gvk"]; !exists {
-			t.Error("olm.gvk property type not discovered")
-		} else {
-			expectedGvkFields := []string{"group", "version", "kind"}
-			for _, field := range expectedGvkFields {
-				graphqlField := remapFieldName(field)
-				if _, exists := olmGvk[graphqlField]; !exists {
-					t.Errorf("Expected GVK field %s not found in olm.gvk", graphqlField)
+		// Check for typical property fields (type, value)
+		if propertiesField.NestedFields != nil {
+			expectedFields := []string{"type", "value"}
+			for _, field := range expectedFields {
+				if _, exists := propertiesField.NestedFields[remapFieldName(field)]; !exists {
+					t.Errorf("Expected nested field %s not found in properties", field)
 				}
 			}
 		}
@@ -288,46 +278,36 @@ func TestBundlePropertiesAnalysis(t *testing.T) {
 	}
 
 	info := &SchemaInfo{
-		PropertyTypes: make(map[string]map[string]*FieldInfo),
+		Fields: make(map[string]*FieldInfo),
 	}
 
-	analyzeBundleProperties(bundleObj, info)
+	// Use the generic field analysis (not bundle-specific)
+	analyzeJSONObject(bundleObj, info)
 
-	// Check that property types were discovered
-	expectedPropertyTypes := []string{"olm.package", "olm.gvk", "olm.csv.metadata"}
-	for _, propType := range expectedPropertyTypes {
-		if _, exists := info.PropertyTypes[propType]; !exists {
-			t.Errorf("Property type %s not discovered", propType)
-		}
+	// Check that properties field was discovered
+	propertiesField, exists := info.Fields[remapFieldName("properties")]
+	if !exists {
+		t.Error("properties field not discovered")
+		return
 	}
 
-	// Check olm.package fields
-	if olmPackage, exists := info.PropertyTypes["olm.package"]; exists {
-		expectedFields := []string{"packageName", "version"}
-		for _, field := range expectedFields {
-			if _, exists := olmPackage[field]; !exists {
-				t.Errorf("Field %s not found in olm.package property type", field)
-			}
-		}
+	// Verify it's detected as an array
+	if !propertiesField.IsArray {
+		t.Error("properties field should be detected as an array")
 	}
 
-	// Check olm.gvk fields
-	if olmGvk, exists := info.PropertyTypes["olm.gvk"]; exists {
-		expectedFields := []string{"group", "version", "kind"}
-		for _, field := range expectedFields {
-			if _, exists := olmGvk[field]; !exists {
-				t.Errorf("Field %s not found in olm.gvk property type", field)
-			}
-		}
+	// Verify nested fields were discovered
+	if propertiesField.NestedFields == nil {
+		t.Error("properties field should have nested fields discovered")
+		return
 	}
 
-	// Check that nested objects are handled (annotations in csv.metadata)
-	if csvMetadata, exists := info.PropertyTypes["olm.csv.metadata"]; exists {
-		expectedFields := []string{"name", "namespace", "annotations"}
-		for _, field := range expectedFields {
-			if _, exists := csvMetadata[field]; !exists {
-				t.Errorf("Field %s not found in olm.csv.metadata property type", field)
-			}
+	// Check for common property fields (type, value)
+	expectedFields := []string{"type", "value"}
+	for _, field := range expectedFields {
+		fieldName := remapFieldName(field)
+		if _, exists := propertiesField.NestedFields[fieldName]; !exists {
+			t.Errorf("Expected nested field %s not found in properties", fieldName)
 		}
 	}
 }

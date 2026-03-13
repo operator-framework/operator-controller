@@ -21,12 +21,29 @@ var errInvalidParams = errors.New("invalid parameters")
 
 const timeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
+// MetasHandlerMode controls whether the metas API endpoint is enabled
+type MetasHandlerMode bool
+
+const (
+	MetasHandlerDisabled MetasHandlerMode = false
+	MetasHandlerEnabled  MetasHandlerMode = true
+)
+
+// GraphQLQueriesMode controls whether GraphQL queries are enabled
+type GraphQLQueriesMode bool
+
+const (
+	GraphQLQueriesDisabled GraphQLQueriesMode = false
+	GraphQLQueriesEnabled  GraphQLQueriesMode = true
+)
+
 // CatalogHandlers handles HTTP requests for catalog content
 type CatalogHandlers struct {
-	store       CatalogStore
-	graphqlSvc  service.GraphQLService
-	rootURL     *url.URL
-	enableMetas bool
+	store         CatalogStore
+	graphqlSvc    service.GraphQLService
+	rootURL       *url.URL
+	enableMetas   MetasHandlerMode
+	enableGraphQL GraphQLQueriesMode
 }
 
 // Index provides methods for looking up catalog content by schema/package/name
@@ -47,12 +64,13 @@ type CatalogStore interface {
 }
 
 // NewCatalogHandlers creates a new HTTP handlers instance
-func NewCatalogHandlers(store CatalogStore, graphqlSvc service.GraphQLService, rootURL *url.URL, enableMetas bool) *CatalogHandlers {
+func NewCatalogHandlers(store CatalogStore, graphqlSvc service.GraphQLService, rootURL *url.URL, enableMetas MetasHandlerMode, enableGraphQL GraphQLQueriesMode) *CatalogHandlers {
 	return &CatalogHandlers{
-		store:       store,
-		graphqlSvc:  graphqlSvc,
-		rootURL:     rootURL,
-		enableMetas: enableMetas,
+		store:         store,
+		graphqlSvc:    graphqlSvc,
+		rootURL:       rootURL,
+		enableMetas:   enableMetas,
+		enableGraphQL: enableGraphQL,
 	}
 }
 
@@ -64,7 +82,9 @@ func (h *CatalogHandlers) Handler() http.Handler {
 	if h.enableMetas {
 		mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "metas").Path, h.handleV1Metas)
 	}
-	mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "graphql").Path, h.handleV1GraphQL)
+	if h.enableGraphQL {
+		mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "graphql").Path, h.handleV1GraphQL)
+	}
 
 	return allowedMethodsHandler(mux, http.MethodGet, http.MethodHead, http.MethodPost)
 }
@@ -140,6 +160,9 @@ func (h *CatalogHandlers) handleV1GraphQL(w http.ResponseWriter, r *http.Request
 	}
 
 	catalog := r.PathValue("catalog")
+
+	// Limit request body size to prevent memory exhaustion attacks (1MB limit)
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	// Parse GraphQL query from request body
 	var params struct {
