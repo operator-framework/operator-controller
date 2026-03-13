@@ -38,7 +38,8 @@ func TestLocalDirStoraget(t *testing.T) {
 				s := NewLocalDirV1(
 					t.TempDir(),
 					&url.URL{Scheme: "http", Host: "test-addr", Path: urlPrefix},
-					false,
+					MetasHandlerDisabled,
+					GraphQLQueriesDisabled,
 				)
 				return s, createTestFS(t)
 			},
@@ -77,7 +78,8 @@ func TestLocalDirStoraget(t *testing.T) {
 				s := NewLocalDirV1(
 					t.TempDir(),
 					nil,
-					true,
+					MetasHandlerEnabled,
+					GraphQLQueriesDisabled,
 				)
 				return s, createTestFS(t)
 			},
@@ -102,7 +104,7 @@ func TestLocalDirStoraget(t *testing.T) {
 			name: "concurrent reads during write should not cause data race",
 			setup: func(t *testing.T) (*LocalDirV1, fs.FS) {
 				dir := t.TempDir()
-				s := NewLocalDirV1(dir, nil, false)
+				s := NewLocalDirV1(dir, nil, MetasHandlerDisabled, GraphQLQueriesDisabled)
 				return s, createTestFS(t)
 			},
 			test: func(t *testing.T, s *LocalDirV1, fsys fs.FS) {
@@ -132,7 +134,7 @@ func TestLocalDirStoraget(t *testing.T) {
 		{
 			name: "delete nonexistent catalog",
 			setup: func(t *testing.T) (*LocalDirV1, fs.FS) {
-				return NewLocalDirV1(t.TempDir(), nil, false), nil
+				return NewLocalDirV1(t.TempDir(), nil, MetasHandlerDisabled, GraphQLQueriesDisabled), nil
 			},
 			test: func(t *testing.T, s *LocalDirV1, _ fs.FS) {
 				err := s.Delete("nonexistent")
@@ -214,7 +216,7 @@ func TestLocalDirStoraget(t *testing.T) {
 				if err := os.Chmod(dir, 0000); err != nil {
 					t.Fatal(err)
 				}
-				return NewLocalDirV1(dir, nil, false), createTestFS(t)
+				return NewLocalDirV1(dir, nil, MetasHandlerDisabled, GraphQLQueriesDisabled), createTestFS(t)
 			},
 			test: func(t *testing.T, s *LocalDirV1, fsys fs.FS) {
 				err := s.Store(context.Background(), "test-catalog", fsys)
@@ -241,7 +243,7 @@ func TestLocalDirStoraget(t *testing.T) {
 }
 
 func TestLocalDirServerHandler(t *testing.T) {
-	store := NewLocalDirV1(t.TempDir(), &url.URL{Path: urlPrefix}, false)
+	store := NewLocalDirV1(t.TempDir(), &url.URL{Path: urlPrefix}, MetasHandlerDisabled, GraphQLQueriesDisabled)
 	if store.Store(context.Background(), "test-catalog", createTestFS(t)) != nil {
 		t.Fatal("failed to store test catalog and start server")
 	}
@@ -345,7 +347,8 @@ func TestMetasEndpoint(t *testing.T) {
 	store := NewLocalDirV1(
 		t.TempDir(),
 		&url.URL{Path: urlPrefix},
-		true,
+		MetasHandlerEnabled,
+		GraphQLQueriesDisabled,
 	)
 	if store.Store(context.Background(), "test-catalog", createTestFS(t)) != nil {
 		t.Fatal("failed to store test catalog")
@@ -489,7 +492,8 @@ func TestServerLoadHandling(t *testing.T) {
 	store := NewLocalDirV1(
 		t.TempDir(),
 		&url.URL{Path: urlPrefix},
-		true,
+		MetasHandlerEnabled,
+		GraphQLQueriesDisabled,
 	)
 
 	// Create large test data
