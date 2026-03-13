@@ -12,21 +12,40 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/klog/v2"
 
 	"github.com/operator-framework/operator-controller/internal/catalogd/service"
 )
 
-var errInvalidParams = errors.New("invalid parameters")
+var (
+	errInvalidParams      = errors.New("invalid parameters")
+	errInvalidCatalogName = errors.New("invalid catalog name")
+)
 
-const timeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
+// MetasHandlerMode controls whether the metas API endpoint is enabled
+type MetasHandlerMode bool
+
+const (
+	MetasHandlerDisabled MetasHandlerMode = false
+	MetasHandlerEnabled  MetasHandlerMode = true
+)
+
+// GraphQLQueriesMode controls whether GraphQL queries are enabled
+type GraphQLQueriesMode bool
+
+const (
+	GraphQLQueriesDisabled GraphQLQueriesMode = false
+	GraphQLQueriesEnabled  GraphQLQueriesMode = true
+)
 
 // CatalogHandlers handles HTTP requests for catalog content
 type CatalogHandlers struct {
-	store       CatalogStore
-	graphqlSvc  service.GraphQLService
-	rootURL     *url.URL
-	enableMetas bool
+	store         CatalogStore
+	graphqlSvc    service.GraphQLService
+	rootURL       *url.URL
+	enableMetas   MetasHandlerMode
+	enableGraphQL GraphQLQueriesMode
 }
 
 // Index provides methods for looking up catalog content by schema/package/name
@@ -47,12 +66,13 @@ type CatalogStore interface {
 }
 
 // NewCatalogHandlers creates a new HTTP handlers instance
-func NewCatalogHandlers(store CatalogStore, graphqlSvc service.GraphQLService, rootURL *url.URL, enableMetas bool) *CatalogHandlers {
+func NewCatalogHandlers(store CatalogStore, graphqlSvc service.GraphQLService, rootURL *url.URL, enableMetas MetasHandlerMode, enableGraphQL GraphQLQueriesMode) *CatalogHandlers {
 	return &CatalogHandlers{
-		store:       store,
-		graphqlSvc:  graphqlSvc,
-		rootURL:     rootURL,
-		enableMetas: enableMetas,
+		store:         store,
+		graphqlSvc:    graphqlSvc,
+		rootURL:       rootURL,
+		enableMetas:   enableMetas,
+		enableGraphQL: enableGraphQL,
 	}
 }
 
@@ -64,7 +84,9 @@ func (h *CatalogHandlers) Handler() http.Handler {
 	if h.enableMetas {
 		mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "metas").Path, h.handleV1Metas)
 	}
-	mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "graphql").Path, h.handleV1GraphQL)
+	if h.enableGraphQL {
+		mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "graphql").Path, h.handleV1GraphQL)
+	}
 
 	return allowedMethodsHandler(mux, http.MethodGet, http.MethodHead, http.MethodPost)
 }
@@ -72,6 +94,10 @@ func (h *CatalogHandlers) Handler() http.Handler {
 // handleV1All serves the complete catalog content
 func (h *CatalogHandlers) handleV1All(w http.ResponseWriter, r *http.Request) {
 	catalog := r.PathValue("catalog")
+	if err := isValidCatalogName(catalog); err != nil {
+		httpError(w, err)
+		return
+	}
 	catalogFile, catalogStat, err := h.store.GetCatalogData(catalog)
 	if err != nil {
 		httpError(w, err)
@@ -85,6 +111,12 @@ func (h *CatalogHandlers) handleV1All(w http.ResponseWriter, r *http.Request) {
 
 // handleV1Metas serves filtered catalog content based on query parameters
 func (h *CatalogHandlers) handleV1Metas(w http.ResponseWriter, r *http.Request) {
+	catalog := r.PathValue("catalog")
+	if err := isValidCatalogName(catalog); err != nil {
+		httpError(w, err)
+		return
+	}
+
 	// Check for unexpected query parameters
 	expectedParams := map[string]bool{
 		"schema":  true,
@@ -98,8 +130,6 @@ func (h *CatalogHandlers) handleV1Metas(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	}
-
-	catalog := r.PathValue("catalog")
 	catalogFile, catalogStat, err := h.store.GetCatalogData(catalog)
 	if err != nil {
 		httpError(w, err)
@@ -140,6 +170,13 @@ func (h *CatalogHandlers) handleV1GraphQL(w http.ResponseWriter, r *http.Request
 	}
 
 	catalog := r.PathValue("catalog")
+	if err := isValidCatalogName(catalog); err != nil {
+		httpError(w, err)
+		return
+	}
+
+	// Limit request body size to prevent memory exhaustion attacks (1MB limit)
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	// Parse GraphQL query from request body
 	var params struct {
@@ -147,6 +184,16 @@ func (h *CatalogHandlers) handleV1GraphQL(w http.ResponseWriter, r *http.Request
 	}
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate query
+	if params.Query == "" {
+		http.Error(w, "Query cannot be empty", http.StatusBadRequest)
+		return
+	}
+	if len(params.Query) > 100000 { // 100KB limit
+		http.Error(w, "Query too large", http.StatusBadRequest)
 		return
 	}
 
@@ -174,19 +221,32 @@ func (h *CatalogHandlers) handleV1GraphQL(w http.ResponseWriter, r *http.Request
 // httpError writes an HTTP error response based on the error type
 func httpError(w http.ResponseWriter, err error) {
 	var code int
+	var message string
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
 		code = http.StatusNotFound
+		message = fmt.Sprintf("%d %s", code, http.StatusText(code))
 	case errors.Is(err, fs.ErrPermission):
 		code = http.StatusForbidden
+		message = fmt.Sprintf("%d %s", code, http.StatusText(code))
 	case errors.Is(err, errInvalidParams):
 		code = http.StatusBadRequest
+		message = fmt.Sprintf("%d %s", code, http.StatusText(code))
+	case errors.Is(err, errInvalidCatalogName):
+		code = http.StatusBadRequest
+		// Include detailed DNS1123 validation errors for better user feedback
+		message = err.Error()
 	default:
 		code = http.StatusInternalServerError
+		message = fmt.Sprintf("%d %s", code, http.StatusText(code))
 	}
-	// Log the actual error for debugging
-	klog.ErrorS(err, "HTTP error", "code", code)
-	http.Error(w, fmt.Sprintf("%d %s", code, http.StatusText(code)), code)
+	// Log 5xx errors at ERROR level, 4xx at INFO level
+	if code >= 500 {
+		klog.ErrorS(err, "HTTP error", "code", code)
+	} else {
+		klog.V(2).InfoS("HTTP client error", "code", code, "error", err.Error())
+	}
+	http.Error(w, message, code)
 }
 
 // serveJSONLines writes JSON lines content to the response
@@ -207,15 +267,30 @@ func serveJSONLines(w http.ResponseWriter, r *http.Request, rs io.Reader) {
 func allowedMethodsHandler(next http.Handler, allowedMethods ...string) http.Handler {
 	allowedMethodSet := sets.New[string](allowedMethods...)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Allow POST requests only for GraphQL endpoint
-		if !strings.HasSuffix(r.URL.Path, "graphql") && r.Method == http.MethodPost {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
-		}
-		if !allowedMethodSet.Has(r.Method) {
+		// Allow POST requests only for GraphQL endpoints (paths ending with /graphql)
+		if r.Method == http.MethodPost {
+			// Check if this is the GraphQL endpoint - must end with exactly "/api/v1/graphql"
+			if !strings.HasSuffix(r.URL.Path, "/api/v1/graphql") {
+				http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+				return
+			}
+		} else if !allowedMethodSet.Has(r.Method) {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// isValidCatalogName validates that a catalog name is safe for filesystem operations
+// and suitable for Kubernetes metadata.name by using DNS1123 subdomain validation.
+// Prevents path traversal attacks by requiring alphanumeric start/end characters.
+// Returns nil if valid, or an error with detailed DNS1123 validation messages if invalid.
+func isValidCatalogName(name string) error {
+	errs := validation.IsDNS1123Subdomain(name)
+	if len(errs) == 0 {
+		return nil
+	}
+	// Wrap errInvalidCatalogName to maintain errors.Is compatibility while adding details
+	return fmt.Errorf("%w: %s", errInvalidCatalogName, strings.Join(errs, "; "))
 }

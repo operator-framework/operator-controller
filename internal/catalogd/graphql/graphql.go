@@ -10,7 +10,17 @@ import (
 	"strings"
 
 	"github.com/graphql-go/graphql"
+
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
+)
+
+// Pre-compiled regex patterns to avoid repeated compilation in hot paths
+var (
+	invalidCharsRE           = regexp.MustCompile(`[^a-zA-Z0-9_]`)
+	consecutiveUnderscoresRE = regexp.MustCompile(`_+`)
+	startsWithLetterRE       = regexp.MustCompile(`^[a-zA-Z]`)
+	alphanumericOnlyRE       = regexp.MustCompile(`[^a-zA-Z0-9]`)
+	leadingDigitsRE          = regexp.MustCompile(`^[0-9]+`)
 )
 
 // FieldInfo represents discovered field information
@@ -20,14 +30,14 @@ type FieldInfo struct {
 	JSONType     reflect.Kind
 	IsArray      bool
 	SampleValues []interface{}
+	NestedFields map[string]*FieldInfo // For array-of-objects, stores object structure
 }
 
 // SchemaInfo holds discovered schema information
 type SchemaInfo struct {
-	Fields        map[string]*FieldInfo
-	PropertyTypes map[string]map[string]*FieldInfo // For bundle properties: type -> field -> info
-	TotalObjects  int
-	SampleObject  map[string]interface{}
+	Fields       map[string]*FieldInfo
+	TotalObjects int
+	SampleObject map[string]interface{}
 }
 
 // CatalogSchema holds the complete discovered schema
@@ -39,7 +49,12 @@ type CatalogSchema struct {
 type DynamicSchema struct {
 	Schema        graphql.Schema
 	CatalogSchema *CatalogSchema
-	MetasBySchema map[string][]*declcfg.Meta // For resolvers
+	ParsedObjects map[string][]map[string]interface{} // Pre-parsed JSON objects cached during schema build
+	// Performance optimization: ParsedObjects avoids json.Unmarshal on every GraphQL query.
+	// Objects are parsed once during schema build and cached for all subsequent queries.
+	// Memory cost: ~same as storing raw blobs (parsed maps ≈ JSON size in memory).
+	// For 1000 bundles @ 5KB each: ~5MB, same as raw metadata storage.
+	// Performance gain: Eliminates N × json.Unmarshal operations per query (where N = returned objects).
 }
 
 // remapFieldName converts field names to valid GraphQL camelCase identifiers
@@ -50,11 +65,10 @@ func remapFieldName(name string) string {
 	}
 
 	// Replace invalid characters with underscores
-	re := regexp.MustCompile(`[^a-zA-Z0-9_]`)
-	clean := re.ReplaceAllString(name, "_")
+	clean := invalidCharsRE.ReplaceAllString(name, "_")
 
 	// Collapse multiple consecutive underscores
-	clean = regexp.MustCompile(`_+`).ReplaceAllString(clean, "_")
+	clean = consecutiveUnderscoresRE.ReplaceAllString(clean, "_")
 
 	// Trim leading underscores only (keep trailing to detect them)
 	clean = strings.TrimLeft(clean, "_")
@@ -62,24 +76,14 @@ func remapFieldName(name string) string {
 	// Split on underscores and camelCase
 	parts := strings.Split(clean, "_")
 	result := ""
-	hasContent := false
-	for i, part := range parts {
+	isFirst := true
+	for _, part := range parts {
+		// Skip empty parts (from consecutive or trailing underscores)
 		if part == "" {
-			// If we have an empty part after having content, it means there was a trailing separator
-			// Add a capitalized version of the last word
-			if hasContent && i == len(parts)-1 {
-				// Get the base word (first non-empty part)
-				for _, p := range parts {
-					if p != "" {
-						result += strings.ToUpper(string(p[0])) + strings.ToLower(p[1:])
-						break
-					}
-				}
-			}
 			continue
 		}
-		hasContent = true
-		if i == 0 || result == "" {
+
+		if isFirst {
 			// For the first part, check if it's all uppercase
 			if strings.ToUpper(part) == part {
 				// If all uppercase, convert entirely to lowercase
@@ -88,6 +92,7 @@ func remapFieldName(name string) string {
 				// Otherwise, make only the first character lowercase
 				result = strings.ToLower(string(part[0])) + part[1:]
 			}
+			isFirst = false
 		} else {
 			// For subsequent parts, capitalize first letter, lowercase rest
 			result += strings.ToUpper(string(part[0])) + strings.ToLower(part[1:])
@@ -95,7 +100,7 @@ func remapFieldName(name string) string {
 	}
 
 	// Ensure it starts with a letter
-	if result == "" || !regexp.MustCompile(`^[a-zA-Z]`).MatchString(result) {
+	if result == "" || !startsWithLetterRE.MatchString(result) {
 		result = "field_" + result
 	}
 
@@ -128,6 +133,100 @@ func jsonTypeToGraphQL(jsonType reflect.Kind, isArray bool) graphql.Type {
 	return baseType
 }
 
+// determineFieldType determines the JSON type and array status of a value
+func determineFieldType(value interface{}) (reflect.Kind, bool) {
+	if value == nil {
+		return reflect.String, false
+	}
+
+	valueType := reflect.TypeOf(value)
+	if valueType.Kind() != reflect.Slice {
+		return valueType.Kind(), false
+	}
+
+	// Handle slice types
+	slice := reflect.ValueOf(value)
+	if slice.Len() == 0 {
+		return reflect.String, true
+	}
+
+	firstElem := slice.Index(0).Interface()
+	if firstElem == nil {
+		return reflect.String, true
+	}
+
+	return reflect.TypeOf(firstElem).Kind(), true
+}
+
+// analyzeFieldValue analyzes a field value and returns type info, sample value, and nested fields
+func analyzeFieldValue(value interface{}) (reflect.Kind, bool, interface{}, map[string]*FieldInfo) {
+	if value == nil {
+		return reflect.String, false, value, nil
+	}
+
+	valueType := reflect.TypeOf(value)
+	if valueType.Kind() != reflect.Slice {
+		return valueType.Kind(), false, value, nil
+	}
+
+	// Handle slice types
+	slice := reflect.ValueOf(value)
+	if slice.Len() == 0 {
+		return reflect.String, true, value, nil
+	}
+
+	firstElem := slice.Index(0).Interface()
+	if firstElem == nil {
+		return reflect.String, true, value, nil
+	}
+
+	jsonType := reflect.TypeOf(firstElem).Kind()
+
+	// If array element is an object, analyze its structure
+	var nestedFields map[string]*FieldInfo
+	if jsonType == reflect.Map {
+		if elemObj, ok := firstElem.(map[string]interface{}); ok {
+			nestedFields = analyzeNestedObject(elemObj)
+		}
+	}
+
+	return jsonType, true, firstElem, nestedFields
+}
+
+// analyzeNestedObject analyzes a nested object and returns its field structure
+func analyzeNestedObject(obj map[string]interface{}) map[string]*FieldInfo {
+	fields := make(map[string]*FieldInfo)
+
+	for key, value := range obj {
+		fieldName := remapFieldName(key)
+		jsonType, isArray := determineFieldType(value)
+
+		fields[fieldName] = &FieldInfo{
+			Name:         fieldName,
+			GraphQLType:  jsonTypeToGraphQL(jsonType, isArray),
+			JSONType:     jsonType,
+			IsArray:      isArray,
+			SampleValues: []interface{}{value},
+		}
+	}
+
+	return fields
+}
+
+// mergeNestedFields merges discovered nested fields into existing ones
+func mergeNestedFields(existing, new map[string]*FieldInfo) {
+	for fieldName, newInfo := range new {
+		if existingInfo, ok := existing[fieldName]; ok {
+			// Merge sample values
+			for _, sample := range newInfo.SampleValues {
+				existingInfo.SampleValues = appendUnique(existingInfo.SampleValues, sample)
+			}
+		} else {
+			existing[fieldName] = newInfo
+		}
+	}
+}
+
 // analyzeJSONObject analyzes a JSON object and extracts field information
 func analyzeJSONObject(obj map[string]interface{}, info *SchemaInfo) {
 	if info.Fields == nil {
@@ -137,127 +236,34 @@ func analyzeJSONObject(obj map[string]interface{}, info *SchemaInfo) {
 	for key, value := range obj {
 		fieldName := remapFieldName(key)
 
-		// Determine type and array status
-		isArray := false
-		var jsonType reflect.Kind
-		var sampleValue interface{} = value
-
-		if value == nil {
-			jsonType = reflect.String // Default for null values
-		} else {
-			valueType := reflect.TypeOf(value)
-			if valueType.Kind() == reflect.Slice {
-				isArray = true
-				slice := reflect.ValueOf(value)
-				if slice.Len() > 0 {
-					firstElem := slice.Index(0).Interface()
-					if firstElem != nil {
-						jsonType = reflect.TypeOf(firstElem).Kind()
-						sampleValue = firstElem
-					} else {
-						jsonType = reflect.String
-					}
-				} else {
-					jsonType = reflect.String
-				}
-			} else {
-				jsonType = valueType.Kind()
-			}
-		}
+		// Determine type, array status, sample value, and nested structure
+		jsonType, isArray, sampleValue, nestedFields := analyzeFieldValue(value)
 
 		// Update or create field info
-		if existing, ok := info.Fields[fieldName]; ok {
-			// Add sample value if not already present
-			existing.SampleValues = appendUnique(existing.SampleValues, sampleValue)
-		} else {
+		existing, ok := info.Fields[fieldName]
+		if !ok {
 			info.Fields[fieldName] = &FieldInfo{
 				Name:         fieldName,
 				GraphQLType:  jsonTypeToGraphQL(jsonType, isArray),
 				JSONType:     jsonType,
 				IsArray:      isArray,
 				SampleValues: []interface{}{sampleValue},
+				NestedFields: nestedFields,
 			}
-		}
-	}
-}
-
-// analyzeBundleProperties analyzes bundle properties for union type creation
-func analyzeBundleProperties(obj map[string]interface{}, info *SchemaInfo) {
-	if info.PropertyTypes == nil {
-		info.PropertyTypes = make(map[string]map[string]*FieldInfo)
-	}
-
-	properties, ok := obj["properties"]
-	if !ok {
-		return
-	}
-
-	propsSlice, ok := properties.([]interface{})
-	if !ok {
-		return
-	}
-
-	for _, prop := range propsSlice {
-		propObj, ok := prop.(map[string]interface{})
-		if !ok {
 			continue
 		}
 
-		propType, ok := propObj["type"].(string)
-		if !ok {
+		// Update existing field
+		existing.SampleValues = appendUnique(existing.SampleValues, sampleValue)
+
+		// Merge nested fields if discovered
+		if nestedFields == nil {
 			continue
 		}
-
-		value, ok := propObj["value"]
-		if !ok {
-			continue
-		}
-
-		// Analyze the value structure for this property type
-		if valueObj, ok := value.(map[string]interface{}); ok {
-			if info.PropertyTypes[propType] == nil {
-				info.PropertyTypes[propType] = make(map[string]*FieldInfo)
-			}
-
-			for key, val := range valueObj {
-				fieldName := remapFieldName(key)
-				isArray := false
-				var jsonType reflect.Kind
-
-				if val == nil {
-					jsonType = reflect.String
-				} else {
-					valType := reflect.TypeOf(val)
-					if valType.Kind() == reflect.Slice {
-						isArray = true
-						slice := reflect.ValueOf(val)
-						if slice.Len() > 0 {
-							firstElem := slice.Index(0).Interface()
-							if firstElem != nil {
-								jsonType = reflect.TypeOf(firstElem).Kind()
-							} else {
-								jsonType = reflect.String
-							}
-						} else {
-							jsonType = reflect.String
-						}
-					} else {
-						jsonType = valType.Kind()
-					}
-				}
-
-				if existing, ok := info.PropertyTypes[propType][fieldName]; ok {
-					existing.SampleValues = appendUnique(existing.SampleValues, val)
-				} else {
-					info.PropertyTypes[propType][fieldName] = &FieldInfo{
-						Name:         fieldName,
-						GraphQLType:  jsonTypeToGraphQL(jsonType, isArray),
-						JSONType:     jsonType,
-						IsArray:      isArray,
-						SampleValues: []interface{}{val},
-					}
-				}
-			}
+		if existing.NestedFields == nil {
+			existing.NestedFields = nestedFields
+		} else {
+			mergeNestedFields(existing.NestedFields, nestedFields)
 		}
 	}
 }
@@ -301,9 +307,8 @@ func DiscoverSchemaFromMetas(metas []*declcfg.Meta) (*CatalogSchema, error) {
 		// Ensure schema info exists
 		if catalogSchema.Schemas[meta.Schema] == nil {
 			catalogSchema.Schemas[meta.Schema] = &SchemaInfo{
-				Fields:        make(map[string]*FieldInfo),
-				PropertyTypes: make(map[string]map[string]*FieldInfo),
-				TotalObjects:  0,
+				Fields:       make(map[string]*FieldInfo),
+				TotalObjects: 0,
 			}
 		}
 
@@ -321,32 +326,56 @@ func DiscoverSchemaFromMetas(metas []*declcfg.Meta) (*CatalogSchema, error) {
 			info.SampleObject = obj
 		}
 
-		// Analyze general fields
+		// Analyze general fields (including nested structures)
 		analyzeJSONObject(obj, info)
-
-		// Special handling for bundle properties
-		if meta.Schema == declcfg.SchemaBundle {
-			analyzeBundleProperties(obj, info)
-		}
 	}
 
 	return catalogSchema, nil
 }
 
-// buildGraphQLObjectType creates a GraphQL object type from discovered field info
-func buildGraphQLObjectType(schemaName string, info *SchemaInfo) *graphql.Object {
+// marshalComplexValue marshals maps and slices as JSON strings
+func marshalComplexValue(value interface{}) interface{} {
+	if value == nil {
+		return nil
+	}
+
+	// Use reflection to detect maps and slices
+	v := reflect.ValueOf(value)
+	kind := v.Kind()
+
+	if kind == reflect.Map || kind == reflect.Slice {
+		// Marshal as JSON
+		if jsonBytes, err := json.Marshal(value); err == nil {
+			return string(jsonBytes)
+		}
+		// If marshal fails, return formatted string
+		return fmt.Sprintf("%v", value)
+	}
+
+	// For simple types, return as-is
+	return value
+}
+
+// createNestedObjectType creates a GraphQL object type for nested array elements
+func createNestedObjectType(typeName string, nestedFields map[string]*FieldInfo) *graphql.Object {
 	fields := graphql.Fields{}
 
-	// Add discovered fields
-	for fieldName, fieldInfo := range info.Fields {
+	for fieldName, fieldInfo := range nestedFields {
+		fieldName := fieldName // Capture loop variable
+		fieldInfo := fieldInfo // Capture loop variable
+
 		fields[fieldName] = &graphql.Field{
 			Type: fieldInfo.GraphQLType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				if source, ok := p.Source.(map[string]interface{}); ok {
-					// Find the original JSON key for this GraphQL field
+					// Try direct field name first
+					if value, ok := source[fieldName]; ok {
+						return marshalComplexValue(value), nil
+					}
+					// Then try finding by remapped name
 					for origKey, value := range source {
 						if remapFieldName(origKey) == fieldName {
-							return value, nil
+							return marshalComplexValue(value), nil
 						}
 					}
 				}
@@ -355,18 +384,53 @@ func buildGraphQLObjectType(schemaName string, info *SchemaInfo) *graphql.Object
 		}
 	}
 
-	// Special handling for bundle properties
-	if schemaName == declcfg.SchemaBundle && len(info.PropertyTypes) > 0 {
-		fields["properties"] = &graphql.Field{
-			Type: graphql.NewList(createBundlePropertyType(info.PropertyTypes)),
-			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				if source, ok := p.Source.(map[string]interface{}); ok {
-					if props, ok := source["properties"]; ok {
-						return props, nil
-					}
-				}
-				return nil, nil
-			},
+	return graphql.NewObject(graphql.ObjectConfig{
+		Name:   typeName,
+		Fields: fields,
+	})
+}
+
+// createFieldResolver creates a resolver function for a field name
+func createFieldResolver(fieldName string) graphql.FieldResolveFn {
+	return func(p graphql.ResolveParams) (interface{}, error) {
+		source, ok := p.Source.(map[string]interface{})
+		if !ok {
+			return nil, nil
+		}
+
+		for origKey, value := range source {
+			if remapFieldName(origKey) == fieldName {
+				return value, nil
+			}
+		}
+		return nil, nil
+	}
+}
+
+// buildGraphQLObjectType creates a GraphQL object type from discovered field info
+func buildGraphQLObjectType(schemaName string, info *SchemaInfo) *graphql.Object {
+	fields := graphql.Fields{}
+
+	// Add discovered fields
+	for fieldName, fieldInfo := range info.Fields {
+		fieldName := fieldName // Capture loop variable
+		fieldInfo := fieldInfo // Capture loop variable
+
+		var fieldType graphql.Output
+		// Check if this field has nested structure (array of objects)
+		if len(fieldInfo.NestedFields) > 0 {
+			// Create a dynamic nested type
+			nestedTypeName := sanitizeTypeName(schemaName) + sanitizeTypeName(fieldName)
+			nestedType := createNestedObjectType(nestedTypeName, fieldInfo.NestedFields)
+			fieldType = graphql.NewList(nestedType)
+		} else {
+			// Regular field (not nested)
+			fieldType = fieldInfo.GraphQLType
+		}
+
+		fields[fieldName] = &graphql.Field{
+			Type:    fieldType,
+			Resolve: createFieldResolver(fieldName),
 		}
 	}
 
@@ -376,88 +440,13 @@ func buildGraphQLObjectType(schemaName string, info *SchemaInfo) *graphql.Object
 	})
 }
 
-// createBundlePropertyType creates a GraphQL type for bundle properties with union values
-func createBundlePropertyType(propertyTypes map[string]map[string]*FieldInfo) *graphql.Object {
-	// Create union type for property values
-	var unionTypes []*graphql.Object
-	unionTypesMap := make(map[string]*graphql.Object)
-
-	for propType, fields := range propertyTypes {
-		typeName := fmt.Sprintf("PropertyValue%s", sanitizeTypeName(propType))
-
-		valueFields := graphql.Fields{}
-		for fieldName, fieldInfo := range fields {
-			valueFields[fieldName] = &graphql.Field{
-				Type: fieldInfo.GraphQLType,
-			}
-		}
-
-		objType := graphql.NewObject(graphql.ObjectConfig{
-			Name:   typeName,
-			Fields: valueFields,
-		})
-
-		unionTypes = append(unionTypes, objType)
-		unionTypesMap[propType] = objType
-	}
-
-	// Create union of all property value types
-	var valueUnion *graphql.Union
-	if len(unionTypes) > 0 {
-		valueUnion = graphql.NewUnion(graphql.UnionConfig{
-			Name:  "PropertyValue",
-			Types: unionTypes,
-			ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
-				// Try to determine the type from the parent property's type field
-				if valueMap, ok := p.Value.(map[string]interface{}); ok {
-					// Look for type in parent context (property object should have type field)
-					if parent, ok := p.Context.Value("propertyType").(string); ok {
-						if objType, ok := unionTypesMap[parent]; ok {
-							return objType
-						}
-					}
-					// Fallback: use the first matching type
-					for _, objType := range unionTypesMap {
-						if len(valueMap) > 0 {
-							return objType
-						}
-					}
-				}
-				// Default to first type if available
-				if len(unionTypes) > 0 {
-					return unionTypes[0]
-				}
-				return nil
-			},
-		})
-	}
-
-	// Create the bundle property object type
-	propertyFields := graphql.Fields{
-		"type": &graphql.Field{Type: graphql.String},
-	}
-
-	if valueUnion != nil {
-		propertyFields["value"] = &graphql.Field{Type: valueUnion}
-	} else {
-		// Fallback to string if no union types
-		propertyFields["value"] = &graphql.Field{Type: graphql.String}
-	}
-
-	return graphql.NewObject(graphql.ObjectConfig{
-		Name:   "BundleProperty",
-		Fields: propertyFields,
-	})
-}
-
 // sanitizeTypeName converts a property type to a valid GraphQL type name
 func sanitizeTypeName(propType string) string {
 	// Remove dots and other invalid characters, capitalize words
-	re := regexp.MustCompile(`[^a-zA-Z0-9]`)
-	clean := re.ReplaceAllString(propType, "_")
+	clean := alphanumericOnlyRE.ReplaceAllString(propType, "_")
 
 	// Strip leading digits
-	clean = regexp.MustCompile(`^[0-9]+`).ReplaceAllString(clean, "")
+	clean = leadingDigitsRE.ReplaceAllString(clean, "")
 
 	parts := strings.Split(clean, "_")
 
@@ -477,6 +466,21 @@ func sanitizeTypeName(propType string) string {
 
 // BuildDynamicGraphQLSchema creates a complete GraphQL schema from discovered structure
 func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[string][]*declcfg.Meta) (*DynamicSchema, error) {
+	// Pre-parse all meta blobs to avoid unmarshaling on every query
+	// This has minimal memory overhead (parsed objects ≈ raw blob size)
+	// but eliminates expensive json.Unmarshal operations from the query path
+	parsedObjects := make(map[string][]map[string]interface{})
+	for schemaName, metas := range metasBySchema {
+		parsedObjects[schemaName] = make([]map[string]interface{}, 0, len(metas))
+		for _, meta := range metas {
+			var obj map[string]interface{}
+			if err := json.Unmarshal(meta.Blob, &obj); err != nil {
+				continue // Skip malformed objects (same as runtime behavior)
+			}
+			parsedObjects[schemaName] = append(parsedObjects[schemaName], obj)
+		}
+	}
+
 	// Build GraphQL object types for each discovered schema
 	objectTypes := make(map[string]*graphql.Object)
 
@@ -484,13 +488,27 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 		objectTypes[schemaName] = buildGraphQLObjectType(schemaName, schemaInfo)
 	}
 
+	// Pre-build field name to schema name lookup map for O(1) access in resolvers
+	fieldNameToSchema := make(map[string]string)
+	for schemaName := range catalogSchema.Schemas {
+		sanitized := alphanumericOnlyRE.ReplaceAllString(schemaName, "")
+		fieldName := strings.ToLower(sanitized) + "s" // e.g., "olmbundles", "olmpackages"
+		fieldNameToSchema[fieldName] = schemaName
+	}
+
 	// Create root query fields
 	queryFields := graphql.Fields{}
 
 	for schemaName, objectType := range objectTypes {
-		// Sanitize schema name by removing dots and special characters for GraphQL field name
-		sanitized := regexp.MustCompile(`[^a-zA-Z0-9]`).ReplaceAllString(schemaName, "")
-		fieldName := strings.ToLower(sanitized) + "s" // e.g., "olmbundles", "olmpackages"
+		schemaName := schemaName // Capture loop variable
+		objectType := objectType // Capture loop variable
+		// Generate GraphQL field name from schema name
+		// Convention: remove dots/special chars, lowercase, append 's' for pluralization
+		// Examples: "olm.bundle" -> "olmbundles", "helm.chart" -> "helmcharts"
+		// LIMITATION: Simple 's' appending doesn't follow English grammar rules or support
+		// non-English languages. Schemas should use names that pluralize well with 's'.
+		sanitized := alphanumericOnlyRE.ReplaceAllString(schemaName, "")
+		fieldName := strings.ToLower(sanitized) + "s"
 
 		queryFields[fieldName] = &graphql.Field{
 			Type: graphql.NewList(objectType),
@@ -507,22 +525,14 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				// Get the schema name from the field name
-				currentSchemaName := ""
-				for sn := range catalogSchema.Schemas {
-					sanitized := regexp.MustCompile(`[^a-zA-Z0-9]`).ReplaceAllString(sn, "")
-					if strings.ToLower(sanitized)+"s" == p.Info.FieldName {
-						currentSchemaName = sn
-						break
-					}
-				}
-
-				if currentSchemaName == "" {
+				// O(1) lookup of schema name from pre-built map
+				currentSchemaName, ok := fieldNameToSchema[p.Info.FieldName]
+				if !ok {
 					return nil, fmt.Errorf("unknown schema for field %s", p.Info.FieldName)
 				}
 
-				// Get metas for this schema
-				metas, ok := metasBySchema[currentSchemaName]
+				// Get pre-parsed objects for this schema (no unmarshaling needed!)
+				objects, ok := parsedObjects[currentSchemaName]
 				if !ok {
 					return []interface{}{}, nil
 				}
@@ -531,19 +541,14 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 				limit, _ := p.Args["limit"].(int)
 				offset, _ := p.Args["offset"].(int)
 
-				// Convert metas to JSON objects and apply pagination
+				// Apply pagination to pre-parsed objects
 				var results []interface{}
-				for i, meta := range metas {
+				for i, obj := range objects {
 					if i < offset {
 						continue
 					}
 					if len(results) >= limit {
 						break
-					}
-
-					var obj map[string]interface{}
-					if err := json.Unmarshal(meta.Blob, &obj); err != nil {
-						continue // Skip malformed objects
 					}
 					results = append(results, obj)
 				}
@@ -572,7 +577,7 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 			},
 		}),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			schemas := []interface{}{}
+			schemas := make([]interface{}, 0, len(catalogSchema.Schemas))
 			for name, info := range catalogSchema.Schemas {
 				schemas = append(schemas, map[string]interface{}{
 					"name":         name,
@@ -605,7 +610,7 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 	return &DynamicSchema{
 		Schema:        schema,
 		CatalogSchema: catalogSchema,
-		MetasBySchema: metasBySchema,
+		ParsedObjects: parsedObjects,
 	}, nil
 }
 
@@ -662,13 +667,6 @@ func PrintCatalogSummary(dynamicSchema *DynamicSchema) {
 		fmt.Printf("\nSchema: %s\n", schemaName)
 		fmt.Printf("  Objects: %d\n", info.TotalObjects)
 		fmt.Printf("  Fields: %d\n", len(info.Fields))
-
-		if schemaName == declcfg.SchemaBundle && len(info.PropertyTypes) > 0 {
-			fmt.Printf("  Property types: %d\n", len(info.PropertyTypes))
-			for propType, fields := range info.PropertyTypes {
-				fmt.Printf("    - %s (%d fields)\n", propType, len(fields))
-			}
-		}
 
 		// Show sample fields
 		if len(info.Fields) > 0 {
