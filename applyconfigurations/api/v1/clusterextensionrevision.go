@@ -32,6 +32,13 @@ import (
 // at a time. Ownership of objects is transitioned from one revision to the next as the extension is upgraded
 // or reconfigured. Once the latest revision has rolled out successfully, previous active revisions are archived for
 // posterity.
+//
+// WARNING: This is a cluster-admin-only API. ClusterExtensionRevisions contain arbitrary resources
+// that operator-controller installs with cluster-admin privileges, which can have significant
+// implications for the integrity of the cluster. Granting write access to non-cluster-admin users
+// is a privilege escalation risk, as revisions may contain RBAC, workloads, webhooks, or CRDs that
+// effectively grant cluster-admin-level access. Only cluster administrators should have write access
+// to this resource.
 type ClusterExtensionRevisionApplyConfiguration struct {
 	metav1.TypeMetaApplyConfiguration `json:",inline"`
 	// metadata is the standard object's metadata.

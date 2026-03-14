@@ -492,9 +492,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 				},
 			}
 			result, err := (&controllers.ClusterExtensionRevisionReconciler{
-				Client:                testClient,
-				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-				TrackingCache:         &mockTrackingCache{client: testClient},
+				Client:         testClient,
+				RevisionEngine: mockEngine,
+				TrackingCache:  &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: tc.reconcilingRevisionName,
@@ -612,9 +612,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 				},
 			}
 			result, err := (&controllers.ClusterExtensionRevisionReconciler{
-				Client:                testClient,
-				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-				TrackingCache:         &mockTrackingCache{client: testClient},
+				Client:         testClient,
+				RevisionEngine: mockEngine,
+				TrackingCache:  &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -643,7 +643,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 		existingObjs             func() []client.Object
 		revisionResult           machinery.RevisionResult
 		revisionEngineTeardownFn func(*testing.T) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error)
-		revisionEngineFactoryErr error
 		validate                 func(*testing.T, client.Client)
 		trackingCacheFreeFn      func(context.Context, client.Object) error
 		expectedErr              string
@@ -815,39 +814,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			},
 		},
 		{
-			name:           "return error and set retrying conditions when factory fails to create engine during archived teardown",
-			revisionResult: mockRevisionResult{},
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
-				rev1.Finalizers = []string{
-					"olm.operatorframework.io/teardown",
-				}
-				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
-				return []client.Object{rev1, ext}
-			},
-			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-				return nil
-			},
-			revisionEngineFactoryErr: fmt.Errorf("token getter failed"),
-			expectedErr:              "failed to create revision engine",
-			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
-				}, rev)
-				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRetrying, cond.Reason)
-				require.Contains(t, cond.Message, "token getter failed")
-
-				// Finalizer should still be present
-				require.Contains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
-			},
-		},
-		{
 			name:           "revision is torn down when in archived state and finalizer is removed",
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
@@ -905,10 +871,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 				},
 				teardown: tc.revisionEngineTeardownFn(t),
 			}
-			factory := &mockRevisionEngineFactory{engine: mockEngine, createErr: tc.revisionEngineFactoryErr}
 			result, err := (&controllers.ClusterExtensionRevisionReconciler{
-				Client:                testClient,
-				RevisionEngineFactory: factory,
+				Client:         testClient,
+				RevisionEngine: mockEngine,
 				TrackingCache: &mockTrackingCache{
 					client: testClient,
 					freeFn: tc.trackingCacheFreeFn,
@@ -1051,8 +1016,8 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 				},
 			}
 			result, err := (&controllers.ClusterExtensionRevisionReconciler{
-				Client:                testClient,
-				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
+				Client:         testClient,
+				RevisionEngine: mockEngine,
 				TrackingCache: &mockTrackingCache{
 					client: testClient,
 				},
@@ -1078,9 +1043,6 @@ func newTestClusterExtension() *ocv1.ClusterExtension {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: "some-namespace",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "service-account",
-			},
 			Source: ocv1.SourceConfig{
 				SourceType: ocv1.SourceTypeCatalog,
 				Catalog: &ocv1.CatalogFilter{
@@ -1103,12 +1065,10 @@ func newTestClusterExtensionRevision(t *testing.T, revisionName string, ext *ocv
 			UID:        types.UID(revisionName),
 			Generation: int64(1),
 			Annotations: map[string]string{
-				labels.PackageNameKey:             "some-package",
-				labels.BundleNameKey:              "some-package.v1.0.0",
-				labels.BundleReferenceKey:         "registry.io/some-repo/some-package:v1.0.0",
-				labels.BundleVersionKey:           "1.0.0",
-				labels.ServiceAccountNameKey:      ext.Spec.ServiceAccount.Name,
-				labels.ServiceAccountNamespaceKey: ext.Spec.Namespace,
+				labels.PackageNameKey:     "some-package",
+				labels.BundleNameKey:      "some-package.v1.0.0",
+				labels.BundleReferenceKey: "registry.io/some-repo/some-package:v1.0.0",
+				labels.BundleVersionKey:   "1.0.0",
 			},
 			Labels: map[string]string{
 				labels.OwnerNameKey: "test-ext",
@@ -1152,19 +1112,6 @@ func (m mockRevisionEngine) Teardown(ctx context.Context, rev machinerytypes.Rev
 
 func (m mockRevisionEngine) Reconcile(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
 	return m.reconcile(ctx, rev)
-}
-
-// mockRevisionEngineFactory creates mock RevisionEngines for testing
-type mockRevisionEngineFactory struct {
-	engine    controllers.RevisionEngine
-	createErr error
-}
-
-func (f *mockRevisionEngineFactory) CreateRevisionEngine(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (controllers.RevisionEngine, error) {
-	if f.createErr != nil {
-		return nil, f.createErr
-	}
-	return f.engine, nil
 }
 
 type mockRevisionResult struct {
@@ -1398,19 +1345,17 @@ func Test_effectiveCollisionProtection(t *testing.T) {
 	}
 }
 
-func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T) {
+func Test_ClusterExtensionRevisionReconciler_Reconcile_WithoutOwnerLabel(t *testing.T) {
 	testScheme := newScheme(t)
 
-	t.Run("works with serviceAccount annotation and without owner label", func(t *testing.T) {
+	t.Run("works without owner label", func(t *testing.T) {
 		rev := &ocv1.ClusterExtensionRevision{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   "test-rev-1",
 				UID:    types.UID("test-rev-1"),
 				Labels: map[string]string{},
 				Annotations: map[string]string{
-					labels.ServiceAccountNameKey:      "test-sa",
-					labels.ServiceAccountNamespaceKey: "test-ns",
-					labels.BundleVersionKey:           "1.0.0",
+					labels.BundleVersionKey: "1.0.0",
 				},
 			},
 			Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -1433,9 +1378,9 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 		}
 
 		reconciler := &controllers.ClusterExtensionRevisionReconciler{
-			Client:                testClient,
-			RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-			TrackingCache:         &mockTrackingCache{client: testClient},
+			Client:         testClient,
+			RevisionEngine: mockEngine,
+			TrackingCache:  &mockTrackingCache{client: testClient},
 		}
 
 		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{
@@ -1443,71 +1388,5 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 		})
 
 		require.NoError(t, err)
-	})
-
-	t.Run("missing serviceAccount annotation", func(t *testing.T) {
-		rev := &ocv1.ClusterExtensionRevision{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-rev-1",
-				Annotations: map[string]string{
-					labels.BundleVersionKey: "1.0.0",
-				},
-			},
-			Spec: ocv1.ClusterExtensionRevisionSpec{
-				LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
-				Revision:       1,
-				Phases:         []ocv1.ClusterExtensionRevisionPhase{},
-			},
-		}
-
-		testClient := fake.NewClientBuilder().
-			WithScheme(testScheme).
-			WithObjects(rev).
-			Build()
-
-		failingFactory := &mockRevisionEngineFactory{
-			createErr: errors.New("missing serviceAccount name annotation"),
-		}
-
-		reconciler := &controllers.ClusterExtensionRevisionReconciler{
-			Client:                testClient,
-			RevisionEngineFactory: failingFactory,
-			TrackingCache:         &mockTrackingCache{client: testClient},
-		}
-
-		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{
-			NamespacedName: types.NamespacedName{Name: "test-rev-1"},
-		})
-
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "serviceAccount")
-	})
-
-	t.Run("factory fails to create engine", func(t *testing.T) {
-		ext := newTestClusterExtension()
-		rev := newTestClusterExtensionRevision(t, "test-rev", ext, testScheme)
-
-		testClient := fake.NewClientBuilder().
-			WithScheme(testScheme).
-			WithObjects(ext, rev).
-			Build()
-
-		failingFactory := &mockRevisionEngineFactory{
-			createErr: errors.New("token getter failed"),
-		}
-
-		reconciler := &controllers.ClusterExtensionRevisionReconciler{
-			Client:                testClient,
-			RevisionEngineFactory: failingFactory,
-			TrackingCache:         &mockTrackingCache{client: testClient},
-		}
-
-		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{
-			NamespacedName: types.NamespacedName{Name: "test-rev"},
-		})
-
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to create revision engine")
-		require.Contains(t, err.Error(), "token getter failed")
 	})
 }

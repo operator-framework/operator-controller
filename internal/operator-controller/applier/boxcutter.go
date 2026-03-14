@@ -1,12 +1,10 @@
 package applier
 
 import (
-	"bytes"
 	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"maps"
 	"slices"
@@ -19,9 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/cli-runtime/pkg/printers"
 	metav1ac "k8s.io/client-go/applyconfigurations/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -32,7 +27,6 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
@@ -204,9 +198,6 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	annotations[labels.ServiceAccountNameKey] = ext.Spec.ServiceAccount.Name
-	annotations[labels.ServiceAccountNamespaceKey] = ext.Spec.Namespace
-
 	phases := PhaseSort(objects)
 
 	spec := ocv1ac.ClusterExtensionRevisionSpec().
@@ -422,18 +413,11 @@ type Boxcutter struct {
 	Scheme            *runtime.Scheme
 	RevisionGenerator ClusterExtensionRevisionGenerator
 	Preflights        []Preflight
-	PreAuthorizer     authorization.PreAuthorizer
 	FieldOwner        string
 }
 
-// apply applies the revision object using server-side apply. PreAuthorization checks are performed
-// to ensure the user has sufficient permissions to manage the revision and its resources.
-func (bc *Boxcutter) apply(ctx context.Context, user user.Info, rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) error {
-	// Run auth preflight checks
-	if err := bc.runPreAuthorizationChecks(ctx, user, rev); err != nil {
-		return err
-	}
-
+// apply applies the revision object using server-side apply.
+func (bc *Boxcutter) apply(ctx context.Context, rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) error {
 	return bc.Client.Apply(ctx, rev, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
 }
 
@@ -488,7 +472,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		desiredRevision.Spec.WithRevision(currentRevision.Spec.Revision)
 		desiredRevision.WithName(currentRevision.Name)
 
-		err := bc.apply(ctx, getUserInfo(ext), desiredRevision)
+		err := bc.apply(ctx, desiredRevision)
 		switch {
 		case apierrors.IsInvalid(err):
 			// We could not update the current revision due to trying to update an immutable field.
@@ -538,29 +522,12 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 			return false, "", fmt.Errorf("garbage collecting old revisions: %w", err)
 		}
 
-		if err := bc.apply(ctx, getUserInfo(ext), desiredRevision); err != nil {
+		if err := bc.apply(ctx, desiredRevision); err != nil {
 			return false, "", fmt.Errorf("creating new Revision: %w", err)
 		}
 	}
 
 	return true, "", nil
-}
-
-// runPreAuthorizationChecks runs PreAuthorization checks if the PreAuthorizer is set. An error will be returned if
-// the ClusterExtension service account does not have the necessary permissions to manage the revision's resources
-func (bc *Boxcutter) runPreAuthorizationChecks(ctx context.Context, user user.Info, rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) error {
-	if bc.PreAuthorizer == nil {
-		return nil
-	}
-
-	// collect the revision manifests
-	manifestReader, err := revisionManifestReader(rev)
-	if err != nil {
-		return err
-	}
-
-	// run preauthorization check
-	return formatPreAuthorizerOutput(bc.PreAuthorizer.PreAuthorize(ctx, user, manifestReader, revisionManagementPerms(rev)))
 }
 
 // garbageCollectOldRevisions deletes archived revisions beyond ClusterExtensionRevisionRetentionLimit.
@@ -640,35 +607,6 @@ func getObjects(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) []client
 		}
 	}
 	return objs
-}
-
-// revisionManifestReader returns an io.Reader containing all manifests in the revision
-func revisionManifestReader(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) (io.Reader, error) {
-	printer := printers.YAMLPrinter{}
-	buf := new(bytes.Buffer)
-	for _, obj := range getObjects(rev) {
-		buf.WriteString("---\n")
-		if err := printer.PrintObj(obj, buf); err != nil {
-			return nil, err
-		}
-	}
-	return buf, nil
-}
-
-func revisionManagementPerms(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) func(user.Info) []authorizer.AttributesRecord {
-	return func(user user.Info) []authorizer.AttributesRecord {
-		return []authorizer.AttributesRecord{
-			{
-				User:            user,
-				Name:            *rev.GetName(),
-				APIGroup:        ocv1.GroupVersion.Group,
-				APIVersion:      ocv1.GroupVersion.Version,
-				Resource:        "clusterextensionrevisions/finalizers",
-				ResourceRequest: true,
-				Verb:            "update",
-			},
-		}
-	}
 }
 
 func mergeLabelMaps(m1, m2 map[string]string) map[string]string {

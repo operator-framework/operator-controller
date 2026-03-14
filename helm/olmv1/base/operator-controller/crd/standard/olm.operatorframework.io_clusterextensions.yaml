@@ -34,7 +34,15 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: ClusterExtension is the Schema for the clusterextensions API
+        description: |-
+          ClusterExtension is the Schema for the clusterextensions API
+
+          WARNING: This is a cluster-admin-only API. Creating a ClusterExtension instructs
+          operator-controller to install arbitrary resources, which can have significant implications
+          for the integrity of the cluster. Granting write access to non-cluster-admin users is a
+          privilege escalation risk, as extension bundles may contain RBAC, workloads, webhooks, or
+          CRDs that effectively grant cluster-admin-level access. Only cluster administrators should
+          have write access to this resource.
         properties:
           apiVersion:
             description: |-
@@ -167,11 +175,11 @@ spec:
                   rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
               serviceAccount:
                 description: |-
-                  serviceAccount specifies a ServiceAccount used to perform all interactions with the cluster
-                  that are required to manage the extension.
-                  The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-                  The ServiceAccount must exist in the namespace referenced in the spec.
-                  The serviceAccount field is required.
+                  serviceAccount was previously used to specify a ServiceAccount for managing the extension.
+                  This field is now deprecated and ignored. operator-controller uses its own ServiceAccount
+                  for all Kubernetes API interactions.
+
+                  Deprecated: This field is ignored. It will be removed in a future API version.
                 properties:
                   name:
                     description: |-
@@ -485,7 +493,6 @@ spec:
                     has(self.catalog) : !has(self.catalog)'
             required:
             - namespace
-            - serviceAccount
             - source
             type: object
           status:

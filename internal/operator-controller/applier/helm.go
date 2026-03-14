@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"slices"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -16,20 +15,16 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
+	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -62,25 +57,11 @@ func (h HelmReleaseToObjectsConverter) GetObjectsFromRelease(rel *release.Releas
 type Helm struct {
 	ActionClientGetter            helmclient.ActionClientGetter
 	Preflights                    []Preflight
-	PreAuthorizer                 authorization.PreAuthorizer
 	HelmChartProvider             HelmChartProvider
 	HelmReleaseToObjectsConverter HelmReleaseToObjectsConverterInterface
 
 	Manager contentmanager.Manager
-	Watcher cache.Watcher
-}
-
-// runPreAuthorizationChecks performs pre-authorization checks for a Helm release
-// it renders a client-only release, checks permissions using the PreAuthorizer
-// and returns an error if authorization fails or required permissions are missing
-func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterExtension, chart *chart.Chart, values chartutil.Values, post postrender.PostRenderer) error {
-	tmplRel, err := h.renderClientOnlyRelease(ctx, ext, chart, values, post)
-	if err != nil {
-		return fmt.Errorf("error rendering content for pre-authorization checks: %w", err)
-	}
-
-	manifestManager := getUserInfo(ext)
-	return formatPreAuthorizerOutput(h.PreAuthorizer.PreAuthorize(ctx, manifestManager, strings.NewReader(tmplRel.Manifest), extManagementPerms(ext)))
+	Watcher cmcache.Watcher
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) (bool, string, error) {
@@ -102,14 +83,6 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 
 	post := &postrenderer{
 		labels: objectLabels,
-	}
-
-	if h.PreAuthorizer != nil {
-		err := h.runPreAuthorizationChecks(ctx, ext, chrt, values, post)
-		if err != nil {
-			// Return the pre-authorization error directly
-			return false, "", err
-		}
 	}
 
 	ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
@@ -176,12 +149,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		return true, "", err
 	}
 	klog.FromContext(ctx).Info("watching managed objects")
-	cache, err := h.Manager.Get(ctx, ext)
-	if err != nil {
-		return true, "", err
-	}
-
-	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
+	if err := h.Manager.Watch(ctx, ext.Name, h.Watcher, relObjects...); err != nil {
 		return true, "", err
 	}
 
@@ -226,17 +194,11 @@ func (h *Helm) reconcileExistingRelease(ctx context.Context, ac helmclient.Actio
 		logger.Error(fmt.Errorf("manager is nil"), "Manager not initialized, cannot set up drift detection watches (resources are applied but drift detection disabled)")
 		return true, "", nil
 	}
-	cache, err := h.Manager.Get(ctx, ext)
-	if err != nil {
-		logger.Error(err, "failed to get managed content cache, cannot set up drift detection watches (resources are applied but drift detection disabled)")
-		return true, "", nil
-	}
-
 	if h.Watcher == nil {
 		logger.Error(fmt.Errorf("watcher is nil"), "Watcher not initialized, cannot set up drift detection watches (resources are applied but drift detection disabled)")
 		return true, "", nil
 	}
-	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
+	if err := h.Manager.Watch(ctx, ext.Name, h.Watcher, relObjects...); err != nil {
 		logger.Error(err, "failed to set up drift detection watches (resources are applied but drift detection disabled)")
 		return true, "", nil
 	}
@@ -259,34 +221,6 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 		}
 	}
 	return h.HelmChartProvider.Get(bundleFS, ext)
-}
-
-func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {
-	// We need to get a separate action client because our work below
-	// permanently modifies the underlying action.Configuration for ClientOnly mode.
-	ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
-	if err != nil {
-		return nil, err
-	}
-
-	isUpgrade := false
-	currentRelease, err := ac.Get(ext.GetName())
-	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, err
-	}
-	if currentRelease != nil {
-		isUpgrade = true
-	}
-
-	return ac.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
-		i.DryRun = true
-		i.ReleaseName = ext.GetName()
-		i.Replace = true
-		i.ClientOnly = true
-		i.IncludeCRDs = true
-		i.IsUpgrade = isUpgrade
-		return nil
-	}, helmclient.AppendInstallPostRenderer(post))
 }
 
 func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
@@ -352,75 +286,4 @@ func (p *postrenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, erro
 		return p.cascade.Run(&buf)
 	}
 	return &buf, nil
-}
-
-func ruleDescription(ns string, rule rbacv1.PolicyRule) string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Namespace:%q", ns))
-
-	if len(rule.APIGroups) > 0 {
-		sb.WriteString(fmt.Sprintf(" APIGroups:[%s]", strings.Join(slices.Sorted(slices.Values(rule.APIGroups)), ",")))
-	}
-	if len(rule.Resources) > 0 {
-		sb.WriteString(fmt.Sprintf(" Resources:[%s]", strings.Join(slices.Sorted(slices.Values(rule.Resources)), ",")))
-	}
-	if len(rule.ResourceNames) > 0 {
-		sb.WriteString(fmt.Sprintf(" ResourceNames:[%s]", strings.Join(slices.Sorted(slices.Values(rule.ResourceNames)), ",")))
-	}
-	if len(rule.Verbs) > 0 {
-		sb.WriteString(fmt.Sprintf(" Verbs:[%s]", strings.Join(slices.Sorted(slices.Values(rule.Verbs)), ",")))
-	}
-	if len(rule.NonResourceURLs) > 0 {
-		sb.WriteString(fmt.Sprintf(" NonResourceURLs:[%s]", strings.Join(slices.Sorted(slices.Values(rule.NonResourceURLs)), ",")))
-	}
-	return sb.String()
-}
-
-// formatPreAuthorizerOutput formats the output of PreAuthorizer.PreAuthorize calls into a consistent and deterministic error.
-// If the call returns no missing rules, and no error, nil is returned.
-func formatPreAuthorizerOutput(missingRules []authorization.ScopedPolicyRules, authErr error) error {
-	var preAuthErrors []error
-	if len(missingRules) > 0 {
-		totalMissingRules := 0
-		for _, policyRules := range missingRules {
-			totalMissingRules += len(policyRules.MissingRules)
-		}
-		missingRuleDescriptions := make([]string, 0, totalMissingRules)
-		for _, policyRules := range missingRules {
-			for _, rule := range policyRules.MissingRules {
-				missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(policyRules.Namespace, rule))
-			}
-		}
-		slices.Sort(missingRuleDescriptions)
-		// This phrase is explicitly checked by external testing
-		preAuthErrors = append(preAuthErrors, fmt.Errorf("service account requires the following permissions to manage cluster extension:\n  %s", strings.Join(missingRuleDescriptions, "\n  ")))
-	}
-	if authErr != nil {
-		preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", authErr))
-	}
-	if len(preAuthErrors) > 0 {
-		// This phrase is explicitly checked by external testing
-		return fmt.Errorf("pre-authorization failed: %v", errors.Join(preAuthErrors...))
-	}
-	return nil
-}
-
-func getUserInfo(ext *ocv1.ClusterExtension) user.Info {
-	return &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}
-}
-
-func extManagementPerms(ext *ocv1.ClusterExtension) func(user.Info) []authorizer.AttributesRecord {
-	return func(user user.Info) []authorizer.AttributesRecord {
-		return []authorizer.AttributesRecord{
-			{
-				User:            user,
-				Name:            ext.Name,
-				APIGroup:        ocv1.GroupVersion.Group,
-				APIVersion:      ocv1.GroupVersion.Version,
-				Resource:        "clusterextensions/finalizers",
-				ResourceRequest: true,
-				Verb:            "update",
-			},
-		}
-	}
 }

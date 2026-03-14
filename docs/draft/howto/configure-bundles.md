@@ -104,8 +104,6 @@ metadata:
   name: my-operator
 spec:
   namespace: my-operator-ns      # <--- Install Namespace
-  serviceAccount:
-    name: my-sa
   config:
     configType: Inline
     inline:
@@ -128,8 +126,6 @@ metadata:
   name: monitor-operator
 spec:
   namespace: ops-system          # <--- Install Namespace
-  serviceAccount:
-    name: monitor-operator-installer
   source:
     sourceType: Catalog
     catalog:

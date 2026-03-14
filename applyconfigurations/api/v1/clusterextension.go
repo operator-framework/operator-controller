@@ -26,7 +26,14 @@ import (
 // ClusterExtensionApplyConfiguration represents a declarative configuration of the ClusterExtension type for use
 // with apply.
 //
-// ClusterExtension is the Schema for the clusterextensions API
+// # ClusterExtension is the Schema for the clusterextensions API
+//
+// WARNING: This is a cluster-admin-only API. Creating a ClusterExtension instructs
+// operator-controller to install arbitrary resources, which can have significant implications
+// for the integrity of the cluster. Granting write access to non-cluster-admin users is a
+// privilege escalation risk, as extension bundles may contain RBAC, workloads, webhooks, or
+// CRDs that effectively grant cluster-admin-level access. Only cluster administrators should
+// have write access to this resource.
 type ClusterExtensionApplyConfiguration struct {
 	metav1.TypeMetaApplyConfiguration `json:",inline"`
 	// metadata is the standard object's metadata.

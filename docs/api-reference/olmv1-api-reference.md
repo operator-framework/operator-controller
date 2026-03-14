@@ -223,6 +223,13 @@ _Appears in:_
 
 ClusterExtension is the Schema for the clusterextensions API
 
+WARNING: This is a cluster-admin-only API. Creating a ClusterExtension instructs
+operator-controller to install arbitrary resources, which can have significant implications
+for the integrity of the cluster. Granting write access to non-cluster-admin users is a
+privilege escalation risk, as extension bundles may contain RBAC, workloads, webhooks, or
+CRDs that effectively grant cluster-admin-level access. Only cluster administrators should
+have write access to this resource.
+
 
 
 _Appears in:_
@@ -340,7 +347,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `namespace` _string_ | namespace specifies a Kubernetes namespace.<br />This is the namespace where the provided ServiceAccount must exist.<br />It also designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.<br />Some extensions may contain namespace-scoped resources to be applied in other namespaces.<br />This namespace must exist.<br />The namespace field is required, immutable, and follows the DNS label standard as defined in [RFC 1123].<br />It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,<br />and be no longer than 63 characters.<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />Required: \{\} <br /> |
-| `serviceAccount` _[ServiceAccountReference](#serviceaccountreference)_ | serviceAccount specifies a ServiceAccount used to perform all interactions with the cluster<br />that are required to manage the extension.<br />The ServiceAccount must be configured with the necessary permissions to perform these interactions.<br />The ServiceAccount must exist in the namespace referenced in the spec.<br />The serviceAccount field is required. |  | Required: \{\} <br /> |
+| `serviceAccount` _[ServiceAccountReference](#serviceaccountreference)_ | serviceAccount was previously used to specify a ServiceAccount for managing the extension.<br />This field is now deprecated and ignored. operator-controller uses its own ServiceAccount<br />for all Kubernetes API interactions.<br />Deprecated: This field is ignored. It will be removed in a future API version. |  | Optional: \{\} <br /> |
 | `source` _[SourceConfig](#sourceconfig)_ | source is required and selects the installation source of content for this ClusterExtension.<br />Set the sourceType field to perform the selection.<br />Catalog is currently the only implemented sourceType.<br />Setting sourceType to "Catalog" requires the catalog field to also be defined.<br />Below is a minimal example of a source definition (in yaml):<br />source:<br />  sourceType: Catalog<br />  catalog:<br />    packageName: example-package |  | Required: \{\} <br /> |
 | `install` _[ClusterExtensionInstallConfig](#clusterextensioninstallconfig)_ | install is optional and configures installation options for the ClusterExtension,<br />such as the pre-flight check configuration. |  | Optional: \{\} <br /> |
 | `config` _[ClusterExtensionConfig](#clusterextensionconfig)_ | config is optional and specifies bundle-specific configuration.<br />Configuration is bundle-specific and a bundle may provide a configuration schema.<br />When not specified, the default configuration of the resolved bundle is used.<br />config is validated against a configuration schema provided by the resolved bundle. If the bundle does not provide<br />a configuration schema the bundle is deemed to not be configurable. More information on how<br />to configure bundles can be found in the OLM documentation associated with your current OLM version. |  | Optional: \{\} <br /> |
@@ -458,7 +465,10 @@ _Appears in:_
 
 
 
-ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
+ServiceAccountReference identifies the serviceAccount used to install a ClusterExtension.
+
+Deprecated: This type is deprecated and will be removed in a future API version.
+operator-controller now uses its own ServiceAccount for all operations.
 
 
 
