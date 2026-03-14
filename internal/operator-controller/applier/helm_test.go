@@ -622,11 +622,16 @@ func TestApply_Upgrade(t *testing.T) {
 
 	t.Run("fails during upgrade reconcile (StateUnchanged)", func(t *testing.T) {
 		// make sure desired and current are the same this time
-		testDesiredRelease := *testCurrentRelease
+		// Current release must have the same labels as storageLabels to trigger StateUnchanged
+		testCurrentWithLabels := &release.Release{
+			Info:   &release.Info{Status: release.StatusDeployed},
+			Labels: testStorageLabels,
+		}
+		testDesiredRelease := *testCurrentWithLabels
 
 		mockAcg := &mockActionGetter{
 			reconcileErr: errors.New("failed reconciling charts"),
-			currentRel:   testCurrentRelease,
+			currentRel:   testCurrentWithLabels,
 			desiredRel:   &testDesiredRelease,
 		}
 		mockPf := &mockPreflight{}
@@ -662,6 +667,47 @@ func TestApply_Upgrade(t *testing.T) {
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.NoError(t, err)
+		require.True(t, installSucceeded)
+		require.Empty(t, installStatus)
+	})
+
+	t.Run("triggers upgrade when storage labels change but manifest is unchanged", func(t *testing.T) {
+		// Current release has old labels but same manifest as desired
+		testCurrentWithLabels := &release.Release{
+			Info:     &release.Info{Status: release.StatusDeployed},
+			Labels:   map[string]string{"bundle-version": "v1.0.0"},
+			Manifest: validManifest, // Same manifest as desired - only labels differ
+		}
+		// Desired release has same manifest as current (no manifest change)
+		testDesiredRelease := &release.Release{
+			Info:     &release.Info{Status: release.StatusDeployed},
+			Manifest: validManifest,
+		}
+
+		mockAcg := &mockActionGetter{
+			currentRel: testCurrentWithLabels,
+			desiredRel: testDesiredRelease,
+			// Set reconcileErr to ensure test fails if reconcile path is taken instead of upgrade
+			reconcileErr: errors.New("reconcile should not be called when labels change"),
+		}
+
+		helmApplier := applier.Helm{
+			ActionClientGetter:            mockAcg,
+			HelmChartProvider:             DummyHelmChartProvider,
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			Manager: &mockManagedContentCacheManager{
+				cache: &mockManagedContentCache{},
+			},
+		}
+
+		// Use new storage labels that differ from current release labels
+		newStorageLabels := map[string]string{"bundle-version": "v2.0.0"}
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, newStorageLabels)
+
+		// If the code correctly triggers upgrade (not reconcile) when labels change,
+		// the test succeeds. If it incorrectly takes the reconcile path, reconcileErr
+		// will cause the test to fail.
 		require.NoError(t, err)
 		require.True(t, installSucceeded)
 		require.Empty(t, installStatus)

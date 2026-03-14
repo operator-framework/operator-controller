@@ -117,7 +117,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		return false, "", err
 	}
 
-	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, post)
+	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, post, storageLabels)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to get release state using server-side dry-run: %w", err)
 	}
@@ -289,7 +289,7 @@ func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExt
 	}, helmclient.AppendInstallPostRenderer(post))
 }
 
-func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer, storageLabels map[string]string) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
 	if errors.Is(err, driver.ErrReleaseNotFound) {
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
@@ -318,10 +318,23 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterE
 	relState := StateUnchanged
 	if desiredRelease.Manifest != currentRelease.Manifest ||
 		currentRelease.Info.Status == release.StatusFailed ||
-		currentRelease.Info.Status == release.StatusSuperseded {
+		currentRelease.Info.Status == release.StatusSuperseded ||
+		releaseLabelsChanged(currentRelease.Labels, storageLabels) {
 		relState = StateNeedsUpgrade
 	}
 	return currentRelease, desiredRelease, relState, nil
+}
+
+// releaseLabelsChanged checks if any of the storage labels have changed.
+// This ensures we upgrade the release when bundle metadata changes,
+// even if the rendered manifests are identical.
+func releaseLabelsChanged(currentLabels, desiredLabels map[string]string) bool {
+	for key, desiredValue := range desiredLabels {
+		if currentValue, exists := currentLabels[key]; !exists || currentValue != desiredValue {
+			return true
+		}
+	}
+	return false
 }
 
 type postrenderer struct {
