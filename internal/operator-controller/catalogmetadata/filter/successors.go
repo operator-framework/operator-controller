@@ -3,24 +3,24 @@ package filter
 import (
 	"fmt"
 
+	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
 func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
-	// TODO: We do not have an explicit field in our BundleMetadata for a bundle's release value.
-	//    Legacy registry+v1 bundles embed the release value inside their versions as build metadata
-	//    (in violation of the semver spec). If/when we add explicit release metadata to bundles and/or
-	//    we support a new bundle format, we need to revisit the assumption that all bundles are
-	//    registry+v1 and embed release in build metadata.
-	installedVersionRelease, err := bundle.NewLegacyRegistryV1VersionRelease(installedBundle.Version)
+	installedBundleVersion, err := mmsemver.NewVersion(installedBundle.Version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get version and release of installed bundle: %v", err)
+		return nil, fmt.Errorf("parsing installed bundle %q version %q: %w", installedBundle.Name, installedBundle.Version, err)
+	}
+
+	installedVersionConstraint, err := mmsemver.NewConstraint(installedBundleVersion.String())
+	if err != nil {
+		return nil, fmt.Errorf("parsing installed version constraint %q: %w", installedBundleVersion.String(), err)
 	}
 
 	successorsPredicate, err := legacySuccessor(installedBundle, channels...)
@@ -31,7 +31,7 @@ func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Chann
 	// We need either successors or current version (no upgrade)
 	return filter.Or(
 		successorsPredicate,
-		ExactVersionRelease(*installedVersionRelease),
+		InMastermindsSemverRange(installedVersionConstraint),
 	), nil
 }
 
