@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -472,13 +472,15 @@ func (c *ClusterExtensionRevisionReconciler) buildBoxcutterPhases(ctx context.Co
 		previousObjs[i] = rev
 	}
 
-	if err = initializeProbes(); err != nil {
+	progressionProbes, err := buildProgressionProbes(cer.Spec.ProgressionProbes)
+	if err != nil {
 		return nil, nil, err
 	}
+
 	opts := []boxcutter.RevisionReconcileOption{
 		boxcutter.WithPreviousOwners(previousObjs),
 		boxcutter.WithProbe(boxcutter.ProgressProbeType, probing.And{
-			&namespaceActiveProbe, deploymentProbe, statefulSetProbe, crdProbe, issuerProbe, certProbe, &pvcBoundProbe,
+			&namespaceActiveProbe, deploymentProbe, statefulSetProbe, crdProbe, issuerProbe, certProbe, &pvcBoundProbe, progressionProbes,
 		}),
 	}
 
@@ -520,27 +522,58 @@ func EffectiveCollisionProtection(cp ...ocv1.CollisionProtection) ocv1.Collision
 	return ecp
 }
 
-// initializeProbes is used to initialize CEL probes once, so we don't recreate them on every reconcile
-var initializeProbes = sync.OnceValue(func() error {
-	nsCEL, err := probing.NewCELProbe(namespaceActiveCEL, `namespace phase must be "Active"`)
-	if err != nil {
-		return fmt.Errorf("initializing namespace CEL probe: %w", err)
+// buildProgressionProbes creates a set of boxcutter probes from the fields provided in the CER's spec.progressionProbes.
+// Returns nil and an error if encountered while attempting to build the probes.
+func buildProgressionProbes(progressionProbes []ocv1.ProgressionProbe) (probing.And, error) {
+	userProbes := probing.And{}
+	if len(progressionProbes) < 1 {
+		return userProbes, nil
 	}
-	pvcCEL, err := probing.NewCELProbe(pvcBoundCEL, `persistentvolumeclaim phase must be "Bound"`)
-	if err != nil {
-		return fmt.Errorf("initializing PVC CEL probe: %w", err)
-	}
-	namespaceActiveProbe = probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: corev1.GroupName, Kind: "Namespace"},
-		Prober:    nsCEL,
-	}
-	pvcBoundProbe = probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: corev1.GroupName, Kind: "PersistentVolumeClaim"},
-		Prober:    pvcCEL,
-	}
+	for _, progressionProbe := range progressionProbes {
+		// Collect all user assertions into a single 'And'
+		assertions := probing.And{}
+		for _, probe := range progressionProbe.Assertions {
+			switch probe.Type {
+			// Switch based on the union discriminator
+			case ocv1.ProbeTypeFieldCondition:
+				conditionProbe := probing.ConditionProbe(probe.ConditionEqual)
+				assertions = append(assertions, &conditionProbe)
+			case ocv1.ProbeTypeFieldEqual:
+				fieldsEqualProbe := probing.FieldsEqualProbe(probe.FieldsEqual)
+				assertions = append(assertions, &fieldsEqualProbe)
+			case ocv1.ProbeTypeFieldValue:
+				fieldValueProbe := applier.FieldValueProbe(probe.FieldValue)
+				assertions = append(assertions, &fieldValueProbe)
+			default:
+				return nil, fmt.Errorf("unknown progressionProbe assertion probe type: %s", probe.Type)
+			}
+		}
 
-	return nil
-})
+		// Create the selector probe based on user-requested type and provide the assertions
+		var selectorProbe probing.Prober
+		switch progressionProbe.Selector.Type {
+		// Switch based on the union discriminator
+		case ocv1.SelectorTypeGroupKind:
+			selectorProbe = &probing.GroupKindSelector{
+				GroupKind: schema.GroupKind(progressionProbe.Selector.GroupKind),
+				Prober:    assertions,
+			}
+		case ocv1.SelectorTypeLabel:
+			selector, err := metav1.LabelSelectorAsSelector(&progressionProbe.Selector.Label)
+			if err != nil {
+				return nil, fmt.Errorf("invalid label selector in progressionProbe (%v): %w", progressionProbe.Selector.Label, err)
+			}
+			selectorProbe = &probing.LabelSelector{
+				Selector: selector,
+				Prober:   assertions,
+			}
+		default:
+			return nil, fmt.Errorf("unknown progressionProbe selector type: %s", progressionProbe.Selector.Type)
+		}
+		userProbes = append(userProbes, selectorProbe)
+	}
+	return userProbes, nil
+}
 
 var (
 	deploymentProbe = &probing.GroupKindSelector{
@@ -573,13 +606,23 @@ var (
 		},
 	}
 
-	// namespaceActiveCEL is a CEL rule which asserts that the namespace is in "Active" phase
-	namespaceActiveCEL   = `self.status.phase == "Active"`
-	namespaceActiveProbe probing.GroupKindSelector
+	// namespaceActiveProbe is a probe which asserts that the namespace is in "Active" phase
+	namespaceActiveProbe = probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: corev1.GroupName, Kind: "Namespace"},
+		Prober: &applier.FieldValueProbe{
+			FieldPath: "status.phase",
+			Value:     "Active",
+		},
+	}
 
-	// pvcBoundCEL is a CEL rule which asserts that the PVC is in "Bound" phase
-	pvcBoundCEL   = `self.status.phase == "Bound"`
-	pvcBoundProbe probing.GroupKindSelector
+	// pvcBoundProbe is a probe which asserts that the PVC is in "Bound" phase
+	pvcBoundProbe = probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: corev1.GroupName, Kind: "PersistentVolumeClaim"},
+		Prober: &applier.FieldValueProbe{
+			FieldPath: "status.phase",
+			Value:     "Bound",
+		},
+	}
 
 	// deplStaefulSetProbe probes Deployment, StatefulSet objects.
 	deplStatefulSetProbe = &probing.ObservedGenerationProbe{
