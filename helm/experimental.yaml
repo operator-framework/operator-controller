@@ -9,6 +9,7 @@ options:
   operatorController:
     features:
       enabled:
+        - SingleOwnNamespaceInstallSupport
         - PreflightPermissions
         - HelmChartSupport
         - BoxcutterRuntime

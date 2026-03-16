@@ -63,6 +63,8 @@ type ClusterExtensionSpecApplyConfiguration struct {
 	// config is validated against a configuration schema provided by the resolved bundle. If the bundle does not provide
 	// a configuration schema the bundle is deemed to not be configurable. More information on how
 	// to configure bundles can be found in the OLM documentation associated with your current OLM version.
+	//
+	// <opcon:experimental>
 	Config *ClusterExtensionConfigApplyConfiguration `json:"config,omitempty"`
 	// progressDeadlineMinutes is an optional field that defines the maximum period
 	// of time in minutes after which an installation should be considered failed and
