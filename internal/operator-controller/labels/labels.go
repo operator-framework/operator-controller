@@ -44,4 +44,11 @@ const (
 	// that were created during migration from Helm releases. This label is used
 	// to distinguish migrated revisions from those created by normal Boxcutter operation.
 	MigratedFromHelmKey = "olm.operatorframework.io/migrated-from-helm"
+
+	// SourceSpecHashKey is the annotation key used to record a SHA-256 fingerprint
+	// of the resolution-relevant fields from the ClusterExtension spec at the time
+	// the revision was resolved. This allows the controller to detect spec changes
+	// (e.g. version constraint, channels, selector, upgradeConstraintPolicy)
+	// even when the rolling-out version still satisfies the new constraint.
+	SourceSpecHashKey = "olm.operatorframework.io/source-spec-hash"
 )

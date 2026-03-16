@@ -243,3 +243,30 @@ Feature: Update ClusterExtension
     And ClusterExtensionRevision "${NAME}-2" reports Progressing as True with Reason RollingOut
     And ClusterExtensionRevision "${NAME}-2" reports Available as False with Reason ProbeFailure
 
+  @BoxcutterRuntime
+  Scenario: Version change while a revision is stuck rolling out re-resolves from catalog
+    Given ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+            version: 1.0.2
+      """
+    And ClusterExtensionRevision "${NAME}-1" reports Available as False with Reason ProbeFailure
+    When ClusterExtension is updated to version "1.2.0"
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "test-operator.1.2.0" is installed in version "1.2.0"
+

@@ -678,28 +678,6 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
 	})
 
-	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		// Boxcutter keeps a rolling revision when apply fails. We mirror that state so the test uses
-		// the same inputs the runtime would see.
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				RollingOut: []*controllers.RevisionMetadata{{}},
-			},
-		}
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
-				Version: bsemver.MustParse("1.0.0"),
-			}
-			return &declcfg.Bundle{
-				Name:    "prometheus.v1.0.0",
-				Package: "prometheus",
-				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
-			}, &v, nil, nil
-		})
-		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
-		d.Applier = &MockApplier{err: errors.New("boxcutter apply failure")}
-	})
-
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -721,6 +699,38 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 			},
 		},
 	}
+	specHash := specHashFor(clusterExtension.Spec.Source.Catalog)
+
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		// Boxcutter keeps a rolling revision when apply fails. We mirror that state so the test uses
+		// the same inputs the runtime would see. The revision's SourceSpecHash must match the spec so
+		// the controller recognizes this as a still-valid rollout (not a spec change).
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				RollingOut: []*controllers.RevisionMetadata{{
+					Package:        "prometheus",
+					Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
+					SourceSpecHash: specHash,
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "prometheus.v1.0.0",
+						Version: "1.0.0",
+					},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+			}
+			return &declcfg.Bundle{
+				Name:    "prometheus.v1.0.0",
+				Package: "prometheus",
+				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+			}, &v, nil, nil
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{err: errors.New("boxcutter apply failure")}
+	})
 	require.NoError(t, cl.Create(ctx, clusterExtension))
 
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
@@ -766,6 +776,619 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 	require.Equal(t, "no bundle installed yet", bundleCond.Message)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionSpecMismatchWhileRollingOutReResolvesBundle verifies that when a
+// ClusterExtension's spec requests a different version than the revision currently rolling out,
+// the controller re-resolves the bundle from the catalog instead of continuing to use the stale revision.
+//
+// Scenario:
+//   - A revision for v1.0.2 is rolling out (e.g., stuck due to deployment probe failure)
+//   - The ClusterExtension spec already requests v1.0.3 at reconcile time (e.g., previously updated by the user)
+//   - The controller detects the spec/revision mismatch and re-resolves from the catalog
+//   - The resolver returns v1.0.3, which is used for the new rollout
+func TestClusterExtensionSpecMismatchWhileRollingOutReResolvesBundle(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	oldSpecHash := specHashFor(&ocv1.CatalogFilter{PackageName: "nginx88138", Version: "1.0.2"})
+
+	resolverCalled := false
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					Package: "nginx88138",
+					Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.1-nginxolm88138",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.1",
+						Version: "1.0.1",
+					},
+				},
+				RollingOut: []*controllers.RevisionMetadata{{
+					RevisionName:   "extension-88138-2",
+					Package:        "nginx88138",
+					Image:          "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+					SourceSpecHash: oldSpecHash,
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.2",
+						Version: "1.0.2",
+					},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			resolverCalled = true
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.3"),
+			}
+			return &declcfg.Bundle{
+				Name:    "nginx88138.v1.0.3",
+				Package: "nginx88138",
+				Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.3-nginxolm88138",
+			}, &v, nil, nil
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+					Version:     "1.0.3",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.NoError(t, err)
+
+	require.True(t, resolverCalled,
+		"resolver should be called because the rolling out revision (v1.0.2) does not match the spec (v1.0.3)")
+
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+	require.NotNil(t, installedCond)
+	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
+	require.Contains(t, installedCond.Message, "1.0.3")
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionRollingOutRevisionMatchesSpecNoReResolve verifies that when a
+// revision is rolling out and the spec hasn't changed, the controller uses the existing
+// rolling out revision without re-resolving from the catalog.
+func TestClusterExtensionRollingOutRevisionMatchesSpecNoReResolve(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	specHash := specHashFor(&ocv1.CatalogFilter{PackageName: "nginx88138", Version: "1.0.2"})
+
+	resolverCalled := false
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				RollingOut: []*controllers.RevisionMetadata{{
+					Package:        "nginx88138",
+					Image:          "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+					SourceSpecHash: specHash,
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.2",
+						Version: "1.0.2",
+					},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			resolverCalled = true
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.2"),
+			}
+			return &declcfg.Bundle{
+				Name:    "nginx88138.v1.0.2",
+				Package: "nginx88138",
+				Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+			}, &v, nil, nil
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+					Version:     "1.0.2",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.NoError(t, err)
+
+	require.False(t, resolverCalled,
+		"resolver should NOT be called because the rolling out revision (v1.0.2) matches the spec (v1.0.2)")
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionMultipleRollingOutRevisionsUsesLatestMatch verifies that when multiple
+// revisions are rolling out (e.g., a stuck revision and a new one created after re-resolution),
+// the controller picks the latest revision that matches the spec.
+//
+// This covers the lifecycle after re-resolution: the stuck revision (v1.0.2) is still active,
+// a new revision (v1.0.1) was created. The revision controller will archive the old one once
+// the new one succeeds, but in the meantime both are in the RollingOut list.
+func TestClusterExtensionMultipleRollingOutRevisionsUsesLatestMatch(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	oldSpecHash := specHashFor(&ocv1.CatalogFilter{PackageName: "nginx88138", Version: "1.0.2"})
+	currentSpecHash := specHashFor(&ocv1.CatalogFilter{PackageName: "nginx88138", Version: "1.0.1"})
+
+	resolverCalled := false
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					Package: "nginx88138",
+					Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.0-nginxolm88138",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*controllers.RevisionMetadata{
+					{
+						RevisionName:   "extension-88138-2",
+						Package:        "nginx88138",
+						Image:          "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+						SourceSpecHash: oldSpecHash,
+						BundleMetadata: ocv1.BundleMetadata{
+							Name:    "nginx88138.v1.0.2",
+							Version: "1.0.2",
+						},
+					},
+					{
+						RevisionName:   "extension-88138-3",
+						Package:        "nginx88138",
+						Image:          "quay.io/olmqe/nginxolm-operator-bundle:v1.0.1-nginxolm88138",
+						SourceSpecHash: currentSpecHash,
+						BundleMetadata: ocv1.BundleMetadata{
+							Name:    "nginx88138.v1.0.1",
+							Version: "1.0.1",
+						},
+					},
+				},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			resolverCalled = true
+			return nil, nil, nil, fmt.Errorf("should not be called")
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+					Version:     "1.0.1",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.NoError(t, err)
+
+	require.False(t, resolverCalled,
+		"resolver should NOT be called: the latest rolling-out revision (v1.0.1) matches the spec, "+
+			"even though an older stuck revision (v1.0.2) does not match")
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionReResolvesWithInstalledAsFromVersion verifies that when re-resolving
+// during a stuck rollout, the resolver receives the Installed revision (A) as the
+// installedBundle parameter — not the rolling-out revision (B). This ensures upgrade
+// constraints are checked against the last known-good state.
+func TestClusterExtensionReResolvesWithInstalledAsFromVersion(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	oldSpecHash := specHashFor(&ocv1.CatalogFilter{PackageName: "nginx88138", Version: "1.0.2"})
+
+	var capturedInstalledBundle *ocv1.BundleMetadata
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					Package: "nginx88138",
+					Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.0-nginxolm88138",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*controllers.RevisionMetadata{{
+					RevisionName:   "extension-88138-2",
+					Package:        "nginx88138",
+					Image:          "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+					SourceSpecHash: oldSpecHash,
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.2",
+						Version: "1.0.2",
+					},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			capturedInstalledBundle = installedBundle
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.1"),
+			}
+			return &declcfg.Bundle{
+				Name:    "nginx88138.v1.0.1",
+				Package: "nginx88138",
+				Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.1-nginxolm88138",
+			}, &v, nil, nil
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+					Version:     "1.0.1",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.NoError(t, err)
+
+	require.NotNil(t, capturedInstalledBundle,
+		"resolver should receive an installedBundle")
+	require.Equal(t, "nginx88138.v1.0.0", capturedInstalledBundle.Name,
+		"resolver should receive the Installed version (v1.0.0), not the rolling-out version (v1.0.2)")
+	require.Equal(t, "1.0.0", capturedInstalledBundle.Version)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionNoInstalledRevisionSpecMismatchReResolves verifies that when there
+// is no installed revision (first install attempt got stuck) and the spec changes,
+// the controller re-resolves with nil as the installedBundle.
+func TestClusterExtensionNoInstalledRevisionSpecMismatchReResolves(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	oldSpecHash := specHashFor(&ocv1.CatalogFilter{PackageName: "nginx88138", Version: "1.0.2"})
+
+	resolverCalled := false
+	var capturedInstalledBundle *ocv1.BundleMetadata
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				RollingOut: []*controllers.RevisionMetadata{{
+					RevisionName:   "extension-1",
+					Package:        "nginx88138",
+					Image:          "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+					SourceSpecHash: oldSpecHash,
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.2",
+						Version: "1.0.2",
+					},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			resolverCalled = true
+			capturedInstalledBundle = installedBundle
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.1"),
+			}
+			return &declcfg.Bundle{
+				Name:    "nginx88138.v1.0.1",
+				Package: "nginx88138",
+				Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.1-nginxolm88138",
+			}, &v, nil, nil
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+					Version:     "1.0.1",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.NoError(t, err)
+
+	require.True(t, resolverCalled,
+		"resolver should be called: first install stuck (v1.0.2) and spec requests v1.0.1")
+	require.Nil(t, capturedInstalledBundle,
+		"installedBundle should be nil since no revision has been successfully installed yet")
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionRollingOutSameSpecHashReuses verifies that when a revision's
+// source spec hash matches the current spec (i.e., the spec hasn't changed since
+// the revision was resolved), the controller reuses the revision without re-resolving.
+func TestClusterExtensionRollingOutSameSpecHashReuses(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	specHash := specHashFor(&ocv1.CatalogFilter{PackageName: "nginx88138"})
+
+	resolverCalled := false
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				RollingOut: []*controllers.RevisionMetadata{{
+					Package:        "nginx88138",
+					Image:          "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+					SourceSpecHash: specHash,
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.2",
+						Version: "1.0.2",
+					},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			resolverCalled = true
+			return nil, nil, nil, fmt.Errorf("should not be called")
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.NoError(t, err)
+
+	require.False(t, resolverCalled,
+		"resolver should NOT be called: revision's source spec hash matches the current spec")
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionRollingOutVersionRangeMatchReuses verifies that when the spec has
+// a version range constraint and the rolling-out revision was resolved from the same spec,
+// the controller reuses the revision without re-resolving.
+func TestClusterExtensionRollingOutVersionRangeMatchReuses(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	specHash := specHashFor(&ocv1.CatalogFilter{PackageName: "nginx88138", Version: ">=1.0.0, <2.0.0"})
+
+	resolverCalled := false
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				RollingOut: []*controllers.RevisionMetadata{{
+					Package:        "nginx88138",
+					Image:          "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+					SourceSpecHash: specHash,
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.2",
+						Version: "1.0.2",
+					},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			resolverCalled = true
+			return nil, nil, nil, fmt.Errorf("should not be called")
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+					Version:     ">=1.0.0, <2.0.0",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.NoError(t, err)
+
+	require.False(t, resolverCalled,
+		"resolver should NOT be called: revision's source spec hash matches the current spec (range unchanged)")
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+func TestCatalogSpecHashSelectorNormalization(t *testing.T) {
+	makeExt := func(sel *metav1.LabelSelector) *ocv1.ClusterExtension {
+		return &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName:             "pkg",
+						UpgradeConstraintPolicy: ocv1.UpgradeConstraintPolicyCatalogProvided,
+						Selector:                sel,
+					},
+				},
+			},
+		}
+	}
+
+	t.Run("reordered MatchExpressions produce the same hash", func(t *testing.T) {
+		sel1 := &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{Key: "env", Operator: metav1.LabelSelectorOpIn, Values: []string{"prod", "staging"}},
+				{Key: "arch", Operator: metav1.LabelSelectorOpIn, Values: []string{"amd64"}},
+			},
+		}
+		sel2 := &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{Key: "arch", Operator: metav1.LabelSelectorOpIn, Values: []string{"amd64"}},
+				{Key: "env", Operator: metav1.LabelSelectorOpIn, Values: []string{"prod", "staging"}},
+			},
+		}
+		require.Equal(t, controllers.CatalogSpecHash(makeExt(sel1)), controllers.CatalogSpecHash(makeExt(sel2)))
+	})
+
+	t.Run("reordered Values within MatchExpression produce the same hash", func(t *testing.T) {
+		sel1 := &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{Key: "env", Operator: metav1.LabelSelectorOpIn, Values: []string{"staging", "prod"}},
+			},
+		}
+		sel2 := &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{Key: "env", Operator: metav1.LabelSelectorOpIn, Values: []string{"prod", "staging"}},
+			},
+		}
+		require.Equal(t, controllers.CatalogSpecHash(makeExt(sel1)), controllers.CatalogSpecHash(makeExt(sel2)))
+	})
+
+	t.Run("different selectors produce different hashes", func(t *testing.T) {
+		sel1 := &metav1.LabelSelector{
+			MatchLabels: map[string]string{"env": "prod"},
+		}
+		sel2 := &metav1.LabelSelector{
+			MatchLabels: map[string]string{"env": "staging"},
+		}
+		require.NotEqual(t, controllers.CatalogSpecHash(makeExt(sel1)), controllers.CatalogSpecHash(makeExt(sel2)))
+	})
+
+	t.Run("nil selector is stable", func(t *testing.T) {
+		h1 := controllers.CatalogSpecHash(makeExt(nil))
+		h2 := controllers.CatalogSpecHash(makeExt(nil))
+		require.Equal(t, h1, h2)
+		require.NotEmpty(t, h1)
+	})
+
+	t.Run("nil and empty selector produce the same hash", func(t *testing.T) {
+		hNil := controllers.CatalogSpecHash(makeExt(nil))
+		hEmpty := controllers.CatalogSpecHash(makeExt(&metav1.LabelSelector{}))
+		require.Equal(t, hNil, hEmpty, "nil and empty selectors are semantically equivalent and must hash identically")
+	})
 }
 
 func TestValidateClusterExtension(t *testing.T) {
