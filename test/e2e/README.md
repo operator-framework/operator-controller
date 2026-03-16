@@ -33,12 +33,14 @@ test/e2e/
     ├── steps.go                # Step definition implementations
     ├── hooks.go                # Test hooks and scenario context
     └── testdata/               # Test data (RBAC templates, catalogs)
-        ├── rbac-template.yaml
+        ├── serviceaccount-template.yaml
+        ├── olm-sa-helm-rbac-template.yaml
+        ├── olm-sa-boxcutter-rbac-template.yaml
+        ├── pvc-probe-sa-boxcutter-rbac-template.yaml
         ├── cluster-admin-rbac-template.yaml
         ├── metrics-reader-rbac-template.yaml
         ├── test-catalog-template.yaml
-        ├── extra-catalog-template.yaml
-        └── ...
+        └── extra-catalog-template.yaml
 ```
 
 ## Architecture
