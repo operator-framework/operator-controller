@@ -140,15 +140,34 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 
-		// If already rolling out, use existing revision and set deprecation to Unknown (no catalog check)
+		// When revisions are actively rolling out, the decision to re-engage the resolver
+		// is driven by the progression deadline — not by spec or catalog changes.
+		//
+		// If the latest rolling-out revision has NOT exceeded its progression deadline,
+		// we continue with the current rollout. Any spec changes the user made will be
+		// picked up once the rollout completes or the progression deadline is exceeded.
+		//
+		// If the latest rolling-out revision HAS exceeded its progression deadline,
+		// we re-resolve from the catalog. At that point the resolver will use the
+		// current spec (which may have been updated by the admin) and the installed
+		// bundle metadata to find the next appropriate version.
 		if len(state.revisionStates.RollingOut) > 0 {
-			installedBundleName := ""
-			if state.revisionStates.Installed != nil {
-				installedBundleName = state.revisionStates.Installed.Name
+			latestRollingOut := state.revisionStates.RollingOut[len(state.revisionStates.RollingOut)-1]
+
+			if !hasProgressDeadlineExceeded(latestRollingOut) {
+				installedBundleName := ""
+				if state.revisionStates.Installed != nil {
+					installedBundleName = state.revisionStates.Installed.Name
+				}
+				SetDeprecationStatus(ext, installedBundleName, nil, false)
+				state.resolvedRevisionMetadata = latestRollingOut
+				return nil, nil
 			}
-			SetDeprecationStatus(ext, installedBundleName, nil, false)
-			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
-			return nil, nil
+
+			l.Info("progression deadline exceeded for rolling out revision, re-resolving bundle",
+				"revision", latestRollingOut.RevisionName,
+				"version", latestRollingOut.Version,
+			)
 		}
 
 		// Resolve a new bundle from the catalog
@@ -197,6 +216,14 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		}
 		return nil, nil
 	}
+}
+
+// hasProgressDeadlineExceeded checks whether a rolling-out revision has exceeded
+// its progression deadline. This is the primary trigger for re-engaging the resolver
+// during an active rollout.
+func hasProgressDeadlineExceeded(rm *RevisionMetadata) bool {
+	cnd := apimeta.FindStatusCondition(rm.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+	return cnd != nil && cnd.Status == metav1.ConditionFalse && cnd.Reason == ocv1.ReasonProgressDeadlineExceeded
 }
 
 // handleResolutionError handles the case when bundle resolution fails.

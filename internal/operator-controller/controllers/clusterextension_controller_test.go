@@ -680,7 +680,8 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
 		// Boxcutter keeps a rolling revision when apply fails. We mirror that state so the test uses
-		// the same inputs the runtime would see.
+		// the same inputs the runtime would see. The rolling-out revision has no ProgressDeadlineExceeded
+		// condition, so the controller reuses it without engaging the resolver.
 		d.RevisionStatesGetter = &MockRevisionStatesGetter{
 			RevisionStates: &controllers.RevisionStates{
 				RollingOut: []*controllers.RevisionMetadata{{}},
@@ -764,6 +765,172 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 	require.Equal(t, metav1.ConditionUnknown, bundleCond.Status, "apply failed before install, so bundle status stays Unknown/Absent")
 	require.Equal(t, ocv1.ReasonAbsent, bundleCond.Reason)
 	require.Equal(t, "no bundle installed yet", bundleCond.Message)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionProgressDeadlineExceededReResolvesBundle verifies that when a
+// rolling-out revision has exceeded its progression deadline, the controller re-resolves
+// from the catalog. This is the primary mechanism for recovering from stuck rollouts.
+//
+// Scenario:
+//   - A revision for v1.0.2 is rolling out but has exceeded its progression deadline
+//   - The ClusterExtension spec requests v1.0.1 (admin changed spec to recover)
+//   - The controller detects ProgressDeadlineExceeded and re-resolves from catalog
+//   - The resolver returns v1.0.1, which is used for the new rollout
+func TestClusterExtensionProgressDeadlineExceededReResolvesBundle(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	resolverCalled := false
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					Package: "nginx88138",
+					Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.0-nginxolm88138",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*controllers.RevisionMetadata{{
+					RevisionName: "extension-88138-2",
+					Package:      "nginx88138",
+					Image:        "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.2",
+						Version: "1.0.2",
+					},
+					Conditions: []metav1.Condition{{
+						Type:   ocv1.ClusterExtensionRevisionTypeProgressing,
+						Status: metav1.ConditionFalse,
+						Reason: ocv1.ReasonProgressDeadlineExceeded,
+					}},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			resolverCalled = true
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.1"),
+			}
+			return &declcfg.Bundle{
+				Name:    "nginx88138.v1.0.1",
+				Package: "nginx88138",
+				Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.1-nginxolm88138",
+			}, &v, nil, nil
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+					Version:     "1.0.1",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.NoError(t, err)
+
+	require.True(t, resolverCalled,
+		"resolver should be called because the rolling out revision exceeded its progression deadline")
+
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+	require.NotNil(t, installedCond)
+	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
+	require.Contains(t, installedCond.Message, "1.0.1")
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
+// TestClusterExtensionRollingOutNoDeadlineExceededReusesRevision verifies that when a
+// revision is actively rolling out and has NOT exceeded its progression deadline,
+// the controller reuses the existing revision without re-resolving from the catalog,
+// regardless of whether the spec has changed.
+func TestClusterExtensionRollingOutNoDeadlineExceededReusesRevision(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.BoxcutterRuntime)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.BoxcutterRuntime)))
+	})
+
+	resolverCalled := false
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				RollingOut: []*controllers.RevisionMetadata{{
+					Package: "nginx88138",
+					Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.2-nginx88138",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "nginx88138.v1.0.2",
+						Version: "1.0.2",
+					},
+				}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			resolverCalled = true
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.1"),
+			}
+			return &declcfg.Bundle{
+				Name:    "nginx88138.v1.0.1",
+				Package: "nginx88138",
+				Image:   "quay.io/olmqe/nginxolm-operator-bundle:v1.0.1-nginxolm88138",
+			}, &v, nil, nil
+		})
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "nginx88138",
+					Version:     "1.0.1",
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.NoError(t, err)
+
+	require.False(t, resolverCalled,
+		"resolver should NOT be called: rollout is active and progression deadline has not been exceeded, "+
+			"even though the spec (v1.0.1) differs from the rolling out revision (v1.0.2)")
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 }

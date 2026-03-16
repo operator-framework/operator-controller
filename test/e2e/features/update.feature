@@ -243,3 +243,36 @@ Feature: Update ClusterExtension
     And ClusterExtensionRevision "${NAME}-2" reports Progressing as True with Reason RollingOut
     And ClusterExtensionRevision "${NAME}-2" reports Available as False with Reason ProbeFailure
 
+  @BoxcutterRuntime
+  @ProgressDeadline
+  Scenario: Progression deadline triggers re-resolution when rollout is stuck
+    Given min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
+    And min value for ClusterExtensionRevision .spec.progressDeadlineMinutes is set to 1
+    And ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+            version: 1.0.2
+            upgradeConstraintPolicy: SelfCertified
+        progressDeadlineMinutes: 1
+      """
+    And ClusterExtensionRevision "${NAME}-1" reports Available as False with Reason ProbeFailure
+    When ClusterExtension is updated to version "1.0.1"
+    And ClusterExtensionRevision "${NAME}-1" reports Progressing as False with Reason ProgressDeadlineExceeded
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "test-operator.1.0.1" is installed in version "1.0.1"
+
