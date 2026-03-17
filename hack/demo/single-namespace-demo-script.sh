@@ -60,13 +60,9 @@ kubectl delete clusterextension argocd-operator --ignore-not-found=true
 kubectl delete namespace argocd-system argocd --ignore-not-found=true
 kubectl delete clusterrolebinding argocd-installer-crb --ignore-not-found=true
 
-# remove feature gate from deployment
-echo "Removing feature gate from operator-controller..."
-kubectl patch deployment -n olmv1-system operator-controller-controller-manager --type='json' -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/args", "value": "--feature-gates=SingleOwnNamespaceInstallSupport=true"}]' || true
-
-# restore standard CRDs
-echo "Restoring standard CRDs..."
-kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/base.yaml"
+# restore standard manifests and reset deployment (removes experimental feature gates)
+echo "Restoring standard manifests..."
+kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/standard.yaml"
 
 # wait for standard CRDs to be available
 kubectl wait --for condition=established --timeout=60s crd/clusterextensions.olm.operatorframework.io
