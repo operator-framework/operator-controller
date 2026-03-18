@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -75,10 +76,15 @@ func (fsc *filesystemCache) Put(catalogName, resolvedRef string, source io.Reade
 func (fsc *filesystemCache) writeFS(catalogName string, source io.Reader) (fs.FS, error) {
 	cacheDir := fsc.cacheDir(catalogName)
 
+	if err := fsc.removeOrphanedTempDirs(catalogName); err != nil {
+		return nil, err
+	}
+
 	tmpDir, err := os.MkdirTemp(fsc.cachePath, fmt.Sprintf(".%s-", catalogName))
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporary directory to unpack catalog metadata: %v", err)
 	}
+	defer os.RemoveAll(tmpDir)
 
 	if err := declcfg.WalkMetasReader(source, func(meta *declcfg.Meta, err error) error {
 		if err != nil {
@@ -163,4 +169,27 @@ func (fsc *filesystemCache) Remove(catalogName string) error {
 
 func (fsc *filesystemCache) cacheDir(catalogName string) string {
 	return filepath.Join(fsc.cachePath, catalogName)
+}
+
+// removeOrphanedTempDirs removes temporary staging directories left behind by a
+// previous writeFS call for the given catalog that was interrupted before the
+// rename (e.g. pod eviction or crash). Temp dirs use the prefix ".{catalogName}-"
+// as created by os.MkdirTemp. This method must be called while the write lock is held.
+func (fsc *filesystemCache) removeOrphanedTempDirs(catalogName string) error {
+	entries, err := os.ReadDir(fsc.cachePath)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("error reading cache directory: %w", err)
+	}
+	prefix := fmt.Sprintf(".%s-", catalogName)
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), prefix) {
+			if err := os.RemoveAll(filepath.Join(fsc.cachePath, entry.Name())); err != nil {
+				return fmt.Errorf("error removing orphaned temp directory %q: %w", entry.Name(), err)
+			}
+		}
+	}
+	return nil
 }
