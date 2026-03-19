@@ -796,6 +796,265 @@ spec:
                 maximum: 720
                 minimum: 10
                 type: integer
+              progressionProbes:
+                description: |-
+                  progressionProbes is an optional field which provides the ability to define custom readiness probes
+                  for objects defined within spec.phases. As documented in that field, most kubernetes-native objects
+                  within the phases already have some kind of readiness check built-in, but this field allows for checks
+                  which are tailored to the objects being rolled out - particularly custom resources.
+
+                  Probes defined within the progressionProbes list will apply to every phase in the revision. However, the probes will only
+                  execute against phase objects which are a match for the provided selector type. For instance, a probe using a GroupKind selector
+                  for ConfigMaps will automatically be considered to have passed for any non-ConfigMap object, but will halt any phase containing
+                  a ConfigMap if that particular object does not pass the probe check.
+
+                  The maximum number of probes is 20.
+                items:
+                  description: ProgressionProbe provides a custom probe definition,
+                    consisting of an object selection method and assertions.
+                  properties:
+                    assertions:
+                      description: |-
+                        assertions is a required list of checks which will run against the objects selected by the selector. If
+                        one or more assertions fail then the phase within which the object lives will be not be considered
+                        'Ready', blocking rollout of all subsequent phases.
+                      items:
+                        description: Assertion is a discriminated union which defines
+                          the probe type and definition used as an assertion.
+                        properties:
+                          conditionEqual:
+                            description: conditionEqual contains the expected condition
+                              type and status.
+                            properties:
+                              status:
+                                description: |-
+                                  status sets the expected condition status.
+
+                                  Allowed values are "True" and "False".
+                                enum:
+                                - "True"
+                                - "False"
+                                type: string
+                              type:
+                                description: type sets the expected condition type,
+                                  i.e. "Ready".
+                                maxLength: 200
+                                minLength: 1
+                                type: string
+                            required:
+                            - status
+                            - type
+                            type: object
+                          fieldValue:
+                            description: fieldValue contains the expected field path
+                              and value found within.
+                            properties:
+                              fieldPath:
+                                description: |-
+                                  fieldPath sets the field path for the field to check, i.e. "status.phase". The probe will fail
+                                  if the path does not exist.
+                                maxLength: 200
+                                minLength: 1
+                                type: string
+                                x-kubernetes-validations:
+                                - message: must contain a valid field path. valid
+                                    fields contain upper or lower-case alphanumeric
+                                    characters separated by the "." character.
+                                  rule: self.matches('^[a-zA-Z0-9]+(?:\\.[a-zA-Z0-9]+)*$')
+                              value:
+                                description: value sets the expected value found at
+                                  fieldPath, i.e. "Bound".
+                                maxLength: 200
+                                minLength: 1
+                                type: string
+                            required:
+                            - fieldPath
+                            - value
+                            type: object
+                          fieldsEqual:
+                            description: fieldsEqual contains the two field paths
+                              whose values are expected to match.
+                            properties:
+                              fieldA:
+                                description: |-
+                                  fieldA sets the field path for the first field, i.e. "spec.replicas". The probe will fail
+                                  if the path does not exist.
+                                maxLength: 200
+                                minLength: 1
+                                type: string
+                                x-kubernetes-validations:
+                                - message: must contain a valid field path. valid
+                                    fields contain upper or lower-case alphanumeric
+                                    characters separated by the "." character.
+                                  rule: self.matches('^[a-zA-Z0-9]+(?:\\.[a-zA-Z0-9]+)*$')
+                              fieldB:
+                                description: |-
+                                  fieldB sets the field path for the second field, i.e. "status.readyReplicas". The probe will fail
+                                  if the path does not exist.
+                                maxLength: 200
+                                minLength: 1
+                                type: string
+                                x-kubernetes-validations:
+                                - message: must contain a valid field path. valid
+                                    fields contain upper or lower-case alphanumeric
+                                    characters separated by the "." character.
+                                  rule: self.matches('^[a-zA-Z0-9]+(?:\\.[a-zA-Z0-9]+)*$')
+                            required:
+                            - fieldA
+                            - fieldB
+                            type: object
+                          type:
+                            description: |-
+                              type is a required field which specifies the type of probe to use.
+
+                              The allowed probe types are "ConditionEqual", "FieldsEqual", and "FieldValue".
+
+                              When set to "ConditionEqual", the probe checks objects that have reached a condition of specified type and status.
+                              When set to "FieldsEqual", the probe checks that the values found at two provided field paths are matching.
+                              When set to "FieldValue", the probe checks that the value found at the provided field path matches what was specified.
+                            enum:
+                            - ConditionEqual
+                            - FieldsEqual
+                            - FieldValue
+                            type: string
+                        required:
+                        - type
+                        type: object
+                        x-kubernetes-validations:
+                        - message: conditionEqual is required when type is ConditionEqual,
+                            and forbidden otherwise
+                          rule: 'self.type == ''ConditionEqual'' ?has(self.conditionEqual)
+                            : !has(self.conditionEqual)'
+                        - message: fieldsEqual is required when type is FieldsEqual,
+                            and forbidden otherwise
+                          rule: 'self.type == ''FieldsEqual'' ?has(self.fieldsEqual)
+                            : !has(self.fieldsEqual)'
+                        - message: fieldValue is required when type is FieldValue,
+                            and forbidden otherwise
+                          rule: 'self.type == ''FieldValue'' ?has(self.fieldValue)
+                            : !has(self.fieldValue)'
+                      maxItems: 20
+                      minItems: 1
+                      type: array
+                      x-kubernetes-list-type: atomic
+                    selector:
+                      description: |-
+                        selector is a required field which defines the method by which we select objects to apply the below
+                        assertions to. Any object which matches the defined selector will have all the associated assertions
+                        applied against it.
+
+                        If no objects within a phase are selected by the provided selector, then all assertions defined here
+                        are considered to have succeeded.
+                      properties:
+                        groupKind:
+                          description: |-
+                            groupKind specifies the group and kind of objects to select.
+
+                            Required when type is "GroupKind".
+
+                            Uses the Kubernetes format specified here:
+                            https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#GroupKind
+                          properties:
+                            group:
+                              type: string
+                            kind:
+                              type: string
+                          required:
+                          - group
+                          - kind
+                          type: object
+                        label:
+                          description: |-
+                            label is the label selector definition.
+
+                            Required when type is "Label".
+
+                            A probe using a Label selector will be executed against every object matching the labels or expressions; you must use care
+                            when using this type of selector. For example, if multiple Kind objects are selected via labels then the probe is
+                            likely to fail because the values of different Kind objects rarely share the same schema.
+
+                            The LabelSelector field uses the following Kubernetes format:
+                            https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
+                            Requires exactly one of matchLabels or matchExpressions.
+                          properties:
+                            matchExpressions:
+                              description: matchExpressions is a list of label selector
+                                requirements. The requirements are ANDed.
+                              items:
+                                description: |-
+                                  A label selector requirement is a selector that contains values, a key, and an operator that
+                                  relates the key and values.
+                                properties:
+                                  key:
+                                    description: key is the label key that the selector
+                                      applies to.
+                                    type: string
+                                  operator:
+                                    description: |-
+                                      operator represents a key's relationship to a set of values.
+                                      Valid operators are In, NotIn, Exists and DoesNotExist.
+                                    type: string
+                                  values:
+                                    description: |-
+                                      values is an array of string values. If the operator is In or NotIn,
+                                      the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                      the values array must be empty. This array is replaced during a strategic
+                                      merge patch.
+                                    items:
+                                      type: string
+                                    type: array
+                                    x-kubernetes-list-type: atomic
+                                required:
+                                - key
+                                - operator
+                                type: object
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            matchLabels:
+                              additionalProperties:
+                                type: string
+                              description: |-
+                                matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                operator is "In", and the values array contains only "value". The requirements are ANDed.
+                              type: object
+                          type: object
+                          x-kubernetes-map-type: atomic
+                          x-kubernetes-validations:
+                          - message: exactly one of matchLabels or matchExpressions
+                              must be set
+                            rule: (has(self.matchExpressions) && !has(self.matchLabels))
+                              || (!has(self.matchExpressions) && has(self.matchLabels))
+                        type:
+                          description: |-
+                            type is a required field which specifies the type of selector to use.
+
+                            The allowed selector types are "GroupKind" and "Label".
+
+                            When set to "GroupKind", all objects which match the specified group and kind will be selected.
+                            When set to "Label", all objects which match the specified labels and/or expressions will be selected.
+                          enum:
+                          - GroupKind
+                          - Label
+                          type: string
+                      required:
+                      - type
+                      type: object
+                      x-kubernetes-validations:
+                      - message: groupKind is required when type is GroupKind, and
+                          forbidden otherwise
+                        rule: 'self.type == ''GroupKind'' ?has(self.groupKind) : !has(self.groupKind)'
+                      - message: label is required when type is Label, and forbidden
+                          otherwise
+                        rule: 'self.type == ''Label'' ?has(self.label) : !has(self.label)'
+                  required:
+                  - assertions
+                  - selector
+                  type: object
+                maxItems: 20
+                minItems: 1
+                type: array
+                x-kubernetes-list-type: atomic
               revision:
                 description: |-
                   revision is a required, immutable sequence number representing a specific revision

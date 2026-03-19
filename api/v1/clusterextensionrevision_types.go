@@ -106,6 +106,25 @@ type ClusterExtensionRevisionSpec struct {
 	// <opcon:experimental>
 	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
 
+	// progressionProbes is an optional field which provides the ability to define custom readiness probes
+	// for objects defined within spec.phases. As documented in that field, most kubernetes-native objects
+	// within the phases already have some kind of readiness check built-in, but this field allows for checks
+	// which are tailored to the objects being rolled out - particularly custom resources.
+	//
+	// Probes defined within the progressionProbes list will apply to every phase in the revision. However, the probes will only
+	// execute against phase objects which are a match for the provided selector type. For instance, a probe using a GroupKind selector
+	// for ConfigMaps will automatically be considered to have passed for any non-ConfigMap object, but will halt any phase containing
+	// a ConfigMap if that particular object does not pass the probe check.
+	//
+	// The maximum number of probes is 20.
+	//
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=20
+	// +listType=atomic
+	// +optional
+	// <opcon:experimental>
+	ProgressionProbes []ProgressionProbe `json:"progressionProbes,omitempty"`
+
 	// collisionProtection specifies the default collision protection strategy for all objects
 	// in this revision. Individual phases or objects can override this value.
 	//
@@ -118,6 +137,205 @@ type ClusterExtensionRevisionSpec struct {
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="collisionProtection is immutable"
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
+}
+
+// ProgressionProbe provides a custom probe definition, consisting of an object selection method and assertions.
+type ProgressionProbe struct {
+	// selector is a required field which defines the method by which we select objects to apply the below
+	// assertions to. Any object which matches the defined selector will have all the associated assertions
+	// applied against it.
+	//
+	// If no objects within a phase are selected by the provided selector, then all assertions defined here
+	// are considered to have succeeded.
+	//
+	// +required
+	// <opcon:experimental>
+	Selector ObjectSelector `json:"selector,omitzero"`
+
+	// assertions is a required list of checks which will run against the objects selected by the selector. If
+	// one or more assertions fail then the phase within which the object lives will be not be considered
+	// 'Ready', blocking rollout of all subsequent phases.
+	//
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=20
+	// +listType=atomic
+	// +required
+	// <opcon:experimental>
+	Assertions []Assertion `json:"assertions,omitempty"`
+}
+
+// ObjectSelector is a discriminated union which defines the method by which we select objects to make assertions against.
+// +union
+// +kubebuilder:validation:XValidation:rule="self.type == 'GroupKind' ?has(self.groupKind) : !has(self.groupKind)",message="groupKind is required when type is GroupKind, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="self.type == 'Label' ?has(self.label) : !has(self.label)",message="label is required when type is Label, and forbidden otherwise"
+type ObjectSelector struct {
+	// type is a required field which specifies the type of selector to use.
+	//
+	// The allowed selector types are "GroupKind" and "Label".
+	//
+	// When set to "GroupKind", all objects which match the specified group and kind will be selected.
+	// When set to "Label", all objects which match the specified labels and/or expressions will be selected.
+	//
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum=GroupKind;Label
+	// +required
+	// <opcon:experimental>
+	Type SelectorType `json:"type,omitempty"`
+
+	// groupKind specifies the group and kind of objects to select.
+	//
+	// Required when type is "GroupKind".
+	//
+	// Uses the Kubernetes format specified here:
+	// https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#GroupKind
+	//
+	// +optional
+	// +unionMember
+	// <opcon:experimental>
+	GroupKind metav1.GroupKind `json:"groupKind,omitempty,omitzero"`
+
+	// label is the label selector definition.
+	//
+	// Required when type is "Label".
+	//
+	// A probe using a Label selector will be executed against every object matching the labels or expressions; you must use care
+	// when using this type of selector. For example, if multiple Kind objects are selected via labels then the probe is
+	// likely to fail because the values of different Kind objects rarely share the same schema.
+	//
+	// The LabelSelector field uses the following Kubernetes format:
+	// https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
+	// Requires exactly one of matchLabels or matchExpressions.
+	//
+	// +optional
+	// +unionMember
+	// +kubebuilder:validation:XValidation:rule="(has(self.matchExpressions) && !has(self.matchLabels)) || (!has(self.matchExpressions) && has(self.matchLabels))",message="exactly one of matchLabels or matchExpressions must be set"
+	// <opcon:experimental>
+	Label metav1.LabelSelector `json:"label,omitempty,omitzero"`
+}
+
+// SelectorType defines the type of selector used for progressionProbes.
+// +enum
+type SelectorType string
+
+const (
+	SelectorTypeGroupKind SelectorType = "GroupKind"
+	SelectorTypeLabel     SelectorType = "Label"
+)
+
+// ProbeType defines the type of probe used as an assertion.
+// +enum
+type ProbeType string
+
+const (
+	ProbeTypeFieldCondition ProbeType = "ConditionEqual"
+	ProbeTypeFieldEqual     ProbeType = "FieldsEqual"
+	ProbeTypeFieldValue     ProbeType = "FieldValue"
+)
+
+// Assertion is a discriminated union which defines the probe type and definition used as an assertion.
+// +union
+// +kubebuilder:validation:XValidation:rule="self.type == 'ConditionEqual' ?has(self.conditionEqual) : !has(self.conditionEqual)",message="conditionEqual is required when type is ConditionEqual, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="self.type == 'FieldsEqual' ?has(self.fieldsEqual) : !has(self.fieldsEqual)",message="fieldsEqual is required when type is FieldsEqual, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="self.type == 'FieldValue' ?has(self.fieldValue) : !has(self.fieldValue)",message="fieldValue is required when type is FieldValue, and forbidden otherwise"
+type Assertion struct {
+	// type is a required field which specifies the type of probe to use.
+	//
+	// The allowed probe types are "ConditionEqual", "FieldsEqual", and "FieldValue".
+	//
+	// When set to "ConditionEqual", the probe checks objects that have reached a condition of specified type and status.
+	// When set to "FieldsEqual", the probe checks that the values found at two provided field paths are matching.
+	// When set to "FieldValue", the probe checks that the value found at the provided field path matches what was specified.
+	//
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum=ConditionEqual;FieldsEqual;FieldValue
+	// +required
+	// <opcon:experimental>
+	Type ProbeType `json:"type,omitempty"`
+
+	// conditionEqual contains the expected condition type and status.
+	//
+	// +unionMember
+	// +optional
+	// <opcon:experimental>
+	ConditionEqual ConditionEqualProbe `json:"conditionEqual,omitzero"`
+
+	// fieldsEqual contains the two field paths whose values are expected to match.
+	//
+	// +unionMember
+	// +optional
+	// <opcon:experimental>
+	FieldsEqual FieldsEqualProbe `json:"fieldsEqual,omitzero"`
+
+	// fieldValue contains the expected field path and value found within.
+	//
+	// +unionMember
+	// +optional
+	// <opcon:experimental>
+	FieldValue FieldValueProbe `json:"fieldValue,omitzero"`
+}
+
+// ConditionEqualProbe defines the condition type and status required for the probe to succeed.
+type ConditionEqualProbe struct {
+	// type sets the expected condition type, i.e. "Ready".
+	//
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=200
+	// +required
+	// <opcon:experimental>
+	Type string `json:"type,omitempty"`
+
+	// status sets the expected condition status.
+	//
+	// Allowed values are "True" and "False".
+	//
+	// +kubebuilder:validation:Enum=True;False
+	// +required
+	// <opcon:experimental>
+	Status string `json:"status,omitempty"`
+}
+
+// FieldsEqualProbe defines the paths of the two fields required to match for the probe to succeed.
+type FieldsEqualProbe struct {
+	// fieldA sets the field path for the first field, i.e. "spec.replicas". The probe will fail
+	// if the path does not exist.
+	//
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=200
+	// +kubebuilder:validation:XValidation:rule="self.matches('^[a-zA-Z0-9]+(?:\\\\.[a-zA-Z0-9]+)*$')",message="must contain a valid field path. valid fields contain upper or lower-case alphanumeric characters separated by the \".\" character."
+	// +required
+	// <opcon:experimental>
+	FieldA string `json:"fieldA,omitempty"`
+
+	// fieldB sets the field path for the second field, i.e. "status.readyReplicas". The probe will fail
+	// if the path does not exist.
+	//
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=200
+	// +kubebuilder:validation:XValidation:rule="self.matches('^[a-zA-Z0-9]+(?:\\\\.[a-zA-Z0-9]+)*$')",message="must contain a valid field path. valid fields contain upper or lower-case alphanumeric characters separated by the \".\" character."
+	// +required
+	// <opcon:experimental>
+	FieldB string `json:"fieldB,omitempty"`
+}
+
+// FieldValueProbe defines the path and value expected within for the probe to succeed.
+type FieldValueProbe struct {
+	// fieldPath sets the field path for the field to check, i.e. "status.phase". The probe will fail
+	// if the path does not exist.
+	//
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=200
+	// +kubebuilder:validation:XValidation:rule="self.matches('^[a-zA-Z0-9]+(?:\\\\.[a-zA-Z0-9]+)*$')",message="must contain a valid field path. valid fields contain upper or lower-case alphanumeric characters separated by the \".\" character."
+	// +required
+	// <opcon:experimental>
+	FieldPath string `json:"fieldPath,omitempty"`
+
+	// value sets the expected value found at fieldPath, i.e. "Bound".
+	//
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=200
+	// +required
+	// <opcon:experimental>
+	Value string `json:"value,omitempty"`
 }
 
 // ClusterExtensionRevisionLifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
