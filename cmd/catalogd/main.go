@@ -37,6 +37,8 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/metadata"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -95,6 +97,7 @@ type config struct {
 	webhookPort          int
 	pullCasDir           string
 	globalPullSecret     string
+	kubeconfig           string
 	// Generated config
 	globalPullSecretKey *k8stypes.NamespacedName
 }
@@ -136,6 +139,7 @@ func init() {
 	flags.IntVar(&cfg.webhookPort, "webhook-server-port", 9443, "Webhook server port")
 	flags.StringVar(&cfg.pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to image registries.")
 	flags.StringVar(&cfg.globalPullSecret, "global-pull-secret", "", "Global pull secret (<namespace>/<name>)")
+	flags.StringVar(&cfg.kubeconfig, "kubeconfig", "", "Path to kubeconfig file for API server access. Uses in-cluster config if empty.")
 
 	// adds version subcommand
 	catalogdCmd.AddCommand(versionCommand)
@@ -273,8 +277,20 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	// Create manager
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	// Create manager with kubeconfig support for non-default kubeconfig
+	var restConfig *rest.Config
+	if cfg.kubeconfig != "" {
+		setupLog.Info("loading kubeconfig from file", "path", cfg.kubeconfig)
+		restConfig, err = clientcmd.BuildConfigFromFlags("", cfg.kubeconfig)
+		if err != nil {
+			setupLog.Error(err, "unable to load kubeconfig")
+			return err
+		}
+	} else {
+		restConfig = ctrl.GetConfigOrDie()
+	}
+
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme,
 		Metrics:                       metricsServerOptions,
 		PprofBindAddress:              cfg.pprofAddr,
