@@ -107,6 +107,15 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource apply fails with error msg containing "([^"]+)"$`, ResourceApplyFails)
 	sc.Step(`^(?i)resource "([^"]+)" is eventually restored$`, ResourceRestored)
 	sc.Step(`^(?i)resource "([^"]+)" matches$`, ResourceMatches)
+	sc.Step(`^(?i)rollout restart is performed on "([^"]+)"$`, RolloutRestartIsPerformed)
+	sc.Step(`^(?i)annotations are added to "([^"]+)"$`, AnnotationsAreAdded)
+	sc.Step(`^(?i)labels are added to "([^"]+)"$`, LabelsAreAdded)
+	sc.Step(`^(?i)resource "([^"]+)" has annotations$`, ResourceHasAnnotations)
+	sc.Step(`^(?i)resource "([^"]+)" has labels$`, ResourceHasLabels)
+	sc.Step(`^(?i)deployment "([^"]+)" pod template has annotation "([^"]+)"$`, DeploymentPodTemplateHasAnnotation)
+	sc.Step(`^(?i)deployment "([^"]+)" rollout is complete$`, DeploymentRolloutIsComplete)
+	sc.Step(`^(?i)deployment "([^"]+)" has (\d+) replica sets?$`, DeploymentHasReplicaSets)
+	sc.Step(`^(?i)ClusterExtension reconciliation is triggered$`, TriggerClusterExtensionReconciliation)
 
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with permissions to install extensions is available in "([^"]*)" namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace)
@@ -1353,4 +1362,382 @@ func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterExtensionRev
 	}
 
 	return latest, nil
+}
+
+// AnnotationsAreAdded adds annotations from a data table to a resource using kubectl annotate.
+// The table must have "key" and "value" columns.
+// Only supports namespaced resources (always uses sc.namespace).
+func AnnotationsAreAdded(ctx context.Context, resourceName string, table *godog.Table) error {
+	sc := scenarioCtx(ctx)
+	resourceName = substituteScenarioVars(resourceName, sc)
+
+	pairs, err := parseKeyValueTable(table)
+	if err != nil {
+		return fmt.Errorf("invalid annotations table: %w", err)
+	}
+
+	kind, name, ok := strings.Cut(resourceName, "/")
+	if !ok {
+		return fmt.Errorf("invalid resource name format: %q (expected kind/name)", resourceName)
+	}
+
+	args := []string{"annotate", kind, name}
+	for k, v := range pairs {
+		args = append(args, fmt.Sprintf("%s=%s", k, v))
+	}
+	args = append(args, "--overwrite", "-n", sc.namespace)
+	if _, err := k8sClient(args...); err != nil {
+		return fmt.Errorf("failed to annotate %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
+	}
+	return nil
+}
+
+// LabelsAreAdded adds labels from a data table to a resource using kubectl label.
+// The table must have "key" and "value" columns.
+// Only supports namespaced resources (always uses sc.namespace).
+func LabelsAreAdded(ctx context.Context, resourceName string, table *godog.Table) error {
+	sc := scenarioCtx(ctx)
+	resourceName = substituteScenarioVars(resourceName, sc)
+
+	pairs, err := parseKeyValueTable(table)
+	if err != nil {
+		return fmt.Errorf("invalid labels table: %w", err)
+	}
+
+	kind, name, ok := strings.Cut(resourceName, "/")
+	if !ok {
+		return fmt.Errorf("invalid resource name format: %q (expected kind/name)", resourceName)
+	}
+
+	args := []string{"label", kind, name}
+	for k, v := range pairs {
+		args = append(args, fmt.Sprintf("%s=%s", k, v))
+	}
+	args = append(args, "--overwrite", "-n", sc.namespace)
+	if _, err := k8sClient(args...); err != nil {
+		return fmt.Errorf("failed to label %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
+	}
+	return nil
+}
+
+// ResourceHasAnnotations waits for a resource to have all annotations specified in the data table.
+// The table must have "key" and "value" columns.
+// Only supports namespaced resources (always uses sc.namespace).
+func ResourceHasAnnotations(ctx context.Context, resourceName string, table *godog.Table) error {
+	sc := scenarioCtx(ctx)
+	resourceName = substituteScenarioVars(resourceName, sc)
+
+	expected, err := parseKeyValueTable(table)
+	if err != nil {
+		return fmt.Errorf("invalid annotations table: %w", err)
+	}
+
+	kind, name, ok := strings.Cut(resourceName, "/")
+	if !ok {
+		return fmt.Errorf("invalid resource name format: %q (expected kind/name)", resourceName)
+	}
+
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var obj unstructured.Unstructured
+		if err := json.Unmarshal([]byte(out), &obj); err != nil {
+			return false
+		}
+		annotations := obj.GetAnnotations()
+		for k, v := range expected {
+			if actual, found := annotations[k]; !found || actual != v {
+				logger.V(1).Info("Annotation not yet present or value mismatch", "resource", resourceName, "key", k, "expected", v, "actual", actual)
+				return false
+			}
+		}
+		return true
+	})
+	return nil
+}
+
+// ResourceHasLabels waits for a resource to have all labels specified in the data table.
+// The table must have "key" and "value" columns.
+// Only supports namespaced resources (always uses sc.namespace).
+func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Table) error {
+	sc := scenarioCtx(ctx)
+	resourceName = substituteScenarioVars(resourceName, sc)
+
+	expected, err := parseKeyValueTable(table)
+	if err != nil {
+		return fmt.Errorf("invalid labels table: %w", err)
+	}
+
+	kind, name, ok := strings.Cut(resourceName, "/")
+	if !ok {
+		return fmt.Errorf("invalid resource name format: %q (expected kind/name)", resourceName)
+	}
+
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var obj unstructured.Unstructured
+		if err := json.Unmarshal([]byte(out), &obj); err != nil {
+			return false
+		}
+		labels := obj.GetLabels()
+		for k, v := range expected {
+			if actual, found := labels[k]; !found || actual != v {
+				logger.V(1).Info("Label not yet present or value mismatch", "resource", resourceName, "key", k, "expected", v, "actual", actual)
+				return false
+			}
+		}
+		return true
+	})
+	return nil
+}
+
+// nestedString traverses a nested map[string]interface{} by the given keys
+// and returns the leaf value as a string.
+func nestedString(obj map[string]interface{}, keys ...string) (string, bool) {
+	if len(keys) == 0 {
+		return "", false
+	}
+	current := obj
+	for _, k := range keys[:len(keys)-1] {
+		next, ok := current[k].(map[string]interface{})
+		if !ok {
+			return "", false
+		}
+		current = next
+	}
+	v, ok := current[keys[len(keys)-1]].(string)
+	return v, ok
+}
+
+// parseKeyValueTable extracts key-value pairs from a godog data table.
+// The table must have a header row with "key" and "value" columns.
+func parseKeyValueTable(table *godog.Table) (map[string]string, error) {
+	if len(table.Rows) < 2 {
+		return nil, fmt.Errorf("table must have a header row and at least one data row")
+	}
+
+	header := table.Rows[0]
+	keyIdx, valueIdx := -1, -1
+	for i, cell := range header.Cells {
+		switch cell.Value {
+		case "key":
+			keyIdx = i
+		case "value":
+			valueIdx = i
+		}
+	}
+	if keyIdx == -1 || valueIdx == -1 {
+		return nil, fmt.Errorf("table must have 'key' and 'value' columns")
+	}
+
+	maxIdx := keyIdx
+	if valueIdx > maxIdx {
+		maxIdx = valueIdx
+	}
+
+	result := make(map[string]string, len(table.Rows)-1)
+	for rowIdx, row := range table.Rows[1:] {
+		if len(row.Cells) <= maxIdx {
+			return nil, fmt.Errorf("table row %d has %d cells, expected at least %d", rowIdx+2, len(row.Cells), maxIdx+1)
+		}
+		result[row.Cells[keyIdx].Value] = row.Cells[valueIdx].Value
+	}
+	return result, nil
+}
+
+// RolloutRestartIsPerformed runs "kubectl rollout restart deployment/<name>".
+// See: https://github.com/operator-framework/operator-lifecycle-manager/issues/3392
+func RolloutRestartIsPerformed(ctx context.Context, resourceName string) error {
+	sc := scenarioCtx(ctx)
+	resourceName = substituteScenarioVars(resourceName, sc)
+
+	kind, deploymentName, ok := strings.Cut(resourceName, "/")
+	if !ok {
+		return fmt.Errorf("invalid resource name format: %q (expected kind/name)", resourceName)
+	}
+
+	if kind != "deployment" {
+		return fmt.Errorf("only deployment resources are supported for rollout restart, got: %q", kind)
+	}
+
+	// Run kubectl rollout restart to add the restart annotation.
+	// This is the real command users run, so we test actual user behavior.
+	out, err := k8sClient("rollout", "restart", resourceName, "-n", sc.namespace)
+	if err != nil {
+		return fmt.Errorf("failed to rollout restart %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
+	}
+
+	logger.V(1).Info("Rollout restart initiated", "deployment", deploymentName, "output", out)
+
+	return nil
+}
+
+// DeploymentPodTemplateHasAnnotation waits for the deployment's pod template to have
+// the given annotation key. Uses JSON parsing to avoid JSONPath issues with dots
+// in annotation keys. Polls with timeout.
+func DeploymentPodTemplateHasAnnotation(ctx context.Context, deploymentName, annotationKey string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var d appsv1.Deployment
+		if err := json.Unmarshal([]byte(out), &d); err != nil {
+			return false
+		}
+		if v, found := d.Spec.Template.Annotations[annotationKey]; found {
+			logger.V(1).Info("Pod template annotation found", "deployment", deploymentName, "key", annotationKey, "value", v)
+			return true
+		}
+		logger.V(1).Info("Pod template annotation not yet present", "deployment", deploymentName, "key", annotationKey, "annotations", d.Spec.Template.Annotations)
+		return false
+	})
+	return nil
+}
+
+// TriggerClusterExtensionReconciliation patches the ClusterExtension spec to bump
+// its metadata generation, forcing the controller to run a full reconciliation loop.
+// Use with "ClusterExtension has been reconciled the latest generation" to confirm
+// the controller processed the change before asserting on the cluster state.
+//
+// We flip install.preflight.crdUpgradeSafety.enforcement between "None" and "Strict"
+// because it is a real spec field that the API server will persist (unlike unknown
+// fields, which are pruned by structural schemas). Toggling ensures that each call
+// results in a spec change, reliably bumping .metadata.generation.
+func TriggerClusterExtensionReconciliation(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+
+	out, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", "json")
+	if err != nil {
+		return fmt.Errorf("failed to get ClusterExtension %s: %w; stderr: %s", sc.clusterExtensionName, err, stderrOutput(err))
+	}
+
+	var obj map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &obj); err != nil {
+		return fmt.Errorf("failed to unmarshal ClusterExtension %s JSON: %w", sc.clusterExtensionName, err)
+	}
+
+	currentEnforcement, _ := nestedString(obj, "spec", "install", "preflight", "crdUpgradeSafety", "enforcement")
+
+	newEnforcement := "None"
+	if currentEnforcement == "None" {
+		newEnforcement = "Strict"
+	}
+
+	payload := fmt.Sprintf(`{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"enforcement":%q}}}}}`, newEnforcement)
+	_, err = k8sClient("patch", "clusterextension", sc.clusterExtensionName,
+		"--type=merge",
+		"-p", payload)
+	if err != nil {
+		return fmt.Errorf("failed to trigger reconciliation for ClusterExtension %s: %w; stderr: %s", sc.clusterExtensionName, err, stderrOutput(err))
+	}
+	return nil
+}
+
+// DeploymentRolloutIsComplete verifies that a deployment rollout has completed successfully.
+// This ensures the new ReplicaSet is fully scaled up and the old one is scaled down.
+func DeploymentRolloutIsComplete(ctx context.Context, deploymentName string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("rollout", "status", "deployment/"+deploymentName, "-n", sc.namespace, "--watch=false")
+		if err != nil {
+			logger.V(1).Info("Failed to get rollout status", "deployment", deploymentName, "error", err)
+			return false
+		}
+		// Successful rollout shows "successfully rolled out"
+		if strings.Contains(out, "successfully rolled out") {
+			logger.V(1).Info("Rollout completed successfully", "deployment", deploymentName)
+			return true
+		}
+		logger.V(1).Info("Rollout not yet complete", "deployment", deploymentName, "status", out)
+		return false
+	})
+	return nil
+}
+
+// DeploymentHasReplicaSets verifies that a deployment has the expected number of ReplicaSets
+// and that at least one owned ReplicaSet is active with pods running.
+func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expectedCount int) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	waitFor(ctx, func() bool {
+		deploymentOut, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			logger.V(1).Info("Failed to get deployment", "deployment", deploymentName, "error", err)
+			return false
+		}
+
+		var deployment appsv1.Deployment
+		if err := json.Unmarshal([]byte(deploymentOut), &deployment); err != nil {
+			logger.V(1).Info("Failed to parse deployment", "error", err)
+			return false
+		}
+
+		args := []string{"get", "rs", "-n", sc.namespace}
+		if deployment.Spec.Selector != nil && len(deployment.Spec.Selector.MatchLabels) > 0 {
+			var parts []string
+			for k, v := range deployment.Spec.Selector.MatchLabels {
+				parts = append(parts, fmt.Sprintf("%s=%s", k, v))
+			}
+			args = append(args, "-l", strings.Join(parts, ","))
+		}
+		args = append(args, "-o", "json")
+		out, err := k8sClient(args...)
+		if err != nil {
+			logger.V(1).Info("Failed to get ReplicaSets", "deployment", deploymentName, "error", err)
+			return false
+		}
+
+		var rsCandidates struct {
+			Items []appsv1.ReplicaSet `json:"items"`
+		}
+		if err := json.Unmarshal([]byte(out), &rsCandidates); err != nil {
+			logger.V(1).Info("Failed to parse ReplicaSets", "error", err)
+			return false
+		}
+
+		var rsList []appsv1.ReplicaSet
+		for _, rs := range rsCandidates.Items {
+			for _, owner := range rs.OwnerReferences {
+				if owner.Kind == "Deployment" && owner.UID == deployment.UID {
+					rsList = append(rsList, rs)
+					break
+				}
+			}
+		}
+
+		if len(rsList) != expectedCount {
+			logger.V(1).Info("ReplicaSet count does not match expected value yet", "deployment", deploymentName, "current", len(rsList), "expected", expectedCount)
+			return false
+		}
+
+		// Verify at least one ReplicaSet has active replicas
+		hasActiveRS := false
+		for _, rs := range rsList {
+			if rs.Status.Replicas > 0 && rs.Status.ReadyReplicas > 0 {
+				hasActiveRS = true
+				logger.V(1).Info("Found active ReplicaSet", "name", rs.Name, "replicas", rs.Status.Replicas, "ready", rs.Status.ReadyReplicas)
+			}
+		}
+
+		if !hasActiveRS {
+			logger.V(1).Info("No active ReplicaSet found yet", "deployment", deploymentName)
+			return false
+		}
+
+		logger.V(1).Info("ReplicaSet verification passed", "deployment", deploymentName, "count", len(rsList))
+		return true
+	})
+	return nil
 }
