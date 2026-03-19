@@ -488,6 +488,13 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		return true, "", nil
 	}
 
+	// Ensure ownerReferences on all existing revisions so they are garbage-collected
+	// when the ClusterExtension is deleted. This handles revisions created by
+	// migration tools that lack ownerReferences at creation time.
+	if err := bc.ensureOwnerRefsOnRevisions(ctx, ext, existingRevisions); err != nil {
+		return false, "", fmt.Errorf("ensuring owner references on existing revisions: %w", err)
+	}
+
 	// Generate desired revision
 	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
@@ -620,6 +627,47 @@ func (bc *Boxcutter) getExistingRevisions(ctx context.Context, extName string) (
 		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
 	})
 	return existingRevisionList.Items, nil
+}
+
+// ensureOwnerRefsOnRevisions checks existing revisions and adds an ownerReference
+// to the ClusterExtension if one is missing. This handles adoption of revisions
+// created by migration tools that don't set ownerReferences at creation time.
+func (bc *Boxcutter) ensureOwnerRefsOnRevisions(ctx context.Context, ext *ocv1.ClusterExtension, revisions []ocv1.ClusterExtensionRevision) error {
+	gvk, err := apiutil.GVKForObject(ext, bc.Scheme)
+	if err != nil {
+		return fmt.Errorf("get GVK for owner: %w", err)
+	}
+
+	for i := range revisions {
+		rev := &revisions[i]
+		if hasOwnerRef(rev.OwnerReferences, ext.Name, string(ext.UID)) {
+			continue
+		}
+
+		blockOwnerDeletion := true
+		controller := true
+		rev.OwnerReferences = append(rev.OwnerReferences, metav1.OwnerReference{
+			APIVersion:         gvk.GroupVersion().String(),
+			Kind:               gvk.Kind,
+			Name:               ext.Name,
+			UID:                ext.UID,
+			BlockOwnerDeletion: &blockOwnerDeletion,
+			Controller:         &controller,
+		})
+		if err := bc.Client.Update(ctx, rev); err != nil {
+			return fmt.Errorf("setting owner reference on revision %s: %w", rev.Name, err)
+		}
+	}
+	return nil
+}
+
+func hasOwnerRef(refs []metav1.OwnerReference, name string, uid string) bool {
+	for _, ref := range refs {
+		if ref.Name == name && string(ref.UID) == uid {
+			return true
+		}
+	}
+	return false
 }
 
 func latestRevisionNumber(prevRevisions []ocv1.ClusterExtensionRevision) int64 {
