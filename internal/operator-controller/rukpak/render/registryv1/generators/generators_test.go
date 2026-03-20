@@ -3085,6 +3085,205 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 				require.Equal(t, "existing_value", dep.Spec.Template.Spec.Containers[0].Env[0].Value)
 			},
 		},
+		{
+			name: "merges volumes from deployment config - overrides matching names",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+										Volumes: []corev1.Volume{
+											{
+												Name: "bundle-emptydir-vol",
+												VolumeSource: corev1.VolumeSource{
+													EmptyDir: &corev1.EmptyDirVolumeSource{},
+												},
+											},
+											{
+												Name: "existing-vol",
+												VolumeSource: corev1.VolumeSource{
+													EmptyDir: &corev1.EmptyDirVolumeSource{},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Volumes: []corev1.Volume{
+						{
+							Name: "bundle-emptydir-vol",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "test-cm-vol",
+									},
+								},
+							},
+						},
+						{
+							Name: "config-secret-vol",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "test-secret-vol",
+								},
+							},
+						},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+				volumes := dep.Spec.Template.Spec.Volumes
+
+				// Should have 3 volumes total:
+				// - bundle-emptydir-vol (overridden to ConfigMap)
+				// - existing-vol (unchanged)
+				// - config-secret-vol (new)
+				require.Len(t, volumes, 3)
+
+				// Verify bundle-emptydir-vol was overridden (now ConfigMap, not EmptyDir)
+				var bundleVol *corev1.Volume
+				for i := range volumes {
+					if volumes[i].Name == "bundle-emptydir-vol" {
+						bundleVol = &volumes[i]
+						break
+					}
+				}
+				require.NotNil(t, bundleVol, "bundle-emptydir-vol should exist")
+				require.NotNil(t, bundleVol.ConfigMap, "bundle-emptydir-vol should be ConfigMap")
+				require.Equal(t, "test-cm-vol", bundleVol.ConfigMap.Name)
+				require.Nil(t, bundleVol.EmptyDir, "bundle-emptydir-vol should not be EmptyDir")
+
+				// Verify existing-vol remains unchanged
+				var existingVol *corev1.Volume
+				for i := range volumes {
+					if volumes[i].Name == "existing-vol" {
+						existingVol = &volumes[i]
+						break
+					}
+				}
+				require.NotNil(t, existingVol, "existing-vol should exist")
+				require.NotNil(t, existingVol.EmptyDir, "existing-vol should still be EmptyDir")
+
+				// Verify config-secret-vol was added
+				var secretVol *corev1.Volume
+				for i := range volumes {
+					if volumes[i].Name == "config-secret-vol" {
+						secretVol = &volumes[i]
+						break
+					}
+				}
+				require.NotNil(t, secretVol, "config-secret-vol should exist")
+				require.NotNil(t, secretVol.Secret, "config-secret-vol should be Secret")
+				require.Equal(t, "test-secret-vol", secretVol.Secret.SecretName)
+			},
+		},
+		{
+			name: "merges volumeMounts from deployment config - overrides matching names",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{
+												Name: "manager",
+												VolumeMounts: []corev1.VolumeMount{
+													{
+														Name:      "bundle-vol",
+														MountPath: "/old/path",
+													},
+													{
+														Name:      "existing-vol",
+														MountPath: "/existing/path",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "bundle-vol",
+							MountPath: "/new/path",
+						},
+						{
+							Name:      "config-vol",
+							MountPath: "/config/path",
+						},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+				volumeMounts := dep.Spec.Template.Spec.Containers[0].VolumeMounts
+
+				// Should have 3 volume mounts total:
+				// - bundle-vol (overridden to /new/path)
+				// - existing-vol (unchanged)
+				// - config-vol (new)
+				require.Len(t, volumeMounts, 3)
+
+				// Verify bundle-vol was overridden
+				var bundleMount *corev1.VolumeMount
+				for i := range volumeMounts {
+					if volumeMounts[i].Name == "bundle-vol" {
+						bundleMount = &volumeMounts[i]
+						break
+					}
+				}
+				require.NotNil(t, bundleMount, "bundle-vol should exist")
+				require.Equal(t, "/new/path", bundleMount.MountPath, "bundle-vol mount path should be overridden")
+
+				// Verify existing-vol remains unchanged
+				var existingMount *corev1.VolumeMount
+				for i := range volumeMounts {
+					if volumeMounts[i].Name == "existing-vol" {
+						existingMount = &volumeMounts[i]
+						break
+					}
+				}
+				require.NotNil(t, existingMount, "existing-vol should exist")
+				require.Equal(t, "/existing/path", existingMount.MountPath)
+
+				// Verify config-vol was added
+				var configMount *corev1.VolumeMount
+				for i := range volumeMounts {
+					if volumeMounts[i].Name == "config-vol" {
+						configMount = &volumeMounts[i]
+						break
+					}
+				}
+				require.NotNil(t, configMount, "config-vol should exist")
+				require.Equal(t, "/config/path", configMount.MountPath)
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			objs, err := generators.BundleCSVDeploymentGenerator(tc.bundle, tc.opts)
