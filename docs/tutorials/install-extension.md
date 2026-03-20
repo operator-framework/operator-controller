@@ -46,7 +46,7 @@ For information on determining the ServiceAccount's permission, please see [Deri
         sourceType: Catalog
         catalog:
           packageName: <package_name>
-          channels: [<channel1>,<channel2>]
+          channels: [<channel1>, <channel2>]
           version: "<version>"
     ```
 
