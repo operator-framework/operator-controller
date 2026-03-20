@@ -128,6 +128,10 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 										"labels": map[string]interface{}{
 											"my-label": "my-value",
 										},
+										"annotations": map[string]interface{}{
+											"olm.operatorframework.io/bundle-version": "1.2.0",
+											"olm.operatorframework.io/package-name":   "my-package",
+										},
 									},
 								},
 							}),
@@ -139,6 +143,10 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 									"metadata": map[string]interface{}{
 										"labels": map[string]interface{}{
 											"my-label": "my-value",
+										},
+										"annotations": map[string]interface{}{
+											"olm.operatorframework.io/bundle-version": "1.2.0",
+											"olm.operatorframework.io/package-name":   "my-package",
 										},
 									},
 								},
@@ -223,6 +231,10 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 							"kind":       "Service",
 							"metadata": map[string]interface{}{
 								"name": "test-service",
+								"annotations": map[string]interface{}{
+									"olm.operatorframework.io/bundle-version": "",
+									"olm.operatorframework.io/package-name":   "",
+								},
 							},
 							"spec": map[string]interface{}{},
 						},
@@ -244,6 +256,8 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 								},
 								"annotations": map[string]interface{}{
 									"my-annotation": "my-annotation-value",
+									"olm.operatorframework.io/bundle-version": "",
+									"olm.operatorframework.io/package-name":   "",
 								},
 							},
 							"spec": map[string]interface{}{

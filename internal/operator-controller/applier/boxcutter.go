@@ -75,6 +75,11 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		_ = cache.ApplyStripAnnotationsTransform(&obj)
 		sanitizedUnstructured(ctx, &obj)
 
+		obj.SetAnnotations(mergeLabelMaps(obj.GetAnnotations(), map[string]string{
+			labels.BundleVersionKey: helmRelease.Labels[labels.BundleVersionKey],
+			labels.PackageNameKey:   helmRelease.Labels[labels.PackageNameKey],
+		}))
+
 		objs = append(objs, *ocv1ac.ClusterExtensionRevisionObject().
 			WithObject(obj))
 	}
@@ -145,6 +150,11 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 			return nil, err
 		}
 		sanitizedUnstructured(ctx, &unstr)
+
+		unstr.SetAnnotations(mergeLabelMaps(unstr.GetAnnotations(), map[string]string{
+			labels.BundleVersionKey: revisionAnnotations[labels.BundleVersionKey],
+			labels.PackageNameKey:   revisionAnnotations[labels.PackageNameKey],
+		}))
 
 		objs = append(objs, *ocv1ac.ClusterExtensionRevisionObject().
 			WithObject(unstr))
