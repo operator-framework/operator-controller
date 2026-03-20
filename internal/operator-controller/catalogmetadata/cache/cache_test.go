@@ -169,6 +169,30 @@ func TestFilesystemCacheRemove(t *testing.T) {
 	assert.NoDirExists(t, catalogCachePath)
 }
 
+func TestFilesystemCachePutCleansOrphanedTempDirs(t *testing.T) {
+	const catalogName = "test-catalog"
+	cacheDir := t.TempDir()
+	c := cache.NewFilesystemCache(cacheDir)
+
+	// Simulate temp dirs left behind by a previous interrupted Put for this catalog.
+	orphan1 := filepath.Join(cacheDir, ".test-catalog-1234567890")
+	orphan2 := filepath.Join(cacheDir, ".test-catalog-9876543210")
+	require.NoError(t, os.MkdirAll(orphan1, 0700))
+	require.NoError(t, os.MkdirAll(orphan2, 0700))
+
+	// A temp dir for a different catalog should NOT be removed.
+	otherOrphan := filepath.Join(cacheDir, ".other-catalog-1111111111")
+	require.NoError(t, os.MkdirAll(otherOrphan, 0700))
+
+	_, err := c.Put(catalogName, "fake/catalog@sha256:fakesha", defaultContent(), nil)
+	require.NoError(t, err)
+
+	assert.NoDirExists(t, orphan1, "orphaned temp dir for catalog should have been removed")
+	assert.NoDirExists(t, orphan2, "orphaned temp dir for catalog should have been removed")
+	assert.DirExists(t, otherOrphan, "temp dir for a different catalog should not be removed")
+	assert.DirExists(t, filepath.Join(cacheDir, catalogName), "real cache dir should exist")
+}
+
 func equalFilesystems(expected, actual fs.FS) error {
 	normalizeJSON := func(data []byte) []byte {
 		var v interface{}
