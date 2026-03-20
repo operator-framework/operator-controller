@@ -1,0 +1,187 @@
+package applier
+
+import (
+	"bytes"
+	"compress/gzip"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"sort"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
+
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+)
+
+const (
+	// maxSecretDataSize is the target maximum for Secret .data size
+	// before starting a new Secret. 900 KiB leaves headroom for
+	// base64 overhead and metadata within etcd's 1.5 MiB limit.
+	maxSecretDataSize = 900 * 1024
+
+	// gzipThreshold is the size above which individual objects are
+	// gzip-compressed before being stored in a Secret.
+	gzipThreshold = 800 * 1024
+)
+
+// SecretPacker packs serialized objects from CER phases into one or more
+// immutable Secrets.
+type SecretPacker struct {
+	RevisionName    string
+	OwnerName       string
+	SystemNamespace string
+}
+
+// PackResult holds the packed Secrets and the ref entries that should
+// replace inline objects in the CER phases.
+type PackResult struct {
+	// Secrets to be created before the CER.
+	Secrets []corev1.Secret
+	// Refs maps (phaseIndex, objectIndex) to the ObjectSourceRef
+	// that should replace the inline object in the CER.
+	Refs map[[2]int]ocv1.ObjectSourceRef
+}
+
+// Pack takes CER phases with inline objects and produces:
+//  1. A set of immutable Secrets containing the serialized objects
+//  2. A mapping from (phaseIdx, objIdx) to the corresponding ObjectSourceRef
+func (p *SecretPacker) Pack(phases []ocv1.ClusterExtensionRevisionPhase) (*PackResult, error) {
+	result := &PackResult{
+		Refs: make(map[[2]int]ocv1.ObjectSourceRef),
+	}
+
+	// pendingRefs tracks which refs belong to the current (not-yet-finalized) Secret.
+	// Each entry records the ref's position key and the data key within the Secret.
+	type pendingRef struct {
+		pos [2]int
+		key string
+	}
+
+	var (
+		currentData    = make(map[string][]byte)
+		currentSize    int
+		currentPending []pendingRef
+	)
+
+	finalizeCurrent := func() {
+		if len(currentData) == 0 {
+			return
+		}
+		secret := p.newSecret(currentData)
+		// Back-fill refs for all objects assigned to this Secret.
+		for _, pr := range currentPending {
+			result.Refs[pr.pos] = ocv1.ObjectSourceRef{
+				Name:      secret.Name,
+				Namespace: p.SystemNamespace,
+				Key:       pr.key,
+			}
+		}
+		result.Secrets = append(result.Secrets, secret)
+		currentData = make(map[string][]byte)
+		currentSize = 0
+		currentPending = nil
+	}
+
+	for phaseIdx, phase := range phases {
+		for objIdx, obj := range phase.Objects {
+			if obj.Object.Object == nil {
+				continue // skip ref-only entries
+			}
+
+			data, err := json.Marshal(obj.Object.Object)
+			if err != nil {
+				return nil, fmt.Errorf("serializing object in phase %d index %d: %w", phaseIdx, objIdx, err)
+			}
+
+			// Gzip large objects.
+			if len(data) > gzipThreshold {
+				compressed, cErr := gzipData(data)
+				if cErr != nil {
+					return nil, fmt.Errorf("compressing object in phase %d index %d: %w", phaseIdx, objIdx, cErr)
+				}
+				data = compressed
+			}
+
+			if len(data) > maxSecretDataSize {
+				return nil, fmt.Errorf(
+					"object in phase %d index %d exceeds maximum Secret data size (%d bytes > %d bytes) even after compression",
+					phaseIdx, objIdx, len(data), maxSecretDataSize,
+				)
+			}
+
+			key := contentHash(data)
+
+			// If adding this entry would exceed the limit, finalize the current Secret.
+			if currentSize+len(data) > maxSecretDataSize && len(currentData) > 0 {
+				finalizeCurrent()
+			}
+
+			currentData[key] = data
+			currentSize += len(data)
+			currentPending = append(currentPending, pendingRef{pos: [2]int{phaseIdx, objIdx}, key: key})
+		}
+	}
+	finalizeCurrent()
+
+	return result, nil
+}
+
+func (p *SecretPacker) newSecret(data map[string][]byte) corev1.Secret {
+	return corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      p.secretNameFromData(data),
+			Namespace: p.SystemNamespace,
+			Labels: map[string]string{
+				labels.RevisionNameKey: p.RevisionName,
+				labels.OwnerNameKey:    p.OwnerName,
+			},
+		},
+		Immutable: ptr.To(true),
+		Data:      data,
+	}
+}
+
+// secretNameFromData computes a content-addressable Secret name from the
+// data entries. The name is "<revisionName>-<hash>" where hash is the
+// first 16 hex characters of the SHA-256 digest of the sorted
+// concatenated keys and values.
+func (p *SecretPacker) secretNameFromData(data map[string][]byte) string {
+	h := sha256.New()
+	// Sort keys for determinism.
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		h.Write([]byte(k))
+		h.Write(data[k])
+	}
+	return fmt.Sprintf("%s-%x", p.RevisionName, h.Sum(nil)[:8])
+}
+
+// contentHash returns a base64url-encoded (no padding) SHA-256 hash of data.
+// The result is 43 characters long.
+func contentHash(data []byte) string {
+	h := sha256.Sum256(data)
+	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
+func gzipData(data []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	w, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := w.Write(data); err != nil {
+		return nil, err
+	}
+	if err := w.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}

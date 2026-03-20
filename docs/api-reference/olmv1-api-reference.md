@@ -475,6 +475,8 @@ _Appears in:_
 | `label` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#labelselector-v1-meta)_ | label is the label selector definition.<br />Required when type is "Label".<br />A probe using a Label selector will be executed against every object matching the labels or expressions; you must use care<br />when using this type of selector. For example, if multiple Kind objects are selected via labels then the probe is<br />likely to fail because the values of different Kind objects rarely share the same schema.<br />The LabelSelector field uses the following Kubernetes format:<br />https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector<br />Requires exactly one of matchLabels or matchExpressions.<br /><opcon:experimental> |  | Optional: \{\} <br /> |
 
 
+
+
 #### PreflightConfig
 
 

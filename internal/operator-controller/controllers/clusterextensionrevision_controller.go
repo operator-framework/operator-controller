@@ -3,16 +3,20 @@
 package controllers
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -60,6 +64,7 @@ type trackingCache interface {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 
 func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("cluster-extension-revision")
@@ -494,7 +499,19 @@ func (c *ClusterExtensionRevisionReconciler) buildBoxcutterPhases(ctx context.Co
 	for _, specPhase := range cer.Spec.Phases {
 		objs := make([]client.Object, 0)
 		for _, specObj := range specPhase.Objects {
-			obj := specObj.Object.DeepCopy()
+			var obj *unstructured.Unstructured
+			switch {
+			case specObj.Object.Object != nil:
+				obj = specObj.Object.DeepCopy()
+			case specObj.Ref.Name != "":
+				resolved, err := c.resolveObjectRef(ctx, specObj.Ref)
+				if err != nil {
+					return nil, nil, fmt.Errorf("resolving ref in phase %q: %w", specPhase.Name, err)
+				}
+				obj = resolved
+			default:
+				return nil, nil, fmt.Errorf("object in phase %q has neither object nor ref", specPhase.Name)
+			}
 
 			objLabels := obj.GetLabels()
 			if objLabels == nil {
@@ -514,6 +531,42 @@ func (c *ClusterExtensionRevisionReconciler) buildBoxcutterPhases(ctx context.Co
 		phases = append(phases, boxcutter.NewPhase(specPhase.Name, objs))
 	}
 	return phases, opts, nil
+}
+
+// resolveObjectRef fetches the referenced Secret, reads the value at the specified key,
+// auto-detects gzip compression, and deserializes into an unstructured.Unstructured.
+func (c *ClusterExtensionRevisionReconciler) resolveObjectRef(ctx context.Context, ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
+	secret := &corev1.Secret{}
+	key := client.ObjectKey{Name: ref.Name, Namespace: ref.Namespace}
+	if err := c.Client.Get(ctx, key, secret); err != nil {
+		return nil, fmt.Errorf("getting Secret %s/%s: %w", ref.Namespace, ref.Name, err)
+	}
+
+	data, ok := secret.Data[ref.Key]
+	if !ok {
+		return nil, fmt.Errorf("key %q not found in Secret %s/%s", ref.Key, ref.Namespace, ref.Name)
+	}
+
+	// Auto-detect gzip compression (magic bytes 0x1f 0x8b)
+	if len(data) >= 2 && data[0] == 0x1f && data[1] == 0x8b {
+		reader, err := gzip.NewReader(bytes.NewReader(data))
+		if err != nil {
+			return nil, fmt.Errorf("creating gzip reader for key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+		}
+		defer reader.Close()
+		decompressed, err := io.ReadAll(reader)
+		if err != nil {
+			return nil, fmt.Errorf("decompressing key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+		}
+		data = decompressed
+	}
+
+	obj := &unstructured.Unstructured{}
+	if err := json.Unmarshal(data, &obj.Object); err != nil {
+		return nil, fmt.Errorf("unmarshaling object from key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+	}
+
+	return obj, nil
 }
 
 // EffectiveCollisionProtection resolves the collision protection value using

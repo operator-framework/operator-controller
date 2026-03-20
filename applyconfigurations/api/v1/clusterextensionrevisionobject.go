@@ -27,11 +27,20 @@ import (
 //
 // ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
 // of a phase, along with its collision protection settings.
+//
+// Exactly one of object or ref must be set.
 type ClusterExtensionRevisionObjectApplyConfiguration struct {
-	// object is a required embedded Kubernetes object to be applied.
+	// object is an optional embedded Kubernetes object to be applied.
+	//
+	// Exactly one of object or ref must be set.
 	//
 	// This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
 	Object *unstructured.Unstructured `json:"object,omitempty"`
+	// ref is an optional reference to a Secret that holds the serialized
+	// object manifest.
+	//
+	// Exactly one of object or ref must be set.
+	Ref *ObjectSourceRefApplyConfiguration `json:"ref,omitempty"`
 	// collisionProtection controls whether the operator can adopt and modify objects
 	// that already exist on the cluster.
 	//
@@ -64,6 +73,14 @@ func ClusterExtensionRevisionObject() *ClusterExtensionRevisionObjectApplyConfig
 // If called multiple times, the Object field is set to the value of the last call.
 func (b *ClusterExtensionRevisionObjectApplyConfiguration) WithObject(value unstructured.Unstructured) *ClusterExtensionRevisionObjectApplyConfiguration {
 	b.Object = &value
+	return b
+}
+
+// WithRef sets the Ref field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Ref field is set to the value of the last call.
+func (b *ClusterExtensionRevisionObjectApplyConfiguration) WithRef(value *ObjectSourceRefApplyConfiguration) *ClusterExtensionRevisionObjectApplyConfiguration {
+	b.Ref = value
 	return b
 }
 

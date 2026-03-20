@@ -23,10 +23,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/cli-runtime/pkg/printers"
 	metav1ac "k8s.io/client-go/applyconfigurations/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -451,17 +453,7 @@ type Boxcutter struct {
 	Preflights        []Preflight
 	PreAuthorizer     authorization.PreAuthorizer
 	FieldOwner        string
-}
-
-// apply applies the revision object using server-side apply. PreAuthorization checks are performed
-// to ensure the user has sufficient permissions to manage the revision and its resources.
-func (bc *Boxcutter) apply(ctx context.Context, user user.Info, rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) error {
-	// Run auth preflight checks
-	if err := bc.runPreAuthorizationChecks(ctx, user, rev); err != nil {
-		return err
-	}
-
-	return bc.Client.Apply(ctx, rev, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
+	SystemNamespace   string
 }
 
 func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
@@ -508,24 +500,41 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 
 	currentRevision := &ocv1.ClusterExtensionRevision{}
 	state := StateNeedsInstall
-	// check if we can update the current revision.
 	if len(existingRevisions) > 0 {
-		// try first to update the current revision.
 		currentRevision = &existingRevisions[len(existingRevisions)-1]
 		desiredRevision.Spec.WithRevision(currentRevision.Spec.Revision)
 		desiredRevision.WithName(currentRevision.Name)
 
-		err := bc.apply(ctx, getUserInfo(ext), desiredRevision)
+		// Save inline objects before externalization (needed for preflights + createExternalizedRevision)
+		savedInline := saveInlineObjects(desiredRevision)
+
+		// Externalize with CURRENT revision name so refs match existing CER
+		phases := extractPhasesForPacking(desiredRevision.Spec.Phases)
+		packer := &SecretPacker{
+			RevisionName:    currentRevision.Name,
+			OwnerName:       ext.Name,
+			SystemNamespace: bc.SystemNamespace,
+		}
+		packResult, err := packer.Pack(phases)
+		if err != nil {
+			return false, "", fmt.Errorf("packing for SSA comparison: %w", err)
+		}
+		replaceInlineWithRefs(desiredRevision, packResult)
+
+		// SSA patch (refs-vs-refs). Skip pre-auth — just checking for changes.
+		// createExternalizedRevision runs its own pre-auth if upgrade is needed.
+		err = bc.Client.Apply(ctx, desiredRevision, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
+
+		// Restore inline objects for preflights + createExternalizedRevision
+		restoreInlineObjects(desiredRevision, savedInline)
+
 		switch {
 		case apierrors.IsInvalid(err):
-			// We could not update the current revision due to trying to update an immutable field.
-			// Therefore, we need to create a new revision.
 			state = StateNeedsUpgrade
 		case err == nil:
-			// inplace patch was successful, no changes in phases
 			state = StateUnchanged
 		default:
-			return false, "", fmt.Errorf("patching %s Revision: %w", *desiredRevision.GetName(), err)
+			return false, "", fmt.Errorf("patching %s Revision: %w", currentRevision.Name, err)
 		}
 	}
 
@@ -554,23 +563,71 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	}
 
 	if state != StateUnchanged {
-		// need to create new revision
-		prevRevisions := existingRevisions
-		revisionNumber := latestRevisionNumber(prevRevisions) + 1
-
-		desiredRevision.WithName(fmt.Sprintf("%s-%d", ext.Name, revisionNumber))
-		desiredRevision.Spec.WithRevision(revisionNumber)
-
-		if err = bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
-			return false, "", fmt.Errorf("garbage collecting old revisions: %w", err)
+		if err := bc.createExternalizedRevision(ctx, ext, desiredRevision, existingRevisions); err != nil {
+			return false, "", err
 		}
-
-		if err := bc.apply(ctx, getUserInfo(ext), desiredRevision); err != nil {
-			return false, "", fmt.Errorf("creating new Revision: %w", err)
+	} else if currentRevision.Name != "" {
+		// In-place patch succeeded. Ensure any existing ref Secrets have ownerReferences
+		// (crash recovery for Step 3 failures).
+		if err := bc.ensureSecretOwnerReferences(ctx, currentRevision); err != nil {
+			return false, "", fmt.Errorf("ensuring ownerReferences on ref Secrets: %w", err)
 		}
 	}
 
 	return true, "", nil
+}
+
+// createExternalizedRevision creates a new CER with all objects externalized to Secrets.
+// It follows a crash-safe three-step sequence: create Secrets, create CER, patch ownerRefs.
+func (bc *Boxcutter) createExternalizedRevision(ctx context.Context, ext *ocv1.ClusterExtension, desiredRevision *ocv1ac.ClusterExtensionRevisionApplyConfiguration, existingRevisions []ocv1.ClusterExtensionRevision) error {
+	prevRevisions := existingRevisions
+	revisionNumber := latestRevisionNumber(prevRevisions) + 1
+
+	revisionName := fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
+	desiredRevision.WithName(revisionName)
+	desiredRevision.Spec.WithRevision(revisionNumber)
+
+	if err := bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
+		return fmt.Errorf("garbage collecting old revisions: %w", err)
+	}
+
+	// Run pre-authorization on the inline revision (before replacing objects with refs)
+	if err := bc.runPreAuthorizationChecks(ctx, getUserInfo(ext), desiredRevision); err != nil {
+		return fmt.Errorf("creating new Revision: %w", err)
+	}
+
+	// Externalize: pack inline objects into Secrets and replace with refs
+	phases := extractPhasesForPacking(desiredRevision.Spec.Phases)
+	packer := &SecretPacker{
+		RevisionName:    revisionName,
+		OwnerName:       ext.Name,
+		SystemNamespace: bc.SystemNamespace,
+	}
+	packResult, err := packer.Pack(phases)
+	if err != nil {
+		return fmt.Errorf("packing objects into Secrets: %w", err)
+	}
+	replaceInlineWithRefs(desiredRevision, packResult)
+
+	// Step 1: Create Secrets (skip AlreadyExists)
+	for i := range packResult.Secrets {
+		if err := bc.Client.Create(ctx, &packResult.Secrets[i]); err != nil {
+			if !apierrors.IsAlreadyExists(err) {
+				return fmt.Errorf("creating ref Secret %q: %w", packResult.Secrets[i].Name, err)
+			}
+		}
+	}
+
+	// Step 2: Create CER with refs via SSA (pre-auth already ran above)
+	if err := bc.Client.Apply(ctx, desiredRevision, client.FieldOwner(bc.FieldOwner), client.ForceOwnership); err != nil {
+		return fmt.Errorf("creating new Revision: %w", err)
+	}
+
+	// Step 3: Patch ownerReferences onto Secrets using the CER's UID
+	if err := bc.patchSecretOwnerReferences(ctx, desiredRevision, packResult.Secrets); err != nil {
+		return fmt.Errorf("patching ownerReferences on ref Secrets: %w", err)
+	}
+	return nil
 }
 
 // runPreAuthorizationChecks runs PreAuthorization checks if the PreAuthorizer is set. An error will be returned if
@@ -806,4 +863,152 @@ func mergeStringMaps(m1, m2 map[string]string) map[string]string {
 	maps.Copy(merged, m1)
 	maps.Copy(merged, m2)
 	return merged
+}
+
+// saveInlineObjects saves Object pointers from each phase/object position.
+func saveInlineObjects(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) [][]*unstructured.Unstructured {
+	saved := make([][]*unstructured.Unstructured, len(rev.Spec.Phases))
+	for i, p := range rev.Spec.Phases {
+		saved[i] = make([]*unstructured.Unstructured, len(p.Objects))
+		for j, o := range p.Objects {
+			saved[i][j] = o.Object
+		}
+	}
+	return saved
+}
+
+// restoreInlineObjects restores saved inline objects and clears refs.
+func restoreInlineObjects(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration, saved [][]*unstructured.Unstructured) {
+	for i := range saved {
+		for j := range saved[i] {
+			rev.Spec.Phases[i].Objects[j].Object = saved[i][j]
+			rev.Spec.Phases[i].Objects[j].Ref = nil
+		}
+	}
+}
+
+// extractPhasesForPacking converts apply configuration phases to API types for SecretPacker.
+func extractPhasesForPacking(phases []ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration) []ocv1.ClusterExtensionRevisionPhase {
+	result := make([]ocv1.ClusterExtensionRevisionPhase, 0, len(phases))
+	for _, p := range phases {
+		phase := ocv1.ClusterExtensionRevisionPhase{}
+		if p.Name != nil {
+			phase.Name = *p.Name
+		}
+		phase.Objects = make([]ocv1.ClusterExtensionRevisionObject, 0, len(p.Objects))
+		for _, o := range p.Objects {
+			obj := ocv1.ClusterExtensionRevisionObject{}
+			if o.Object != nil {
+				obj.Object = *o.Object
+			}
+			if o.CollisionProtection != nil {
+				obj.CollisionProtection = *o.CollisionProtection
+			}
+			phase.Objects = append(phase.Objects, obj)
+		}
+		result = append(result, phase)
+	}
+	return result
+}
+
+// replaceInlineWithRefs replaces inline objects in the apply configuration with refs from the pack result.
+func replaceInlineWithRefs(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration, pack *PackResult) {
+	if rev.Spec == nil {
+		return
+	}
+	for phaseIdx := range rev.Spec.Phases {
+		for objIdx := range rev.Spec.Phases[phaseIdx].Objects {
+			ref, ok := pack.Refs[[2]int{phaseIdx, objIdx}]
+			if !ok {
+				continue
+			}
+			rev.Spec.Phases[phaseIdx].Objects[objIdx].Object = nil
+			rev.Spec.Phases[phaseIdx].Objects[objIdx].Ref = ocv1ac.ObjectSourceRef().
+				WithName(ref.Name).
+				WithNamespace(ref.Namespace).
+				WithKey(ref.Key)
+		}
+	}
+}
+
+// patchSecretOwnerReferences fetches the CER to get its UID, then patches ownerReferences onto all Secrets.
+func (bc *Boxcutter) patchSecretOwnerReferences(ctx context.Context, rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration, secrets []corev1.Secret) error {
+	if len(secrets) == 0 {
+		return nil
+	}
+
+	// Fetch the CER to get its UID
+	cer := &ocv1.ClusterExtensionRevision{}
+	if err := bc.Client.Get(ctx, client.ObjectKey{Name: *rev.GetName()}, cer); err != nil {
+		return fmt.Errorf("getting CER %q for ownerReference: %w", *rev.GetName(), err)
+	}
+
+	return bc.patchOwnerRefsOnSecrets(ctx, cer.Name, cer.UID, secrets)
+}
+
+// ensureSecretOwnerReferences checks referenced Secrets on an existing CER and patches missing ownerReferences.
+// This handles crash recovery when Step 3 (patching ownerRefs) failed on a previous reconciliation.
+func (bc *Boxcutter) ensureSecretOwnerReferences(ctx context.Context, cer *ocv1.ClusterExtensionRevision) error {
+	// List Secrets with the revision-name label
+	secretList := &corev1.SecretList{}
+	if err := bc.Client.List(ctx, secretList,
+		client.InNamespace(bc.SystemNamespace),
+		client.MatchingLabels{labels.RevisionNameKey: cer.Name},
+	); err != nil {
+		return fmt.Errorf("listing ref Secrets for revision %q: %w", cer.Name, err)
+	}
+
+	var needsPatch []corev1.Secret
+	for _, s := range secretList.Items {
+		hasOwnerRef := false
+		for _, ref := range s.OwnerReferences {
+			if ref.UID == cer.UID {
+				hasOwnerRef = true
+				break
+			}
+		}
+		if !hasOwnerRef {
+			needsPatch = append(needsPatch, s)
+		}
+	}
+
+	if len(needsPatch) == 0 {
+		return nil
+	}
+
+	return bc.patchOwnerRefsOnSecrets(ctx, cer.Name, cer.UID, needsPatch)
+}
+
+// patchOwnerRefsOnSecrets patches ownerReferences onto the given Secrets, pointing to the CER.
+func (bc *Boxcutter) patchOwnerRefsOnSecrets(ctx context.Context, cerName string, cerUID types.UID, secrets []corev1.Secret) error {
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         ocv1.GroupVersion.String(),
+		Kind:               ocv1.ClusterExtensionRevisionKind,
+		Name:               cerName,
+		UID:                cerUID,
+		Controller:         ptr.To(true),
+		BlockOwnerDeletion: ptr.To(true),
+	}
+
+	for i := range secrets {
+		s := &secrets[i]
+		// Check if ownerRef already set
+		alreadySet := false
+		for _, ref := range s.OwnerReferences {
+			if ref.UID == cerUID {
+				alreadySet = true
+				break
+			}
+		}
+		if alreadySet {
+			continue
+		}
+
+		patch := client.MergeFrom(s.DeepCopy())
+		s.OwnerReferences = append(s.OwnerReferences, ownerRef)
+		if err := bc.Client.Patch(ctx, s, patch); err != nil {
+			return fmt.Errorf("patching ownerReference on Secret %s/%s: %w", s.Namespace, s.Name, err)
+		}
+	}
+	return nil
 }

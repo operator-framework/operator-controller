@@ -501,6 +501,35 @@ Feature: Install ClusterExtension
     And ClusterExtensionRevision "${NAME}-1" has label "olm.operatorframework.io/owner-kind" with value "ClusterExtension"
     And ClusterExtensionRevision "${NAME}-1" has label "olm.operatorframework.io/owner-name" with value "${NAME}"
 
+  @BoxcutterRuntime
+  Scenario: ClusterExtensionRevision objects are externalized to immutable Secrets
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            version: 1.2.0
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And ClusterExtensionRevision "${NAME}-1" phase objects use refs
+    And ClusterExtensionRevision "${NAME}-1" ref Secrets exist in "olmv1-system" namespace
+    And ClusterExtensionRevision "${NAME}-1" ref Secrets are immutable
+    And ClusterExtensionRevision "${NAME}-1" ref Secrets are labeled with revision and owner
+    And ClusterExtensionRevision "${NAME}-1" ref Secrets have ownerReference to the revision
+
   @DeploymentConfig
   Scenario: deploymentConfig nodeSelector is applied to the operator deployment
     When ClusterExtension is applied

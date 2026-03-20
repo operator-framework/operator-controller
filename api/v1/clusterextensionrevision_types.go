@@ -30,12 +30,13 @@ const (
 	ClusterExtensionRevisionTypeSucceeded   = "Succeeded"
 
 	// Condition Reasons
-	ClusterExtensionRevisionReasonArchived        = "Archived"
-	ClusterExtensionRevisionReasonBlocked         = "Blocked"
-	ClusterExtensionRevisionReasonProbeFailure    = "ProbeFailure"
-	ClusterExtensionRevisionReasonProbesSucceeded = "ProbesSucceeded"
-	ClusterExtensionRevisionReasonReconciling     = "Reconciling"
-	ClusterExtensionRevisionReasonRetrying        = "Retrying"
+	ClusterExtensionRevisionReasonArchived            = "Archived"
+	ClusterExtensionRevisionReasonBlocked             = "Blocked"
+	ClusterExtensionRevisionReasonProbeFailure        = "ProbeFailure"
+	ClusterExtensionRevisionReasonProbesSucceeded     = "ProbesSucceeded"
+	ClusterExtensionRevisionReasonReconciling         = "Reconciling"
+	ClusterExtensionRevisionReasonRefResolutionFailed = "RefResolutionFailed"
+	ClusterExtensionRevisionReasonRetrying            = "Retrying"
 )
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
@@ -392,14 +393,29 @@ type ClusterExtensionRevisionPhase struct {
 
 // ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
 // of a phase, along with its collision protection settings.
+//
+// Exactly one of object or ref must be set.
+//
+// +kubebuilder:validation:XValidation:rule="has(self.object) != has(self.ref)",message="exactly one of object or ref must be set"
 type ClusterExtensionRevisionObject struct {
-	// object is a required embedded Kubernetes object to be applied.
+	// object is an optional embedded Kubernetes object to be applied.
+	//
+	// Exactly one of object or ref must be set.
 	//
 	// This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
 	//
 	// +kubebuilder:validation:EmbeddedResource
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Object unstructured.Unstructured `json:"object"`
+	// +optional
+	Object unstructured.Unstructured `json:"object,omitzero"`
+
+	// ref is an optional reference to a Secret that holds the serialized
+	// object manifest.
+	//
+	// Exactly one of object or ref must be set.
+	//
+	// +optional
+	Ref ObjectSourceRef `json:"ref,omitzero"`
 
 	// collisionProtection controls whether the operator can adopt and modify objects
 	// that already exist on the cluster.
@@ -423,6 +439,32 @@ type ClusterExtensionRevisionObject struct {
 	// +optional
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
+}
+
+// ObjectSourceRef references content within a Secret that contains a
+// serialized object manifest.
+type ObjectSourceRef struct {
+	// name is the name of the referenced Secret.
+	//
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	Name string `json:"name"`
+
+	// namespace is the namespace of the referenced Secret.
+	//
+	// +optional
+	// +kubebuilder:validation:MaxLength=63
+	Namespace string `json:"namespace,omitempty"`
+
+	// key is the data key within the referenced Secret containing the
+	// object manifest content. The value at this key must be a
+	// JSON-serialized Kubernetes object manifest.
+	//
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	Key string `json:"key"`
 }
 
 // CollisionProtection specifies if and how ownership collisions are prevented.
