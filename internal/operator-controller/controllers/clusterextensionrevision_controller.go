@@ -10,9 +10,6 @@ import (
 	"strings"
 	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -479,9 +476,7 @@ func (c *ClusterExtensionRevisionReconciler) buildBoxcutterPhases(ctx context.Co
 
 	opts := []boxcutter.RevisionReconcileOption{
 		boxcutter.WithPreviousOwners(previousObjs),
-		boxcutter.WithProbe(boxcutter.ProgressProbeType, probing.And{
-			&namespaceActiveProbe, deploymentProbe, statefulSetProbe, crdProbe, issuerProbe, certProbe, &pvcBoundProbe, progressionProbes,
-		}),
+		boxcutter.WithProbe(boxcutter.ProgressProbeType, progressionProbes),
 	}
 
 	phases := make([]boxcutter.Phase, 0)
@@ -535,10 +530,10 @@ func buildProgressionProbes(progressionProbes []ocv1.ProgressionProbe) (probing.
 		for _, probe := range progressionProbe.Assertions {
 			switch probe.Type {
 			// Switch based on the union discriminator
-			case ocv1.ProbeTypeFieldCondition:
+			case ocv1.ProbeTypeConditionEqual:
 				conditionProbe := probing.ConditionProbe(probe.ConditionEqual)
 				assertions = append(assertions, &conditionProbe)
-			case ocv1.ProbeTypeFieldEqual:
+			case ocv1.ProbeTypeFieldsEqual:
 				fieldsEqualProbe := probing.FieldsEqualProbe(probe.FieldsEqual)
 				assertions = append(assertions, &fieldsEqualProbe)
 			case ocv1.ProbeTypeFieldValue:
@@ -570,89 +565,12 @@ func buildProgressionProbes(progressionProbes []ocv1.ProgressionProbe) (probing.
 		default:
 			return nil, fmt.Errorf("unknown progressionProbe selector type: %s", progressionProbe.Selector.Type)
 		}
-		userProbes = append(userProbes, selectorProbe)
+		userProbes = append(userProbes, &probing.ObservedGenerationProbe{
+			Prober: selectorProbe,
+		})
 	}
 	return userProbes, nil
 }
-
-var (
-	deploymentProbe = &probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: appsv1.GroupName, Kind: "Deployment"},
-		Prober:    deplStatefulSetProbe,
-	}
-	statefulSetProbe = &probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: appsv1.GroupName, Kind: "StatefulSet"},
-		Prober:    deplStatefulSetProbe,
-	}
-	crdProbe = &probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: "apiextensions.k8s.io", Kind: "CustomResourceDefinition"},
-		Prober: &probing.ObservedGenerationProbe{
-			Prober: &probing.ConditionProbe{ // "Available" == "True"
-				Type:   string(apiextensions.Established),
-				Status: string(corev1.ConditionTrue),
-			},
-		},
-	}
-	certProbe = &probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: "acme.cert-manager.io", Kind: "Certificate"},
-		Prober: &probing.ObservedGenerationProbe{
-			Prober: readyConditionProbe,
-		},
-	}
-	issuerProbe = &probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: "acme.cert-manager.io", Kind: "Issuer"},
-		Prober: &probing.ObservedGenerationProbe{
-			Prober: readyConditionProbe,
-		},
-	}
-
-	// namespaceActiveProbe is a probe which asserts that the namespace is in "Active" phase
-	namespaceActiveProbe = probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: corev1.GroupName, Kind: "Namespace"},
-		Prober: &applier.FieldValueProbe{
-			FieldPath: "status.phase",
-			Value:     "Active",
-		},
-	}
-
-	// pvcBoundProbe is a probe which asserts that the PVC is in "Bound" phase
-	pvcBoundProbe = probing.GroupKindSelector{
-		GroupKind: schema.GroupKind{Group: corev1.GroupName, Kind: "PersistentVolumeClaim"},
-		Prober: &applier.FieldValueProbe{
-			FieldPath: "status.phase",
-			Value:     "Bound",
-		},
-	}
-
-	// deplStaefulSetProbe probes Deployment, StatefulSet objects.
-	deplStatefulSetProbe = &probing.ObservedGenerationProbe{
-		Prober: probing.And{
-			availableConditionProbe,
-			replicasUpdatedProbe,
-		},
-	}
-
-	// Checks if the Type: "Available" Condition is "True".
-	availableConditionProbe = &probing.ConditionProbe{ // "Available" == "True"
-		Type:   string(appsv1.DeploymentAvailable),
-		Status: string(corev1.ConditionTrue),
-	}
-
-	// Checks if the Type: "Ready" Condition is "True"
-	readyConditionProbe = &probing.ObservedGenerationProbe{
-		Prober: &probing.ConditionProbe{
-			Type:   "Ready",
-			Status: "True",
-		},
-	}
-
-	// Checks if .status.updatedReplicas == .status.replicas.
-	// Works for StatefulSts, Deployments and ReplicaSets.
-	replicasUpdatedProbe = &probing.FieldsEqualProbe{
-		FieldA: ".status.updatedReplicas",
-		FieldB: ".status.replicas",
-	}
-)
 
 func setRetryingConditions(cer *ocv1.ClusterExtensionRevision, message string) {
 	markAsProgressing(cer, ocv1.ClusterExtensionRevisionReasonRetrying, message)
