@@ -1,0 +1,72 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${TEST_NAMESPACE}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-olm-admin-clusterrole
+rules:
+  # Allow management of ClusterExtensionRevision finalizers (e.g. by the Boxcutter applier)
+  - apiGroups: [olm.operatorframework.io]
+    resources: [clusterextensionrevisions/finalizers]
+    verbs: [update, patch]
+  # OLMv0 compatibility requirement for AllNamespaces install
+  # https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/olm/operatorgroup.go#L530
+  - apiGroups: [ "" ]
+    resources:
+      - namespaces
+    verbs: [ get, list, watch ]
+  # Bundle resource management RBAC derived from bundle resource and permissions described in the ClusterServiceVersion
+  # NOTE: Intentionally MISSING "create" verb to test preflight check
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs: [update, get, delete, patch]
+  - apiGroups: [""]
+    resources:
+      - configmaps
+      - serviceaccounts
+    verbs: [update, list, watch, get, delete, patch]
+  - apiGroups: [ "" ]
+    resources:
+      - events
+    verbs: [ patch ]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+    verbs: [ update, get, delete, patch ]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - networkpolicies
+    verbs: [update, list, get, delete, patch]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources:
+      - clusterroles
+      - roles
+      - clusterrolebindings
+      - rolebindings
+    verbs: [ update, get, delete, patch ]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: [update, list, watch, get, delete, patch]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["subjectaccessreviews"]
+    verbs: [create]
+  - apiGroups: ["authentication.k8s.io"]
+    resources: ["tokenreviews"]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-install-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-olm-admin-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: ${SERVICEACCOUNT_NAME}
+    namespace: ${TEST_NAMESPACE}

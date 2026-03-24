@@ -535,3 +535,38 @@ Feature: Install ClusterExtension
             nodeSelector:
               kubernetes.io/os: linux
       """
+
+  @BoxcutterRuntime
+  @PreflightPermissions
+  Scenario: Boxcutter preflight check detects missing CREATE permissions
+    Given ServiceAccount "olm-sa" without create permissions is available in ${TEST_NAMESPACE}
+    And ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    And ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+      """
+      pre-authorization failed: service account requires the following permissions to manage cluster extension
+      """
+    And ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+      """
+      Verbs:[create]
+      """
+    When ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    Then ClusterExtension is available
+    And ClusterExtension reports Progressing as True with Reason Succeeded
+    And ClusterExtension reports Installed as True
