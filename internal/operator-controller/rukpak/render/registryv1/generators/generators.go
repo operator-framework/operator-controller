@@ -671,19 +671,32 @@ func applyEnvironmentFromConfig(deployment *appsv1.Deployment, config *config.De
 	}
 }
 
-// applyVolumeConfig appends volumes to the deployment's pod spec.
-// This follows OLMv0 behavior:
+// applyVolumeConfig merges volumes into the deployment's pod spec.
+// Volumes from config override existing volumes with the same name.
+// This differs from OLMv0, which appends volumes without checking for duplicates:
 // https://github.com/operator-framework/operator-lifecycle-manager/blob/v0.39.0/pkg/controller/operators/olm/overrides/inject/inject.go#L104-L117
 func applyVolumeConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
 	if len(config.Volumes) == 0 {
 		return
 	}
 
-	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, config.Volumes...)
+	existingVolMap := make(map[string]int, len(deployment.Spec.Template.Spec.Volumes))
+	for i, vol := range deployment.Spec.Template.Spec.Volumes {
+		existingVolMap[vol.Name] = i
+	}
+
+	for _, configVol := range config.Volumes {
+		if idx, exists := existingVolMap[configVol.Name]; exists {
+			deployment.Spec.Template.Spec.Volumes[idx] = configVol
+		} else {
+			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, configVol)
+		}
+	}
 }
 
-// applyVolumeMountConfig appends volume mounts to all containers in the deployment.
-// This follows OLMv0 behavior:
+// applyVolumeMountConfig merges volume mounts into all containers in the deployment.
+// Volume mounts from config override existing volume mounts with the same name.
+// This differs from OLMv0, which appends volume mounts without checking for duplicates:
 // https://github.com/operator-framework/operator-lifecycle-manager/blob/v0.39.0/pkg/controller/operators/olm/overrides/inject/inject.go#L149-L165
 func applyVolumeMountConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
 	if len(config.VolumeMounts) == 0 {
@@ -692,7 +705,19 @@ func applyVolumeMountConfig(deployment *appsv1.Deployment, config *config.Deploy
 
 	for i := range deployment.Spec.Template.Spec.Containers {
 		container := &deployment.Spec.Template.Spec.Containers[i]
-		container.VolumeMounts = append(container.VolumeMounts, config.VolumeMounts...)
+
+		existingMountMap := make(map[string]int, len(container.VolumeMounts))
+		for idx, mount := range container.VolumeMounts {
+			existingMountMap[mount.Name] = idx
+		}
+
+		for _, configMount := range config.VolumeMounts {
+			if idx, exists := existingMountMap[configMount.Name]; exists {
+				container.VolumeMounts[idx] = configMount
+			} else {
+				container.VolumeMounts = append(container.VolumeMounts, configMount)
+			}
+		}
 	}
 }
 
