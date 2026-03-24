@@ -31,7 +31,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.podman.io/image/v5 v5.39.1
 	golang.org/x/exp v0.0.0-20260209203927-2842357ff358
-	golang.org/x/mod v0.33.0
+	golang.org/x/mod v0.34.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/tools v0.42.0
 	helm.sh/helm/v3 v3.20.0
