@@ -136,7 +136,7 @@ func Test_CertManagerProvider_AdditionalObjects(t *testing.T) {
 					"webhook-service.namespace.svc",
 					"webhook-service.namespace.svc.cluster.local",
 				},
-				IssuerRef: certmanagermetav1.ObjectReference{
+				IssuerRef: certmanagermetav1.IssuerReference{
 					Name: "cert-name-selfsigned-issuer",
 				},
 				Duration: &metav1.Duration{
