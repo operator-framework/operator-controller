@@ -180,6 +180,8 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		//   the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
 		//   all catalogs? This needs a follow-up discussion and PR.
 		hasCatalogData := err == nil || resolvedDeprecation != nil
+		state.resolvedDeprecation = resolvedDeprecation
+		state.hasCatalogData = hasCatalogData
 		SetDeprecationStatus(ext, installedBundleName, resolvedDeprecation, hasCatalogData)
 
 		if err != nil {
@@ -436,6 +438,15 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 			state.revisionStates = &RevisionStates{RollingOut: []*RevisionMetadata{state.resolvedRevisionMetadata}}
 		}
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+
+		// After a successful rollout the installed bundle may have changed
+		// (e.g. upgrade from a deprecated to a non-deprecated version).
+		// Refresh deprecation conditions so they reflect the newly running
+		// bundle instead of the pre-upgrade bundle that was used during
+		// resolution.
+		if rolloutSucceeded && state.revisionStates.Installed != nil {
+			SetDeprecationStatus(ext, state.revisionStates.Installed.Name, state.resolvedDeprecation, state.hasCatalogData)
+		}
 
 		// If there was an error applying the resolved bundle,
 		// report the error via the Progressing condition.
