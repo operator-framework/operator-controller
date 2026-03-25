@@ -34,7 +34,7 @@ CATD_IMG := $(CATD_IMAGE_REPO):$(IMAGE_TAG)
 
 # Extract Kubernetes client-go version used to set the version to the PSA labels, for ENVTEST and KIND
 ifeq ($(origin K8S_VERSION), undefined)
-K8S_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed -E 's/^v0\.([0-9]+)\.[0-9]+$$/1.\1/')
+K8S_VERSION := $(shell go list -m k8s.io/client-go | awk '{print $$NF}' | sed -E 's/^v0\.([0-9]+)\.[0-9]+$$/1.\1/')
 endif
 
 # Ensure ENVTEST_VERSION follows correct "X.Y.x" format
