@@ -68,12 +68,23 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		if err := yaml.Unmarshal([]byte(doc), &obj); err != nil {
 			return nil, err
 		}
-		obj.SetLabels(mergeLabelMaps(obj.GetLabels(), objectLabels))
+		obj.SetLabels(mergeStringMaps(obj.GetLabels(), objectLabels))
 
 		// Memory optimization: strip large annotations
 		// Note: ApplyStripTransform never returns an error in practice
 		_ = cache.ApplyStripAnnotationsTransform(&obj)
 		sanitizedUnstructured(ctx, &obj)
+
+		annotationUpdates := map[string]string{}
+		if v := helmRelease.Labels[labels.BundleVersionKey]; v != "" {
+			annotationUpdates[labels.BundleVersionKey] = v
+		}
+		if v := helmRelease.Labels[labels.PackageNameKey]; v != "" {
+			annotationUpdates[labels.PackageNameKey] = v
+		}
+		if len(annotationUpdates) > 0 {
+			obj.SetAnnotations(mergeStringMaps(obj.GetAnnotations(), annotationUpdates))
+		}
 
 		objs = append(objs, *ocv1ac.ClusterExtensionRevisionObject().
 			WithObject(obj))
@@ -126,7 +137,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	// objectLabels
 	objs := make([]ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration, 0, len(plain))
 	for _, obj := range plain {
-		obj.SetLabels(mergeLabelMaps(obj.GetLabels(), objectLabels))
+		obj.SetLabels(mergeStringMaps(obj.GetLabels(), objectLabels))
 
 		gvk, err := apiutil.GVKForObject(obj, r.Scheme)
 		if err != nil {
@@ -145,6 +156,17 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 			return nil, err
 		}
 		sanitizedUnstructured(ctx, &unstr)
+
+		annotationUpdates := map[string]string{}
+		if v := revisionAnnotations[labels.BundleVersionKey]; v != "" {
+			annotationUpdates[labels.BundleVersionKey] = v
+		}
+		if v := revisionAnnotations[labels.PackageNameKey]; v != "" {
+			annotationUpdates[labels.PackageNameKey] = v
+		}
+		if len(annotationUpdates) > 0 {
+			unstr.SetAnnotations(mergeStringMaps(unstr.GetAnnotations(), annotationUpdates))
+		}
 
 		objs = append(objs, *ocv1ac.ClusterExtensionRevisionObject().
 			WithObject(unstr))
@@ -671,9 +693,9 @@ func revisionManagementPerms(rev *ocv1ac.ClusterExtensionRevisionApplyConfigurat
 	}
 }
 
-func mergeLabelMaps(m1, m2 map[string]string) map[string]string {
-	mergedLabels := make(map[string]string, len(m1)+len(m2))
-	maps.Copy(mergedLabels, m1)
-	maps.Copy(mergedLabels, m2)
-	return mergedLabels
+func mergeStringMaps(m1, m2 map[string]string) map[string]string {
+	merged := make(map[string]string, len(m1)+len(m2))
+	maps.Copy(merged, m1)
+	maps.Copy(merged, m2)
+	return merged
 }

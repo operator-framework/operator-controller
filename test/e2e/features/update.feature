@@ -181,6 +181,36 @@ Feature: Update ClusterExtension
     Then bundle "test-operator.1.3.0" is installed in version "1.3.0"
 
   @BoxcutterRuntime
+  Scenario: Update to a version with identical bundle content creates a new revision
+    Given ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+            version: 1.0.0
+            upgradeConstraintPolicy: SelfCertified
+      """
+    And ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "test-operator.1.0.0" is installed in version "1.0.0"
+    When ClusterExtension is updated to version "1.0.4"
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "test-operator.1.0.4" is installed in version "1.0.4"
+
+  @BoxcutterRuntime
   Scenario: Each update creates a new revision and resources not present in the new revision are removed from the cluster
     Given ClusterExtension is applied
       """
