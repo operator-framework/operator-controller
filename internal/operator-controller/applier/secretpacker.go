@@ -25,7 +25,7 @@ const (
 
 	// gzipThreshold is the size above which individual objects are
 	// gzip-compressed before being stored in a Secret.
-	gzipThreshold = 800 * 1024
+	gzipThreshold = 900 * 1024
 )
 
 // SecretPacker packs serialized objects from CER phases into one or more
