@@ -1111,7 +1111,7 @@ func newTestClusterExtensionRevision(t *testing.T, revisionName string, ext *ocv
 				labels.ServiceAccountNamespaceKey: ext.Spec.Namespace,
 			},
 			Labels: map[string]string{
-				labels.OwnerNameKey: "test-ext",
+				labels.OwnerNameKey: ext.Name,
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -1342,6 +1342,241 @@ func (m *mockTrackingCache) Free(ctx context.Context, user client.Object) error 
 		return m.freeFn(ctx, user)
 	}
 	return nil
+}
+
+func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(t *testing.T) {
+	testScheme := newScheme(t)
+
+	for _, tc := range []struct {
+		name                    string
+		reconcilingRevisionName string
+		existingObjs            func() []client.Object
+		revisionResult          machinery.RevisionResult
+		expectCollision         bool
+	}{
+		{
+			name:                    "progressed object owned by a foreign CER is treated as a collision",
+			reconcilingRevisionName: "ext-B-1",
+			existingObjs: func() []client.Object {
+				extA := &ocv1.ClusterExtension{
+					ObjectMeta: metav1.ObjectMeta{Name: "ext-A", UID: "ext-A-uid"},
+					Spec: ocv1.ClusterExtensionSpec{
+						Namespace:      "ns-a",
+						ServiceAccount: ocv1.ServiceAccountReference{Name: "sa-a"},
+						Source: ocv1.SourceConfig{
+							SourceType: ocv1.SourceTypeCatalog,
+							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
+						},
+					},
+				}
+				extB := &ocv1.ClusterExtension{
+					ObjectMeta: metav1.ObjectMeta{Name: "ext-B", UID: "ext-B-uid"},
+					Spec: ocv1.ClusterExtensionSpec{
+						Namespace:      "ns-b",
+						ServiceAccount: ocv1.ServiceAccountReference{Name: "sa-b"},
+						Source: ocv1.SourceConfig{
+							SourceType: ocv1.SourceTypeCatalog,
+							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
+						},
+					},
+				}
+				cerA2 := newTestClusterExtensionRevision(t, "ext-A-2", extA, testScheme)
+				cerB1 := newTestClusterExtensionRevision(t, "ext-B-1", extB, testScheme)
+				return []client.Object{extA, extB, cerA2, cerB1}
+			},
+			revisionResult: mockRevisionResult{
+				phases: []machinery.PhaseResult{
+					mockPhaseResult{
+						name: "everything",
+						objects: []machinery.ObjectResult{
+							mockObjectResult{
+								action: machinery.ActionProgressed,
+								object: &unstructured.Unstructured{
+									Object: map[string]interface{}{
+										"apiVersion": "apiextensions.k8s.io/v1",
+										"kind":       "CustomResourceDefinition",
+										"metadata": map[string]interface{}{
+											"name": "widgets.example.com",
+											"ownerReferences": []interface{}{
+												map[string]interface{}{
+													"apiVersion":         ocv1.GroupVersion.String(),
+													"kind":               ocv1.ClusterExtensionRevisionKind,
+													"name":               "ext-A-2",
+													"uid":                "ext-A-2",
+													"controller":         true,
+													"blockOwnerDeletion": true,
+												},
+											},
+										},
+									},
+								},
+								probes: machinerytypes.ProbeResultContainer{
+									boxcutter.ProgressProbeType: {
+										Status: machinerytypes.ProbeStatusTrue,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectCollision: true,
+		},
+		{
+			name:                    "progressed object owned by a sibling CER is not a collision",
+			reconcilingRevisionName: "ext-A-1",
+			existingObjs: func() []client.Object {
+				extA := &ocv1.ClusterExtension{
+					ObjectMeta: metav1.ObjectMeta{Name: "ext-A", UID: "ext-A-uid"},
+					Spec: ocv1.ClusterExtensionSpec{
+						Namespace:      "ns-a",
+						ServiceAccount: ocv1.ServiceAccountReference{Name: "sa-a"},
+						Source: ocv1.SourceConfig{
+							SourceType: ocv1.SourceTypeCatalog,
+							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
+						},
+					},
+				}
+				cerA1 := newTestClusterExtensionRevision(t, "ext-A-1", extA, testScheme)
+				cerA2 := newTestClusterExtensionRevision(t, "ext-A-2", extA, testScheme)
+				return []client.Object{extA, cerA1, cerA2}
+			},
+			revisionResult: mockRevisionResult{
+				phases: []machinery.PhaseResult{
+					mockPhaseResult{
+						name: "everything",
+						objects: []machinery.ObjectResult{
+							mockObjectResult{
+								action: machinery.ActionProgressed,
+								object: &unstructured.Unstructured{
+									Object: map[string]interface{}{
+										"apiVersion": "apiextensions.k8s.io/v1",
+										"kind":       "CustomResourceDefinition",
+										"metadata": map[string]interface{}{
+											"name": "widgets.example.com",
+											"ownerReferences": []interface{}{
+												map[string]interface{}{
+													"apiVersion":         ocv1.GroupVersion.String(),
+													"kind":               ocv1.ClusterExtensionRevisionKind,
+													"name":               "ext-A-2",
+													"uid":                "ext-A-2",
+													"controller":         true,
+													"blockOwnerDeletion": true,
+												},
+											},
+										},
+									},
+								},
+								probes: machinerytypes.ProbeResultContainer{
+									boxcutter.ProgressProbeType: {
+										Status: machinerytypes.ProbeStatusTrue,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectCollision: false,
+		},
+		{
+			name:                    "progressed object owned by a non-CER controller is not a collision",
+			reconcilingRevisionName: "ext-B-1",
+			existingObjs: func() []client.Object {
+				extB := &ocv1.ClusterExtension{
+					ObjectMeta: metav1.ObjectMeta{Name: "ext-B", UID: "ext-B-uid"},
+					Spec: ocv1.ClusterExtensionSpec{
+						Namespace:      "ns-b",
+						ServiceAccount: ocv1.ServiceAccountReference{Name: "sa-b"},
+						Source: ocv1.SourceConfig{
+							SourceType: ocv1.SourceTypeCatalog,
+							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
+						},
+					},
+				}
+				cerB1 := newTestClusterExtensionRevision(t, "ext-B-1", extB, testScheme)
+				return []client.Object{extB, cerB1}
+			},
+			revisionResult: mockRevisionResult{
+				phases: []machinery.PhaseResult{
+					mockPhaseResult{
+						name: "everything",
+						objects: []machinery.ObjectResult{
+							mockObjectResult{
+								action: machinery.ActionProgressed,
+								object: &unstructured.Unstructured{
+									Object: map[string]interface{}{
+										"apiVersion": "v1",
+										"kind":       "ConfigMap",
+										"metadata": map[string]interface{}{
+											"name":      "some-cm",
+											"namespace": "default",
+											"ownerReferences": []interface{}{
+												map[string]interface{}{
+													"apiVersion":         "apps/v1",
+													"kind":               "Deployment",
+													"name":               "some-deployment",
+													"uid":                "deploy-uid",
+													"controller":         true,
+													"blockOwnerDeletion": true,
+												},
+											},
+										},
+									},
+								},
+								probes: machinerytypes.ProbeResultContainer{
+									boxcutter.ProgressProbeType: {
+										Status: machinerytypes.ProbeStatusTrue,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectCollision: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testClient := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+				WithObjects(tc.existingObjs()...).
+				Build()
+
+			mockEngine := &mockRevisionEngine{
+				reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+					return tc.revisionResult, nil
+				},
+			}
+			result, err := (&controllers.ClusterExtensionRevisionReconciler{
+				Client:                testClient,
+				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
+				TrackingCache:         &mockTrackingCache{client: testClient},
+			}).Reconcile(t.Context(), ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Name: tc.reconcilingRevisionName,
+				},
+			})
+
+			if tc.expectCollision {
+				require.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, result)
+				require.NoError(t, err)
+
+				rev := &ocv1.ClusterExtensionRevision{}
+				require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: tc.reconcilingRevisionName}, rev))
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionTrue, cond.Status)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRetrying, cond.Reason)
+				require.Contains(t, cond.Message, "revision object collisions")
+				require.Contains(t, cond.Message, "Conflicting Owner")
+			} else {
+				require.Equal(t, ctrl.Result{}, result)
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func Test_effectiveCollisionProtection(t *testing.T) {
