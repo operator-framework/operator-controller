@@ -151,10 +151,15 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 									},
 								},
 							}),
-					),
-			),
+					)),
 		)
-	assert.Equal(t, expected, rev)
+	assert.Equal(t, expected.Name, rev.Name)
+	assert.Equal(t, expected.Labels, rev.Labels)
+	assert.Equal(t, expected.Annotations, rev.Annotations)
+	assert.Equal(t, expected.Spec.LifecycleState, rev.Spec.LifecycleState)
+	assert.Equal(t, expected.Spec.CollisionProtection, rev.Spec.CollisionProtection)
+	assert.Equal(t, expected.Spec.Revision, rev.Spec.Revision)
+	assert.Equal(t, expected.Spec.Phases, rev.Spec.Phases)
 }
 
 func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {

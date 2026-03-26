@@ -20,6 +20,17 @@ Feature: Install ClusterExtensionRevision
       spec:
         lifecycleState: Active
         collisionProtection: Prevent
+        progressionProbes:
+        - selector:
+            type: GroupKind
+            groupKind:
+              group: ""
+              kind: PersistentVolumeClaim
+          assertions:
+          - type: FieldValue
+            fieldValue:
+              fieldPath: "status.phase"
+              value: "Bound"
         phases:
         - name: pvc
           objects:
@@ -72,6 +83,17 @@ Feature: Install ClusterExtensionRevision
       spec:
         lifecycleState: Active
         collisionProtection: Prevent
+        progressionProbes:
+        - selector:
+            type: GroupKind
+            groupKind:
+              group: ""
+              kind: PersistentVolumeClaim
+          assertions:
+          - type: FieldValue
+            fieldValue:
+              fieldPath: "status.phase"
+              value: "Bound"
         phases:
         - name: pvc
           objects:

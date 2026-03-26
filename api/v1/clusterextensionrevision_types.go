@@ -227,8 +227,8 @@ const (
 type ProbeType string
 
 const (
-	ProbeTypeFieldCondition ProbeType = "ConditionEqual"
-	ProbeTypeFieldEqual     ProbeType = "FieldsEqual"
+	ProbeTypeConditionEqual ProbeType = "ConditionEqual"
+	ProbeTypeFieldsEqual    ProbeType = "FieldsEqual"
 	ProbeTypeFieldValue     ProbeType = "FieldValue"
 )
 
