@@ -63,6 +63,8 @@ type reconcileState struct {
 	revisionStates           *RevisionStates
 	resolvedRevisionMetadata *RevisionMetadata
 	imageFS                  fs.FS
+	resolvedDeprecation      *declcfg.Deprecation
+	hasCatalogData           bool
 }
 
 // ReconcileStepFunc represents a single step in the ClusterExtension reconciliation process.

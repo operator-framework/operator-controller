@@ -344,6 +344,108 @@ func TestClusterExtensionUpgradeShowsInstalledBundleDeprecation(t *testing.T) {
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 }
 
+// TestClusterExtensionUpgradeFromDeprecatedBundleClearsDeprecation verifies that after
+// a successful upgrade from a deprecated bundle to a non-deprecated bundle, the deprecation
+// conditions are updated in the SAME reconciliation cycle (no stale conditions).
+//
+// Scenario:
+//   - Bundle v1.0.1 is installed and deprecated in the catalog
+//   - Bundle v1.0.3 is resolved (not deprecated) and the applier succeeds (rolloutSucceeded=true)
+//   - After the apply, BundleDeprecated should be False (reflecting the newly installed v1.0.3)
+//   - Deprecated rollup should also be False
+//
+// This is the regression test for the bug where deprecation conditions remained stale
+// (showing the old deprecated bundle) after a successful upgrade until the next reconciliation.
+func TestClusterExtensionUpgradeFromDeprecatedBundleClearsDeprecation(t *testing.T) {
+	ctx := context.Background()
+	pkgName := fmt.Sprintf("upgrade-clear-%s", rand.String(6))
+	installedBundleName := fmt.Sprintf("%s.v1.0.1", pkgName)
+	resolvedBundleName := fmt.Sprintf("%s.v1.0.3", pkgName)
+	deprecationMessage := fmt.Sprintf("%s is deprecated. Uninstall and install v1.0.3 for support.", installedBundleName)
+
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.3"),
+			}
+			return &declcfg.Bundle{
+					Name:    resolvedBundleName,
+					Package: pkgName,
+					Image:   fmt.Sprintf("quay.io/example/%s@sha256:resolved103", pkgName),
+				}, &v, &declcfg.Deprecation{
+					Entries: []declcfg.DeprecationEntry{{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaBundle,
+							Name:   installedBundleName,
+						},
+						Message: deprecationMessage,
+					}},
+				}, nil
+		})
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					Package: pkgName,
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    installedBundleName,
+						Version: "1.0.1",
+					},
+					Image: fmt.Sprintf("quay.io/example/%s@sha256:installed101", pkgName),
+				},
+			},
+		}
+		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+		d.Applier = &MockApplier{installCompleted: true}
+	})
+
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
+			},
+			Namespace:      "default",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.NoError(t, err)
+
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	// After a successful upgrade to v1.0.3, deprecation should reflect the NEW bundle
+	bundleCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeBundleDeprecated)
+	require.NotNil(t, bundleCond)
+	require.Equal(t, metav1.ConditionFalse, bundleCond.Status, "newly installed bundle v1.0.3 is NOT deprecated")
+	require.Equal(t, ocv1.ReasonNotDeprecated, bundleCond.Reason)
+
+	deprecatedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeDeprecated)
+	require.NotNil(t, deprecatedCond)
+	require.Equal(t, metav1.ConditionFalse, deprecatedCond.Status, "no deprecation exists after upgrade")
+	require.Equal(t, ocv1.ReasonNotDeprecated, deprecatedCond.Reason)
+
+	pkgCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypePackageDeprecated)
+	require.NotNil(t, pkgCond)
+	require.Equal(t, metav1.ConditionFalse, pkgCond.Status)
+
+	channelCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeChannelDeprecated)
+	require.NotNil(t, channelCond)
+	require.Equal(t, metav1.ConditionFalse, channelCond.Status)
+
+	// Verify the installed bundle IS v1.0.3
+	require.NotNil(t, clusterExtension.Status.Install)
+	require.Equal(t, resolvedBundleName, clusterExtension.Status.Install.Bundle.Name)
+	require.Equal(t, "1.0.3", clusterExtension.Status.Install.Bundle.Version)
+
+	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+}
+
 // TestClusterExtensionResolutionFailsWithoutCatalogDeprecationData verifies deprecation status handling when catalog data is unavailable.
 //
 // Scenario:
