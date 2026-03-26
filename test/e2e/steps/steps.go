@@ -1577,6 +1577,8 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 				objs = append(objs, resolved)
 			case len(specObj.Object.Object) > 0:
 				objs = append(objs, &specObj.Object)
+			default:
+				return nil, fmt.Errorf("object %d in phase %q has neither object nor ref", j, phase.Name)
 			}
 		}
 	}
@@ -1605,9 +1607,14 @@ func resolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, err
 			return nil, fmt.Errorf("creating gzip reader for key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
 		}
 		defer reader.Close()
-		decompressed, err := io.ReadAll(reader)
+		const maxDecompressedSize = 10 * 1024 * 1024 // 10 MiB
+		limited := io.LimitReader(reader, maxDecompressedSize+1)
+		decompressed, err := io.ReadAll(limited)
 		if err != nil {
 			return nil, fmt.Errorf("decompressing key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+		}
+		if len(decompressed) > maxDecompressedSize {
+			return nil, fmt.Errorf("decompressed data for key %q in Secret %s/%s exceeds maximum size (%d bytes)", ref.Key, ref.Namespace, ref.Name, maxDecompressedSize)
 		}
 		data = decompressed
 	}

@@ -364,9 +364,12 @@ Key properties:
 - **No reconciler churn**: Referenced Secrets exist before the CER is created.
   The CER reconciler never encounters missing Secrets during normal operation.
 - **Orphan cleanup**: Secrets created in step 1 carry the revision label
-  (`olm.operatorframework.io/revision-name`). If a crash leaves Secrets without
-  a corresponding CER, the ClusterExtension controller detects and deletes them
-  on its next reconciliation.
+  (`olm.operatorframework.io/revision-name`). Once the CER is created in step 2
+  and ownerReferences are patched in step 3, Kubernetes garbage collection
+  automatically removes the Secrets when the CER is deleted. If a crash occurs
+  between steps 1 and 2, the ClusterExtension controller detects orphaned
+  Secrets (those with the revision label but no corresponding CER) and deletes
+  them on its next reconciliation.
 - **Idempotent retry**: Secrets are immutable in data. Re-creation of an
   existing Secret returns AlreadyExists and is skipped. ownerReference patching
   is idempotent — patching an already-set ownerReference is a no-op.
@@ -389,7 +392,9 @@ Under normal operation, referenced Secrets are guaranteed to exist before the
 CER is created (see [Crash-safe creation sequence](#crash-safe-creation-sequence)).
 If a referenced Secret or key is not found — indicating an inconsistent state
 caused by external modification or a partially completed creation sequence —
-the reconciler sets a terminal error condition on the CER.
+the reconciler returns a retryable error, allowing the controller to retry on
+subsequent reconciliation attempts. This handles transient issues such as
+informer cache lag after Secret creation.
 
 Secrets are fetched using the typed client served from the informer cache.
 

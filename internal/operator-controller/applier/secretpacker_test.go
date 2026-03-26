@@ -171,6 +171,28 @@ func TestSecretPacker_Pack(t *testing.T) {
 		defer reader.Close()
 	})
 
+	t.Run("duplicate content objects share key and do not inflate size", func(t *testing.T) {
+		// Two identical objects should produce the same content hash key.
+		// The second occurrence must not double-count the size.
+		phases := []ocv1.ClusterExtensionRevisionPhase{{
+			Name: "deploy",
+			Objects: []ocv1.ClusterExtensionRevisionObject{
+				{Object: testConfigMap("same-cm", "default")},
+				{Object: testConfigMap("same-cm", "default")},
+			},
+		}}
+
+		result, err := packer.Pack(phases)
+		require.NoError(t, err)
+		require.Len(t, result.Secrets, 1)
+		// Only one data entry despite two objects.
+		assert.Len(t, result.Secrets[0].Data, 1)
+		// Both positions get refs.
+		assert.Len(t, result.Refs, 2)
+		// Both refs point to the same key.
+		assert.Equal(t, result.Refs[[2]int{0, 0}].Key, result.Refs[[2]int{0, 1}].Key)
+	})
+
 	t.Run("key is SHA-256 base64url", func(t *testing.T) {
 		obj := testConfigMap("test-cm", "default")
 		rawData, err := json.Marshal(obj.Object)

@@ -115,13 +115,15 @@ func (p *SecretPacker) Pack(phases []ocv1.ClusterExtensionRevisionPhase) (*PackR
 
 			key := contentHash(data)
 
-			// If adding this entry would exceed the limit, finalize the current Secret.
-			if currentSize+len(data) > maxSecretDataSize && len(currentData) > 0 {
-				finalizeCurrent()
+			// Only add data and increment size for new keys. Duplicate content
+			// (same hash) reuses the existing entry without inflating the size.
+			if _, exists := currentData[key]; !exists {
+				if currentSize+len(data) > maxSecretDataSize && len(currentData) > 0 {
+					finalizeCurrent()
+				}
+				currentData[key] = data
+				currentSize += len(data)
 			}
-
-			currentData[key] = data
-			currentSize += len(data)
 			currentPending = append(currentPending, pendingRef{pos: [2]int{phaseIdx, objIdx}, key: key})
 		}
 	}

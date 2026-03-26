@@ -30,13 +30,12 @@ const (
 	ClusterExtensionRevisionTypeSucceeded   = "Succeeded"
 
 	// Condition Reasons
-	ClusterExtensionRevisionReasonArchived            = "Archived"
-	ClusterExtensionRevisionReasonBlocked             = "Blocked"
-	ClusterExtensionRevisionReasonProbeFailure        = "ProbeFailure"
-	ClusterExtensionRevisionReasonProbesSucceeded     = "ProbesSucceeded"
-	ClusterExtensionRevisionReasonReconciling         = "Reconciling"
-	ClusterExtensionRevisionReasonRefResolutionFailed = "RefResolutionFailed"
-	ClusterExtensionRevisionReasonRetrying            = "Retrying"
+	ClusterExtensionRevisionReasonArchived        = "Archived"
+	ClusterExtensionRevisionReasonBlocked         = "Blocked"
+	ClusterExtensionRevisionReasonProbeFailure    = "ProbeFailure"
+	ClusterExtensionRevisionReasonProbesSucceeded = "ProbesSucceeded"
+	ClusterExtensionRevisionReasonReconciling     = "Reconciling"
+	ClusterExtensionRevisionReasonRetrying        = "Retrying"
 )
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
@@ -452,6 +451,7 @@ type ObjectSourceRef struct {
 	Name string `json:"name"`
 
 	// namespace is the namespace of the referenced Secret.
+	// When empty, defaults to the OLM system namespace during ref resolution.
 	//
 	// +optional
 	// +kubebuilder:validation:MaxLength=63

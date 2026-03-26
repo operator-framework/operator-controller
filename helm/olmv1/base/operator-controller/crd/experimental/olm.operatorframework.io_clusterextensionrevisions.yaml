@@ -221,8 +221,9 @@ spec:
                                 minLength: 1
                                 type: string
                               namespace:
-                                description: namespace is the namespace of the referenced
-                                  Secret.
+                                description: |-
+                                  namespace is the namespace of the referenced Secret.
+                                  When empty, defaults to the OLM system namespace during ref resolution.
                                 maxLength: 63
                                 type: string
                             required:
