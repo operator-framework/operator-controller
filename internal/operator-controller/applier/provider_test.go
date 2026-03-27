@@ -17,6 +17,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
@@ -599,8 +600,8 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 			BundleRenderer: render.BundleRenderer{
 				ResourceGenerators: []render.ResourceGenerator{
 					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						t.Log("ensure deploymentConfig is nil for empty config object")
-						require.Nil(t, opts.DeploymentConfig)
+						t.Log("ensure deploymentConfig is empty for empty config object")
+						require.Equal(t, &config.DeploymentConfig{}, opts.DeploymentConfig)
 						return nil, nil
 					},
 				},

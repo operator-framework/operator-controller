@@ -112,13 +112,13 @@ func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.Regi
 		opts = append(opts, render.WithTargetNamespaces(*watchNS))
 	}
 
-	// Extract and convert deploymentConfig if present and the feature gate is enabled.
+	// Extract deploymentConfig if present and the feature gate is enabled.
 	if r.IsDeploymentConfigEnabled {
-		if deploymentConfigMap := bundleConfig.GetDeploymentConfig(); deploymentConfigMap != nil {
-			deploymentConfig, err := convertToDeploymentConfig(deploymentConfigMap)
-			if err != nil {
-				return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid deploymentConfig: %w", err))
-			}
+		deploymentConfig, err := bundleConfig.GetDeploymentConfig()
+		if err != nil {
+			return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid deploymentConfig: %w", err))
+		}
+		if deploymentConfig != nil {
 			opts = append(opts, render.WithDeploymentConfig(deploymentConfig))
 		}
 	}
@@ -185,29 +185,6 @@ func extensionConfigBytes(ext *ocv1.ClusterExtension) []byte {
 		}
 	}
 	return nil
-}
-
-// convertToDeploymentConfig converts a map[string]any (from validated bundle config)
-// to a *config.DeploymentConfig struct that can be passed to the renderer.
-// Returns nil if the map is empty.
-func convertToDeploymentConfig(deploymentConfigMap map[string]any) (*config.DeploymentConfig, error) {
-	if len(deploymentConfigMap) == 0 {
-		return nil, nil
-	}
-
-	// Marshal the map to JSON
-	data, err := json.Marshal(deploymentConfigMap)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal deploymentConfig: %w", err)
-	}
-
-	// Unmarshal into the DeploymentConfig struct
-	var deploymentConfig config.DeploymentConfig
-	if err := json.Unmarshal(data, &deploymentConfig); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal deploymentConfig: %w", err)
-	}
-
-	return &deploymentConfig, nil
 }
 
 func getBundleAnnotations(bundleFS fs.FS) (map[string]string, error) {

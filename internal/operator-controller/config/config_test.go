@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -596,7 +598,7 @@ func Test_GetDeploymentConfig(t *testing.T) {
 	tests := []struct {
 		name                        string
 		rawConfig                   []byte
-		expectedDeploymentConfig    map[string]any
+		expectedDeploymentConfig    *config.DeploymentConfig
 		expectedDeploymentConfigNil bool
 	}{
 		{
@@ -628,13 +630,13 @@ func Test_GetDeploymentConfig(t *testing.T) {
 					}
 				}
 			}`),
-			expectedDeploymentConfig: map[string]any{
-				"nodeSelector": map[string]any{
+			expectedDeploymentConfig: &config.DeploymentConfig{
+				NodeSelector: map[string]string{
 					"kubernetes.io/os": "linux",
 				},
-				"resources": map[string]any{
-					"requests": map[string]any{
-						"memory": "128Mi",
+				Resources: &corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceMemory: resource.MustParse("128Mi"),
 					},
 				},
 			},
@@ -650,7 +652,8 @@ func Test_GetDeploymentConfig(t *testing.T) {
 			cfg, err := config.UnmarshalConfig(tt.rawConfig, schema, "")
 			require.NoError(t, err)
 
-			result := cfg.GetDeploymentConfig()
+			result, err := cfg.GetDeploymentConfig()
+			require.NoError(t, err)
 			if tt.expectedDeploymentConfigNil {
 				require.Nil(t, result)
 			} else {
@@ -663,12 +666,13 @@ func Test_GetDeploymentConfig(t *testing.T) {
 	// Test nil config separately
 	t.Run("nil config returns nil", func(t *testing.T) {
 		var cfg *config.Config
-		result := cfg.GetDeploymentConfig()
+		result, err := cfg.GetDeploymentConfig()
+		require.NoError(t, err)
 		require.Nil(t, result)
 	})
 
-	// Test that returned map is a defensive copy (mutations don't affect original)
-	t.Run("returned map is defensive copy - mutations don't affect original", func(t *testing.T) {
+	// Test that returned struct is a separate instance (mutations don't affect original)
+	t.Run("returned struct is independent copy - mutations don't affect original", func(t *testing.T) {
 		rawConfig := []byte(`{
 			"deploymentConfig": {
 				"nodeSelector": {
@@ -684,31 +688,29 @@ func Test_GetDeploymentConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get the deploymentConfig
-		result1 := cfg.GetDeploymentConfig()
+		result1, err := cfg.GetDeploymentConfig()
+		require.NoError(t, err)
 		require.NotNil(t, result1)
 
-		// Mutate the returned map
-		result1["nodeSelector"] = map[string]any{
-			"mutated": "value",
-		}
-		result1["newField"] = "added"
+		// Mutate the returned struct
+		result1.NodeSelector["mutated"] = "value"
 
 		// Get deploymentConfig again - should be unaffected by mutations
-		result2 := cfg.GetDeploymentConfig()
+		result2, err := cfg.GetDeploymentConfig()
+		require.NoError(t, err)
 		require.NotNil(t, result2)
 
 		// Original values should be intact
-		require.Equal(t, map[string]any{
-			"nodeSelector": map[string]any{
-				"kubernetes.io/os": "linux",
-			},
-		}, result2)
+		require.Equal(t, map[string]string{
+			"kubernetes.io/os": "linux",
+		}, result2.NodeSelector)
+	})
 
-		// New field should not exist
-		_, exists := result2["newField"]
-		require.False(t, exists)
-
-		// result1 should have the mutations
-		require.Equal(t, "added", result1["newField"])
+	// Test that invalid deploymentConfig type returns an error
+	t.Run("invalid deploymentConfig type returns error", func(t *testing.T) {
+		cfg := config.Config{"deploymentConfig": "not-an-object"}
+		result, err := cfg.GetDeploymentConfig()
+		require.Error(t, err)
+		require.Nil(t, result)
 	})
 }
