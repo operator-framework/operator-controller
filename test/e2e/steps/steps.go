@@ -138,6 +138,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 	sc.Step(`^(?i)min value for (ClusterExtension|ClusterExtensionRevision) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)
 
+	sc.Step(`^(?i)the current ClusterExtension is tracked for cleanup$`, TrackCurrentClusterExtensionForCleanup)
+
 	// Upgrade-specific steps
 	sc.Step(`^(?i)the latest stable OLM release is installed$`, LatestStableOLMReleaseIsInstalled)
 	sc.Step(`^(?i)OLM is upgraded$`, OLMIsUpgraded)
@@ -250,6 +252,17 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 		}
 		return true
 	})
+	return nil
+}
+
+// TrackCurrentClusterExtensionForCleanup saves the current ClusterExtension name in the cleanup list
+// so it gets deleted at the end of the scenario. Call this before applying a second ClusterExtension
+// in the same scenario, because ResourceIsApplied overwrites the tracked name.
+func TrackCurrentClusterExtensionForCleanup(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+	if sc.clusterExtensionName != "" {
+		sc.addedResources = append(sc.addedResources, resource{name: sc.clusterExtensionName, kind: "clusterextension"})
+	}
 	return nil
 }
 

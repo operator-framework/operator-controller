@@ -145,6 +145,12 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
 	}
 
+	siblings, err := c.siblingRevisionNames(ctx, cer)
+	if err != nil {
+		setRetryingConditions(cer, err.Error())
+		return ctrl.Result{}, fmt.Errorf("listing sibling revisions: %v", err)
+	}
+
 	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cer)
 	if err != nil {
 		setRetryingConditions(cer, err.Error())
@@ -206,6 +212,11 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 		for _, ores := range pres.GetObjects() {
 			if ores.Action() == machinery.ActionCollision {
 				collidingObjs = append(collidingObjs, ores.String())
+			}
+			if ores.Action() == machinery.ActionProgressed && siblings != nil {
+				if ref := foreignRevisionController(ores.Object(), siblings); ref != nil {
+					collidingObjs = append(collidingObjs, ores.String()+fmt.Sprintf("\nConflicting Owner: %s", ref.String()))
+				}
 			}
 		}
 
@@ -515,6 +526,42 @@ func EffectiveCollisionProtection(cp ...ocv1.CollisionProtection) ocv1.Collision
 		}
 	}
 	return ecp
+}
+
+// siblingRevisionNames returns the names of all ClusterExtensionRevisions that belong to
+// the same ClusterExtension as cer. Returns nil when cer has no owner label.
+func (c *ClusterExtensionRevisionReconciler) siblingRevisionNames(ctx context.Context, cer *ocv1.ClusterExtensionRevision) (sets.Set[string], error) {
+	ownerLabel, ok := cer.Labels[labels.OwnerNameKey]
+	if !ok {
+		return nil, nil
+	}
+	revList := &ocv1.ClusterExtensionRevisionList{}
+	if err := c.TrackingCache.List(ctx, revList, client.MatchingLabels{
+		labels.OwnerNameKey: ownerLabel,
+	}); err != nil {
+		return nil, fmt.Errorf("listing sibling revisions: %w", err)
+	}
+	names := sets.New[string]()
+	for i := range revList.Items {
+		names.Insert(revList.Items[i].Name)
+	}
+	return names, nil
+}
+
+// foreignRevisionController returns the controller OwnerReference when obj is owned by a
+// ClusterExtensionRevision that is not in siblings (i.e. belongs to a different ClusterExtension).
+// Returns nil when the controller is a sibling or is not a ClusterExtensionRevision.
+func foreignRevisionController(obj metav1.Object, siblings sets.Set[string]) *metav1.OwnerReference {
+	refs := obj.GetOwnerReferences()
+	for i := range refs {
+		if refs[i].Controller != nil && *refs[i].Controller &&
+			refs[i].Kind == ocv1.ClusterExtensionRevisionKind &&
+			refs[i].APIVersion == ocv1.GroupVersion.String() &&
+			!siblings.Has(refs[i].Name) {
+			return &refs[i]
+		}
+	}
+	return nil
 }
 
 // buildProgressionProbes creates a set of boxcutter probes from the fields provided in the CER's spec.progressionProbes.
