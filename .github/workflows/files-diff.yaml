@@ -22,7 +22,7 @@ jobs:
 
       - name: Comment on PR if NetworkPolicy files changed
         if: steps.filter.outputs.networkpolicy == 'true'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: networkpolicy-changes
           message: |
