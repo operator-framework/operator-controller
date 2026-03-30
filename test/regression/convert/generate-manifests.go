@@ -237,6 +237,24 @@ func main() {
 					"testkey": "testval",
 				},
 			},
+		}, {
+			name:             "WithEmptyAffinityConfig",
+			installNamespace: "argocd-system",
+			bundle:           "argocd-operator.v0.6.0",
+			testCaseName:     "with-empty-affinity",
+			deploymentConfig: &config.DeploymentConfig{
+				Affinity: &corev1.Affinity{},
+			},
+		}, {
+			name:             "WithEmptyAffinitySubTypeConfig",
+			installNamespace: "argocd-system",
+			bundle:           "argocd-operator.v0.6.0",
+			testCaseName:     "with-empty-affinity-subtype",
+			deploymentConfig: &config.DeploymentConfig{
+				Affinity: &corev1.Affinity{
+					NodeAffinity: &corev1.NodeAffinity{},
+				},
+			},
 		},
 	} {
 		bundlePath := filepath.Join(bundleRootDir, tc.bundle)
