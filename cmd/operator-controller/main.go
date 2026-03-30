@@ -744,7 +744,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 			c.mgr.GetClient(),
 			// Additional verbs / bundle manifest that are expected by the content manager to watch those resources
 			authorization.WithClusterCollectionVerbs("list", "watch"),
-			authorization.WithNamespacedCollectionVerbs("create"),
 		)
 	}
 

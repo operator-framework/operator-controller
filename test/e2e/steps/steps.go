@@ -34,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 	k8sresource "k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/component-base/featuregate"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -125,6 +126,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with permissions to install extensions is available in "([^"]*)" namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace)
+	sc.Step(`^(?i)ServiceAccount "([^"]*)" without create permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" is available in \${TEST_NAMESPACE}$`, ServiceAccountIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" in test namespace is cluster admin$`, ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" in test namespace has permissions to fetch "([^"]+)" metrics$`, ServiceAccountWithFetchMetricsPermissions)
@@ -435,6 +437,11 @@ func waitFor(ctx context.Context, conditionFn func() bool) {
 type msgMatchFn func(string) bool
 
 func alwaysMatch(_ string) bool { return true }
+
+func isFeatureGateEnabled(feature featuregate.Feature) bool {
+	enabled, found := featureGates[feature]
+	return enabled && found
+}
 
 func messageComparison(ctx context.Context, msg *godog.DocString) msgMatchFn {
 	msgCmp := alwaysMatch
@@ -1116,6 +1123,23 @@ func ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace(ctx context.C
 		kernel = "boxcutter"
 	}
 	rbacTemplate := fmt.Sprintf("%s-%s-rbac-template.yaml", serviceAccount, kernel)
+	return applyPermissionsToServiceAccount(ctx, serviceAccount, rbacTemplate)
+}
+
+// ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace creates a ServiceAccount with permissions that
+// intentionally exclude the "create" verb to test preflight permission validation for Boxcutter applier.
+// This is used to verify that the preflight check properly detects missing CREATE permissions.
+// Note: This function requires both @BoxcutterRuntime and @PreflightPermissions tags.
+func ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace(ctx context.Context, serviceAccount string) error {
+	// This test is only valid with Boxcutter runtime enabled
+	if !isFeatureGateEnabled(features.BoxcutterRuntime) {
+		return fmt.Errorf("this step requires BoxcutterRuntime feature gate to be enabled")
+	}
+	// It also requires preflight permissions checks to be enabled
+	if !isFeatureGateEnabled(features.PreflightPermissions) {
+		return fmt.Errorf("this step requires PreflightPermissions feature gate to be enabled")
+	}
+	rbacTemplate := fmt.Sprintf("%s-boxcutter-no-create-rbac-template.yaml", serviceAccount)
 	return applyPermissionsToServiceAccount(ctx, serviceAccount, rbacTemplate)
 }
 

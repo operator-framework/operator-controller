@@ -57,7 +57,15 @@ type ScopedPolicyRules struct {
 	MissingRules []rbacv1.PolicyRule
 }
 
+// objectVerbs are the verbs checked for each specific resource (by name) in the manifest.
+// These verbs operate on existing resource instances and can be restricted by resourceNames in RBAC rules.
 var objectVerbs = []string{"get", "patch", "update", "delete"}
+
+// namespacedCollectionVerbs are the verbs checked once per unique namespace across all resources in a GVR.
+// These verbs operate at the resource type level (collection) and cannot be restricted by resourceNames.
+// The "create" verb is included here because it operates on the collection level - you can't specify
+// resourceNames for create operations since the resource doesn't exist yet.
+var namespacedCollectionVerbs = []string{"create"}
 
 type RBACPreAuthorizerOption func(*rbacPreAuthorizer)
 
@@ -69,20 +77,11 @@ func WithClusterCollectionVerbs(verbs ...string) RBACPreAuthorizerOption {
 	}
 }
 
-// WithNamespacedCollectionVerbs configures namespaced collection verbs (e.g. create)
-// that are checked for each unique namespace across all objects in a GVR.
-func WithNamespacedCollectionVerbs(verbs ...string) RBACPreAuthorizerOption {
-	return func(a *rbacPreAuthorizer) {
-		a.namespacedCollectionVerbs = slices.Clone(verbs)
-	}
-}
-
 type rbacPreAuthorizer struct {
-	authorizer                authorizer.Authorizer
-	ruleResolver              validation.AuthorizationRuleResolver
-	restMapper                meta.RESTMapper
-	clusterCollectionVerbs    []string
-	namespacedCollectionVerbs []string
+	authorizer             authorizer.Authorizer
+	ruleResolver           validation.AuthorizationRuleResolver
+	restMapper             meta.RESTMapper
+	clusterCollectionVerbs []string
 }
 
 func NewRBACPreAuthorizer(cl client.Client, opts ...RBACPreAuthorizerOption) PreAuthorizer {
@@ -104,7 +103,7 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, user user.Info, ma
 	}
 
 	// derive manifest related attributes records
-	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(user, a.clusterCollectionVerbs, a.namespacedCollectionVerbs)
+	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(user, a.clusterCollectionVerbs, namespacedCollectionVerbs)
 
 	// append additional required perms
 	for _, fn := range additionalRequiredPerms {
