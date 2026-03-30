@@ -185,3 +185,23 @@ properties:
     value:
       packageName: single-namespace-operator
       version: 1.0.0
+---
+schema: olm.package
+name: large-crd-operator
+defaultChannel: beta
+---
+schema: olm.channel
+name: beta
+package: large-crd-operator
+entries:
+  - name: large-crd-operator.1.0.0
+---
+schema: olm.bundle
+name: large-crd-operator.1.0.0
+package: large-crd-operator
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/large-crd-operator:v1.0.0
+properties:
+  - type: olm.package
+    value:
+      packageName: large-crd-operator
+      version: 1.0.0
