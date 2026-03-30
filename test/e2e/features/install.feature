@@ -566,6 +566,32 @@ Feature: Install ClusterExtension
       """
 
   @BoxcutterRuntime
+  Scenario: Install bundle with large CRD
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: large-crd-operator
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "large-crd-operator.1.0.0" is installed in version "1.0.0"
+    And resource "customresourcedefinition/largecrdtests.largecrd.operatorframework.io" is installed
+    And resource "deployment/large-crd-operator" is installed
+
+  @BoxcutterRuntime
   @PreflightPermissions
   Scenario: Boxcutter preflight check detects missing CREATE permissions
     Given ServiceAccount "olm-sa" without create permissions is available in ${TEST_NAMESPACE}
