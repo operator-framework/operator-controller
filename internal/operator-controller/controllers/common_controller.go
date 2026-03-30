@@ -96,8 +96,8 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	// Check if the LATEST rolling revision indicates an error (Retrying reason)
 	// Latest revision is the last element in the array (sorted ascending by Spec.Revision)
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
-	progressingCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
-	if progressingCond != nil && progressingCond.Reason == string(ocv1.ClusterExtensionRevisionReasonRetrying) {
+	progressingCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+	if progressingCond != nil && progressingCond.Reason == string(ocv1.ClusterObjectSetReasonRetrying) {
 		// Retrying indicates an error occurred (config, apply, validation, etc.)
 		// Use Failed for semantic correctness: installation failed due to error
 		return ocv1.ReasonFailed

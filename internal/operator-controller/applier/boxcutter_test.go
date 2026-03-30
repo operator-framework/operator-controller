@@ -98,7 +98,7 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 	rev, err := g.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
 	require.NoError(t, err)
 
-	expected := ocv1ac.ClusterExtensionRevision("test-123-1").
+	expected := ocv1ac.ClusterObjectSet("test-123-1").
 		WithAnnotations(map[string]string{
 			"olm.operatorframework.io/bundle-name":               "my-bundle",
 			"olm.operatorframework.io/bundle-reference":          "bundle-ref",
@@ -111,15 +111,15 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 			labels.OwnerNameKey: "test-123",
 		}).
-		WithSpec(ocv1ac.ClusterExtensionRevisionSpec().
-			WithLifecycleState(ocv1.ClusterExtensionRevisionLifecycleStateActive).
+		WithSpec(ocv1ac.ClusterObjectSetSpec().
+			WithLifecycleState(ocv1.ClusterObjectSetLifecycleStateActive).
 			WithCollisionProtection(ocv1.CollisionProtectionNone).
 			WithRevision(1).
 			WithPhases(
-				ocv1ac.ClusterExtensionRevisionPhase().
+				ocv1ac.ClusterObjectSetPhase().
 					WithName("configuration").
 					WithObjects(
-						ocv1ac.ClusterExtensionRevisionObject().
+						ocv1ac.ClusterObjectSetObject().
 							WithObject(unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
@@ -135,7 +135,7 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 									},
 								},
 							}),
-						ocv1ac.ClusterExtensionRevisionObject().
+						ocv1ac.ClusterObjectSetObject().
 							WithObject(unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
@@ -228,11 +228,11 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	t.Log("by checking the spec-level collisionProtection is set")
 	require.Equal(t, ptr.To(ocv1.CollisionProtectionPrevent), rev.Spec.CollisionProtection)
 	t.Log("by checking the rendered objects are present in the correct phases")
-	require.Equal(t, []ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
-		*ocv1ac.ClusterExtensionRevisionPhase().
+	require.Equal(t, []ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
+		*ocv1ac.ClusterObjectSetPhase().
 			WithName(string(applier.PhaseInfrastructure)).
 			WithObjects(
-				ocv1ac.ClusterExtensionRevisionObject().
+				ocv1ac.ClusterObjectSetObject().
 					WithObject(unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
@@ -248,10 +248,10 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 						},
 					}),
 			),
-		*ocv1ac.ClusterExtensionRevisionPhase().
+		*ocv1ac.ClusterObjectSetPhase().
 			WithName(string(applier.PhaseDeploy)).
 			WithObjects(
-				ocv1ac.ClusterExtensionRevisionObject().
+				ocv1ac.ClusterObjectSetObject().
 					WithObject(unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "apps/v1",
@@ -539,7 +539,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			UID:  "test-uid",
 		},
 	}
-	defaultDesiredRevision := &ocv1.ClusterExtensionRevision{
+	defaultDesiredRevision := &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-ext-1",
 			UID:  "rev-uid-1",
@@ -547,12 +547,12 @@ func TestBoxcutter_Apply(t *testing.T) {
 				labels.OwnerNameKey: ext.Name,
 			},
 		},
-		Spec: ocv1.ClusterExtensionRevisionSpec{
+		Spec: ocv1.ClusterObjectSetSpec{
 			Revision: 1,
-			Phases: []ocv1.ClusterExtensionRevisionPhase{
+			Phases: []ocv1.ClusterObjectSetPhase{
 				{
 					Name: string(applier.PhaseDeploy),
-					Objects: []ocv1.ClusterExtensionRevisionObject{
+					Objects: []ocv1.ClusterObjectSetObject{
 						{
 							Object: unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -573,14 +573,14 @@ func TestBoxcutter_Apply(t *testing.T) {
 	allowedRevisionValue := func(revNum int64) *interceptor.Funcs {
 		return &interceptor.Funcs{
 			Apply: func(ctx context.Context, client client.WithWatch, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
-				cer, ok := obj.(*ocv1ac.ClusterExtensionRevisionApplyConfiguration)
+				cos, ok := obj.(*ocv1ac.ClusterObjectSetApplyConfiguration)
 				if !ok {
-					return fmt.Errorf("expected ClusterExtensionRevisionApplyConfiguration, got %T", obj)
+					return fmt.Errorf("expected ClusterObjectSetApplyConfiguration, got %T", obj)
 				}
-				if cer.Spec == nil || cer.Spec.Revision == nil || *cer.Spec.Revision != revNum {
-					gk := ocv1.SchemeGroupVersion.WithKind("ClusterExtensionRevision").GroupKind()
+				if cos.Spec == nil || cos.Spec.Revision == nil || *cos.Spec.Revision != revNum {
+					gk := ocv1.SchemeGroupVersion.WithKind("ClusterObjectSet").GroupKind()
 					name := ""
-					if n := cer.GetName(); n != nil {
+					if n := cos.GetName(); n != nil {
 						name = *n
 					}
 					return apierrors.NewInvalid(gk, name, field.ErrorList{field.Invalid(field.NewPath("spec.phases"), "immutable", "spec.phases is immutable")})
@@ -591,7 +591,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 	}
 	testCases := []struct {
 		name             string
-		mockBuilder      applier.ClusterExtensionRevisionGenerator
+		mockBuilder      applier.ClusterObjectSetGenerator
 		existingObjs     []client.Object
 		expectedErr      string
 		validate         func(t *testing.T, c client.Client)
@@ -600,18 +600,18 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "first revision",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
-					return ocv1ac.ClusterExtensionRevision("").
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					return ocv1ac.ClusterObjectSet("").
 						WithAnnotations(revisionAnnotations).
 						WithLabels(map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						}).
-						WithSpec(ocv1ac.ClusterExtensionRevisionSpec().
+						WithSpec(ocv1ac.ClusterObjectSetSpec().
 							WithPhases(
-								ocv1ac.ClusterExtensionRevisionPhase().
+								ocv1ac.ClusterObjectSetPhase().
 									WithName(string(applier.PhaseDeploy)).
 									WithObjects(
-										ocv1ac.ClusterExtensionRevisionObject().
+										ocv1ac.ClusterObjectSetObject().
 											WithObject(unstructured.Unstructured{
 												Object: map[string]interface{}{
 													"apiVersion": "v1",
@@ -627,7 +627,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 			},
 			validate: func(t *testing.T, c client.Client) {
-				revList := &ocv1.ClusterExtensionRevisionList{}
+				revList := &ocv1.ClusterObjectSetList{}
 				err := c.List(t.Context(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				require.Len(t, revList.Items, 1)
@@ -643,18 +643,18 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "no change, revision exists",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
-					return ocv1ac.ClusterExtensionRevision("").
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					return ocv1ac.ClusterObjectSet("").
 						WithAnnotations(revisionAnnotations).
 						WithLabels(map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						}).
-						WithSpec(ocv1ac.ClusterExtensionRevisionSpec().
+						WithSpec(ocv1ac.ClusterObjectSetSpec().
 							WithPhases(
-								ocv1ac.ClusterExtensionRevisionPhase().
+								ocv1ac.ClusterObjectSetPhase().
 									WithName(string(applier.PhaseDeploy)).
 									WithObjects(
-										ocv1ac.ClusterExtensionRevisionObject().
+										ocv1ac.ClusterObjectSetObject().
 											WithObject(unstructured.Unstructured{
 												Object: map[string]interface{}{
 													"apiVersion": "v1",
@@ -673,7 +673,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				defaultDesiredRevision,
 			},
 			validate: func(t *testing.T, c client.Client) {
-				revList := &ocv1.ClusterExtensionRevisionList{}
+				revList := &ocv1.ClusterObjectSetList{}
 				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				// No new revision should be created
@@ -684,18 +684,18 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "new revision created when objects in new revision are different",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
-					return ocv1ac.ClusterExtensionRevision("").
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					return ocv1ac.ClusterObjectSet("").
 						WithAnnotations(revisionAnnotations).
 						WithLabels(map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						}).
-						WithSpec(ocv1ac.ClusterExtensionRevisionSpec().
+						WithSpec(ocv1ac.ClusterObjectSetSpec().
 							WithPhases(
-								ocv1ac.ClusterExtensionRevisionPhase().
+								ocv1ac.ClusterObjectSetPhase().
 									WithName(string(applier.PhaseDeploy)).
 									WithObjects(
-										ocv1ac.ClusterExtensionRevisionObject().
+										ocv1ac.ClusterObjectSetObject().
 											WithObject(unstructured.Unstructured{
 												Object: map[string]interface{}{
 													"apiVersion": "v1",
@@ -715,13 +715,13 @@ func TestBoxcutter_Apply(t *testing.T) {
 				defaultDesiredRevision,
 			},
 			validate: func(t *testing.T, c client.Client) {
-				revList := &ocv1.ClusterExtensionRevisionList{}
+				revList := &ocv1.ClusterObjectSetList{}
 				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				require.Len(t, revList.Items, 2)
 
 				// Find the new revision (rev 2)
-				var newRev ocv1.ClusterExtensionRevision
+				var newRev ocv1.ClusterObjectSet
 				for _, r := range revList.Items {
 					if r.Spec.Revision == 2 {
 						newRev = r
@@ -737,14 +737,14 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "error from GenerateRevision",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 					return nil, errors.New("render boom")
 				},
 			},
 			expectedErr: "render boom",
 			validate: func(t *testing.T, c client.Client) {
 				// Ensure no revisions were created
-				revList := &ocv1.ClusterExtensionRevisionList{}
+				revList := &ocv1.ClusterObjectSetList{}
 				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				assert.Empty(t, revList.Items)
@@ -753,217 +753,217 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "keep at most 5 past revisions",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
-					return ocv1ac.ClusterExtensionRevision("").
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					return ocv1ac.ClusterObjectSet("").
 						WithAnnotations(revisionAnnotations).
 						WithLabels(map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						}).
-						WithSpec(ocv1ac.ClusterExtensionRevisionSpec()), nil
+						WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
 				},
 			},
 			existingObjs: []client.Object{
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-1",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       1,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-2",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       2,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-3",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       3,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-4",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       4,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-5",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       5,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-6",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       6,
 					},
 				},
 			},
 			clientIterceptor: allowedRevisionValue(7),
 			validate: func(t *testing.T, c client.Client) {
-				rev1 := &ocv1.ClusterExtensionRevision{}
+				rev1 := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{Name: "rev-1"}, rev1)
 				require.Error(t, err)
 				assert.True(t, apierrors.IsNotFound(err))
 
 				// Verify garbage collection: should only keep the limit + 1 (current) revisions
-				revList := &ocv1.ClusterExtensionRevisionList{}
+				revList := &ocv1.ClusterObjectSetList{}
 				err = c.List(t.Context(), revList)
 				require.NoError(t, err)
-				// Should have ClusterExtensionRevisionRetentionLimit (5) + current (1) = 6 revisions max
-				assert.LessOrEqual(t, len(revList.Items), applier.ClusterExtensionRevisionRetentionLimit+1)
+				// Should have ClusterObjectSetRetentionLimit (5) + current (1) = 6 revisions max
+				assert.LessOrEqual(t, len(revList.Items), applier.ClusterObjectSetRetentionLimit+1)
 			},
 		},
 		{
 			name: "keep active revisions when they are out of limit",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
-					return ocv1ac.ClusterExtensionRevision("").
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					return ocv1ac.ClusterObjectSet("").
 						WithAnnotations(revisionAnnotations).
 						WithLabels(map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						}).
-						WithSpec(ocv1ac.ClusterExtensionRevisionSpec()), nil
+						WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
 				},
 			},
 			existingObjs: []client.Object{
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-1",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       1,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-2",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
+					Spec: ocv1.ClusterObjectSetSpec{
 						// index beyond the retention limit but active; should be preserved
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       2,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-3",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       3,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-4",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
+					Spec: ocv1.ClusterObjectSetSpec{
 						// archived but should be preserved since it is within the limit
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       4,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-5",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       5,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-6",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       6,
 					},
 				},
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-7",
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
-						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					Spec: ocv1.ClusterObjectSetSpec{
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       7,
 					},
 				},
 			},
 			clientIterceptor: allowedRevisionValue(8),
 			validate: func(t *testing.T, c client.Client) {
-				rev1 := &ocv1.ClusterExtensionRevision{}
+				rev1 := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{Name: "rev-1"}, rev1)
 				require.Error(t, err)
 				assert.True(t, apierrors.IsNotFound(err))
 
-				rev2 := &ocv1.ClusterExtensionRevision{}
+				rev2 := &ocv1.ClusterObjectSet{}
 				err = c.Get(t.Context(), client.ObjectKey{Name: "rev-2"}, rev2)
 				require.NoError(t, err)
 
 				// Verify active revisions are kept even if beyond the limit
-				rev4 := &ocv1.ClusterExtensionRevision{}
+				rev4 := &ocv1.ClusterObjectSet{}
 				err = c.Get(t.Context(), client.ObjectKey{Name: "rev-4"}, rev4)
 				require.NoError(t, err, "active revision 4 should still exist even though it's beyond the limit")
 			},
@@ -971,18 +971,18 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "annotation-only update (same phases, different annotations)",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
-					return ocv1ac.ClusterExtensionRevision("").
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					return ocv1ac.ClusterObjectSet("").
 						WithAnnotations(revisionAnnotations).
 						WithLabels(map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						}).
-						WithSpec(ocv1ac.ClusterExtensionRevisionSpec().
+						WithSpec(ocv1ac.ClusterObjectSetSpec().
 							WithPhases(
-								ocv1ac.ClusterExtensionRevisionPhase().
+								ocv1ac.ClusterObjectSetPhase().
 									WithName(string(applier.PhaseDeploy)).
 									WithObjects(
-										ocv1ac.ClusterExtensionRevisionObject().
+										ocv1ac.ClusterObjectSetObject().
 											WithObject(unstructured.Unstructured{
 												Object: map[string]interface{}{
 													"apiVersion": "v1",
@@ -999,7 +999,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 			existingObjs: []client.Object{
 				ext,
-				&ocv1.ClusterExtensionRevision{
+				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-ext-1",
 						Annotations: map[string]string{
@@ -1010,12 +1010,12 @@ func TestBoxcutter_Apply(t *testing.T) {
 							labels.OwnerNameKey: ext.Name,
 						},
 					},
-					Spec: ocv1.ClusterExtensionRevisionSpec{
+					Spec: ocv1.ClusterObjectSetSpec{
 						Revision: 1,
-						Phases: []ocv1.ClusterExtensionRevisionPhase{
+						Phases: []ocv1.ClusterObjectSetPhase{
 							{
 								Name: string(applier.PhaseDeploy),
-								Objects: []ocv1.ClusterExtensionRevisionObject{
+								Objects: []ocv1.ClusterObjectSetObject{
 									{
 										Object: unstructured.Unstructured{
 											Object: map[string]interface{}{
@@ -1034,7 +1034,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 			},
 			validate: func(t *testing.T, c client.Client) {
-				revList := &ocv1.ClusterExtensionRevisionList{}
+				revList := &ocv1.ClusterObjectSetList{}
 				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				// Should still be only 1 revision (in-place update, not new revision)
@@ -1128,14 +1128,14 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 	}
 	fakeClient := fake.NewClientBuilder().WithScheme(testScheme).Build()
 	dummyGenerator := &mockBundleRevisionBuilder{
-		makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
-			return ocv1ac.ClusterExtensionRevision("").
-				WithSpec(ocv1ac.ClusterExtensionRevisionSpec().
+		makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+			return ocv1ac.ClusterObjectSet("").
+				WithSpec(ocv1ac.ClusterObjectSetSpec().
 					WithPhases(
-						ocv1ac.ClusterExtensionRevisionPhase().
+						ocv1ac.ClusterObjectSetPhase().
 							WithName("some-phase").
 							WithObjects(
-								ocv1ac.ClusterExtensionRevisionObject().
+								ocv1ac.ClusterObjectSetObject().
 									WithObject(unstructured.Unstructured{
 										Object: map[string]interface{}{
 											"apiVersion": "v1",
@@ -1178,7 +1178,7 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 							Name:            "test-ext-1",
 							APIGroup:        "olm.operatorframework.io",
 							APIVersion:      "v1",
-							Resource:        "clusterextensionrevisions/finalizers",
+							Resource:        "clusterobjectsets/finalizers",
 							ResourceRequest: true,
 							Verb:            "update",
 						}, perms[0])
@@ -1319,23 +1319,23 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		}
 
 		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
 			Return(nil)
 		client.
-			On("Apply", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionApplyConfiguration"), mock.Anything).
+			On("Apply", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetApplyConfiguration"), mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
 				// Verify the migration marker label is set before apply
-				rev := args.Get(1).(*ocv1ac.ClusterExtensionRevisionApplyConfiguration)
+				rev := args.Get(1).(*ocv1ac.ClusterObjectSetApplyConfiguration)
 				require.Equal(t, "true", rev.Labels[labels.MigratedFromHelmKey], "Migration marker label should be set")
 			}).
 			Return(nil)
 		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevision"), mock.Anything).
+			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
 				// Simulate Get() returning the created revision with server-managed fields
-				rev := args.Get(2).(*ocv1.ClusterExtensionRevision)
+				rev := args.Get(2).(*ocv1.ClusterObjectSet)
 				rev.Name = "test-revision"
 				rev.Generation = 1
 				rev.ResourceVersion = "1"
@@ -1355,10 +1355,10 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.True(t, statusWriter.updateCalled, "Status().Update() should be called during migration")
 		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
 
-		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterExtensionRevision)
-		require.True(t, ok, "Updated object should be a ClusterExtensionRevision")
+		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterObjectSet)
+		require.True(t, ok, "Updated object should be a ClusterObjectSet")
 
-		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
+		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
 		require.NotNil(t, succeededCond, "Succeeded condition should be set")
 		assert.Equal(t, metav1.ConditionTrue, succeededCond.Status, "Succeeded condition should be True")
 		assert.Equal(t, ocv1.ReasonSucceeded, succeededCond.Reason, "Reason should be Succeeded")
@@ -1385,7 +1385,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
 
-		existingRev := ocv1.ClusterExtensionRevision{
+		existingRev := ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-revision",
 				Generation: 2,
@@ -1393,13 +1393,13 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 					labels.MigratedFromHelmKey: "true",
 				},
 			},
-			Spec: ocv1.ClusterExtensionRevisionSpec{
+			Spec: ocv1.ClusterObjectSetSpec{
 				Revision: 1, // Migration creates revision 1
 			},
-			Status: ocv1.ClusterExtensionRevisionStatus{
+			Status: ocv1.ClusterObjectSetStatus{
 				Conditions: []metav1.Condition{
 					{
-						Type:   ocv1.ClusterExtensionRevisionTypeSucceeded,
+						Type:   ocv1.ClusterObjectSetTypeSucceeded,
 						Status: metav1.ConditionTrue,
 						Reason: ocv1.ReasonSucceeded,
 					},
@@ -1408,10 +1408,10 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		}
 
 		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
 			Run(func(args mock.Arguments) {
-				list := args.Get(1).(*ocv1.ClusterExtensionRevisionList)
-				list.Items = []ocv1.ClusterExtensionRevision{existingRev}
+				list := args.Get(1).(*ocv1.ClusterObjectSetList)
+				list.Items = []ocv1.ClusterObjectSet{existingRev}
 			}).
 			Return(nil)
 
@@ -1440,7 +1440,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
 
-		existingRev := ocv1.ClusterExtensionRevision{
+		existingRev := ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-revision",
 				Generation: 2,
@@ -1448,24 +1448,24 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 					labels.MigratedFromHelmKey: "true",
 				},
 			},
-			Spec: ocv1.ClusterExtensionRevisionSpec{
+			Spec: ocv1.ClusterObjectSetSpec{
 				Revision: 1, // Migration creates revision 1
 			},
 			// Status is empty - simulating the case where creation succeeded but status update failed
 		}
 
 		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
 			Run(func(args mock.Arguments) {
-				list := args.Get(1).(*ocv1.ClusterExtensionRevisionList)
-				list.Items = []ocv1.ClusterExtensionRevision{existingRev}
+				list := args.Get(1).(*ocv1.ClusterObjectSetList)
+				list.Items = []ocv1.ClusterObjectSet{existingRev}
 			}).
 			Return(nil)
 
 		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevision"), mock.Anything).
+			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
 			Run(func(args mock.Arguments) {
-				rev := args.Get(2).(*ocv1.ClusterExtensionRevision)
+				rev := args.Get(2).(*ocv1.ClusterObjectSet)
 				*rev = existingRev
 			}).
 			Return(nil)
@@ -1480,10 +1480,10 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.True(t, statusWriter.updateCalled, "Status().Update() should be called to set missing status")
 		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
 
-		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterExtensionRevision)
-		require.True(t, ok, "Updated object should be a ClusterExtensionRevision")
+		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterObjectSet)
+		require.True(t, ok, "Updated object should be a ClusterObjectSet")
 
-		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
+		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
 		require.NotNil(t, succeededCond, "Succeeded condition should be set")
 		assert.Equal(t, metav1.ConditionTrue, succeededCond.Status, "Succeeded condition should be True")
 		assert.Equal(t, ocv1.ReasonSucceeded, succeededCond.Reason, "Reason should be Succeeded")
@@ -1510,7 +1510,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 
 		// Migrated revision with Succeeded=False (e.g., from a previous failed status update attempt)
 		// This simulates a revision whose Succeeded condition should be corrected from False to True during migration.
-		existingRev := ocv1.ClusterExtensionRevision{
+		existingRev := ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-revision",
 				Generation: 2,
@@ -1518,13 +1518,13 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 					labels.MigratedFromHelmKey: "true",
 				},
 			},
-			Spec: ocv1.ClusterExtensionRevisionSpec{
+			Spec: ocv1.ClusterObjectSetSpec{
 				Revision: 1,
 			},
-			Status: ocv1.ClusterExtensionRevisionStatus{
+			Status: ocv1.ClusterObjectSetStatus{
 				Conditions: []metav1.Condition{
 					{
-						Type:   ocv1.ClusterExtensionRevisionTypeSucceeded,
+						Type:   ocv1.ClusterObjectSetTypeSucceeded,
 						Status: metav1.ConditionFalse, // Important: False, not missing
 						Reason: "InProgress",
 					},
@@ -1533,17 +1533,17 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		}
 
 		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
 			Run(func(args mock.Arguments) {
-				list := args.Get(1).(*ocv1.ClusterExtensionRevisionList)
-				list.Items = []ocv1.ClusterExtensionRevision{existingRev}
+				list := args.Get(1).(*ocv1.ClusterObjectSetList)
+				list.Items = []ocv1.ClusterObjectSet{existingRev}
 			}).
 			Return(nil)
 
 		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevision"), mock.Anything).
+			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
 			Run(func(args mock.Arguments) {
-				rev := args.Get(2).(*ocv1.ClusterExtensionRevision)
+				rev := args.Get(2).(*ocv1.ClusterObjectSet)
 				*rev = existingRev
 			}).
 			Return(nil)
@@ -1558,10 +1558,10 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.True(t, statusWriter.updateCalled, "Status().Update() should be called to update False to True")
 		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
 
-		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterExtensionRevision)
-		require.True(t, ok, "Updated object should be a ClusterExtensionRevision")
+		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterObjectSet)
+		require.True(t, ok, "Updated object should be a ClusterObjectSet")
 
-		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
+		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
 		require.NotNil(t, succeededCond, "Succeeded condition should be set")
 		assert.Equal(t, metav1.ConditionTrue, succeededCond.Status, "Succeeded condition should be updated to True")
 		assert.Equal(t, ocv1.ReasonSucceeded, succeededCond.Reason, "Reason should be Succeeded")
@@ -1588,31 +1588,31 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 
 		// Revision 1 created by normal Boxcutter operation (no migration label)
 		// This simulates the first rollout - status should NOT be set as it may still be in progress
-		existingRev := ocv1.ClusterExtensionRevision{
+		existingRev := ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-revision",
 				Generation: 2,
 				// No migration label - this is a normal Boxcutter revision
 			},
-			Spec: ocv1.ClusterExtensionRevisionSpec{
+			Spec: ocv1.ClusterObjectSetSpec{
 				Revision: 1,
 			},
 		}
 
 		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
 			Run(func(args mock.Arguments) {
-				list := args.Get(1).(*ocv1.ClusterExtensionRevisionList)
-				list.Items = []ocv1.ClusterExtensionRevision{existingRev}
+				list := args.Get(1).(*ocv1.ClusterObjectSetList)
+				list.Items = []ocv1.ClusterObjectSet{existingRev}
 			}).
 			Return(nil)
 
 		// The migration flow calls Get() to re-fetch the revision before checking its status.
 		// Even for non-migrated revisions, Get() is called to determine if status needs to be set.
 		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevision"), mock.Anything).
+			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
 			Run(func(args mock.Arguments) {
-				rev := args.Get(2).(*ocv1.ClusterExtensionRevision)
+				rev := args.Get(2).(*ocv1.ClusterObjectSet)
 				*rev = existingRev
 			}).
 			Return(nil)
@@ -1670,23 +1670,23 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		}
 
 		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
 			Return(nil)
 
 		client.
-			On("Apply", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionApplyConfiguration"), mock.Anything).
+			On("Apply", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetApplyConfiguration"), mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
 				// Verify the migration marker label is set before apply
-				rev := args.Get(1).(*ocv1ac.ClusterExtensionRevisionApplyConfiguration)
+				rev := args.Get(1).(*ocv1ac.ClusterObjectSetApplyConfiguration)
 				require.Equal(t, "true", rev.Labels[labels.MigratedFromHelmKey], "Migration marker label should be set")
 			}).
 			Return(nil)
 
 		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevision"), mock.Anything).
+			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
 			Run(func(args mock.Arguments) {
-				rev := args.Get(2).(*ocv1.ClusterExtensionRevision)
+				rev := args.Get(2).(*ocv1.ClusterObjectSet)
 				rev.ObjectMeta.Name = "test-revision"
 				rev.ObjectMeta.Generation = 1
 				rev.ObjectMeta.ResourceVersion = "1"
@@ -1711,10 +1711,10 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.True(t, statusWriter.updateCalled, "Status().Update() should be called during migration")
 		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
 
-		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterExtensionRevision)
-		require.True(t, ok, "Updated object should be a ClusterExtensionRevision")
+		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterObjectSet)
+		require.True(t, ok, "Updated object should be a ClusterObjectSet")
 
-		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
+		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
 		require.NotNil(t, succeededCond, "Succeeded condition should be set")
 		assert.Equal(t, metav1.ConditionTrue, succeededCond.Status, "Succeeded condition should be True")
 	})
@@ -1756,7 +1756,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		}
 
 		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
 			Return(nil)
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
@@ -1789,7 +1789,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		}
 
 		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
 			Return(nil)
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
@@ -1799,14 +1799,14 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 	})
 }
 
-// mockBundleRevisionBuilder is a mock implementation of the ClusterExtensionRevisionGenerator for testing.
+// mockBundleRevisionBuilder is a mock implementation of the ClusterObjectSetGenerator for testing.
 type mockBundleRevisionBuilder struct {
-	makeRevisionFunc                      func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error)
+	makeRevisionFunc                      func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error)
 	generateRevisionFromHelmReleaseCalled bool
 	helmReleaseUsed                       *release.Release
 }
 
-func (m *mockBundleRevisionBuilder) GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
+func (m *mockBundleRevisionBuilder) GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 	return m.makeRevisionFunc(ctx, bundleFS, ext, objectLabels, revisionAnnotations)
 }
 
@@ -1814,14 +1814,14 @@ func (m *mockBundleRevisionBuilder) GenerateRevisionFromHelmRelease(
 	ctx context.Context,
 	helmRelease *release.Release, ext *ocv1.ClusterExtension,
 	objectLabels map[string]string,
-) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
+) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 	m.generateRevisionFromHelmReleaseCalled = true
 	m.helmReleaseUsed = helmRelease
-	return ocv1ac.ClusterExtensionRevision("test-revision").
+	return ocv1ac.ClusterObjectSet("test-revision").
 		WithLabels(map[string]string{
 			labels.OwnerNameKey: ext.Name,
 		}).
-		WithSpec(ocv1ac.ClusterExtensionRevisionSpec()), nil
+		WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
 }
 
 type clientMock struct {

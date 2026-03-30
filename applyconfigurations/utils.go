@@ -55,20 +55,20 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1.ClusterExtensionInstallConfigApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ClusterExtensionInstallStatus"):
 		return &apiv1.ClusterExtensionInstallStatusApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("ClusterExtensionRevision"):
-		return &apiv1.ClusterExtensionRevisionApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("ClusterExtensionRevisionObject"):
-		return &apiv1.ClusterExtensionRevisionObjectApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("ClusterExtensionRevisionPhase"):
-		return &apiv1.ClusterExtensionRevisionPhaseApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("ClusterExtensionRevisionSpec"):
-		return &apiv1.ClusterExtensionRevisionSpecApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("ClusterExtensionRevisionStatus"):
-		return &apiv1.ClusterExtensionRevisionStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ClusterExtensionSpec"):
 		return &apiv1.ClusterExtensionSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ClusterExtensionStatus"):
 		return &apiv1.ClusterExtensionStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectSet"):
+		return &apiv1.ClusterObjectSetApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectSetObject"):
+		return &apiv1.ClusterObjectSetObjectApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectSetPhase"):
+		return &apiv1.ClusterObjectSetPhaseApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectSetSpec"):
+		return &apiv1.ClusterObjectSetSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectSetStatus"):
+		return &apiv1.ClusterObjectSetStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ConditionEqualProbe"):
 		return &apiv1.ConditionEqualProbeApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("CRDUpgradeSafetyPreflightConfig"):

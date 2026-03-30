@@ -7,7 +7,7 @@ set -e
 # The names of the generated CRDs
 CE="olm.operatorframework.io_clusterextensions.yaml"
 CC="olm.operatorframework.io_clustercatalogs.yaml"
-CR="olm.operatorframework.io_clusterextensionrevisions.yaml"
+CR="olm.operatorframework.io_clusterobjectsets.yaml"
 
 # order for modules and crds must match
 # each item in crds must be unique, and should be associated with a module

@@ -163,7 +163,7 @@ func init() {
 // to ensure consistent ordering regardless of input order. This is critical for
 // Helm-to-Boxcutter migration where the same resources may come from different sources
 // (Helm release manifest vs bundle manifest) and need to produce identical phases.
-func compareClusterExtensionRevisionObjectApplyConfigurations(a, b ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration) int {
+func compareClusterObjectSetObjectApplyConfigurations(a, b ocv1ac.ClusterObjectSetObjectApplyConfiguration) int {
 	aGVK := a.Object.GroupVersionKind()
 	bGVK := b.Object.GroupVersionKind()
 
@@ -179,9 +179,9 @@ func compareClusterExtensionRevisionObjectApplyConfigurations(a, b ocv1ac.Cluste
 // PhaseSort takes an unsorted list of objects and organizes them into sorted phases.
 // Each phase will be applied in order according to DefaultPhaseOrder. Objects
 // within a single phase are applied simultaneously.
-func PhaseSort(unsortedObjs []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration) []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration {
-	phasesSorted := make([]*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration, 0)
-	phaseMap := make(map[Phase][]ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration)
+func PhaseSort(unsortedObjs []ocv1ac.ClusterObjectSetObjectApplyConfiguration) []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration {
+	phasesSorted := make([]*ocv1ac.ClusterObjectSetPhaseApplyConfiguration, 0)
+	phaseMap := make(map[Phase][]ocv1ac.ClusterObjectSetObjectApplyConfiguration)
 
 	for _, obj := range unsortedObjs {
 		phase := determinePhase(obj.Object.GroupVersionKind().GroupKind())
@@ -191,14 +191,14 @@ func PhaseSort(unsortedObjs []ocv1ac.ClusterExtensionRevisionObjectApplyConfigur
 	for _, phaseName := range defaultPhaseOrder {
 		if objs, ok := phaseMap[phaseName]; ok {
 			// Sort objects within the phase deterministically
-			slices.SortFunc(objs, compareClusterExtensionRevisionObjectApplyConfigurations)
+			slices.SortFunc(objs, compareClusterObjectSetObjectApplyConfigurations)
 
 			// Convert to pointers for WithObjects
-			objPtrs := make([]*ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration, len(objs))
+			objPtrs := make([]*ocv1ac.ClusterObjectSetObjectApplyConfiguration, len(objs))
 			for i := range objs {
 				objPtrs[i] = &objs[i]
 			}
-			phasesSorted = append(phasesSorted, ocv1ac.ClusterExtensionRevisionPhase().
+			phasesSorted = append(phasesSorted, ocv1ac.ClusterObjectSetPhase().
 				WithName(string(phaseName)).
 				WithObjects(objPtrs...))
 		}

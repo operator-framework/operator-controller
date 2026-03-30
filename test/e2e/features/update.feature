@@ -291,10 +291,10 @@ Feature: Update ClusterExtension
     And ClusterExtension is rolled out
     And ClusterExtension is available
     And ClusterExtension reports "${NAME}-2" as active revision
-    And ClusterExtensionRevision "${NAME}-2" reports Progressing as True with Reason Succeeded
-    And ClusterExtensionRevision "${NAME}-2" reports Available as True with Reason ProbesSucceeded
-    And ClusterExtensionRevision "${NAME}-1" is archived
-    And ClusterExtensionRevision "${NAME}-1" phase objects are not found or not owned by the revision
+    And ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason Succeeded
+    And ClusterObjectSet "${NAME}-2" reports Available as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${NAME}-1" is archived
+    And ClusterObjectSet "${NAME}-1" phase objects are not found or not owned by the revision
 
   @BoxcutterRuntime
   Scenario: Report all active revisions on ClusterExtension
@@ -322,6 +322,6 @@ Feature: Update ClusterExtension
     And ClusterExtension is available
     When ClusterExtension is updated to version "1.0.2"
     Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
-    And ClusterExtensionRevision "${NAME}-2" reports Progressing as True with Reason RollingOut
-    And ClusterExtensionRevision "${NAME}-2" reports Available as False with Reason ProbeFailure
+    And ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason RollingOut
+    And ClusterObjectSet "${NAME}-2" reports Available as False with Reason ProbeFailure
 

@@ -22,14 +22,14 @@ import (
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-// ClusterExtensionRevisionObjectApplyConfiguration represents a declarative configuration of the ClusterExtensionRevisionObject type for use
+// ClusterObjectSetObjectApplyConfiguration represents a declarative configuration of the ClusterObjectSetObject type for use
 // with apply.
 //
-// ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
+// ClusterObjectSetObject represents a Kubernetes object to be applied as part
 // of a phase, along with its collision protection settings.
 //
 // Exactly one of object or ref must be set.
-type ClusterExtensionRevisionObjectApplyConfiguration struct {
+type ClusterObjectSetObjectApplyConfiguration struct {
 	// object is an optional embedded Kubernetes object to be applied.
 	//
 	// Exactly one of object or ref must be set.
@@ -62,16 +62,16 @@ type ClusterExtensionRevisionObjectApplyConfiguration struct {
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
-// ClusterExtensionRevisionObjectApplyConfiguration constructs a declarative configuration of the ClusterExtensionRevisionObject type for use with
+// ClusterObjectSetObjectApplyConfiguration constructs a declarative configuration of the ClusterObjectSetObject type for use with
 // apply.
-func ClusterExtensionRevisionObject() *ClusterExtensionRevisionObjectApplyConfiguration {
-	return &ClusterExtensionRevisionObjectApplyConfiguration{}
+func ClusterObjectSetObject() *ClusterObjectSetObjectApplyConfiguration {
+	return &ClusterObjectSetObjectApplyConfiguration{}
 }
 
 // WithObject sets the Object field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Object field is set to the value of the last call.
-func (b *ClusterExtensionRevisionObjectApplyConfiguration) WithObject(value unstructured.Unstructured) *ClusterExtensionRevisionObjectApplyConfiguration {
+func (b *ClusterObjectSetObjectApplyConfiguration) WithObject(value unstructured.Unstructured) *ClusterObjectSetObjectApplyConfiguration {
 	b.Object = &value
 	return b
 }
@@ -79,7 +79,7 @@ func (b *ClusterExtensionRevisionObjectApplyConfiguration) WithObject(value unst
 // WithRef sets the Ref field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Ref field is set to the value of the last call.
-func (b *ClusterExtensionRevisionObjectApplyConfiguration) WithRef(value *ObjectSourceRefApplyConfiguration) *ClusterExtensionRevisionObjectApplyConfiguration {
+func (b *ClusterObjectSetObjectApplyConfiguration) WithRef(value *ObjectSourceRefApplyConfiguration) *ClusterObjectSetObjectApplyConfiguration {
 	b.Ref = value
 	return b
 }
@@ -87,7 +87,7 @@ func (b *ClusterExtensionRevisionObjectApplyConfiguration) WithRef(value *Object
 // WithCollisionProtection sets the CollisionProtection field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the CollisionProtection field is set to the value of the last call.
-func (b *ClusterExtensionRevisionObjectApplyConfiguration) WithCollisionProtection(value apiv1.CollisionProtection) *ClusterExtensionRevisionObjectApplyConfiguration {
+func (b *ClusterObjectSetObjectApplyConfiguration) WithCollisionProtection(value apiv1.CollisionProtection) *ClusterObjectSetObjectApplyConfiguration {
 	b.CollisionProtection = &value
 	return b
 }

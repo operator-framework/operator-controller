@@ -32,9 +32,9 @@ func TestSecretPacker_Pack(t *testing.T) {
 	})
 
 	t.Run("single object packs into one Secret", func(t *testing.T) {
-		phases := []ocv1.ClusterExtensionRevisionPhase{{
+		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
-			Objects: []ocv1.ClusterExtensionRevisionObject{{
+			Objects: []ocv1.ClusterObjectSetObject{{
 				Object: testConfigMap("test-cm", "default"),
 			}},
 		}}
@@ -66,9 +66,9 @@ func TestSecretPacker_Pack(t *testing.T) {
 	})
 
 	t.Run("multiple objects fit in one Secret", func(t *testing.T) {
-		phases := []ocv1.ClusterExtensionRevisionPhase{{
+		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
-			Objects: []ocv1.ClusterExtensionRevisionObject{
+			Objects: []ocv1.ClusterObjectSetObject{
 				{Object: testConfigMap("cm-1", "default")},
 				{Object: testConfigMap("cm-2", "default")},
 			},
@@ -82,14 +82,14 @@ func TestSecretPacker_Pack(t *testing.T) {
 	})
 
 	t.Run("objects across multiple phases", func(t *testing.T) {
-		phases := []ocv1.ClusterExtensionRevisionPhase{
+		phases := []ocv1.ClusterObjectSetPhase{
 			{
 				Name:    "crds",
-				Objects: []ocv1.ClusterExtensionRevisionObject{{Object: testConfigMap("crd-1", "")}},
+				Objects: []ocv1.ClusterObjectSetObject{{Object: testConfigMap("crd-1", "")}},
 			},
 			{
 				Name:    "deploy",
-				Objects: []ocv1.ClusterExtensionRevisionObject{{Object: testConfigMap("deploy-1", "ns")}},
+				Objects: []ocv1.ClusterObjectSetObject{{Object: testConfigMap("deploy-1", "ns")}},
 			},
 		}
 
@@ -109,9 +109,9 @@ func TestSecretPacker_Pack(t *testing.T) {
 	})
 
 	t.Run("deterministic: same input produces same output", func(t *testing.T) {
-		phases := []ocv1.ClusterExtensionRevisionPhase{{
+		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
-			Objects: []ocv1.ClusterExtensionRevisionObject{
+			Objects: []ocv1.ClusterObjectSetObject{
 				{Object: testConfigMap("cm-1", "default")},
 			},
 		}}
@@ -127,9 +127,9 @@ func TestSecretPacker_Pack(t *testing.T) {
 	})
 
 	t.Run("skips ref-only objects", func(t *testing.T) {
-		phases := []ocv1.ClusterExtensionRevisionPhase{{
+		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
-			Objects: []ocv1.ClusterExtensionRevisionObject{
+			Objects: []ocv1.ClusterObjectSetObject{
 				{Ref: ocv1.ObjectSourceRef{Name: "existing-secret", Namespace: "ns", Key: "somekey"}},
 			},
 		}}
@@ -148,9 +148,9 @@ func TestSecretPacker_Pack(t *testing.T) {
 			"bigkey": strings.Repeat("a", gzipThreshold+1),
 		}
 
-		phases := []ocv1.ClusterExtensionRevisionPhase{{
+		phases := []ocv1.ClusterObjectSetPhase{{
 			Name:    "deploy",
-			Objects: []ocv1.ClusterExtensionRevisionObject{{Object: largeObj}},
+			Objects: []ocv1.ClusterObjectSetObject{{Object: largeObj}},
 		}}
 
 		result, err := packer.Pack(phases)
@@ -174,9 +174,9 @@ func TestSecretPacker_Pack(t *testing.T) {
 	t.Run("duplicate content objects share key and do not inflate size", func(t *testing.T) {
 		// Two identical objects should produce the same content hash key.
 		// The second occurrence must not double-count the size.
-		phases := []ocv1.ClusterExtensionRevisionPhase{{
+		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
-			Objects: []ocv1.ClusterExtensionRevisionObject{
+			Objects: []ocv1.ClusterObjectSetObject{
 				{Object: testConfigMap("same-cm", "default")},
 				{Object: testConfigMap("same-cm", "default")},
 			},
@@ -201,9 +201,9 @@ func TestSecretPacker_Pack(t *testing.T) {
 		expectedHash := sha256.Sum256(rawData)
 		expectedKey := base64.RawURLEncoding.EncodeToString(expectedHash[:])
 
-		phases := []ocv1.ClusterExtensionRevisionPhase{{
+		phases := []ocv1.ClusterObjectSetPhase{{
 			Name:    "deploy",
-			Objects: []ocv1.ClusterExtensionRevisionObject{{Object: obj}},
+			Objects: []ocv1.ClusterObjectSetObject{{Object: obj}},
 		}}
 		result, err := packer.Pack(phases)
 		require.NoError(t, err)

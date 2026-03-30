@@ -19,9 +19,9 @@ func TestExtractPhasesForPacking(t *testing.T) {
 	}}
 
 	cp := ocv1.CollisionProtectionPrevent
-	acPhases := []ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
-		*ocv1ac.ClusterExtensionRevisionPhase().WithName("deploy").WithObjects(
-			ocv1ac.ClusterExtensionRevisionObject().WithObject(obj).WithCollisionProtection(cp),
+	acPhases := []ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
+		*ocv1ac.ClusterObjectSetPhase().WithName("deploy").WithObjects(
+			ocv1ac.ClusterObjectSetObject().WithObject(obj).WithCollisionProtection(cp),
 		),
 	}
 
@@ -46,12 +46,12 @@ func TestReplaceInlineWithRefs(t *testing.T) {
 		"metadata":   map[string]interface{}{"name": "cm2"},
 	}}
 
-	rev := ocv1ac.ClusterExtensionRevision("test-rev").
-		WithSpec(ocv1ac.ClusterExtensionRevisionSpec().
+	rev := ocv1ac.ClusterObjectSet("test-rev").
+		WithSpec(ocv1ac.ClusterObjectSetSpec().
 			WithPhases(
-				ocv1ac.ClusterExtensionRevisionPhase().WithName("deploy").WithObjects(
-					ocv1ac.ClusterExtensionRevisionObject().WithObject(obj1),
-					ocv1ac.ClusterExtensionRevisionObject().WithObject(obj2),
+				ocv1ac.ClusterObjectSetPhase().WithName("deploy").WithObjects(
+					ocv1ac.ClusterObjectSetObject().WithObject(obj1),
+					ocv1ac.ClusterObjectSetObject().WithObject(obj2),
 				),
 			),
 		)
@@ -82,7 +82,7 @@ func TestReplaceInlineWithRefs(t *testing.T) {
 }
 
 func TestReplaceInlineWithRefs_NilSpec(t *testing.T) {
-	rev := ocv1ac.ClusterExtensionRevision("test-rev")
+	rev := ocv1ac.ClusterObjectSet("test-rev")
 	pack := &PackResult{
 		Refs: map[[2]int]ocv1.ObjectSourceRef{},
 	}

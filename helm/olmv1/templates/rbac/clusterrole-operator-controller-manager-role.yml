@@ -89,7 +89,7 @@ rules:
   - apiGroups:
       - olm.operatorframework.io
     resources:
-      - clusterextensionrevisions
+      - clusterobjectsets
     verbs:
       - create
       - delete
@@ -101,14 +101,14 @@ rules:
   - apiGroups:
       - olm.operatorframework.io
     resources:
-      - clusterextensionrevisions/status
+      - clusterobjectsets/status
     verbs:
       - patch
       - update
   - apiGroups:
       - olm.operatorframework.io
     resources:
-      - clusterextensionrevisions/finalizers
+      - clusterobjectsets/finalizers
     verbs:
       - update
   {{- end }}

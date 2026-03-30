@@ -11,7 +11,7 @@ operator-controller is the central component of Operator Lifecycle Manager (OLM)
 install and manage cluster extensions. The project follows a microservices architecture with two main binaries:
 
 **operator-controller** 
- - manages `ClusterExtension` and `ClusterExtensionRevision` CRDs
+ - manages `ClusterExtension` and `ClusterObjectSet` CRDs
  - resolves bundles from configured source
  - unpacks bundles and renders manifests from them
  - applies manifests with phase-based rollouts
@@ -193,7 +193,7 @@ make generate
 
 - **Primary CRDs:**
   - `ClusterExtension` - declares desired extension installations
-  - `ClusterExtensionRevision` - revision management (experimental)
+  - `ClusterObjectSet` - revision management (experimental)
   - `ClusterCatalog` - catalog source definitions
 - **API domain:** `olm.operatorframework.io`
   - This is the API group of our user-facing CRDs
@@ -204,7 +204,7 @@ make generate
 
 Two manifest variants exist:
 - **Standard:** Production-ready features
-- **Experimental:** Features under development/testing (includes `ClusterExtensionRevision` API)
+- **Experimental:** Features under development/testing (includes `ClusterObjectSet` API)
 
 ---
 
@@ -330,7 +330,7 @@ Two manifest variants exist:
 
 **operator-controller:**
 - `ClusterExtension` controller - manages extension installations
-- `ClusterExtensionRevision` controller - manages revision lifecycle
+- `ClusterObjectSet` controller - manages revision lifecycle
 - Resolver - bundle version selection
 - Applier - applies manifests to cluster
 - Content Manager - manages extension content

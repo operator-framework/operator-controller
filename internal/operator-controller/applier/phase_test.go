@@ -19,12 +19,12 @@ import (
 func Test_PhaseSort(t *testing.T) {
 	for _, tt := range []struct {
 		name string
-		objs []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration
-		want []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration
+		objs []ocv1ac.ClusterObjectSetObjectApplyConfiguration
+		want []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration
 	}{
 		{
 			name: "single deploy obj",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -34,10 +34,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseDeploy)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -52,7 +52,7 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "all phases",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -182,10 +182,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseNamespaces)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -198,7 +198,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhasePolicies)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -211,7 +211,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseIdentity)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -224,7 +224,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseConfiguration)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -237,7 +237,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseStorage)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -250,7 +250,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseCRDs)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -263,7 +263,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseRoles)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -284,7 +284,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseBindings)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -305,7 +305,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseInfrastructure)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -318,7 +318,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseDeploy)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -339,7 +339,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseScaling)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -352,7 +352,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhasePublish)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -365,7 +365,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseAdmission)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -380,7 +380,7 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "sorted and batched",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -406,10 +406,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseIdentity)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -422,7 +422,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseConfiguration)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -435,7 +435,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseDeploy)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -450,12 +450,12 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "no objects",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{},
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{},
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{},
 		},
 		{
 			name: "sort by group within same phase",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -479,10 +479,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseDeploy)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -511,7 +511,7 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "sort by version within same group and phase",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -535,10 +535,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseDeploy)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -567,7 +567,7 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "sort by kind within same group, version, and phase",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -591,10 +591,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseConfiguration)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -623,7 +623,7 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "sort by namespace within same GVK and phase",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -661,10 +661,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseConfiguration)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -707,7 +707,7 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "sort by name within same GVK, namespace, and phase",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -745,10 +745,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseConfiguration)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -791,7 +791,7 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "comprehensive sorting - all dimensions",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -865,10 +865,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseConfiguration)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -921,7 +921,7 @@ func Test_PhaseSort(t *testing.T) {
 				},
 				{
 					Name: ptr.To(string(applier.PhaseDeploy)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -952,7 +952,7 @@ func Test_PhaseSort(t *testing.T) {
 		},
 		{
 			name: "cluster-scoped vs namespaced resources - empty namespace sorts first",
-			objs: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
@@ -988,10 +988,10 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 			},
-			want: []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration{
+			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
 					Name: ptr.To(string(applier.PhaseRoles)),
-					Objects: []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration{
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
 							Object: &unstructured.Unstructured{
 								Object: map[string]interface{}{

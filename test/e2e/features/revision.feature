@@ -1,22 +1,22 @@
 @BoxcutterRuntime
-Feature: Install ClusterExtensionRevision
+Feature: Install ClusterObjectSet
 
-  As an OLM user I would like to install a cluster extension revision directly, without using the cluster extension API.
+  As an OLM user I would like to install a ClusterObjectSet directly, without using the cluster extension API.
 
   Background:
     Given OLM is available
 
   Scenario: Probe failure for PersistentVolumeClaim halts phase progression
     Given ServiceAccount "pvc-probe-sa" with needed permissions is available in test namespace
-    When ClusterExtensionRevision is applied
+    When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       metadata:
         annotations:
           olm.operatorframework.io/service-account-name: pvc-probe-sa
           olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
-        name: ${CER_NAME}
+        name: ${COS_NAME}
       spec:
         lifecycleState: Active
         collisionProtection: Prevent
@@ -63,7 +63,7 @@ Feature: Install ClusterExtensionRevision
       """
 
     Then resource "persistentvolumeclaim/test-pvc" is installed
-    And ClusterExtensionRevision "${CER_NAME}" reports Available as False with Reason ProbeFailure and Message:
+    And ClusterObjectSet "${COS_NAME}" reports Available as False with Reason ProbeFailure and Message:
     """
       Object PersistentVolumeClaim.v1 ${TEST_NAMESPACE}/test-pvc: value at key "status.phase" != "Bound"; expected: "Bound" got: "Pending"
     """
@@ -71,15 +71,15 @@ Feature: Install ClusterExtensionRevision
 
   Scenario: Phases progress when PersistentVolumeClaim becomes "Bound"
     Given ServiceAccount "pvc-probe-sa" with needed permissions is available in test namespace
-    When ClusterExtensionRevision is applied
+    When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       metadata:
         annotations:
           olm.operatorframework.io/service-account-name: pvc-probe-sa
           olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
-        name: ${CER_NAME}
+        name: ${COS_NAME}
       spec:
         lifecycleState: Active
         collisionProtection: Prevent
@@ -153,23 +153,23 @@ Feature: Install ClusterExtensionRevision
         revision: 1
       """
 
-    Then ClusterExtensionRevision "${CER_NAME}" reports Progressing as True with Reason Succeeded
-    And ClusterExtensionRevision "${CER_NAME}" reports Available as True with Reason ProbesSucceeded
+    Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
+    And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
     And resource "persistentvolume/test-pv" is installed
     And resource "persistentvolumeclaim/test-pvc" is installed
     And resource "configmap/test-configmap" is installed
 
   Scenario: Phases does not progress when user-provided progressionProbes do not pass
     Given ServiceAccount "pvc-probe-sa" with needed permissions is available in test namespace
-    When ClusterExtensionRevision is applied
+    When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       metadata:
         annotations:
           olm.operatorframework.io/service-account-name: pvc-probe-sa
           olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
-        name: ${CER_NAME}
+        name: ${COS_NAME}
       spec:
         lifecycleState: Active
         collisionProtection: Prevent
@@ -214,7 +214,7 @@ Feature: Install ClusterExtensionRevision
       """
 
     Then resource "configmap/test-configmap-1" is installed
-    And ClusterExtensionRevision "${CER_NAME}" reports Available as False with Reason ProbeFailure and Message:
+    And ClusterObjectSet "${COS_NAME}" reports Available as False with Reason ProbeFailure and Message:
     """
       Object ConfigMap.v1 ${TEST_NAMESPACE}/test-configmap-1: value at key "data.foo" != "bar"; expected: "bar" got: "foo"
     """
@@ -222,15 +222,15 @@ Feature: Install ClusterExtensionRevision
 
   Scenario: Phases progresses when user-provided progressionProbes pass
     Given ServiceAccount "pvc-probe-sa" with needed permissions is available in test namespace
-    When ClusterExtensionRevision is applied
+    When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       metadata:
         annotations:
           olm.operatorframework.io/service-account-name: pvc-probe-sa
           olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
-        name: ${CER_NAME}
+        name: ${COS_NAME}
       spec:
         lifecycleState: Active
         collisionProtection: Prevent
@@ -337,5 +337,5 @@ Feature: Install ClusterExtensionRevision
     And resource "serviceaccount/test-serviceaccount" is installed
     And resource "pod/test-pod" is installed
     And resource "configmap/test-configmap-3" is installed
-    And ClusterExtensionRevision "${CER_NAME}" reports Progressing as True with Reason Succeeded
-    And ClusterExtensionRevision "${CER_NAME}" reports Available as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
+    And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded

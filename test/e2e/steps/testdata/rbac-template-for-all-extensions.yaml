@@ -12,9 +12,9 @@ rules:
   - apiGroups: [olm.operatorframework.io]
     resources: [clusterextensions, clusterextensions/finalizers]
     verbs: [update]
-  # Allow ClusterExtensionRevisions to set blockOwnerDeletion ownerReferences
+  # Allow ClusterObjectSets to set blockOwnerDeletion ownerReferences
   - apiGroups: [olm.operatorframework.io]
-    resources: [clusterextensionrevisions, clusterextensionrevisions/finalizers]
+    resources: [clusterobjectsets, clusterobjectsets/finalizers]
     verbs: [update, create, list, watch, get, delete, patch]
   - apiGroups: [apiextensions.k8s.io]
     resources: [customresourcedefinitions]

@@ -24,9 +24,9 @@ import (
 // RevisionStatusApplyConfiguration represents a declarative configuration of the RevisionStatus type for use
 // with apply.
 //
-// RevisionStatus defines the observed state of a ClusterExtensionRevision.
+// RevisionStatus defines the observed state of a ClusterObjectSet.
 type RevisionStatusApplyConfiguration struct {
-	// name of the ClusterExtensionRevision resource
+	// name of the ClusterObjectSet resource
 	Name *string `json:"name,omitempty"`
 	// conditions optionally expose Progressing and Available condition of the revision,
 	// in case when it is not yet marked as successfully installed (condition Succeeded is not set to True).

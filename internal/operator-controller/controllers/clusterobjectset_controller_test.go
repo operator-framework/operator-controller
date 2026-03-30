@@ -35,9 +35,9 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
-const clusterExtensionRevisionName = "test-ext-1"
+const clusterObjectSetName = "test-ext-1"
 
-func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t *testing.T) {
+func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing.T) {
 	testScheme := newScheme(t)
 
 	for _, tc := range []struct {
@@ -50,17 +50,17 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 	}{
 		{
 			name:                    "sets teardown finalizer",
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
 				require.Contains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
@@ -68,71 +68,71 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 		},
 		{
 			name:                    "Available condition is not updated on error if its not already set",
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          mockRevisionResult{},
 			revisionReconcileErr:    errors.New("some error"),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.Nil(t, cond)
 			},
 		},
 		{
 			name:                    "Available condition is updated to Unknown on error if its been already set",
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          mockRevisionResult{},
 			revisionReconcileErr:    errors.New("some error"),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+					Type:               ocv1.ClusterObjectSetTypeAvailable,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ClusterExtensionRevisionReasonProbesSucceeded,
+					Reason:             ocv1.ClusterObjectSetReasonProbesSucceeded,
 					Message:            "Revision 1.0.0 is rolled out.",
 					ObservedGeneration: 1,
 				})
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionUnknown, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Equal(t, "some error", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
 			name:                    "set Available:False:RollingOut status condition during rollout when no probe failures are detected",
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cond.Reason)
@@ -142,7 +142,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 		},
 		{
 			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is in transition",
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult: mockRevisionResult{
 				inTransition: true,
 				isComplete:   false,
@@ -214,26 +214,26 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbeFailure, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonProbeFailure, cond.Reason)
 				require.Equal(t, "Object Service.v1 my-namespace/my-service: something bad happened and something worse happened\nObject ConfigMap.v1 my-namespace/my-configmap: we have a problem", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
 			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is not in transition",
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult: mockRevisionResult{
 				inTransition: false,
 				isComplete:   false,
@@ -305,19 +305,19 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbeFailure, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonProbeFailure, cond.Reason)
 				require.Equal(t, "Object Service.v1 my-namespace/my-service: something bad happened and something worse happened\nObject ConfigMap.v1 my-namespace/my-configmap: we have a problem", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
@@ -325,22 +325,22 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 		{
 			name:                    "set Progressing:True:Retrying when there's an error reconciling the revision",
 			revisionReconcileErr:    errors.New("some error"),
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRetrying, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
 				require.Equal(t, "some error", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
@@ -350,16 +350,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			revisionResult: mockRevisionResult{
 				inTransition: true,
 			},
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
@@ -376,10 +376,10 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 				inTransition: false,
 				isComplete:   true,
 			},
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
 					Type:               ocv1.TypeProgressing,
 					Status:             metav1.ConditionTrue,
@@ -390,9 +390,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
@@ -408,33 +408,33 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			revisionResult: mockRevisionResult{
 				isComplete: true,
 			},
-			reconcilingRevisionName: clusterExtensionRevisionName,
+			reconcilingRevisionName: clusterObjectSetName,
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbesSucceeded, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonProbesSucceeded, cond.Reason)
 				require.Equal(t, "Objects are available and pass all probes.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
 				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
 				require.Equal(t, "Revision 1.0.0 has rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
+				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
 				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
@@ -450,30 +450,30 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			reconcilingRevisionName: "test-ext-3",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				prevRev1 := newTestClusterExtensionRevision(t, "test-ext-1", ext, testScheme)
-				prevRev2 := newTestClusterExtensionRevision(t, "test-ext-2", ext, testScheme)
-				rev := newTestClusterExtensionRevision(t, "test-ext-3", ext, testScheme)
+				prevRev1 := newTestClusterObjectSet(t, "test-ext-1", ext, testScheme)
+				prevRev2 := newTestClusterObjectSet(t, "test-ext-2", ext, testScheme)
+				rev := newTestClusterObjectSet(t, "test-ext-3", ext, testScheme)
 				return []client.Object{ext, prevRev1, prevRev2, rev}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
 					Name: "test-ext-1",
 				}, rev)
 				require.NoError(t, err)
-				require.Equal(t, ocv1.ClusterExtensionRevisionLifecycleStateArchived, rev.Spec.LifecycleState)
+				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateArchived, rev.Spec.LifecycleState)
 
 				err = c.Get(t.Context(), client.ObjectKey{
 					Name: "test-ext-2",
 				}, rev)
 				require.NoError(t, err)
-				require.Equal(t, ocv1.ClusterExtensionRevisionLifecycleStateArchived, rev.Spec.LifecycleState)
+				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateArchived, rev.Spec.LifecycleState)
 
 				err = c.Get(t.Context(), client.ObjectKey{
 					Name: "test-ext-3",
 				}, rev)
 				require.NoError(t, err)
-				require.Equal(t, ocv1.ClusterExtensionRevisionLifecycleStateActive, rev.Spec.LifecycleState)
+				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState)
 			},
 		},
 	} {
@@ -481,7 +481,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
-				WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
 
@@ -491,7 +491,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					return tc.revisionResult, tc.revisionReconcileErr
 				},
 			}
-			result, err := (&controllers.ClusterExtensionRevisionReconciler{
+			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
 				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
 				TrackingCache:         &mockTrackingCache{client: testClient},
@@ -515,10 +515,10 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 	}
 }
 
-func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t *testing.T) {
+func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testing.T) {
 	const (
-		clusterExtensionName         = "test-ext"
-		clusterExtensionRevisionName = "test-ext-1"
+		clusterExtensionName = "test-ext"
+		clusterObjectSetName = "test-ext-1"
 	)
 
 	testScheme := newScheme(t)
@@ -596,12 +596,12 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ext := newTestClusterExtension()
-			rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+			rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
-				WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(ext, rev1).
 				Build()
 
@@ -611,13 +611,13 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 					return tc.revisionResult, nil
 				},
 			}
-			result, err := (&controllers.ClusterExtensionRevisionReconciler{
+			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
 				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
 				TrackingCache:         &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				},
 			})
 
@@ -630,9 +630,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 	}
 }
 
-func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *testing.T) {
+func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T) {
 	const (
-		clusterExtensionRevisionName = "test-ext-1"
+		clusterObjectSetName = "test-ext-1"
 	)
 
 	testScheme := newScheme(t)
@@ -654,16 +654,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
 				return []client.Object{ext, rev1}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
 				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
@@ -677,7 +677,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
@@ -689,15 +689,15 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			},
 			expectedErr: "error stopping informers",
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionUnknown, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Contains(t, cond.Message, "tracking cache free failed")
 			},
 			revisionEngineTeardownFn: func(t *testing.T) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
@@ -709,11 +709,11 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
-				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
+				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				return []client.Object{rev1, ext}
 			},
 			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
@@ -724,22 +724,22 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 				}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionUnknown, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonArchived, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonArchived, cond.Reason)
 				require.Equal(t, "revision is archived", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonArchived, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonArchived, cond.Reason)
 				require.Equal(t, "revision is archived", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
@@ -749,11 +749,11 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
-				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
+				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				return []client.Object{rev1, ext}
 			},
 			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
@@ -765,15 +765,15 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			},
 			expectedResult: ctrl.Result{RequeueAfter: 5 * time.Second},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRetrying, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
 				require.Equal(t, "removing revision resources that are not owned by another revision", cond.Message)
 
 				// Finalizer should still be present
@@ -785,11 +785,11 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
-				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
+				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				return []client.Object{rev1, ext}
 			},
 			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
@@ -799,15 +799,15 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			},
 			expectedErr: "error archiving revision",
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRetrying, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
 				require.Contains(t, cond.Message, "teardown failed: connection refused")
 
 				// Finalizer should still be present
@@ -819,11 +819,11 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
-				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
+				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				return []client.Object{rev1, ext}
 			},
 			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
@@ -832,15 +832,15 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			revisionEngineFactoryErr: fmt.Errorf("token getter failed"),
 			expectedErr:              "failed to create revision engine",
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRetrying, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
 				require.Contains(t, cond.Message, "token getter failed")
 
 				// Finalizer should still be present
@@ -852,22 +852,22 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
-				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
+				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+					Type:               ocv1.ClusterObjectSetTypeAvailable,
 					Status:             metav1.ConditionUnknown,
-					Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
+					Reason:             ocv1.ClusterObjectSetReasonArchived,
 					Message:            "revision is archived",
 					ObservedGeneration: rev1.Generation,
 				})
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+					Type:               ocv1.ClusterObjectSetTypeProgressing,
 					Status:             metav1.ConditionFalse,
-					Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
+					Reason:             ocv1.ClusterObjectSetReasonArchived,
 					Message:            "revision is archived",
 					ObservedGeneration: rev1.Generation,
 				})
@@ -881,9 +881,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 				}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
 				require.NotContains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
@@ -894,7 +894,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
-				WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
 
@@ -906,7 +906,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 				teardown: tc.revisionEngineTeardownFn(t),
 			}
 			factory := &mockRevisionEngineFactory{engine: mockEngine, createErr: tc.revisionEngineFactoryErr}
-			result, err := (&controllers.ClusterExtensionRevisionReconciler{
+			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
 				RevisionEngineFactory: factory,
 				TrackingCache: &mockTrackingCache{
@@ -915,7 +915,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 				},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				},
 			})
 
@@ -933,9 +933,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ArchivalAndDeletion(t *te
 	}
 }
 
-func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testing.T) {
+func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 	const (
-		clusterExtensionRevisionName = "test-ext-1"
+		clusterObjectSetName = "test-ext-1"
 	)
 
 	testScheme := newScheme(t)
@@ -954,7 +954,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 			name: "progressing set to false when progress deadline is exceeded",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Spec.ProgressDeadlineMinutes = 1
 				rev1.CreationTimestamp = metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
 				return []client.Object{rev1, ext}
@@ -965,12 +965,12 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 				inTransition: true,
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.Equal(t, metav1.ConditionFalse, cnd.Status)
 				require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cnd.Reason)
 			},
@@ -979,7 +979,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 			name: "requeue after progressDeadline time for final progression deadline check",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Spec.ProgressDeadlineMinutes = 1
 				rev1.CreationTimestamp = metav1.NewTime(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC))
 				return []client.Object{rev1, ext}
@@ -990,12 +990,12 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 			},
 			reconcileResult: ctrl.Result{RequeueAfter: 62 * time.Second},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.Equal(t, metav1.ConditionTrue, cnd.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
 			},
@@ -1004,17 +1004,17 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 			name: "no progression deadline checks on revision recovery",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Spec.ProgressDeadlineMinutes = 1
 				rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-2 * time.Minute))
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+					Type:               ocv1.ClusterObjectSetTypeProgressing,
 					Status:             metav1.ConditionTrue,
 					Reason:             ocv1.ReasonSucceeded,
 					ObservedGeneration: rev1.Generation,
 				})
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
+					Type:               ocv1.ClusterObjectSetTypeSucceeded,
 					Status:             metav1.ConditionTrue,
 					Reason:             ocv1.ReasonSucceeded,
 					ObservedGeneration: rev1.Generation,
@@ -1025,12 +1025,12 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 				inTransition: true,
 			},
 			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.Equal(t, metav1.ConditionTrue, cnd.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
 			},
@@ -1040,7 +1040,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
-				WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
 
@@ -1050,7 +1050,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 					return tc.revisionResult, nil
 				},
 			}
-			result, err := (&controllers.ClusterExtensionRevisionReconciler{
+			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
 				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
 				TrackingCache: &mockTrackingCache{
@@ -1059,7 +1059,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 				Clock: tc.clock,
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
-					Name: clusterExtensionRevisionName,
+					Name: clusterObjectSetName,
 				},
 			})
 			require.Equal(t, tc.reconcileResult, result)
@@ -1091,13 +1091,13 @@ func newTestClusterExtension() *ocv1.ClusterExtension {
 	}
 }
 
-func newTestClusterExtensionRevision(t *testing.T, revisionName string, ext *ocv1.ClusterExtension, scheme *runtime.Scheme) *ocv1.ClusterExtensionRevision {
+func newTestClusterObjectSet(t *testing.T, revisionName string, ext *ocv1.ClusterExtension, scheme *runtime.Scheme) *ocv1.ClusterObjectSet {
 	t.Helper()
 
 	// Extract revision number from name (e.g., "rev-1" -> 1, "test-ext-10" -> 10)
 	revNum := controllers.ExtractRevisionNumber(t, revisionName)
 
-	rev := &ocv1.ClusterExtensionRevision{
+	rev := &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       revisionName,
 			UID:        types.UID(revisionName),
@@ -1114,13 +1114,13 @@ func newTestClusterExtensionRevision(t *testing.T, revisionName string, ext *ocv
 				labels.OwnerNameKey: ext.Name,
 			},
 		},
-		Spec: ocv1.ClusterExtensionRevisionSpec{
-			LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+		Spec: ocv1.ClusterObjectSetSpec{
+			LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 			Revision:       revNum,
-			Phases: []ocv1.ClusterExtensionRevisionPhase{
+			Phases: []ocv1.ClusterObjectSetPhase{
 				{
 					Name: "everything",
-					Objects: []ocv1.ClusterExtensionRevisionObject{
+					Objects: []ocv1.ClusterObjectSetObject{
 						{
 							Object: unstructured.Unstructured{
 								Object: map[string]interface{}{
@@ -1160,7 +1160,7 @@ type mockRevisionEngineFactory struct {
 	createErr error
 }
 
-func (f *mockRevisionEngineFactory) CreateRevisionEngine(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (controllers.RevisionEngine, error) {
+func (f *mockRevisionEngineFactory) CreateRevisionEngine(ctx context.Context, rev *ocv1.ClusterObjectSet) (controllers.RevisionEngine, error) {
 	if f.createErr != nil {
 		return nil, f.createErr
 	}
@@ -1344,7 +1344,7 @@ func (m *mockTrackingCache) Free(ctx context.Context, user client.Object) error 
 	return nil
 }
 
-func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(t *testing.T) {
+func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testing.T) {
 	testScheme := newScheme(t)
 
 	for _, tc := range []struct {
@@ -1355,7 +1355,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 		expectCollision         bool
 	}{
 		{
-			name:                    "progressed object owned by a foreign CER is treated as a collision",
+			name:                    "progressed object owned by a foreign COS is treated as a collision",
 			reconcilingRevisionName: "ext-B-1",
 			existingObjs: func() []client.Object {
 				extA := &ocv1.ClusterExtension{
@@ -1380,8 +1380,8 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 						},
 					},
 				}
-				cerA2 := newTestClusterExtensionRevision(t, "ext-A-2", extA, testScheme)
-				cerB1 := newTestClusterExtensionRevision(t, "ext-B-1", extB, testScheme)
+				cerA2 := newTestClusterObjectSet(t, "ext-A-2", extA, testScheme)
+				cerB1 := newTestClusterObjectSet(t, "ext-B-1", extB, testScheme)
 				return []client.Object{extA, extB, cerA2, cerB1}
 			},
 			revisionResult: mockRevisionResult{
@@ -1400,7 +1400,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 											"ownerReferences": []interface{}{
 												map[string]interface{}{
 													"apiVersion":         ocv1.GroupVersion.String(),
-													"kind":               ocv1.ClusterExtensionRevisionKind,
+													"kind":               ocv1.ClusterObjectSetKind,
 													"name":               "ext-A-2",
 													"uid":                "ext-A-2",
 													"controller":         true,
@@ -1423,7 +1423,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 			expectCollision: true,
 		},
 		{
-			name:                    "progressed object owned by a sibling CER is not a collision",
+			name:                    "progressed object owned by a sibling COS is not a collision",
 			reconcilingRevisionName: "ext-A-1",
 			existingObjs: func() []client.Object {
 				extA := &ocv1.ClusterExtension{
@@ -1437,8 +1437,8 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 						},
 					},
 				}
-				cerA1 := newTestClusterExtensionRevision(t, "ext-A-1", extA, testScheme)
-				cerA2 := newTestClusterExtensionRevision(t, "ext-A-2", extA, testScheme)
+				cerA1 := newTestClusterObjectSet(t, "ext-A-1", extA, testScheme)
+				cerA2 := newTestClusterObjectSet(t, "ext-A-2", extA, testScheme)
 				return []client.Object{extA, cerA1, cerA2}
 			},
 			revisionResult: mockRevisionResult{
@@ -1457,7 +1457,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 											"ownerReferences": []interface{}{
 												map[string]interface{}{
 													"apiVersion":         ocv1.GroupVersion.String(),
-													"kind":               ocv1.ClusterExtensionRevisionKind,
+													"kind":               ocv1.ClusterObjectSetKind,
 													"name":               "ext-A-2",
 													"uid":                "ext-A-2",
 													"controller":         true,
@@ -1480,7 +1480,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 			expectCollision: false,
 		},
 		{
-			name:                    "progressed object owned by a non-CER controller is not a collision",
+			name:                    "progressed object owned by a non-COS controller is not a collision",
 			reconcilingRevisionName: "ext-B-1",
 			existingObjs: func() []client.Object {
 				extB := &ocv1.ClusterExtension{
@@ -1494,7 +1494,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 						},
 					},
 				}
-				cerB1 := newTestClusterExtensionRevision(t, "ext-B-1", extB, testScheme)
+				cerB1 := newTestClusterObjectSet(t, "ext-B-1", extB, testScheme)
 				return []client.Object{extB, cerB1}
 			},
 			revisionResult: mockRevisionResult{
@@ -1540,7 +1540,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 		t.Run(tc.name, func(t *testing.T) {
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
-				WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
 
@@ -1549,7 +1549,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 					return tc.revisionResult, nil
 				},
 			}
-			result, err := (&controllers.ClusterExtensionRevisionReconciler{
+			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
 				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
 				TrackingCache:         &mockTrackingCache{client: testClient},
@@ -1563,12 +1563,12 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ForeignRevisionCollision(
 				require.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, result)
 				require.NoError(t, err)
 
-				rev := &ocv1.ClusterExtensionRevision{}
+				rev := &ocv1.ClusterObjectSet{}
 				require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: tc.reconcilingRevisionName}, rev))
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRetrying, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
 				require.Contains(t, cond.Message, "revision object collisions")
 				require.Contains(t, cond.Message, "Conflicting Owner")
 			} else {
@@ -1633,11 +1633,11 @@ func Test_effectiveCollisionProtection(t *testing.T) {
 	}
 }
 
-func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T) {
+func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 	testScheme := newScheme(t)
 
 	t.Run("works with serviceAccount annotation and without owner label", func(t *testing.T) {
-		rev := &ocv1.ClusterExtensionRevision{
+		rev := &ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   "test-rev-1",
 				UID:    types.UID("test-rev-1"),
@@ -1648,16 +1648,16 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 					labels.BundleVersionKey:           "1.0.0",
 				},
 			},
-			Spec: ocv1.ClusterExtensionRevisionSpec{
-				LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+			Spec: ocv1.ClusterObjectSetSpec{
+				LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
-				Phases:         []ocv1.ClusterExtensionRevisionPhase{},
+				Phases:         []ocv1.ClusterObjectSetPhase{},
 			},
 		}
 
 		testClient := fake.NewClientBuilder().
 			WithScheme(testScheme).
-			WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+			WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 			WithObjects(rev).
 			Build()
 
@@ -1667,7 +1667,7 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 			},
 		}
 
-		reconciler := &controllers.ClusterExtensionRevisionReconciler{
+		reconciler := &controllers.ClusterObjectSetReconciler{
 			Client:                testClient,
 			RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
 			TrackingCache:         &mockTrackingCache{client: testClient},
@@ -1681,17 +1681,17 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 	})
 
 	t.Run("missing serviceAccount annotation", func(t *testing.T) {
-		rev := &ocv1.ClusterExtensionRevision{
+		rev := &ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-rev-1",
 				Annotations: map[string]string{
 					labels.BundleVersionKey: "1.0.0",
 				},
 			},
-			Spec: ocv1.ClusterExtensionRevisionSpec{
-				LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+			Spec: ocv1.ClusterObjectSetSpec{
+				LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
-				Phases:         []ocv1.ClusterExtensionRevisionPhase{},
+				Phases:         []ocv1.ClusterObjectSetPhase{},
 			},
 		}
 
@@ -1704,7 +1704,7 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 			createErr: errors.New("missing serviceAccount name annotation"),
 		}
 
-		reconciler := &controllers.ClusterExtensionRevisionReconciler{
+		reconciler := &controllers.ClusterObjectSetReconciler{
 			Client:                testClient,
 			RevisionEngineFactory: failingFactory,
 			TrackingCache:         &mockTrackingCache{client: testClient},
@@ -1720,7 +1720,7 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 
 	t.Run("factory fails to create engine", func(t *testing.T) {
 		ext := newTestClusterExtension()
-		rev := newTestClusterExtensionRevision(t, "test-rev", ext, testScheme)
+		rev := newTestClusterObjectSet(t, "test-rev", ext, testScheme)
 
 		testClient := fake.NewClientBuilder().
 			WithScheme(testScheme).
@@ -1731,7 +1731,7 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 			createErr: errors.New("token getter failed"),
 		}
 
-		reconciler := &controllers.ClusterExtensionRevisionReconciler{
+		reconciler := &controllers.ClusterObjectSetReconciler{
 			Client:                testClient,
 			RevisionEngineFactory: failingFactory,
 			TrackingCache:         &mockTrackingCache{client: testClient},

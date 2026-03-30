@@ -28,7 +28,7 @@ const (
 	gzipThreshold = 900 * 1024
 )
 
-// SecretPacker packs serialized objects from CER phases into one or more
+// SecretPacker packs serialized objects from COS phases into one or more
 // immutable Secrets.
 type SecretPacker struct {
 	RevisionName    string
@@ -37,19 +37,19 @@ type SecretPacker struct {
 }
 
 // PackResult holds the packed Secrets and the ref entries that should
-// replace inline objects in the CER phases.
+// replace inline objects in the COS phases.
 type PackResult struct {
-	// Secrets to be created before the CER.
+	// Secrets to be created before the COS.
 	Secrets []corev1.Secret
 	// Refs maps (phaseIndex, objectIndex) to the ObjectSourceRef
-	// that should replace the inline object in the CER.
+	// that should replace the inline object in the COS.
 	Refs map[[2]int]ocv1.ObjectSourceRef
 }
 
-// Pack takes CER phases with inline objects and produces:
+// Pack takes COS phases with inline objects and produces:
 //  1. A set of immutable Secrets containing the serialized objects
 //  2. A mapping from (phaseIdx, objIdx) to the corresponding ObjectSourceRef
-func (p *SecretPacker) Pack(phases []ocv1.ClusterExtensionRevisionPhase) (*PackResult, error) {
+func (p *SecretPacker) Pack(phases []ocv1.ClusterObjectSetPhase) (*PackResult, error) {
 	result := &PackResult{
 		Refs: make(map[[2]int]ocv1.ObjectSourceRef),
 	}

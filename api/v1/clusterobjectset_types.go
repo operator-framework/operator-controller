@@ -22,25 +22,25 @@ import (
 )
 
 const (
-	ClusterExtensionRevisionKind = "ClusterExtensionRevision"
+	ClusterObjectSetKind = "ClusterObjectSet"
 
 	// Condition Types
-	ClusterExtensionRevisionTypeAvailable   = "Available"
-	ClusterExtensionRevisionTypeProgressing = "Progressing"
-	ClusterExtensionRevisionTypeSucceeded   = "Succeeded"
+	ClusterObjectSetTypeAvailable   = "Available"
+	ClusterObjectSetTypeProgressing = "Progressing"
+	ClusterObjectSetTypeSucceeded   = "Succeeded"
 
 	// Condition Reasons
-	ClusterExtensionRevisionReasonArchived        = "Archived"
-	ClusterExtensionRevisionReasonBlocked         = "Blocked"
-	ClusterExtensionRevisionReasonProbeFailure    = "ProbeFailure"
-	ClusterExtensionRevisionReasonProbesSucceeded = "ProbesSucceeded"
-	ClusterExtensionRevisionReasonReconciling     = "Reconciling"
-	ClusterExtensionRevisionReasonRetrying        = "Retrying"
+	ClusterObjectSetReasonArchived        = "Archived"
+	ClusterObjectSetReasonBlocked         = "Blocked"
+	ClusterObjectSetReasonProbeFailure    = "ProbeFailure"
+	ClusterObjectSetReasonProbesSucceeded = "ProbesSucceeded"
+	ClusterObjectSetReasonReconciling     = "Reconciling"
+	ClusterObjectSetReasonRetrying        = "Retrying"
 )
 
-// ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
-type ClusterExtensionRevisionSpec struct {
-	// lifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
+// ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
+type ClusterObjectSetSpec struct {
+	// lifecycleState specifies the lifecycle state of the ClusterObjectSet.
 	//
 	// When set to "Active", the revision is actively managed and reconciled.
 	// When set to "Archived", the revision is inactive and any resources not managed by a subsequent revision are deleted.
@@ -56,13 +56,13 @@ type ClusterExtensionRevisionSpec struct {
 	// +required
 	// +kubebuilder:validation:Enum=Active;Archived
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Archived' && oldSelf == self", message="cannot un-archive"
-	LifecycleState ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
+	LifecycleState ClusterObjectSetLifecycleState `json:"lifecycleState,omitempty"`
 
 	// revision is a required, immutable sequence number representing a specific revision
 	// of the parent ClusterExtension.
 	//
 	// The revision field must be a positive integer.
-	// Each ClusterExtensionRevision belonging to the same parent ClusterExtension must have a unique revision number.
+	// Each ClusterObjectSet belonging to the same parent ClusterExtension must have a unique revision number.
 	// The revision number must always be the previous revision number plus one, or 1 for the first revision.
 	//
 	// +required
@@ -93,7 +93,7 @@ type ClusterExtensionRevisionSpec struct {
 	// +listType=map
 	// +listMapKey=name
 	// +optional
-	Phases []ClusterExtensionRevisionPhase `json:"phases,omitempty"`
+	Phases []ClusterObjectSetPhase `json:"phases,omitempty"`
 
 	// progressDeadlineMinutes is an optional field that defines the maximum period
 	// of time in minutes after which an installation should be considered failed and
@@ -338,21 +338,21 @@ type FieldValueProbe struct {
 	Value string `json:"value,omitempty"`
 }
 
-// ClusterExtensionRevisionLifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
-type ClusterExtensionRevisionLifecycleState string
+// ClusterObjectSetLifecycleState specifies the lifecycle state of the ClusterObjectSet.
+type ClusterObjectSetLifecycleState string
 
 const (
-	// ClusterExtensionRevisionLifecycleStateActive / "Active" is the default lifecycle state.
-	ClusterExtensionRevisionLifecycleStateActive ClusterExtensionRevisionLifecycleState = "Active"
-	// ClusterExtensionRevisionLifecycleStateArchived / "Archived" archives the revision for historical or auditing purposes.
+	// ClusterObjectSetLifecycleStateActive / "Active" is the default lifecycle state.
+	ClusterObjectSetLifecycleStateActive ClusterObjectSetLifecycleState = "Active"
+	// ClusterObjectSetLifecycleStateArchived / "Archived" archives the revision for historical or auditing purposes.
 	// The revision is removed from the owner list of all other objects previously under management and all objects
 	// that did not transition to a succeeding revision are deleted.
-	ClusterExtensionRevisionLifecycleStateArchived ClusterExtensionRevisionLifecycleState = "Archived"
+	ClusterObjectSetLifecycleStateArchived ClusterObjectSetLifecycleState = "Archived"
 )
 
-// ClusterExtensionRevisionPhase represents a group of objects that are applied together. The phase is considered
+// ClusterObjectSetPhase represents a group of objects that are applied together. The phase is considered
 // complete only after all objects pass their status probes.
-type ClusterExtensionRevisionPhase struct {
+type ClusterObjectSetPhase struct {
 	// name is a required identifier for this phase.
 	//
 	// phase names must follow the DNS label standard as defined in [RFC 1123].
@@ -374,7 +374,7 @@ type ClusterExtensionRevisionPhase struct {
 	// All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50.
 	// +required
 	// +kubebuilder:validation:MaxItems=50
-	Objects []ClusterExtensionRevisionObject `json:"objects"`
+	Objects []ClusterObjectSetObject `json:"objects"`
 
 	// collisionProtection specifies the default collision protection strategy for all objects
 	// in this phase. Individual objects can override this value.
@@ -390,13 +390,13 @@ type ClusterExtensionRevisionPhase struct {
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
-// ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
+// ClusterObjectSetObject represents a Kubernetes object to be applied as part
 // of a phase, along with its collision protection settings.
 //
 // Exactly one of object or ref must be set.
 //
 // +kubebuilder:validation:XValidation:rule="has(self.object) != has(self.ref)",message="exactly one of object or ref must be set"
-type ClusterExtensionRevisionObject struct {
+type ClusterObjectSetObject struct {
 	// object is an optional embedded Kubernetes object to be applied.
 	//
 	// Exactly one of object or ref must be set.
@@ -484,27 +484,27 @@ const (
 	CollisionProtectionNone CollisionProtection = "None"
 )
 
-// ClusterExtensionRevisionStatus defines the observed state of a ClusterExtensionRevision.
-type ClusterExtensionRevisionStatus struct {
+// ClusterObjectSetStatus defines the observed state of a ClusterObjectSet.
+type ClusterObjectSetStatus struct {
 	// conditions is an optional list of status conditions describing the state of the
-	// ClusterExtensionRevision.
+	// ClusterObjectSet.
 	//
 	// The Progressing condition represents whether the revision is actively rolling out:
-	//   - When status is True and reason is RollingOut, the ClusterExtensionRevision rollout is actively making progress and is in transition.
-	//   - When status is True and reason is Retrying, the ClusterExtensionRevision has encountered an error that could be resolved on subsequent reconciliation attempts.
-	//   - When status is True and reason is Succeeded, the ClusterExtensionRevision has reached the desired state.
-	//   - When status is False and reason is Blocked, the ClusterExtensionRevision has encountered an error that requires manual intervention for recovery.
-	//   - When status is False and reason is Archived, the ClusterExtensionRevision is archived and not being actively reconciled.
+	//   - When status is True and reason is RollingOut, the ClusterObjectSet rollout is actively making progress and is in transition.
+	//   - When status is True and reason is Retrying, the ClusterObjectSet has encountered an error that could be resolved on subsequent reconciliation attempts.
+	//   - When status is True and reason is Succeeded, the ClusterObjectSet has reached the desired state.
+	//   - When status is False and reason is Blocked, the ClusterObjectSet has encountered an error that requires manual intervention for recovery.
+	//   - When status is False and reason is Archived, the ClusterObjectSet is archived and not being actively reconciled.
 	//
 	// The Available condition represents whether the revision has been successfully rolled out and is available:
-	//   - When status is True and reason is ProbesSucceeded, the ClusterExtensionRevision has been successfully rolled out and all objects pass their readiness probes.
+	//   - When status is True and reason is ProbesSucceeded, the ClusterObjectSet has been successfully rolled out and all objects pass their readiness probes.
 	//   - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes during rollout.
-	//   - When status is Unknown and reason is Reconciling, the ClusterExtensionRevision has encountered an error that prevented it from observing the probes.
-	//   - When status is Unknown and reason is Archived, the ClusterExtensionRevision has been archived and its objects have been torn down.
-	//   - When status is Unknown and reason is Migrated, the ClusterExtensionRevision was migrated from an existing release and object status probe results have not yet been observed.
+	//   - When status is Unknown and reason is Reconciling, the ClusterObjectSet has encountered an error that prevented it from observing the probes.
+	//   - When status is Unknown and reason is Archived, the ClusterObjectSet has been archived and its objects have been torn down.
+	//   - When status is Unknown and reason is Migrated, the ClusterObjectSet was migrated from an existing release and object status probe results have not yet been observed.
 	//
 	// The Succeeded condition represents whether the revision has successfully completed its rollout:
-	//   - When status is True and reason is Succeeded, the ClusterExtensionRevision has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
+	//   - When status is True and reason is Succeeded, the ClusterObjectSet has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
 	//
 	// +listType=map
 	// +listMapKey=type
@@ -521,13 +521,13 @@ type ClusterExtensionRevisionStatus struct {
 // +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
-// ClusterExtensionRevision represents an immutable snapshot of Kubernetes objects
+// ClusterObjectSet represents an immutable snapshot of Kubernetes objects
 // for a specific version of a ClusterExtension. Each revision contains objects
 // organized into phases that roll out sequentially. The same object can only be managed by a single revision
 // at a time. Ownership of objects is transitioned from one revision to the next as the extension is upgraded
 // or reconfigured. Once the latest revision has rolled out successfully, previous active revisions are archived for
 // posterity.
-type ClusterExtensionRevision struct {
+type ClusterObjectSet struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// metadata is the standard object's metadata.
@@ -535,30 +535,30 @@ type ClusterExtensionRevision struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// spec defines the desired state of the ClusterExtensionRevision.
+	// spec defines the desired state of the ClusterObjectSet.
 	// +optional
-	Spec ClusterExtensionRevisionSpec `json:"spec,omitempty"`
+	Spec ClusterObjectSetSpec `json:"spec,omitempty"`
 
-	// status is optional and defines the observed state of the ClusterExtensionRevision.
+	// status is optional and defines the observed state of the ClusterObjectSet.
 	// +optional
-	Status ClusterExtensionRevisionStatus `json:"status,omitempty"`
+	Status ClusterObjectSetStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// ClusterExtensionRevisionList contains a list of ClusterExtensionRevision
-type ClusterExtensionRevisionList struct {
+// ClusterObjectSetList contains a list of ClusterObjectSet
+type ClusterObjectSetList struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// items is a required list of ClusterExtensionRevision objects.
+	// items is a required list of ClusterObjectSet objects.
 	//
 	// +required
-	Items []ClusterExtensionRevision `json:"items"`
+	Items []ClusterObjectSet `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&ClusterExtensionRevision{}, &ClusterExtensionRevisionList{})
+	SchemeBuilder.Register(&ClusterObjectSet{}, &ClusterObjectSetList{})
 }
