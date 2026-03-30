@@ -120,10 +120,10 @@ var (
 		PhaseInfrastructure: {
 			{Kind: "Service"},
 			{Kind: "Issuer", Group: "cert-manager.io"},
+			{Kind: "Certificate", Group: "cert-manager.io"},
 		},
 
 		PhaseDeploy: {
-			{Kind: "Certificate", Group: "cert-manager.io"},
 			{Kind: "Deployment", Group: "apps"},
 		},
 
