@@ -22,7 +22,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
-func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T) {
+func Test_ClusterObjectSetReconciler_listPreviousRevisions(t *testing.T) {
 	testScheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(testScheme))
 
@@ -41,9 +41,9 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 			name: "should skip current revision when listing previous",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtensionInternal()
-				rev1 := newTestClusterExtensionRevisionInternal(t, "rev-1")
-				rev2 := newTestClusterExtensionRevisionInternal(t, "rev-2")
-				rev3 := newTestClusterExtensionRevisionInternal(t, "rev-3")
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
+				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
@@ -60,10 +60,10 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 			name: "should drop archived revisions when listing previous",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtensionInternal()
-				rev1 := newTestClusterExtensionRevisionInternal(t, "rev-1")
-				rev2 := newTestClusterExtensionRevisionInternal(t, "rev-2")
-				rev2.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
-				rev3 := newTestClusterExtensionRevisionInternal(t, "rev-3")
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
+				rev2.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
+				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
@@ -80,11 +80,11 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 			name: "should drop deleting revisions when listing previous",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtensionInternal()
-				rev1 := newTestClusterExtensionRevisionInternal(t, "rev-1")
-				rev2 := newTestClusterExtensionRevisionInternal(t, "rev-2")
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
 				rev2.Finalizers = []string{"test-finalizer"}
 				rev2.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-				rev3 := newTestClusterExtensionRevisionInternal(t, "rev-3")
+				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
@@ -105,10 +105,10 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 				ext2.Name = "test-ext-2"
 				ext2.UID = "test-ext-2"
 
-				rev1 := newTestClusterExtensionRevisionInternal(t, "rev-1")
-				rev2 := newTestClusterExtensionRevisionInternal(t, "rev-2")
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
 				rev2.Labels[labels.OwnerNameKey] = "test-ext-2"
-				rev3 := newTestClusterExtensionRevisionInternal(t, "rev-3")
+				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext2, rev2, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
@@ -125,7 +125,7 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 			name: "should return empty list when owner label missing",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtensionInternal()
-				rev1 := newTestClusterExtensionRevisionInternal(t, "rev-1")
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
 				delete(rev1.Labels, labels.OwnerNameKey)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				return []client.Object{ext, rev1}
@@ -140,12 +140,12 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 				WithObjects(tc.existingObjs()...).
 				Build()
 
-			reconciler := &ClusterExtensionRevisionReconciler{
+			reconciler := &ClusterObjectSetReconciler{
 				Client:        testClient,
 				TrackingCache: &mockTrackingCacheInternal{client: testClient},
 			}
 
-			currentRev := &ocv1.ClusterExtensionRevision{}
+			currentRev := &ocv1.ClusterObjectSet{}
 			err := testClient.Get(t.Context(), client.ObjectKey{Name: tc.currentRev}, currentRev)
 			require.NoError(t, err)
 
@@ -183,13 +183,13 @@ func newTestClusterExtensionInternal() *ocv1.ClusterExtension {
 	}
 }
 
-func newTestClusterExtensionRevisionInternal(t *testing.T, name string) *ocv1.ClusterExtensionRevision {
+func newTestClusterObjectSetInternal(t *testing.T, name string) *ocv1.ClusterObjectSet {
 	t.Helper()
 
 	// Extract revision number from name (e.g., "rev-1" -> 1, "test-ext-10" -> 10)
 	revNum := ExtractRevisionNumber(t, name)
 
-	rev := &ocv1.ClusterExtensionRevision{
+	rev := &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			UID:        types.UID(name),
@@ -198,17 +198,17 @@ func newTestClusterExtensionRevisionInternal(t *testing.T, name string) *ocv1.Cl
 				labels.OwnerNameKey: "test-ext",
 			},
 		},
-		Spec: ocv1.ClusterExtensionRevisionSpec{
+		Spec: ocv1.ClusterObjectSetSpec{
 			Revision: revNum,
-			Phases: []ocv1.ClusterExtensionRevisionPhase{
+			Phases: []ocv1.ClusterObjectSetPhase{
 				{
 					Name:    "everything",
-					Objects: []ocv1.ClusterExtensionRevisionObject{},
+					Objects: []ocv1.ClusterObjectSetObject{},
 				},
 			},
 		},
 	}
-	rev.SetGroupVersionKind(ocv1.GroupVersion.WithKind("ClusterExtensionRevision"))
+	rev.SetGroupVersionKind(ocv1.GroupVersion.WithKind("ClusterObjectSet"))
 	return rev
 }
 

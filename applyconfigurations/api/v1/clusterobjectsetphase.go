@@ -21,12 +21,12 @@ import (
 	apiv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-// ClusterExtensionRevisionPhaseApplyConfiguration represents a declarative configuration of the ClusterExtensionRevisionPhase type for use
+// ClusterObjectSetPhaseApplyConfiguration represents a declarative configuration of the ClusterObjectSetPhase type for use
 // with apply.
 //
-// ClusterExtensionRevisionPhase represents a group of objects that are applied together. The phase is considered
+// ClusterObjectSetPhase represents a group of objects that are applied together. The phase is considered
 // complete only after all objects pass their status probes.
-type ClusterExtensionRevisionPhaseApplyConfiguration struct {
+type ClusterObjectSetPhaseApplyConfiguration struct {
 	// name is a required identifier for this phase.
 	//
 	// phase names must follow the DNS label standard as defined in [RFC 1123].
@@ -40,7 +40,7 @@ type ClusterExtensionRevisionPhaseApplyConfiguration struct {
 	// objects is a required list of all Kubernetes objects that belong to this phase.
 	//
 	// All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50.
-	Objects []ClusterExtensionRevisionObjectApplyConfiguration `json:"objects,omitempty"`
+	Objects []ClusterObjectSetObjectApplyConfiguration `json:"objects,omitempty"`
 	// collisionProtection specifies the default collision protection strategy for all objects
 	// in this phase. Individual objects can override this value.
 	//
@@ -52,16 +52,16 @@ type ClusterExtensionRevisionPhaseApplyConfiguration struct {
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
-// ClusterExtensionRevisionPhaseApplyConfiguration constructs a declarative configuration of the ClusterExtensionRevisionPhase type for use with
+// ClusterObjectSetPhaseApplyConfiguration constructs a declarative configuration of the ClusterObjectSetPhase type for use with
 // apply.
-func ClusterExtensionRevisionPhase() *ClusterExtensionRevisionPhaseApplyConfiguration {
-	return &ClusterExtensionRevisionPhaseApplyConfiguration{}
+func ClusterObjectSetPhase() *ClusterObjectSetPhaseApplyConfiguration {
+	return &ClusterObjectSetPhaseApplyConfiguration{}
 }
 
 // WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Name field is set to the value of the last call.
-func (b *ClusterExtensionRevisionPhaseApplyConfiguration) WithName(value string) *ClusterExtensionRevisionPhaseApplyConfiguration {
+func (b *ClusterObjectSetPhaseApplyConfiguration) WithName(value string) *ClusterObjectSetPhaseApplyConfiguration {
 	b.Name = &value
 	return b
 }
@@ -69,7 +69,7 @@ func (b *ClusterExtensionRevisionPhaseApplyConfiguration) WithName(value string)
 // WithObjects adds the given value to the Objects field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Objects field.
-func (b *ClusterExtensionRevisionPhaseApplyConfiguration) WithObjects(values ...*ClusterExtensionRevisionObjectApplyConfiguration) *ClusterExtensionRevisionPhaseApplyConfiguration {
+func (b *ClusterObjectSetPhaseApplyConfiguration) WithObjects(values ...*ClusterObjectSetObjectApplyConfiguration) *ClusterObjectSetPhaseApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithObjects")
@@ -82,7 +82,7 @@ func (b *ClusterExtensionRevisionPhaseApplyConfiguration) WithObjects(values ...
 // WithCollisionProtection sets the CollisionProtection field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the CollisionProtection field is set to the value of the last call.
-func (b *ClusterExtensionRevisionPhaseApplyConfiguration) WithCollisionProtection(value apiv1.CollisionProtection) *ClusterExtensionRevisionPhaseApplyConfiguration {
+func (b *ClusterObjectSetPhaseApplyConfiguration) WithCollisionProtection(value apiv1.CollisionProtection) *ClusterObjectSetPhaseApplyConfiguration {
 	b.CollisionProtection = &value
 	return b
 }

@@ -1,6 +1,6 @@
 //go:build !standard
 
-// This file is excluded from standard builds because ClusterExtensionRevision
+// This file is excluded from standard builds because ClusterObjectSet
 // is an experimental feature. Standard builds use Helm-based applier only.
 // The experimental build includes BoxcutterRuntime which requires these factories
 // for serviceAccount-scoped client creation and RevisionEngine instantiation.
@@ -35,9 +35,9 @@ type RevisionEngine interface {
 	Reconcile(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error)
 }
 
-// RevisionEngineFactory creates a RevisionEngine for a ClusterExtensionRevision.
+// RevisionEngineFactory creates a RevisionEngine for a ClusterObjectSet.
 type RevisionEngineFactory interface {
-	CreateRevisionEngine(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (RevisionEngine, error)
+	CreateRevisionEngine(ctx context.Context, rev *ocv1.ClusterObjectSet) (RevisionEngine, error)
 }
 
 // defaultRevisionEngineFactory creates boxcutter RevisionEngines with serviceAccount-scoped clients.
@@ -51,9 +51,9 @@ type defaultRevisionEngineFactory struct {
 	TokenGetter      *authentication.TokenGetter
 }
 
-// CreateRevisionEngine constructs a boxcutter RevisionEngine for the given ClusterExtensionRevision.
+// CreateRevisionEngine constructs a boxcutter RevisionEngine for the given ClusterObjectSet.
 // It reads the ServiceAccount from annotations and creates a scoped client.
-func (f *defaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, rev *ocv1.ClusterExtensionRevision) (RevisionEngine, error) {
+func (f *defaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, rev *ocv1.ClusterObjectSet) (RevisionEngine, error) {
 	saNamespace, saName, err := f.getServiceAccount(rev)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (f *defaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, r
 	), nil
 }
 
-func (f *defaultRevisionEngineFactory) getServiceAccount(rev *ocv1.ClusterExtensionRevision) (string, string, error) {
+func (f *defaultRevisionEngineFactory) getServiceAccount(rev *ocv1.ClusterObjectSet) (string, string, error) {
 	annotations := rev.GetAnnotations()
 	if annotations == nil {
 		return "", "", fmt.Errorf("revision %q is missing required annotations", rev.Name)

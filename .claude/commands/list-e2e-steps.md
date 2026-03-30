@@ -66,7 +66,7 @@ Organize steps into these 10 categories. For each step, document:
 2. **Catalog Management** - ClusterCatalog creation, updates, image tagging, deletion
 3. **ClusterExtension Lifecycle** - Apply, update, remove ClusterExtension resources
 4. **ClusterExtension Status & Conditions** - Condition checks, transition times, reconciliation
-5. **ClusterExtensionRevision** - Revision-specific condition checks, archival, annotations, labels, active revisions
+5. **ClusterObjectSet** - Revision-specific condition checks, archival, annotations, labels, active revisions
 6. **Generic Resource Operations** - Get, delete, restore, match arbitrary resources
 7. **Test Operator Control** - Marking test-operator deployment ready/not-ready
 8. **Metrics** - Fetching and validating Prometheus metrics

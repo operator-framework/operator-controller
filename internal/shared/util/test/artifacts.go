@@ -25,7 +25,7 @@ import (
 // CollectTestArtifacts gets all the artifacts from the test run and saves them to the artifact path.
 // Currently, it saves:
 // - clusterextensions
-// - clusterextensionrevisions
+// - clusterobjectsets
 // - pods logs
 // - deployments
 // - catalogsources
@@ -70,20 +70,20 @@ func CollectTestArtifacts(t *testing.T, artifactName string, c client.Client, cf
 		}
 	}
 
-	// get all cluster extension revisions save them to the artifact path.
-	clusterExtensionRevisions := ocv1.ClusterExtensionRevisionList{}
-	if err := c.List(context.Background(), &clusterExtensionRevisions); err != nil {
-		fmt.Printf("Failed to list cluster extensions: %v", err)
+	// get all cluster object sets save them to the artifact path.
+	clusterObjectSets := ocv1.ClusterObjectSetList{}
+	if err := c.List(context.Background(), &clusterObjectSets); err != nil {
+		fmt.Printf("Failed to list cluster object sets: %v", err)
 	}
-	for _, cer := range clusterExtensionRevisions.Items {
-		// Save cluster extension to artifact path
-		clusterExtensionYaml, err := yaml.Marshal(cer)
+	for _, cos := range clusterObjectSets.Items {
+		// Save cluster object set to artifact path
+		clusterObjectSetYaml, err := yaml.Marshal(cos)
 		if err != nil {
-			fmt.Printf("Failed to marshal cluster extension: %v", err)
+			fmt.Printf("Failed to marshal cluster object set: %v", err)
 			continue
 		}
-		if err := os.WriteFile(filepath.Join(artifactPath, cer.Name+"-clusterextensionrevision.yaml"), clusterExtensionYaml, 0600); err != nil {
-			fmt.Printf("Failed to write cluster extension to file: %v", err)
+		if err := os.WriteFile(filepath.Join(artifactPath, cos.Name+"-clusterobjectset.yaml"), clusterObjectSetYaml, 0600); err != nil {
+			fmt.Printf("Failed to write cluster object set to file: %v", err)
 		}
 	}
 

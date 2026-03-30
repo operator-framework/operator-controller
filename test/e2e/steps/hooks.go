@@ -27,22 +27,22 @@ type resource struct {
 }
 
 type scenarioContext struct {
-	id                           string
-	namespace                    string
-	clusterExtensionName         string
-	clusterExtensionRevisionName string
-	clusterCatalogName           string
-	addedResources               []resource
-	removedResources             []unstructured.Unstructured
-	backGroundCmds               []*exec.Cmd
-	metricsResponse              map[string]string
-	leaderPods                   map[string]string // component name -> leader pod name
+	id                   string
+	namespace            string
+	clusterExtensionName string
+	clusterObjectSetName string
+	clusterCatalogName   string
+	addedResources       []resource
+	removedResources     []unstructured.Unstructured
+	backGroundCmds       []*exec.Cmd
+	metricsResponse      map[string]string
+	leaderPods           map[string]string // component name -> leader pod name
 
 	extensionObjects []client.Object
 }
 
 // GatherClusterExtensionObjects collects all resources related to the ClusterExtension container in
-// either their Helm release Secret or ClusterExtensionRevision depending on the applier being used
+// either their Helm release Secret or ClusterObjectSet depending on the applier being used
 // and saves them into the context.
 func (s *scenarioContext) GatherClusterExtensionObjects() error {
 	objs, err := listExtensionResources(s.clusterExtensionName)
@@ -153,11 +153,11 @@ func CheckFeatureTags(ctx context.Context, sc *godog.Scenario) (context.Context,
 
 func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	scCtx := &scenarioContext{
-		id:                           sc.Id,
-		namespace:                    fmt.Sprintf("ns-%s", sc.Id),
-		clusterExtensionName:         fmt.Sprintf("ce-%s", sc.Id),
-		clusterExtensionRevisionName: fmt.Sprintf("cer-%s", sc.Id),
-		leaderPods:                   make(map[string]string),
+		id:                   sc.Id,
+		namespace:            fmt.Sprintf("ns-%s", sc.Id),
+		clusterExtensionName: fmt.Sprintf("ce-%s", sc.Id),
+		clusterObjectSetName: fmt.Sprintf("cos-%s", sc.Id),
+		leaderPods:           make(map[string]string),
 	}
 	return context.WithValue(ctx, scenarioContextKey, scCtx), nil
 }
@@ -189,8 +189,8 @@ func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context
 	if sc.clusterExtensionName != "" {
 		forDeletion = append(forDeletion, resource{name: sc.clusterExtensionName, kind: "clusterextension"})
 	}
-	if sc.clusterExtensionRevisionName != "" {
-		forDeletion = append(forDeletion, resource{name: sc.clusterExtensionRevisionName, kind: "clusterextensionrevision"})
+	if sc.clusterObjectSetName != "" {
+		forDeletion = append(forDeletion, resource{name: sc.clusterObjectSetName, kind: "clusterobjectset"})
 	}
 	forDeletion = append(forDeletion, resource{name: sc.namespace, kind: "namespace"})
 	for _, r := range forDeletion {

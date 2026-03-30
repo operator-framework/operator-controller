@@ -39,7 +39,7 @@ type ClusterExtensionStatusApplyConfiguration struct {
 	// When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
 	// When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
 	// <opcon:experimental:description>
-	// When Progressing is True and Reason is RollingOut, the ClusterExtension has one or more ClusterExtensionRevisions in active roll out.
+	// When Progressing is True and Reason is RollingOut, the ClusterExtension has one or more ClusterObjectSets in active roll out.
 	// </opcon:experimental:description>
 	//
 	// When the ClusterExtension is sourced from a catalog, it surfaces deprecation conditions based on catalog metadata.
@@ -51,7 +51,7 @@ type ClusterExtensionStatusApplyConfiguration struct {
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// install is a representation of the current installation status for this ClusterExtension.
 	Install *ClusterExtensionInstallStatusApplyConfiguration `json:"install,omitempty"`
-	// activeRevisions holds a list of currently active (non-archived) ClusterExtensionRevisions,
+	// activeRevisions holds a list of currently active (non-archived) ClusterObjectSets,
 	// including both installed and rolling out revisions.
 	// <opcon:experimental>
 	ActiveRevisions []RevisionStatusApplyConfiguration `json:"activeRevisions,omitempty"`

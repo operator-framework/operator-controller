@@ -380,7 +380,7 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 			if bundleUnchanged {
 				// Bundle hasn't changed and Pull failed (likely cache miss + catalog unavailable).
 				// This happens in fallback mode after catalog deletion. Set imageFS to nil so the
-				// applier can maintain the workload using existing Helm release or ClusterExtensionRevision.
+				// applier can maintain the workload using existing Helm release or ClusterObjectSet.
 				l.V(1).Info("bundle content unavailable but version unchanged, maintaining current installation",
 					"bundle", state.resolvedRevisionMetadata.Name,
 					"version", state.resolvedRevisionMetadata.Version,

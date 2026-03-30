@@ -21,12 +21,12 @@ import (
 	apiv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-// ClusterExtensionRevisionSpecApplyConfiguration represents a declarative configuration of the ClusterExtensionRevisionSpec type for use
+// ClusterObjectSetSpecApplyConfiguration represents a declarative configuration of the ClusterObjectSetSpec type for use
 // with apply.
 //
-// ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
-type ClusterExtensionRevisionSpecApplyConfiguration struct {
-	// lifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
+// ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
+type ClusterObjectSetSpecApplyConfiguration struct {
+	// lifecycleState specifies the lifecycle state of the ClusterObjectSet.
 	//
 	// When set to "Active", the revision is actively managed and reconciled.
 	// When set to "Archived", the revision is inactive and any resources not managed by a subsequent revision are deleted.
@@ -38,12 +38,12 @@ type ClusterExtensionRevisionSpecApplyConfiguration struct {
 	// It is possible for more than one revision to be "Active" simultaneously. This will occur when
 	// moving from one revision to another. The old revision will not be set to "Archived" until the
 	// new revision has been completely rolled out.
-	LifecycleState *apiv1.ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
+	LifecycleState *apiv1.ClusterObjectSetLifecycleState `json:"lifecycleState,omitempty"`
 	// revision is a required, immutable sequence number representing a specific revision
 	// of the parent ClusterExtension.
 	//
 	// The revision field must be a positive integer.
-	// Each ClusterExtensionRevision belonging to the same parent ClusterExtension must have a unique revision number.
+	// Each ClusterObjectSet belonging to the same parent ClusterExtension must have a unique revision number.
 	// The revision number must always be the previous revision number plus one, or 1 for the first revision.
 	Revision *int64 `json:"revision,omitempty"`
 	// phases is an optional, immutable list of phases that group objects to be applied together.
@@ -63,7 +63,7 @@ type ClusterExtensionRevisionSpecApplyConfiguration struct {
 	// Once set, even if empty, the phases field is immutable.
 	//
 	// Each phase in the list must have a unique name. The maximum number of phases is 20.
-	Phases []ClusterExtensionRevisionPhaseApplyConfiguration `json:"phases,omitempty"`
+	Phases []ClusterObjectSetPhaseApplyConfiguration `json:"phases,omitempty"`
 	// progressDeadlineMinutes is an optional field that defines the maximum period
 	// of time in minutes after which an installation should be considered failed and
 	// require manual intervention. This functionality is disabled when no value
@@ -95,16 +95,16 @@ type ClusterExtensionRevisionSpecApplyConfiguration struct {
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
-// ClusterExtensionRevisionSpecApplyConfiguration constructs a declarative configuration of the ClusterExtensionRevisionSpec type for use with
+// ClusterObjectSetSpecApplyConfiguration constructs a declarative configuration of the ClusterObjectSetSpec type for use with
 // apply.
-func ClusterExtensionRevisionSpec() *ClusterExtensionRevisionSpecApplyConfiguration {
-	return &ClusterExtensionRevisionSpecApplyConfiguration{}
+func ClusterObjectSetSpec() *ClusterObjectSetSpecApplyConfiguration {
+	return &ClusterObjectSetSpecApplyConfiguration{}
 }
 
 // WithLifecycleState sets the LifecycleState field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the LifecycleState field is set to the value of the last call.
-func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithLifecycleState(value apiv1.ClusterExtensionRevisionLifecycleState) *ClusterExtensionRevisionSpecApplyConfiguration {
+func (b *ClusterObjectSetSpecApplyConfiguration) WithLifecycleState(value apiv1.ClusterObjectSetLifecycleState) *ClusterObjectSetSpecApplyConfiguration {
 	b.LifecycleState = &value
 	return b
 }
@@ -112,7 +112,7 @@ func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithLifecycleState(valu
 // WithRevision sets the Revision field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Revision field is set to the value of the last call.
-func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithRevision(value int64) *ClusterExtensionRevisionSpecApplyConfiguration {
+func (b *ClusterObjectSetSpecApplyConfiguration) WithRevision(value int64) *ClusterObjectSetSpecApplyConfiguration {
 	b.Revision = &value
 	return b
 }
@@ -120,7 +120,7 @@ func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithRevision(value int6
 // WithPhases adds the given value to the Phases field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Phases field.
-func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithPhases(values ...*ClusterExtensionRevisionPhaseApplyConfiguration) *ClusterExtensionRevisionSpecApplyConfiguration {
+func (b *ClusterObjectSetSpecApplyConfiguration) WithPhases(values ...*ClusterObjectSetPhaseApplyConfiguration) *ClusterObjectSetSpecApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithPhases")
@@ -133,7 +133,7 @@ func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithPhases(values ...*C
 // WithProgressDeadlineMinutes sets the ProgressDeadlineMinutes field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ProgressDeadlineMinutes field is set to the value of the last call.
-func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithProgressDeadlineMinutes(value int32) *ClusterExtensionRevisionSpecApplyConfiguration {
+func (b *ClusterObjectSetSpecApplyConfiguration) WithProgressDeadlineMinutes(value int32) *ClusterObjectSetSpecApplyConfiguration {
 	b.ProgressDeadlineMinutes = &value
 	return b
 }
@@ -141,7 +141,7 @@ func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithProgressDeadlineMin
 // WithProgressionProbes adds the given value to the ProgressionProbes field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the ProgressionProbes field.
-func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithProgressionProbes(values ...*ProgressionProbeApplyConfiguration) *ClusterExtensionRevisionSpecApplyConfiguration {
+func (b *ClusterObjectSetSpecApplyConfiguration) WithProgressionProbes(values ...*ProgressionProbeApplyConfiguration) *ClusterObjectSetSpecApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithProgressionProbes")
@@ -154,7 +154,7 @@ func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithProgressionProbes(v
 // WithCollisionProtection sets the CollisionProtection field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the CollisionProtection field is set to the value of the last call.
-func (b *ClusterExtensionRevisionSpecApplyConfiguration) WithCollisionProtection(value apiv1.CollisionProtection) *ClusterExtensionRevisionSpecApplyConfiguration {
+func (b *ClusterObjectSetSpecApplyConfiguration) WithCollisionProtection(value apiv1.CollisionProtection) *ClusterObjectSetSpecApplyConfiguration {
 	b.CollisionProtection = &value
 	return b
 }

@@ -56,7 +56,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 		},
 	}
 
-	cer := newRefTestCER("ref-plain-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-plain-1", ocv1.ObjectSourceRef{
 		Name:      "test-secret",
 		Namespace: "olmv1-system",
 		Key:       "my-key",
@@ -64,8 +64,8 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
-		WithObjects(secret, cer).
-		WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+		WithObjects(secret, cos).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
 
 	mockEngine := &mockRevisionEngine{
@@ -73,7 +73,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 			return mockRevisionResult{}, nil
 		},
 	}
-	reconciler := &controllers.ClusterExtensionRevisionReconciler{
+	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
 		RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
 		TrackingCache:         &mockTrackingCache{client: fakeClient},
@@ -81,7 +81,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 	}
 
 	_, err = reconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Name: cer.Name},
+		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
 	require.NoError(t, err)
 }
@@ -117,7 +117,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 		},
 	}
 
-	cer := newRefTestCER("ref-gzip-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-gzip-1", ocv1.ObjectSourceRef{
 		Name:      "test-secret-gz",
 		Namespace: "olmv1-system",
 		Key:       "my-key",
@@ -125,8 +125,8 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
-		WithObjects(secret, cer).
-		WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+		WithObjects(secret, cos).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
 
 	mockEngine := &mockRevisionEngine{
@@ -134,7 +134,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 			return mockRevisionResult{}, nil
 		},
 	}
-	reconciler := &controllers.ClusterExtensionRevisionReconciler{
+	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
 		RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
 		TrackingCache:         &mockTrackingCache{client: fakeClient},
@@ -142,7 +142,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 	}
 
 	_, err = reconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Name: cer.Name},
+		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
 	require.NoError(t, err)
 }
@@ -150,7 +150,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 	testScheme := newSchemeWithCoreV1(t)
 
-	cer := newRefTestCER("ref-notfound-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-notfound-1", ocv1.ObjectSourceRef{
 		Name:      "nonexistent-secret",
 		Namespace: "olmv1-system",
 		Key:       "my-key",
@@ -158,11 +158,11 @@ func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
-		WithObjects(cer).
-		WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+		WithObjects(cos).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
 
-	reconciler := &controllers.ClusterExtensionRevisionReconciler{
+	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
 		RevisionEngineFactory: &mockRevisionEngineFactory{engine: &mockRevisionEngine{}},
 		TrackingCache:         &mockTrackingCache{client: fakeClient},
@@ -170,7 +170,7 @@ func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 	}
 
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Name: cer.Name},
+		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "resolving ref")
@@ -189,7 +189,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 		},
 	}
 
-	cer := newRefTestCER("ref-nokey-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-nokey-1", ocv1.ObjectSourceRef{
 		Name:      "test-secret-nokey",
 		Namespace: "olmv1-system",
 		Key:       "missing-key",
@@ -197,11 +197,11 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
-		WithObjects(secret, cer).
-		WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+		WithObjects(secret, cos).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
 
-	reconciler := &controllers.ClusterExtensionRevisionReconciler{
+	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
 		RevisionEngineFactory: &mockRevisionEngineFactory{engine: &mockRevisionEngine{}},
 		TrackingCache:         &mockTrackingCache{client: fakeClient},
@@ -209,7 +209,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 	}
 
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Name: cer.Name},
+		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "key")
@@ -228,7 +228,7 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 		},
 	}
 
-	cer := newRefTestCER("ref-invalid-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-invalid-1", ocv1.ObjectSourceRef{
 		Name:      "test-secret-invalid",
 		Namespace: "olmv1-system",
 		Key:       "my-key",
@@ -236,11 +236,11 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
-		WithObjects(secret, cer).
-		WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+		WithObjects(secret, cos).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
 
-	reconciler := &controllers.ClusterExtensionRevisionReconciler{
+	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
 		RevisionEngineFactory: &mockRevisionEngineFactory{engine: &mockRevisionEngine{}},
 		TrackingCache:         &mockTrackingCache{client: fakeClient},
@@ -248,14 +248,14 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 	}
 
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Name: cer.Name},
+		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unmarshal")
 }
 
-func newRefTestCER(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterExtensionRevision {
-	cer := &ocv1.ClusterExtensionRevision{
+func newRefTestCOS(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterObjectSet {
+	cos := &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			UID:  types.UID(name),
@@ -263,14 +263,14 @@ func newRefTestCER(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterExtension
 				labels.OwnerNameKey: "test-ext",
 			},
 		},
-		Spec: ocv1.ClusterExtensionRevisionSpec{
-			LifecycleState:      ocv1.ClusterExtensionRevisionLifecycleStateActive,
+		Spec: ocv1.ClusterObjectSetSpec{
+			LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
 			Revision:            1,
 			CollisionProtection: ocv1.CollisionProtectionPrevent,
-			Phases: []ocv1.ClusterExtensionRevisionPhase{
+			Phases: []ocv1.ClusterObjectSetPhase{
 				{
 					Name: "deploy",
-					Objects: []ocv1.ClusterExtensionRevisionObject{
+					Objects: []ocv1.ClusterObjectSetObject{
 						{
 							Ref: ref,
 						},
@@ -279,6 +279,6 @@ func newRefTestCER(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterExtension
 			},
 		},
 	}
-	cer.SetGroupVersionKind(ocv1.GroupVersion.WithKind("ClusterExtensionRevision"))
-	return cer
+	cos.SetGroupVersionKind(ocv1.GroupVersion.WithKind("ClusterObjectSet"))
+	return cos
 }

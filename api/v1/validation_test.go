@@ -34,7 +34,7 @@ func TestValidate(t *testing.T) {
 		}
 		return s
 	}
-	defaultRevisionSpec := func(s *ClusterExtensionRevisionSpec) *ClusterExtensionRevisionSpec {
+	defaultRevisionSpec := func(s *ClusterObjectSetSpec) *ClusterObjectSetSpec {
 		s.Revision = 1
 		s.CollisionProtection = CollisionProtectionPrevent
 		return s
@@ -89,55 +89,55 @@ func TestValidate(t *testing.T) {
 			},
 			want: want{valid: true},
 		},
-		"ClusterExtensionRevision: invalid progress deadline < 10": {
+		"ClusterObjectSet: invalid progress deadline < 10": {
 			args: args{
-				object: ClusterExtensionRevisionSpec{
-					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
+				object: ClusterObjectSetSpec{
+					LifecycleState:          ClusterObjectSetLifecycleStateActive,
 					ProgressDeadlineMinutes: 9,
 				},
 			},
 			want: want{valid: false},
 		},
-		"ClusterExtensionRevision: valid progress deadline = 10": {
+		"ClusterObjectSet: valid progress deadline = 10": {
 			args: args{
-				object: ClusterExtensionRevisionSpec{
-					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
+				object: ClusterObjectSetSpec{
+					LifecycleState:          ClusterObjectSetLifecycleStateActive,
 					ProgressDeadlineMinutes: 10,
 				},
 			},
 			want: want{valid: true},
 		},
-		"ClusterExtensionRevision: valid progress deadline = 360": {
+		"ClusterObjectSet: valid progress deadline = 360": {
 			args: args{
-				object: ClusterExtensionRevisionSpec{
-					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
+				object: ClusterObjectSetSpec{
+					LifecycleState:          ClusterObjectSetLifecycleStateActive,
 					ProgressDeadlineMinutes: 360,
 				},
 			},
 			want: want{valid: true},
 		},
-		"ClusterExtensionRevision: valid progress deadline = 720": {
+		"ClusterObjectSet: valid progress deadline = 720": {
 			args: args{
-				object: ClusterExtensionRevisionSpec{
-					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
+				object: ClusterObjectSetSpec{
+					LifecycleState:          ClusterObjectSetLifecycleStateActive,
 					ProgressDeadlineMinutes: 720,
 				},
 			},
 			want: want{valid: true},
 		},
-		"ClusterExtensionRevision: invalid progress deadline > 720": {
+		"ClusterObjectSet: invalid progress deadline > 720": {
 			args: args{
-				object: ClusterExtensionRevisionSpec{
-					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
+				object: ClusterObjectSetSpec{
+					LifecycleState:          ClusterObjectSetLifecycleStateActive,
 					ProgressDeadlineMinutes: 721,
 				},
 			},
 			want: want{valid: false},
 		},
-		"ClusterExtensionRevision: no progress deadline set": {
+		"ClusterObjectSet: no progress deadline set": {
 			args: args{
-				object: ClusterExtensionRevisionSpec{
-					LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				object: ClusterObjectSetSpec{
+					LifecycleState: ClusterObjectSetLifecycleStateActive,
 				},
 			},
 			want: want{valid: true},
@@ -157,17 +157,17 @@ func TestValidate(t *testing.T) {
 					defaultExtensionSpec(&ce.Spec)
 				}
 				obj = ce
-			case ClusterExtensionRevisionSpec:
-				cer := &ClusterExtensionRevision{
+			case ClusterObjectSetSpec:
+				cos := &ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: fmt.Sprintf("cer-%d", i),
+						Name: fmt.Sprintf("cos-%d", i),
 					},
 					Spec: s,
 				}
 				if !tc.args.skipDefaulting {
-					defaultRevisionSpec(&cer.Spec)
+					defaultRevisionSpec(&cos.Spec)
 				}
-				obj = cer
+				obj = cos
 			default:
 				t.Fatalf("unknown type %T", s)
 			}

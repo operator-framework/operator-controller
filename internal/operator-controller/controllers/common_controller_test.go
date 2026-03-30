@@ -325,9 +325,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-1",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Type:    ocv1.ClusterObjectSetTypeProgressing,
 								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Reason:  ocv1.ClusterObjectSetReasonRetrying,
 								Message: "some error occurred",
 							},
 						},
@@ -349,7 +349,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-1",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Type:    ocv1.ClusterObjectSetTypeProgressing,
 								Status:  metav1.ConditionTrue,
 								Reason:  ocv1.ReasonRollingOut,
 								Message: "Revision is rolling out",
@@ -360,9 +360,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-2",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Type:    ocv1.ClusterObjectSetTypeProgressing,
 								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Reason:  ocv1.ClusterObjectSetReasonRetrying,
 								Message: "validation error occurred",
 							},
 						},
@@ -384,7 +384,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-1",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Type:    ocv1.ClusterObjectSetTypeProgressing,
 								Status:  metav1.ConditionTrue,
 								Reason:  ocv1.ReasonRollingOut,
 								Message: "Revision is rolling out",
@@ -408,9 +408,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-1",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Type:    ocv1.ClusterObjectSetTypeProgressing,
 								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Reason:  ocv1.ClusterObjectSetReasonRetrying,
 								Message: "old error that was superseded",
 							},
 						},
@@ -419,7 +419,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-2",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Type:    ocv1.ClusterObjectSetTypeProgressing,
 								Status:  metav1.ConditionTrue,
 								Reason:  ocv1.ReasonRollingOut,
 								Message: "Latest revision is rolling out healthy",

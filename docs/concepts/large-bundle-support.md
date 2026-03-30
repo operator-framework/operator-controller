@@ -2,13 +2,13 @@
 
 ## Need
 
-ClusterExtensionRevision (CER) objects embed full Kubernetes manifests inline in
+ClusterObjectSet (COS) objects embed full Kubernetes manifests inline in
 `.spec.phases[].objects[].object`. With up to 20 phases and 50 objects per phase,
-the serialized CER can approach or exceed the etcd maximum object size of
+the serialized COS can approach or exceed the etcd maximum object size of
 1.5 MiB. Large operators shipping many CRDs, Deployments, RBAC rules, and
 webhook configurations are likely to hit this limit.
 
-When the limit is exceeded, the API server rejects the CER and the extension
+When the limit is exceeded, the API server rejects the COS and the extension
 cannot be installed or upgraded. Today there is no mitigation path other than
 reducing the number of objects in the bundle.
 
@@ -25,20 +25,20 @@ chains is presented as an alternative.
 ## Approach: Per-Object Content References
 
 Externalize all objects by default. Add an optional `ref` field to
-`ClusterExtensionRevisionObject` that points to the object content stored in a
+`ClusterObjectSetObject` that points to the object content stored in a
 Secret. Exactly one of `object` or `ref` must be set. The system uses `ref` for
-all objects it creates; users who manually craft CERs may use either `object` or
+all objects it creates; users who manually craft COSs may use either `object` or
 `ref`.
 
 ### API change
 
 Add a new `ObjectSourceRef` type and a `ref` field to
-`ClusterExtensionRevisionObject`. Exactly one of `object` or `ref` must be set,
+`ClusterObjectSetObject`. Exactly one of `object` or `ref` must be set,
 enforced via CEL validation. Both fields are immutable (inherited from the
 immutability of phases).
 
 ```go
-type ClusterExtensionRevisionObject struct {
+type ClusterObjectSetObject struct {
 	// object is an optional embedded Kubernetes object to be applied.
 	// Exactly one of object or ref must be set.
 	//
@@ -63,7 +63,7 @@ type ClusterExtensionRevisionObject struct {
 }
 ```
 
-CEL validation on `ClusterExtensionRevisionObject`:
+CEL validation on `ClusterObjectSetObject`:
 
 ```
 rule: "has(self.object) != has(self.ref)"
@@ -130,7 +130,7 @@ kubectl get secret <name> -o jsonpath='{.data.<key>}' | base64 -d | gunzip | jq 
 
 ### Referenced resource conventions
 
-The CER API does not enforce any particular structure or metadata on the
+The COS API does not enforce any particular structure or metadata on the
 referenced Secret — the `ref` field is a plain pointer. The reconciler only
 requires that the Secret exists and that the key resolves to valid JSON content
 (optionally gzip-compressed). Everything else is a convention that the system
@@ -139,30 +139,30 @@ follow for consistency and safe lifecycle management.
 
 Recommended conventions:
 
-1. **Immutability**: Secrets should set `immutable: true`. Because CER phases
+1. **Immutability**: Secrets should set `immutable: true`. Because COS phases
    are immutable, the content backing a ref should not change after creation.
    Mutable referenced Secrets are not rejected, but modifying them after the
-   CER is created leads to undefined behavior.
+   COS is created leads to undefined behavior.
 
 2. **Owner references**: Referenced Secrets should carry an ownerReference to
-   the CER so that Kubernetes garbage collection removes them when the CER is
+   the COS so that Kubernetes garbage collection removes them when the COS is
    deleted:
    ```yaml
    ownerReferences:
      - apiVersion: olm.operatorframework.io/v1
-       kind: ClusterExtensionRevision
-       name: <CER-name>
+       kind: ClusterObjectSet
+       name: <COS-name>
        uid: <revision-uid>
        controller: true
    ```
    Without an ownerReference, the producer is responsible for cleaning up the
-   Secret when the CER is deleted. The reconciler does not delete referenced
+   Secret when the COS is deleted. The reconciler does not delete referenced
    Secrets itself.
 
 3. **Revision label**: A label identifying the owning revision aids discovery,
    debugging, and bulk cleanup:
    ```
-   olm.operatorframework.io/revision-name: <CER-name>
+   olm.operatorframework.io/revision-name: <COS-name>
    ```
    This enables fetching all referenced Secrets for a revision with a single
    list call:
@@ -176,23 +176,23 @@ This reduces the number of Secrets created.
 ### Controller implementation
 
 The ClusterExtension controller externalizes all objects by default. When the
-Boxcutter applier creates a CER, every object entry uses `ref` pointing to the
+Boxcutter applier creates a COS, every object entry uses `ref` pointing to the
 object content stored in a Secret. Secrets are created in the system namespace
-(`olmv1-system` by default). This keeps CERs uniformly small regardless of
+(`olmv1-system` by default). This keeps COSs uniformly small regardless of
 bundle size.
 
-Users who manually craft CERs may use either inline `object` or `ref` pointing
+Users who manually craft COSs may use either inline `object` or `ref` pointing
 to their own Secrets. Inline `object` is convenient for development, testing, or
 extensions with very few small objects. Users who prefer to manage their own
 externalized storage can create Secrets and use `ref` directly.
 
 ### Example
 
-A system-created CER with all objects externalized:
+A system-created COS with all objects externalized:
 
 ```yaml
 apiVersion: olm.operatorframework.io/v1
-kind: ClusterExtensionRevision
+kind: ClusterObjectSet
 metadata:
   name: my-extension-1
 spec:
@@ -232,7 +232,7 @@ metadata:
     olm.operatorframework.io/revision-name: my-extension-1
   ownerReferences:
     - apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       name: my-extension-1
       uid: <revision-uid>
       controller: true
@@ -250,7 +250,7 @@ metadata:
     olm.operatorframework.io/revision-name: my-extension-1
   ownerReferences:
     - apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       name: my-extension-1
       uid: <revision-uid>
       controller: true
@@ -267,7 +267,7 @@ metadata:
     olm.operatorframework.io/revision-name: my-extension-1
   ownerReferences:
     - apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       name: my-extension-1
       uid: <revision-uid>
       controller: true
@@ -276,11 +276,11 @@ data:
   deployment: <base64(JSON Deployment manifest)>
 ```
 
-A user-crafted CER with inline objects:
+A user-crafted COS with inline objects:
 
 ```yaml
 apiVersion: olm.operatorframework.io/v1
-kind: ClusterExtensionRevision
+kind: ClusterObjectSet
 metadata:
   name: my-extension-1
 spec:
@@ -311,8 +311,8 @@ system namespace (`olmv1-system` by default):
    the hash as the data key. The corresponding `ref.key` is set to the hash.
    Using the content hash as key ensures that it is a stable, deterministic
    identifier tied to the exact content — if the content changes, the hash
-   changes, which in turn changes the key in the CER, guaranteeing that any
-   content mutation is visible as a CER spec change and triggers a new
+   changes, which in turn changes the key in the COS, guaranteeing that any
+   content mutation is visible as a COS spec change and triggers a new
    revision.
 2. When adding an object would push the current Secret beyond 900 KiB (leaving
    headroom for base64 overhead and metadata), finalize it and start a new one.
@@ -321,16 +321,16 @@ system namespace (`olmv1-system` by default):
    creation fails with a clear error.
 
 Multiple Secrets are independent — each is referenced directly by a `ref` in
-the CER. There is no linked-list chaining between them.
+the COS. There is no linked-list chaining between them.
 
 ### Crash-safe creation sequence
 
-The creation sequence ensures that by the time the CER exists and is visible to
-the CER reconciler, all referenced Secrets are already present. This avoids
+The creation sequence ensures that by the time the COS exists and is visible to
+the COS reconciler, all referenced Secrets are already present. This avoids
 spurious "not found" errors and unnecessary retry loops.
 
 ownerReferences require the parent's `uid`, which is only assigned by the API
-server at creation time. Since we must create the Secrets before the CER, they
+server at creation time. Since we must create the Secrets before the COS, they
 are initially created without ownerReferences. The Secret `immutable` flag only
 protects `.data` and `.stringData` — metadata (including ownerReferences) can
 still be patched after creation.
@@ -342,43 +342,43 @@ Step 1: Create Secret(s) with revision label, no ownerReference
              |                ClusterExtension controller detects them on
              |                next reconciliation by listing Secrets with
              |                the revision label and checking whether the
-             |                corresponding CER exists. If not, deletes them.
+             |                corresponding COS exists. If not, deletes them.
              v
-Step 2: Create CER with refs pointing to the Secrets from step 1
+Step 2: Create COS with refs pointing to the Secrets from step 1
              |
-             |  crash here → CER exists, Secrets exist, refs resolve.
-             |                CER reconciler can proceed normally.
+             |  crash here → COS exists, Secrets exist, refs resolve.
+             |                COS reconciler can proceed normally.
              |                Secrets have no ownerReferences yet.
              |                ClusterExtension controller retries step 3.
              v
-Step 3: Patch ownerReferences onto Secrets (using CER uid)
+Step 3: Patch ownerReferences onto Secrets (using COS uid)
              |
              |  crash here → Some Secrets have ownerRefs, some don't.
              |                ClusterExtension controller retries patching
              |                the remaining Secrets on next reconciliation.
              v
-         Done — CER has refs, all Secrets exist with owner refs.
+         Done — COS has refs, all Secrets exist with owner refs.
 ```
 
 Key properties:
-- **No reconciler churn**: Referenced Secrets exist before the CER is created.
-  The CER reconciler never encounters missing Secrets during normal operation.
+- **No reconciler churn**: Referenced Secrets exist before the COS is created.
+  The COS reconciler never encounters missing Secrets during normal operation.
 - **Orphan cleanup**: Secrets created in step 1 carry the revision label
-  (`olm.operatorframework.io/revision-name`). Once the CER is created in step 2
+  (`olm.operatorframework.io/revision-name`). Once the COS is created in step 2
   and ownerReferences are patched in step 3, Kubernetes garbage collection
-  automatically removes the Secrets when the CER is deleted. If a crash occurs
+  automatically removes the Secrets when the COS is deleted. If a crash occurs
   between steps 1 and 2, the ClusterExtension controller detects orphaned
-  Secrets (those with the revision label but no corresponding CER) and deletes
+  Secrets (those with the revision label but no corresponding COS) and deletes
   them on its next reconciliation.
 - **Idempotent retry**: Secrets are immutable in data. Re-creation of an
   existing Secret returns AlreadyExists and is skipped. ownerReference patching
   is idempotent — patching an already-set ownerReference is a no-op.
-- **Refs are truly immutable**: Set at CER creation, never modified (inherited
+- **Refs are truly immutable**: Set at COS creation, never modified (inherited
   from phase immutability).
 
-### CER reconciler behavior
+### COS reconciler behavior
 
-When processing a CER phase:
+When processing a COS phase:
 - For each object entry in the phase:
   - If `object` is set, use it directly (current behavior, unchanged).
   - If `ref` is set, fetch the referenced Secret, read the value at the
@@ -389,7 +389,7 @@ When processing a CER phase:
   rollout semantics are unchanged.
 
 Under normal operation, referenced Secrets are guaranteed to exist before the
-CER is created (see [Crash-safe creation sequence](#crash-safe-creation-sequence)).
+COS is created (see [Crash-safe creation sequence](#crash-safe-creation-sequence)).
 If a referenced Secret or key is not found — indicating an inconsistent state
 caused by external modification or a partially completed creation sequence —
 the reconciler returns a retryable error, allowing the controller to retry on
@@ -435,7 +435,7 @@ exclusive.
 Secrets use a dedicated type `olm.operatorframework.io/revision-phase-data` to
 distinguish them from user-created Secrets and enable easy identification.
 
-Secret names are derived deterministically from the CER name and a content hash.
+Secret names are derived deterministically from the COS name and a content hash.
 The hash is the first 16 hex characters of the SHA-256 digest of the phases
 serialized to JSON (before gzip compression). Computing the hash from the JSON
 serialization rather than the gzip output makes it deterministic regardless of
@@ -443,13 +443,13 @@ gzip implementation details.
 
 | Secret   | Name                          |
 |----------|-------------------------------|
-| First    | `<CER-name>-<hash>`           |
-| Second   | `<CER-name>-<hash>-1`         |
-| Third    | `<CER-name>-<hash>-2`         |
-| Nth      | `<CER-name>-<hash>-<N-1>`     |
+| First    | `<COS-name>-<hash>`           |
+| Second   | `<COS-name>-<hash>-1`         |
+| Third    | `<COS-name>-<hash>-2`         |
+| Nth      | `<COS-name>-<hash>-<N-1>`     |
 
 The hash is computed from the phases JSON before any Secrets are created, so
-`phasesRef.secretRef.name` is known at CER creation time and can be set
+`phasesRef.secretRef.name` is known at COS creation time and can be set
 immediately.
 
 ### Secret labeling
@@ -457,7 +457,7 @@ immediately.
 All Secrets in a chain carry a common label identifying the owning revision:
 
 ```
-olm.operatorframework.io/revision-name: <CER-name>
+olm.operatorframework.io/revision-name: <COS-name>
 ```
 
 This allows all phase data Secrets for a given revision to be fetched with a
@@ -488,7 +488,7 @@ metadata:
     olm.operatorframework.io/revision-name: my-extension-1
   ownerReferences:
     - apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       name: my-extension-1
       uid: <revision-uid>
       controller: true
@@ -510,7 +510,7 @@ metadata:
     olm.operatorframework.io/revision-name: my-extension-1
   ownerReferences:
     - apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       name: my-extension-1
       uid: <revision-uid>
       controller: true
@@ -529,7 +529,7 @@ metadata:
     olm.operatorframework.io/revision-name: my-extension-1
   ownerReferences:
     - apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       name: my-extension-1
       uid: <revision-uid>
       controller: true
@@ -548,7 +548,7 @@ metadata:
     olm.operatorframework.io/revision-name: my-extension-1
   ownerReferences:
     - apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtensionRevision
+      kind: ClusterObjectSet
       name: my-extension-1
       uid: <revision-uid>
       controller: true
@@ -593,35 +593,35 @@ of Secrets, creation fails with a clear error.
 ### Crash-safe creation sequence
 
 Because the hash is computed from the phases JSON before any Secrets are created,
-`phasesRef` can be set at CER creation time:
+`phasesRef` can be set at COS creation time:
 
 ```
-Step 1: Create CER with phasesRef.secretRef.name = <CER-name>-<hash>
+Step 1: Create COS with phasesRef.secretRef.name = <COS-name>-<hash>
              |
-             |  crash here → CER exists but Secrets do not.
+             |  crash here → COS exists but Secrets do not.
              |                Reconciler retries Secret creation.
              v
-Step 2: Create Secrets with ownerReferences pointing to the CER
+Step 2: Create Secrets with ownerReferences pointing to the COS
              |
              |  crash here → Partial set of Secrets exists, all with
              |                ownerReferences. Not orphaned — GC'd if
-             |                CER is deleted. Existing immutable Secrets
+             |                COS is deleted. Existing immutable Secrets
              |                are skipped (AlreadyExists), missing ones
              |                are created on next attempt.
              v
-         Done — CER has phasesRef, all Secrets exist with owner refs.
+         Done — COS has phasesRef, all Secrets exist with owner refs.
 ```
 
 Key properties:
-- **No orphaned Secrets**: Every Secret carries an ownerReference to the CER.
-  Kubernetes garbage collection removes them if the CER is deleted at any point.
+- **No orphaned Secrets**: Every Secret carries an ownerReference to the COS.
+  Kubernetes garbage collection removes them if the COS is deleted at any point.
 - **Idempotent retry**: Secrets are immutable. Re-creation of an existing Secret
   returns AlreadyExists and is skipped. Missing Secrets are created on retry.
-- **phasesRef is truly immutable**: Set at CER creation, never modified.
+- **phasesRef is truly immutable**: Set at COS creation, never modified.
 
-### CER reconciler behavior
+### COS reconciler behavior
 
-When reconciling a CER:
+When reconciling a COS:
 - If `phases` is set, use it directly (current behavior, unchanged).
 - If `phasesRef` is set:
   1. Fetch the Secret at `phasesRef.secretRef.name` in
@@ -630,7 +630,7 @@ When reconciling a CER:
   3. If `data[.nextSecretRef]` exists, fetch the named Secret and repeat from
      step 2.
   4. Gunzip the concatenated buffer.
-  5. JSON-deserialize into `[]ClusterExtensionRevisionPhase`.
+  5. JSON-deserialize into `[]ClusterObjectSetPhase`.
   6. Use identically to inline phases.
   If a Secret is not yet available, return a retryable error.
 - If neither is set, skip reconciliation (invalid state).
@@ -650,7 +650,7 @@ rollout semantics are unchanged.
 | **Reconciler complexity** | Secrets are served from cache; no ordering dependency between fetches                                 | Chain traversal — follow `.nextSecretRef` links, concatenate chunks, gunzip, deserialize         |
 | **Compression** | Optional per-object gzip, auto-detected via magic bytes; each object compressed independently         | Single gzip stream across all phases; exploits cross-phase redundancy for better ratios          |
 | **Number of Secrets** | One or more, typically one                                                                            | Typically one Secret for all phases; multiple only when compressed blob exceeds 900 KiB          |
-| **Crash safety** | 3-step: Secrets → CER → patch ownerRefs; orphan cleanup via revision label                            | 2-step: CER → Secrets with ownerRefs; simpler but reconciler may see missing Secrets temporarily |
+| **Crash safety** | 3-step: Secrets → COS → patch ownerRefs; orphan cleanup via revision label                            | 2-step: COS → Secrets with ownerRefs; simpler but reconciler may see missing Secrets temporarily |
 | **Flexibility** | Mixed inline/ref per object within the same phase is possible                                         | All-or-nothing — either all phases inline or all externalized                                    |
 | **Storage efficiency** | Per-object compression misses cross-object redundancy; potentially more Secrets created in edge cases | Better compression from cross-phase redundancy; fewer Secrets                                    |
 | **Resource type** | Secret only                                                                                          | Secret only (with dedicated type)                                                                |
@@ -661,13 +661,13 @@ rollout semantics are unchanged.
 
 ## Non-goals
 
-- **Migration of existing inline objects/phases**: Existing CERs using inline
+- **Migration of existing inline objects/phases**: Existing COSs using inline
   `object` or `phases` fields continue to work as-is. There is no automatic
   migration to `ref` or `phasesRef`.
 
 - **System-managed lifecycle for system-created resources**: The OLM creates
   and owns the referenced Secrets it produces (setting ownerReferences and
-  immutability). Users who manually craft CERs with `ref` are responsible for
+  immutability). Users who manually craft COSs with `ref` are responsible for
   the lifecycle of their own referenced Secrets.
 
 - **Cross-revision deduplication**: Objects or phases that are identical between
@@ -694,7 +694,7 @@ rollout semantics are unchanged.
   the ceiling rather than removing it.
 
 - **Custom Resource for phase/object storage**: A dedicated CRD (e.g.,
-  `ClusterExtensionRevisionPhaseData`) would provide schema validation and
+  `ClusterObjectSetPhaseData`) would provide schema validation and
   a typed API. However, it introduces a new CRD to manage, is subject to the
   same etcd size limit, and the phase data is opaque to the API server anyway
   (embedded `unstructured.Unstructured` objects). Secrets are simpler and
@@ -711,13 +711,13 @@ rollout semantics are unchanged.
 **Per-object content references** is the recommended approach for the following
 reasons:
 
-1. **Phases structure preserved**: The phases array in the CER spec remains
+1. **Phases structure preserved**: The phases array in the COS spec remains
    unchanged. Only individual object entries gain a new resolution path via
    `ref`. This is a smaller, more targeted API change compared to replacing the
    entire phases field with `phasesRef`.
 
 2. **Granular flexibility**: Inline `object` and `ref` can be mixed within the
-   same phase. Users who manually craft CERs can choose either approach
+   same phase. Users who manually craft COSs can choose either approach
    per-object. The externalized phases approach is all-or-nothing.
 
 3. **Uniform code path**: By externalizing all objects by default, the system

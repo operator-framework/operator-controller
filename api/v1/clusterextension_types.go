@@ -468,9 +468,9 @@ type BundleMetadata struct {
 	Version string `json:"version"`
 }
 
-// RevisionStatus defines the observed state of a ClusterExtensionRevision.
+// RevisionStatus defines the observed state of a ClusterObjectSet.
 type RevisionStatus struct {
-	// name of the ClusterExtensionRevision resource
+	// name of the ClusterObjectSet resource
 	Name string `json:"name"`
 	// conditions optionally expose Progressing and Available condition of the revision,
 	// in case when it is not yet marked as successfully installed (condition Succeeded is not set to True).
@@ -498,7 +498,7 @@ type ClusterExtensionStatus struct {
 	// When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
 	// When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
 	// <opcon:experimental:description>
-	// When Progressing is True and Reason is RollingOut, the ClusterExtension has one or more ClusterExtensionRevisions in active roll out.
+	// When Progressing is True and Reason is RollingOut, the ClusterExtension has one or more ClusterObjectSets in active roll out.
 	// </opcon:experimental:description>
 	//
 	// When the ClusterExtension is sourced from a catalog, it surfaces deprecation conditions based on catalog metadata.
@@ -518,7 +518,7 @@ type ClusterExtensionStatus struct {
 	// +optional
 	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
 
-	// activeRevisions holds a list of currently active (non-archived) ClusterExtensionRevisions,
+	// activeRevisions holds a list of currently active (non-archived) ClusterObjectSets,
 	// including both installed and rolling out revisions.
 	// +listType=map
 	// +listMapKey=name

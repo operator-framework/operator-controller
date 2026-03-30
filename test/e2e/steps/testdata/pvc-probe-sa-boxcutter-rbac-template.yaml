@@ -4,7 +4,7 @@ metadata:
   name: ${TEST_NAMESPACE}-${SERVICEACCOUNT_NAME}-clusterrole
 rules:
   - apiGroups: [olm.operatorframework.io]
-    resources: [clusterextensionrevisions/finalizers]
+    resources: [clusterobjectsets/finalizers]
     verbs: [update]
   - apiGroups: [""]
     resources: [persistentvolumes]
