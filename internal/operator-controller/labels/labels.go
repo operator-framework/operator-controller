@@ -40,6 +40,12 @@ const (
 	// ClusterExtensionRevision operations is preserved.
 	ServiceAccountNamespaceKey = "olm.operatorframework.io/service-account-namespace"
 
+	// RevisionNameKey is the label key used to record the name of the
+	// ClusterExtensionRevision that owns or references a resource (e.g. a
+	// ref Secret). It enables efficient listing of all resources associated
+	// with a specific revision.
+	RevisionNameKey = "olm.operatorframework.io/revision-name"
+
 	// MigratedFromHelmKey is the label key used to mark ClusterExtensionRevisions
 	// that were created during migration from Helm releases. This label is used
 	// to distinguish migrated revisions from those created by normal Boxcutter operation.

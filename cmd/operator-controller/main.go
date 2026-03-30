@@ -634,6 +634,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		Preflights:        c.preflights,
 		PreAuthorizer:     preAuth,
 		FieldOwner:        fieldOwner,
+		SystemNamespace:   cfg.systemNamespace,
 	}
 	revisionStatesGetter := &controllers.BoxcutterRevisionStatesGetter{Reader: c.mgr.GetClient()}
 	storageMigrator := &applier.BoxcutterStorageMigrator{

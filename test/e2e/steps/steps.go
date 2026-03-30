@@ -95,6 +95,11 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterExtensionRevisionHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterExtensionRevisionHasLabelWithValue)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" phase objects are not found or not owned by the revision$`, ClusterExtensionRevisionObjectsNotFoundOrNotOwned)
+	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" phase objects use refs$`, ClusterExtensionRevisionPhaseObjectsUseRefs)
+	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" ref Secrets exist in "([^"]+)" namespace$`, ClusterExtensionRevisionRefSecretsExist)
+	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" ref Secrets are immutable$`, ClusterExtensionRevisionRefSecretsAreImmutable)
+	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" ref Secrets are labeled with revision and owner$`, ClusterExtensionRevisionRefSecretsLabeled)
+	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" ref Secrets have ownerReference to the revision$`, ClusterExtensionRevisionRefSecretsHaveOwnerRef)
 
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
@@ -643,9 +648,21 @@ func ClusterExtensionRevisionObjectsNotFoundOrNotOwned(ctx context.Context, revi
 
 	// For each object in each phase, verify it either doesn't exist or
 	// doesn't have the CER in its ownerReferences
-	for _, phase := range rev.Spec.Phases {
-		for _, phaseObj := range phase.Objects {
-			obj := phaseObj.Object
+	for i, phase := range rev.Spec.Phases {
+		for j, phaseObj := range phase.Objects {
+			var obj *unstructured.Unstructured
+			switch {
+			case phaseObj.Ref.Name != "":
+				resolved, err := resolveObjectRef(phaseObj.Ref)
+				if err != nil {
+					return fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
+				}
+				obj = resolved
+			case len(phaseObj.Object.Object) > 0:
+				obj = &phaseObj.Object
+			default:
+				return fmt.Errorf("clusterextensionrevision %q phase %d object %d has neither ref nor inline object", revisionName, i, j)
+			}
 			kind := obj.GetKind()
 			name := obj.GetName()
 			namespace := obj.GetNamespace()
@@ -689,6 +706,218 @@ func ClusterExtensionRevisionObjectsNotFoundOrNotOwned(ctx context.Context, revi
 		}
 	}
 	return nil
+}
+
+// ClusterExtensionRevisionPhaseObjectsUseRefs verifies that every object in every phase of the named
+// ClusterExtensionRevision uses a ref (not an inline object). Polls with timeout.
+func ClusterExtensionRevisionPhaseObjectsUseRefs(ctx context.Context, revisionName string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+
+	waitFor(ctx, func() bool {
+		obj, err := getResource("clusterextensionrevision", revisionName, "")
+		if err != nil {
+			return false
+		}
+		phases, ok, _ := unstructured.NestedSlice(obj.Object, "spec", "phases")
+		if !ok || len(phases) == 0 {
+			return false
+		}
+		for _, p := range phases {
+			phase, ok := p.(map[string]interface{})
+			if !ok {
+				return false
+			}
+			objects, ok, _ := unstructured.NestedSlice(phase, "objects")
+			if !ok || len(objects) == 0 {
+				return false
+			}
+			for _, o := range objects {
+				obj, ok := o.(map[string]interface{})
+				if !ok {
+					return false
+				}
+				ref, refOK, _ := unstructured.NestedMap(obj, "ref")
+				if !refOK || len(ref) == 0 {
+					logger.V(1).Info("object does not use ref", "revision", revisionName)
+					return false
+				}
+				name, _, _ := unstructured.NestedString(ref, "name")
+				if name == "" {
+					logger.V(1).Info("ref has empty name", "revision", revisionName)
+					return false
+				}
+			}
+		}
+		return true
+	})
+	return nil
+}
+
+// ClusterExtensionRevisionRefSecretsExist verifies that all Secrets referenced by the named
+// ClusterExtensionRevision's phase objects exist in the given namespace. Polls with timeout.
+func ClusterExtensionRevisionRefSecretsExist(ctx context.Context, revisionName, namespace string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	namespace = substituteScenarioVars(strings.TrimSpace(namespace), sc)
+
+	secretNames, err := collectRefSecretNames(ctx, revisionName)
+	if err != nil {
+		return err
+	}
+
+	for _, name := range secretNames {
+		waitFor(ctx, func() bool {
+			_, err := getResource("secret", name, namespace)
+			return err == nil
+		})
+	}
+	return nil
+}
+
+// ClusterExtensionRevisionRefSecretsAreImmutable verifies that all ref Secrets for the named
+// ClusterExtensionRevision are immutable. Polls with timeout.
+func ClusterExtensionRevisionRefSecretsAreImmutable(ctx context.Context, revisionName string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+
+	secrets, err := listRefSecrets(ctx, revisionName)
+	if err != nil {
+		return err
+	}
+	if len(secrets) == 0 {
+		return fmt.Errorf("no ref Secrets found for revision %q", revisionName)
+	}
+	for _, s := range secrets {
+		if s.Immutable == nil || !*s.Immutable {
+			return fmt.Errorf("ref Secret %s/%s is not immutable", s.Namespace, s.Name)
+		}
+	}
+	return nil
+}
+
+// ClusterExtensionRevisionRefSecretsLabeled verifies that all ref Secrets for the named
+// ClusterExtensionRevision have the expected revision-name and owner-name labels.
+func ClusterExtensionRevisionRefSecretsLabeled(ctx context.Context, revisionName string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+
+	secrets, err := listRefSecrets(ctx, revisionName)
+	if err != nil {
+		return err
+	}
+	if len(secrets) == 0 {
+		return fmt.Errorf("no ref Secrets found for revision %q", revisionName)
+	}
+
+	// Get the owner name from the CER's own labels.
+	cerObj, err := getResource("clusterextensionrevision", revisionName, "")
+	if err != nil {
+		return fmt.Errorf("getting CER %q: %w", revisionName, err)
+	}
+	expectedOwner := cerObj.GetLabels()["olm.operatorframework.io/owner-name"]
+
+	for _, s := range secrets {
+		revLabel := s.Labels["olm.operatorframework.io/revision-name"]
+		if revLabel != revisionName {
+			return fmt.Errorf("secret %s/%s has revision-name label %q, expected %q", s.Namespace, s.Name, revLabel, revisionName)
+		}
+		ownerLabel := s.Labels["olm.operatorframework.io/owner-name"]
+		if expectedOwner != "" && ownerLabel != expectedOwner {
+			return fmt.Errorf("secret %s/%s has owner-name label %q, expected %q", s.Namespace, s.Name, ownerLabel, expectedOwner)
+		}
+	}
+	return nil
+}
+
+// ClusterExtensionRevisionRefSecretsHaveOwnerRef verifies that all ref Secrets for the named
+// ClusterExtensionRevision have an ownerReference pointing to the CER with controller=true.
+func ClusterExtensionRevisionRefSecretsHaveOwnerRef(ctx context.Context, revisionName string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+
+	cerObj, err := getResource("clusterextensionrevision", revisionName, "")
+	if err != nil {
+		return fmt.Errorf("getting CER %q: %w", revisionName, err)
+	}
+	cerUID := cerObj.GetUID()
+
+	secrets, err := listRefSecrets(ctx, revisionName)
+	if err != nil {
+		return err
+	}
+	if len(secrets) == 0 {
+		return fmt.Errorf("no ref Secrets found for revision %q", revisionName)
+	}
+
+	for _, s := range secrets {
+		found := false
+		for _, ref := range s.OwnerReferences {
+			if ref.Kind == ocv1.ClusterExtensionRevisionKind && ref.Name == revisionName && ref.UID == cerUID {
+				if ref.Controller == nil || !*ref.Controller {
+					return fmt.Errorf("secret %s/%s has ownerReference to CER but controller is not true", s.Namespace, s.Name)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("secret %s/%s does not have ownerReference to CER %q (uid %s)", s.Namespace, s.Name, revisionName, cerUID)
+		}
+	}
+	return nil
+}
+
+// collectRefSecretNames returns the unique set of Secret names referenced by the CER's phase objects.
+func collectRefSecretNames(ctx context.Context, revisionName string) ([]string, error) {
+	var names []string
+	seen := sets.New[string]()
+
+	var obj *unstructured.Unstructured
+	waitFor(ctx, func() bool {
+		var err error
+		obj, err = getResource("clusterextensionrevision", revisionName, "")
+		return err == nil
+	})
+
+	phases, _, _ := unstructured.NestedSlice(obj.Object, "spec", "phases")
+	for _, p := range phases {
+		phase, ok := p.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		objects, _, _ := unstructured.NestedSlice(phase, "objects")
+		for _, o := range objects {
+			phaseObj, ok := o.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			name, _, _ := unstructured.NestedString(phaseObj, "ref", "name")
+			if name != "" && !seen.Has(name) {
+				seen.Insert(name)
+				names = append(names, name)
+			}
+		}
+	}
+	if len(names) == 0 {
+		return nil, fmt.Errorf("no ref Secret names found in CER %q", revisionName)
+	}
+	return names, nil
+}
+
+// listRefSecrets lists all Secrets in the OLM namespace that have the revision-name label
+// matching the given revision name.
+func listRefSecrets(_ context.Context, revisionName string) ([]corev1.Secret, error) {
+	out, err := k8sClient("get", "secrets", "-n", olmNamespace,
+		"-l", "olm.operatorframework.io/revision-name="+revisionName, "-o", "json")
+	if err != nil {
+		return nil, fmt.Errorf("listing ref Secrets for revision %q: %w", revisionName, err)
+	}
+	var secretList corev1.SecretList
+	if err := json.Unmarshal([]byte(out), &secretList); err != nil {
+		return nil, fmt.Errorf("unmarshalling Secret list: %w", err)
+	}
+	return secretList.Items, nil
 }
 
 // ResourceAvailable waits for the specified resource (kind/name format) to exist in the test namespace. Polls with timeout.
@@ -1338,11 +1567,62 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 	for i := range rev.Spec.Phases {
 		phase := &rev.Spec.Phases[i]
 		for j := range phase.Objects {
-			objs = append(objs, &phase.Objects[j].Object)
+			specObj := &phase.Objects[j]
+			switch {
+			case specObj.Ref.Name != "":
+				resolved, err := resolveObjectRef(specObj.Ref)
+				if err != nil {
+					return nil, fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
+				}
+				objs = append(objs, resolved)
+			case len(specObj.Object.Object) > 0:
+				objs = append(objs, &specObj.Object)
+			default:
+				return nil, fmt.Errorf("object %d in phase %q has neither object nor ref", j, phase.Name)
+			}
 		}
 	}
 
 	return objs, nil
+}
+
+// resolveObjectRef fetches an object from a Secret ref using kubectl.
+func resolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
+	out, err := k8sClient("get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
+	if err != nil {
+		return nil, fmt.Errorf("getting Secret %s/%s: %w", ref.Namespace, ref.Name, err)
+	}
+	var secret corev1.Secret
+	if err := json.Unmarshal([]byte(out), &secret); err != nil {
+		return nil, fmt.Errorf("unmarshaling Secret %s/%s: %w", ref.Namespace, ref.Name, err)
+	}
+	data, ok := secret.Data[ref.Key]
+	if !ok {
+		return nil, fmt.Errorf("key %q not found in Secret %s/%s", ref.Key, ref.Namespace, ref.Name)
+	}
+	// Auto-detect gzip compression (magic bytes 0x1f 0x8b)
+	if len(data) >= 2 && data[0] == 0x1f && data[1] == 0x8b {
+		reader, err := gzip.NewReader(bytes.NewReader(data))
+		if err != nil {
+			return nil, fmt.Errorf("creating gzip reader for key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+		}
+		defer reader.Close()
+		const maxDecompressedSize = 10 * 1024 * 1024 // 10 MiB
+		limited := io.LimitReader(reader, maxDecompressedSize+1)
+		decompressed, err := io.ReadAll(limited)
+		if err != nil {
+			return nil, fmt.Errorf("decompressing key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+		}
+		if len(decompressed) > maxDecompressedSize {
+			return nil, fmt.Errorf("decompressed data for key %q in Secret %s/%s exceeds maximum size (%d bytes)", ref.Key, ref.Namespace, ref.Name, maxDecompressedSize)
+		}
+		data = decompressed
+	}
+	obj := &unstructured.Unstructured{}
+	if err := json.Unmarshal(data, &obj.Object); err != nil {
+		return nil, fmt.Errorf("unmarshaling object from key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+	}
+	return obj, nil
 }
 
 // latestActiveRevisionForExtension returns the latest active revision for the extension called extName

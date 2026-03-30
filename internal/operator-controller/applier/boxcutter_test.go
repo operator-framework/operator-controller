@@ -529,6 +529,7 @@ func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
 func TestBoxcutter_Apply(t *testing.T) {
 	testScheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(testScheme))
+	require.NoError(t, corev1.AddToScheme(testScheme))
 
 	// This is the revision that the mock builder will produce by default.
 	// We calculate its hash to use in the tests.
@@ -1065,6 +1066,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				Scheme:            testScheme,
 				RevisionGenerator: tc.mockBuilder,
 				FieldOwner:        "test-owner",
+				SystemNamespace:   "olmv1-system",
 			}
 
 			// We need a dummy fs.FS
@@ -1108,6 +1110,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 func Test_PreAuthorizer_Integration(t *testing.T) {
 	testScheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(testScheme))
+	require.NoError(t, corev1.AddToScheme(testScheme))
 
 	// This is the revision that the mock builder will produce by default.
 	// We calculate its hash to use in the tests.
@@ -1278,6 +1281,7 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 				FieldOwner:        "test-owner",
 				RevisionGenerator: dummyGenerator,
 				PreAuthorizer:     tc.preAuthorizer(t),
+				SystemNamespace:   "olmv1-system",
 			}
 			completed, status, err := boxcutter.Apply(t.Context(), dummyBundleFs, ext, nil, revisionAnnotations)
 			if tc.validate != nil {

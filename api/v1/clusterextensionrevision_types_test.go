@@ -272,6 +272,77 @@ func TestClusterExtensionRevisionValidity(t *testing.T) {
 			},
 			valid: true,
 		},
+		"object with inline object is valid": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name: "deploy",
+						Objects: []ClusterExtensionRevisionObject{
+							{
+								Object: configMap(),
+							},
+						},
+					},
+				},
+			},
+			valid: true,
+		},
+		"object with ref is valid": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name: "deploy",
+						Objects: []ClusterExtensionRevisionObject{
+							{
+								Ref: ObjectSourceRef{Name: "my-secret", Key: "my-key"},
+							},
+						},
+					},
+				},
+			},
+			valid: true,
+		},
+		"object with both object and ref is invalid": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name: "deploy",
+						Objects: []ClusterExtensionRevisionObject{
+							{
+								Object: configMap(),
+								Ref:    ObjectSourceRef{Name: "my-secret", Key: "my-key"},
+							},
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		"object with neither object nor ref is invalid": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name: "deploy",
+						Objects: []ClusterExtensionRevisionObject{
+							{},
+						},
+					},
+				},
+			},
+			valid: false,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			cer := &ClusterExtensionRevision{

@@ -774,6 +774,8 @@ spec:
                         description: |-
                           ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
                           of a phase, along with its collision protection settings.
+
+                          Exactly one of object or ref must be set.
                         properties:
                           collisionProtection:
                             description: |-
@@ -802,15 +804,48 @@ spec:
                             type: string
                           object:
                             description: |-
-                              object is a required embedded Kubernetes object to be applied.
+                              object is an optional embedded Kubernetes object to be applied.
+
+                              Exactly one of object or ref must be set.
 
                               This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
                             type: object
                             x-kubernetes-embedded-resource: true
                             x-kubernetes-preserve-unknown-fields: true
-                        required:
-                        - object
+                          ref:
+                            description: |-
+                              ref is an optional reference to a Secret that holds the serialized
+                              object manifest.
+
+                              Exactly one of object or ref must be set.
+                            properties:
+                              key:
+                                description: |-
+                                  key is the data key within the referenced Secret containing the
+                                  object manifest content. The value at this key must be a
+                                  JSON-serialized Kubernetes object manifest.
+                                maxLength: 253
+                                minLength: 1
+                                type: string
+                              name:
+                                description: name is the name of the referenced Secret.
+                                maxLength: 253
+                                minLength: 1
+                                type: string
+                              namespace:
+                                description: |-
+                                  namespace is the namespace of the referenced Secret.
+                                  When empty, defaults to the OLM system namespace during ref resolution.
+                                maxLength: 63
+                                type: string
+                            required:
+                            - key
+                            - name
+                            type: object
                         type: object
+                        x-kubernetes-validations:
+                        - message: exactly one of object or ref must be set
+                          rule: has(self.object) != has(self.ref)
                       maxItems: 50
                       type: array
                   required:
