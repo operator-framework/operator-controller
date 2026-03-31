@@ -1,6 +1,13 @@
 package labels
 
+import corev1 "k8s.io/api/core/v1"
+
 const (
+	// SecretTypeObjectData is the custom Secret type used for Secrets that store
+	// externalized object content referenced by ClusterObjectSet ref entries.
+	// It distinguishes OLM-managed ref Secrets from user-created Secrets.
+	SecretTypeObjectData corev1.SecretType = "olm.operatorframework.io/object-data" //nolint:gosec // G101 false positive: this is a Kubernetes Secret type identifier, not a credential
+
 	// OwnerKindKey is the label key used to record the kind of the owner
 	// resource responsible for creating or managing a ClusterObjectSet.
 	OwnerKindKey = "olm.operatorframework.io/owner-kind"

@@ -529,6 +529,7 @@ Feature: Install ClusterExtension
     And ClusterObjectSet "${NAME}-1" ref Secrets are immutable
     And ClusterObjectSet "${NAME}-1" ref Secrets are labeled with revision and owner
     And ClusterObjectSet "${NAME}-1" ref Secrets have ownerReference to the revision
+    And ClusterObjectSet "${NAME}-1" ref Secrets have type "olm.operatorframework.io/object-data"
 
   @DeploymentConfig
   Scenario: deploymentConfig nodeSelector is applied to the operator deployment

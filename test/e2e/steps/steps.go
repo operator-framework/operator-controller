@@ -101,6 +101,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets are immutable$`, ClusterObjectSetRefSecretsAreImmutable)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets are labeled with revision and owner$`, ClusterObjectSetRefSecretsLabeled)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets have ownerReference to the revision$`, ClusterObjectSetRefSecretsHaveOwnerRef)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets have type "([^"]+)"$`, ClusterObjectSetReferredSecretsHaveType)
 
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
@@ -870,6 +871,28 @@ func ClusterObjectSetRefSecretsHaveOwnerRef(ctx context.Context, revisionName st
 		}
 		if !found {
 			return fmt.Errorf("secret %s/%s does not have ownerReference to ClusterObjectSet %q (uid %s)", s.Namespace, s.Name, revisionName, cosUID)
+		}
+	}
+	return nil
+}
+
+// ClusterObjectSetReferredSecretsHaveType verifies that all ref Secrets for the named
+// ClusterObjectSet have the specified Secret type.
+func ClusterObjectSetReferredSecretsHaveType(ctx context.Context, revisionName, expectedType string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+
+	secrets, err := listRefSecrets(ctx, revisionName)
+	if err != nil {
+		return err
+	}
+	if len(secrets) == 0 {
+		return fmt.Errorf("no ref Secrets found for revision %q", revisionName)
+	}
+
+	for _, s := range secrets {
+		if string(s.Type) != expectedType {
+			return fmt.Errorf("secret %s/%s has type %q, expected %q", s.Namespace, s.Name, s.Type, expectedType)
 		}
 	}
 	return nil
