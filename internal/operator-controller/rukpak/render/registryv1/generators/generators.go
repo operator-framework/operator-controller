@@ -772,29 +772,104 @@ func applyNodeSelectorConfig(deployment *appsv1.Deployment, config *config.Deplo
 	deployment.Spec.Template.Spec.NodeSelector = config.NodeSelector
 }
 
+// isAffinityEmpty checks if an Affinity object is semantically empty.
+// This accounts for YAML unmarshaling which creates empty slices instead of nil.
+func isAffinityEmpty(a *corev1.Affinity) bool {
+	if a == nil {
+		return true
+	}
+	return isNodeAffinityEmpty(a.NodeAffinity) &&
+		isPodAffinityEmpty(a.PodAffinity) &&
+		isPodAntiAffinityEmpty(a.PodAntiAffinity)
+}
+
+// isNodeAffinityEmpty checks if a NodeAffinity object is semantically empty.
+func isNodeAffinityEmpty(na *corev1.NodeAffinity) bool {
+	if na == nil {
+		return true
+	}
+	requiredEmpty := na.RequiredDuringSchedulingIgnoredDuringExecution == nil ||
+		len(na.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms) == 0
+	return requiredEmpty && len(na.PreferredDuringSchedulingIgnoredDuringExecution) == 0
+}
+
+// isPodAffinityEmpty checks if a PodAffinity object is semantically empty.
+func isPodAffinityEmpty(pa *corev1.PodAffinity) bool {
+	if pa == nil {
+		return true
+	}
+	return len(pa.RequiredDuringSchedulingIgnoredDuringExecution) == 0 &&
+		len(pa.PreferredDuringSchedulingIgnoredDuringExecution) == 0
+}
+
+// isPodAntiAffinityEmpty checks if a PodAntiAffinity object is semantically empty.
+func isPodAntiAffinityEmpty(paa *corev1.PodAntiAffinity) bool {
+	if paa == nil {
+		return true
+	}
+	return len(paa.RequiredDuringSchedulingIgnoredDuringExecution) == 0 &&
+		len(paa.PreferredDuringSchedulingIgnoredDuringExecution) == 0
+}
+
 // applyAffinityConfig applies affinity configuration to the deployment's pod spec.
-// This selectively overrides non-nil affinity sub-attributes.
-// This follows OLMv0 behavior:
-// https://github.com/operator-framework/operator-lifecycle-manager/blob/v0.39.0/pkg/controller/operators/olm/overrides/inject/inject.go#L273-L341
+// This follows OLMv0 behavior where:
+//   - nil affinity means "don't touch" the deployment's existing affinity
+//   - empty affinity ({}) means "erase" the deployment's existing affinity
+//   - non-nil sub-attributes override the corresponding deployment sub-attributes
+//   - nil sub-attributes within a non-empty affinity are left unchanged
+//   - empty sub-attributes ({}) erase the corresponding deployment sub-attributes
+//
+// See: https://github.com/operator-framework/operator-lifecycle-manager/blob/v0.39.0/pkg/controller/operators/olm/overrides/inject/inject.go#L273-L341
 func applyAffinityConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
 	if config.Affinity == nil {
 		return
 	}
 
-	if deployment.Spec.Template.Spec.Affinity == nil {
-		deployment.Spec.Template.Spec.Affinity = &corev1.Affinity{}
+	podSpec := &deployment.Spec.Template.Spec
+
+	// Check if the config specifies an empty affinity object with all fields unset.
+	// This is different from having empty sub-fields - an empty affinity {} with no fields
+	// means erase everything, while affinity with empty sub-fields means selectively erase.
+	configHasNoFields := config.Affinity.NodeAffinity == nil &&
+		config.Affinity.PodAffinity == nil &&
+		config.Affinity.PodAntiAffinity == nil
+
+	if configHasNoFields {
+		// Config is affinity: {} with no fields - erase entire affinity
+		podSpec.Affinity = nil
+		return
+	}
+
+	if podSpec.Affinity == nil {
+		podSpec.Affinity = &corev1.Affinity{}
 	}
 
 	if config.Affinity.NodeAffinity != nil {
-		deployment.Spec.Template.Spec.Affinity.NodeAffinity = config.Affinity.NodeAffinity
+		if isNodeAffinityEmpty(config.Affinity.NodeAffinity) {
+			podSpec.Affinity.NodeAffinity = nil
+		} else {
+			podSpec.Affinity.NodeAffinity = config.Affinity.NodeAffinity
+		}
 	}
 
 	if config.Affinity.PodAffinity != nil {
-		deployment.Spec.Template.Spec.Affinity.PodAffinity = config.Affinity.PodAffinity
+		if isPodAffinityEmpty(config.Affinity.PodAffinity) {
+			podSpec.Affinity.PodAffinity = nil
+		} else {
+			podSpec.Affinity.PodAffinity = config.Affinity.PodAffinity
+		}
 	}
 
 	if config.Affinity.PodAntiAffinity != nil {
-		deployment.Spec.Template.Spec.Affinity.PodAntiAffinity = config.Affinity.PodAntiAffinity
+		if isPodAntiAffinityEmpty(config.Affinity.PodAntiAffinity) {
+			podSpec.Affinity.PodAntiAffinity = nil
+		} else {
+			podSpec.Affinity.PodAntiAffinity = config.Affinity.PodAntiAffinity
+		}
+	}
+
+	if isAffinityEmpty(podSpec.Affinity) {
+		podSpec.Affinity = nil
 	}
 }
 
