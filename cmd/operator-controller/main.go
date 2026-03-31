@@ -30,6 +30,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.podman.io/image/v5/types"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -281,6 +282,18 @@ func run() error {
 	if err != nil {
 		setupLog.Error(err, "Unable to setup pull-secret cache")
 		return err
+	}
+
+	// Ensure bundle Secrets in the configured systemNamespace are cached without enabling a cluster-wide Secret informer.
+	// Bundle Secrets are created in cfg.systemNamespace by SecretPacker.
+	if secretCache, ok := cacheOptions.ByObject[&corev1.Secret{}]; ok {
+		if secretCache.Namespaces == nil {
+			secretCache.Namespaces = make(map[string]crcache.Config)
+		}
+		if _, exists := secretCache.Namespaces[cfg.systemNamespace]; !exists {
+			secretCache.Namespaces[cfg.systemNamespace] = crcache.Config{}
+		}
+		cacheOptions.ByObject[&corev1.Secret{}] = secretCache
 	}
 
 	metricsServerOptions := server.Options{}
