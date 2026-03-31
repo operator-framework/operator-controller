@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -344,29 +343,12 @@ type Sourcoser interface {
 }
 
 func (c *ClusterObjectSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	skipProgressDeadlineExceededPredicate := predicate.Funcs{
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			rev, ok := e.ObjectNew.(*ocv1.ClusterObjectSet)
-			if !ok {
-				return true
-			}
-			// allow deletions to happen
-			if !rev.DeletionTimestamp.IsZero() {
-				return true
-			}
-			if cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing); cnd != nil && cnd.Status == metav1.ConditionFalse && cnd.Reason == ocv1.ReasonProgressDeadlineExceeded {
-				return false
-			}
-			return true
-		},
-	}
 	c.Clock = clock.RealClock{}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&ocv1.ClusterObjectSet{},
 			builder.WithPredicates(
 				predicate.ResourceVersionChangedPredicate{},
-				skipProgressDeadlineExceededPredicate,
 			),
 		).
 		WatchesRawSource(
@@ -684,7 +666,31 @@ func setRetryingConditions(cos *ocv1.ClusterObjectSet, message string) {
 	}
 }
 
+// markAsProgressing sets the Progressing condition to True with the given reason.
+//
+// Once ProgressDeadlineExceeded has been set for the current generation, this function
+// becomes a no-op for every reason except Succeeded. This prevents a reconcile loop
+// where the reconciler would set Progressing=True on each run only for the deadline
+// check to immediately reset it back to ProgressDeadlineExceeded, producing an
+// unnecessary status update that triggers another reconcile.
+//
+// If the generation changed (spec update) since ProgressDeadlineExceeded was recorded,
+// the guard allows the update through so the condition reflects the new generation.
+//
+// Succeeded is allowed through so that a revision whose objects eventually finish
+// rolling out can still complete normally.
+//
+// NOTE: new reasons added in the future will be blocked by default. If a new reason
+// should be allowed to overwrite ProgressDeadlineExceeded, add it to the check below.
 func markAsProgressing(cos *ocv1.ClusterObjectSet, reason, message string) {
+	if cnd := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing); cnd != nil &&
+		cnd.Status == metav1.ConditionFalse && cnd.Reason == ocv1.ReasonProgressDeadlineExceeded &&
+		cnd.ObservedGeneration == cos.Generation &&
+		reason != ocv1.ReasonSucceeded {
+		log.Log.V(1).Info("skipping markAsProgressing: ProgressDeadlineExceeded already set",
+			"requestedReason", reason, "revision", cos.Name)
+		return
+	}
 	meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
 		Type:               ocv1.ClusterObjectSetTypeProgressing,
 		Status:             metav1.ConditionTrue,

@@ -325,3 +325,36 @@ Feature: Update ClusterExtension
     And ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason RollingOut
     And ClusterObjectSet "${NAME}-2" reports Available as False with Reason ProbeFailure
 
+  @BoxcutterRuntime
+  @ProgressDeadline
+  Scenario: Old revision with ProgressDeadlineExceeded is archived when a new revision succeeds
+    Given min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
+    And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        progressDeadlineMinutes: 1
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            version: 1.0.2
+            upgradeConstraintPolicy: SelfCertified
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterObjectSet "${NAME}-1" reports Progressing as False with Reason ProgressDeadlineExceeded
+    When ClusterExtension is updated to version "1.0.0"
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason Succeeded
+    And ClusterObjectSet "${NAME}-1" is archived
+
