@@ -191,6 +191,14 @@ func TestInstall(t *testing.T) {
 				Manifest: getManifestString(t, "crd-description-changed.json"),
 			},
 		},
+		{
+			name:       "optional field addition should not fail (RHDH scenario)",
+			oldCrdPath: "crd-rhdh-old.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-rhdh-new-optional-field.json"),
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -368,6 +376,14 @@ func TestUpgrade(t *testing.T) {
 				require.NotContains(t, err.Error(),
 					`v1 -> v2: ^.spec.foobarbaz: enum: allowed enum values removed`,
 				)
+			},
+		},
+		{
+			name:       "optional field addition should not fail (RHDH scenario)",
+			oldCrdPath: "crd-rhdh-old.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-rhdh-new-optional-field.json"),
 			},
 		},
 	}

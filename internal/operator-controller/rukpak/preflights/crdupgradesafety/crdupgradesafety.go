@@ -160,15 +160,15 @@ func sameVersionErrors(results *runner.Results) []error {
 	}
 
 	errs := []error{}
-	for version, propertyResults := range results.SameVersionValidation {
-		for property, comparisonResults := range propertyResults {
-			for _, result := range comparisonResults {
+	for _, versionResult := range results.SameVersionValidation {
+		for _, propertyResult := range versionResult.PropertyComparisons {
+			for _, result := range propertyResult.ComparisonResults {
 				for _, err := range result.Errors {
 					msg := err
 					if result.Name == "unhandled" {
 						msg = conciseUnhandledMessage(err)
 					}
-					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", version, property, result.Name, msg))
+					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", versionResult.Version, propertyResult.Property, result.Name, msg))
 				}
 			}
 		}
@@ -183,15 +183,15 @@ func servedVersionErrors(results *runner.Results) []error {
 	}
 
 	errs := []error{}
-	for version, propertyResults := range results.ServedVersionValidation {
-		for property, comparisonResults := range propertyResults {
-			for _, result := range comparisonResults {
+	for _, versionResult := range results.ServedVersionValidation {
+		for _, propertyResult := range versionResult.PropertyComparisons {
+			for _, result := range propertyResult.ComparisonResults {
 				for _, err := range result.Errors {
 					msg := err
 					if result.Name == "unhandled" {
 						msg = conciseUnhandledMessage(err)
 					}
-					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", version, property, result.Name, msg))
+					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", versionResult.Version, propertyResult.Property, result.Name, msg))
 				}
 			}
 		}
