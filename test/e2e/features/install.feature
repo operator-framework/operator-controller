@@ -6,7 +6,7 @@ Feature: Install ClusterExtension
   Background:
     Given OLM is available
     And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
 
   Scenario:  Install latest available version
     When ClusterExtension is applied
@@ -594,7 +594,7 @@ Feature: Install ClusterExtension
   @BoxcutterRuntime
   @PreflightPermissions
   Scenario: Boxcutter preflight check detects missing CREATE permissions
-    Given ServiceAccount "olm-sa" without create permissions is available in ${TEST_NAMESPACE}
+    Given ServiceAccount "olm-sa" without create permissions is available in test namespace
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1

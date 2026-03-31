@@ -7,7 +7,7 @@ Feature: Preserve user-managed fields on deployed resources
   Background:
     Given OLM is available
     And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1

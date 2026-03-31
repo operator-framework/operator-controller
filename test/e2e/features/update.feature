@@ -6,7 +6,7 @@ Feature: Update ClusterExtension
   Background:
     Given OLM is available
     And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
 
   Scenario: Update to a successor version
     Given ClusterExtension is applied
