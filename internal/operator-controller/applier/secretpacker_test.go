@@ -46,6 +46,7 @@ func TestSecretPacker_Pack(t *testing.T) {
 		assert.True(t, strings.HasPrefix(result.Secrets[0].Name, "my-ext-3-"), "Secret name should be content-addressable with revision prefix")
 		assert.Equal(t, "olmv1-system", result.Secrets[0].Namespace)
 		assert.True(t, *result.Secrets[0].Immutable)
+		assert.Equal(t, labels.SecretTypeObjectData, result.Secrets[0].Type)
 		assert.Equal(t, "my-ext-3", result.Secrets[0].Labels[labels.RevisionNameKey])
 		assert.Equal(t, "my-ext", result.Secrets[0].Labels[labels.OwnerNameKey])
 

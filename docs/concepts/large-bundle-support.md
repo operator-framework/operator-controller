@@ -139,12 +139,19 @@ follow for consistency and safe lifecycle management.
 
 Recommended conventions:
 
-1. **Immutability**: Secrets should set `immutable: true`. Because COS phases
+1. **Secret type**: Secrets should use the dedicated type
+   `olm.operatorframework.io/object-data` to distinguish them from user-created
+   Secrets and enable easy identification. The system always sets this type on
+   Secrets it creates. The reconciler does not enforce the type when resolving
+   refs — Secrets with any type are accepted — but producers should set it for
+   consistency.
+
+2. **Immutability**: Secrets should set `immutable: true`. Because COS phases
    are immutable, the content backing a ref should not change after creation.
    Mutable referenced Secrets are not rejected, but modifying them after the
    COS is created leads to undefined behavior.
 
-2. **Owner references**: Referenced Secrets should carry an ownerReference to
+3. **Owner references**: Referenced Secrets should carry an ownerReference to
    the COS so that Kubernetes garbage collection removes them when the COS is
    deleted:
    ```yaml
@@ -159,7 +166,7 @@ Recommended conventions:
    Secret when the COS is deleted. The reconciler does not delete referenced
    Secrets itself.
 
-3. **Revision label**: A label identifying the owning revision aids discovery,
+4. **Revision label**: A label identifying the owning revision aids discovery,
    debugging, and bulk cleanup:
    ```
    olm.operatorframework.io/revision-name: <COS-name>
@@ -237,6 +244,7 @@ metadata:
       uid: <revision-uid>
       controller: true
 immutable: true
+type: olm.operatorframework.io/object-data
 data:
   service-account: <base64(JSON ServiceAccount manifest)>
   cluster-role:    <base64(JSON ClusterRole manifest)>
@@ -255,6 +263,7 @@ metadata:
       uid: <revision-uid>
       controller: true
 immutable: true
+type: olm.operatorframework.io/object-data
 data:
   my-crd: <base64(JSON CRD manifest)>
 ---
@@ -272,6 +281,7 @@ metadata:
       uid: <revision-uid>
       controller: true
 immutable: true
+type: olm.operatorframework.io/object-data
 data:
   deployment: <base64(JSON Deployment manifest)>
 ```
@@ -653,7 +663,7 @@ rollout semantics are unchanged.
 | **Crash safety** | 3-step: Secrets → COS → patch ownerRefs; orphan cleanup via revision label                            | 2-step: COS → Secrets with ownerRefs; simpler but reconciler may see missing Secrets temporarily |
 | **Flexibility** | Mixed inline/ref per object within the same phase is possible                                         | All-or-nothing — either all phases inline or all externalized                                    |
 | **Storage efficiency** | Per-object compression misses cross-object redundancy; potentially more Secrets created in edge cases | Better compression from cross-phase redundancy; fewer Secrets                                    |
-| **Resource type** | Secret only                                                                                          | Secret only (with dedicated type)                                                                |
+| **Resource type** | Secret with dedicated type `olm.operatorframework.io/object-data`                                     | Secret with dedicated type `olm.operatorframework.io/revision-phase-data`                        |
 | **Phases structure** | Unchanged — phases array preserved as-is; only individual objects gain a new resolution path          | Replaced at the top level — phases field swapped for phasesRef                                   |
 | **Content addressability** | Content hash as Secret data key — key changes when content changes                                    | Content hash embedded in Secret name — detects changes without fetching contents                 |
 

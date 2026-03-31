@@ -143,6 +143,7 @@ func (p *SecretPacker) newSecret(data map[string][]byte) corev1.Secret {
 			},
 		},
 		Immutable: ptr.To(true),
+		Type:      labels.SecretTypeObjectData,
 		Data:      data,
 	}
 }
