@@ -191,6 +191,14 @@ func TestInstall(t *testing.T) {
 				Manifest: getManifestString(t, "crd-description-changed.json"),
 			},
 		},
+		{
+			name:       "optional field addition should not fail",
+			oldCrdPath: "crd-optional-field-old.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-optional-field-new.json"),
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -369,6 +377,35 @@ func TestUpgrade(t *testing.T) {
 					`v1 -> v2: ^.spec.foobarbaz: enum: allowed enum values removed`,
 				)
 			},
+		},
+		{
+			name:       "optional field addition should not fail",
+			oldCrdPath: "crd-optional-field-old.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-optional-field-new.json"),
+			},
+		},
+		{
+			name:       "complex breaking changes should fail",
+			oldCrdPath: "crd-complex-breaking-changes-old.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-complex-breaking-changes-new.json"),
+			},
+			// This test verifies detection of multiple breaking changes in a single CRD upgrade:
+			// 1. Type changed from "object" to "" - Properly detected by type validator
+			// 2. Nullable changed from false to true - Properly detected by nullable validator
+			// 3. OneOf constraint added - Reported as "unhandled" (needs crdify support)
+			//    See: https://github.com/kubernetes-sigs/crdify/issues/25
+			// The upgrade is correctly blocked, but OneOf changes need better categorization.
+			requireErr: wantErrorMsgs([]string{
+				`validating upgrade for CRD "services.networking.example.com"`,
+				`type: type changed`,
+				`nullable: nullable added`,
+				`unhandled: unhandled changes found`,
+				`OneOf`,
+			}),
 		},
 	}
 

@@ -1,0 +1,95 @@
+{
+    "apiVersion": "apiextensions.k8s.io/v1",
+    "kind": "CustomResourceDefinition",
+    "metadata": {
+        "name": "services.networking.example.com"
+    },
+    "spec": {
+        "group": "networking.example.com",
+        "versions": [
+            {
+                "name": "v1beta1",
+                "served": true,
+                "storage": true,
+                "schema": {
+                    "openAPIV3Schema": {
+                        "type": "object",
+                        "properties": {
+                            "spec": {
+                                "type": "object",
+                                "properties": {
+                                    "ingress": {
+                                        "type": "object",
+                                        "properties": {
+                                            "gateway": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "servers": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "hosts": {
+                                                                    "description": "One or more hosts exposed by this gateway",
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "port": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "name": {
+                                                                            "description": "Label assigned to the port",
+                                                                            "type": "string"
+                                                                        },
+                                                                        "number": {
+                                                                            "description": "Port number",
+                                                                            "type": "integer"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "tls": {
+                                                                    "type": "object",
+                                                                    "nullable": false,
+                                                                    "properties": {
+                                                                        "credentialName": {
+                                                                            "description": "TLS certificate name",
+                                                                            "type": "string"
+                                                                        },
+                                                                        "mode": {
+                                                                            "description": "TLS mode",
+                                                                            "type": "string"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ],
+        "scope": "Namespaced",
+        "names": {
+            "plural": "services",
+            "singular": "service",
+            "kind": "Service",
+            "shortNames": [
+                "svc"
+            ]
+        }
+    },
+    "status": {
+        "storedVersions": [
+            "v1beta1"
+        ]
+    }
+}
