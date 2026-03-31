@@ -55,6 +55,7 @@ spec:
                 labels:
                   app: singlenamespacetest
               spec:
+                serviceAccountName: simple-bundle-manager
                 terminationGracePeriodSeconds: 0
                 containers:
                   - name: busybox
@@ -65,7 +66,6 @@ spec:
                     securityContext:
                       runAsUser: 1000
                       runAsNonRoot: true
-                serviceAccountName: simple-bundle-manager
       clusterPermissions:
         - rules:
             - apiGroups:
