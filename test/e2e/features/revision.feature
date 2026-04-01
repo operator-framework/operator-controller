@@ -339,3 +339,107 @@ Feature: Install ClusterObjectSet
     And resource "configmap/test-configmap-3" is installed
     And ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
     And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
+
+  Scenario: User can install a ClusterObjectSet with objects stored in Secrets
+    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    When resource is applied
+      """
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ${COS_NAME}-ref-secret
+        namespace: ${TEST_NAMESPACE}
+      immutable: true
+      type: olm.operatorframework.io/object-data
+      stringData:
+        configmap: |
+          {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+              "name": "test-configmap-ref",
+              "namespace": "${TEST_NAMESPACE}"
+            },
+            "data": {
+              "key": "value"
+            }
+          }
+        deployment: |
+          {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {
+              "name": "test-httpd",
+              "namespace": "${TEST_NAMESPACE}",
+              "labels": {
+                "app": "test-httpd"
+              }
+            },
+            "spec": {
+              "replicas": 1,
+              "selector": {
+                "matchLabels": {
+                  "app": "test-httpd"
+                }
+              },
+              "template": {
+                "metadata": {
+                  "labels": {
+                    "app": "test-httpd"
+                  }
+                },
+                "spec": {
+                  "containers": [
+                    {
+                      "name": "httpd",
+                      "image": "busybox:1.36",
+                      "imagePullPolicy": "IfNotPresent",
+                      "command": ["httpd"],
+                      "args": ["-f", "-p", "8080"],
+                      "securityContext": {
+                        "runAsNonRoot": true,
+                        "runAsUser": 1000,
+                        "allowPrivilegeEscalation": false,
+                        "capabilities": {
+                          "drop": ["ALL"]
+                        },
+                        "seccompProfile": {
+                          "type": "RuntimeDefault"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+      """
+    And ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        annotations:
+          olm.operatorframework.io/service-account-name: olm-sa
+          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
+        name: ${COS_NAME}
+      spec:
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - ref:
+              name: ${COS_NAME}-ref-secret
+              namespace: ${TEST_NAMESPACE}
+              key: configmap
+          - ref:
+              name: ${COS_NAME}-ref-secret
+              namespace: ${TEST_NAMESPACE}
+              key: deployment
+        revision: 1
+      """
+    Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
+    And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
+    And resource "configmap/test-configmap-ref" is installed
+    And resource "deployment/test-httpd" is installed

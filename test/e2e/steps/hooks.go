@@ -22,8 +22,9 @@ import (
 )
 
 type resource struct {
-	name string
-	kind string
+	name      string
+	kind      string
+	namespace string
 }
 
 type scenarioContext struct {
@@ -195,8 +196,12 @@ func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context
 	forDeletion = append(forDeletion, resource{name: sc.namespace, kind: "namespace"})
 	for _, r := range forDeletion {
 		go func(res resource) {
-			if _, err := k8sClient("delete", res.kind, res.name, "--ignore-not-found=true"); err != nil {
-				logger.Info("Error deleting resource", "name", res.name, "namespace", sc.namespace, "stderr", stderrOutput(err))
+			args := []string{"delete", res.kind, res.name, "--ignore-not-found=true"}
+			if res.namespace != "" {
+				args = append(args, "-n", res.namespace)
+			}
+			if _, err := k8sClient(args...); err != nil {
+				logger.Info("Error deleting resource", "name", res.name, "namespace", res.namespace, "stderr", stderrOutput(err))
 			}
 		}(r)
 	}
