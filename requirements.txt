@@ -20,8 +20,8 @@ packaging==26.0
 paginate==0.5.7
 pathspec==1.0.4
 platformdirs==4.9.4
-Pygments==2.19.2
-pymdown-extensions==10.21
+Pygments==2.20.0
+pymdown-extensions==10.21.2
 pyquery==2.0.1
 python-dateutil==2.9.0.post0
 PyYAML==6.0.3
