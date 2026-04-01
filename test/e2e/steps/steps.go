@@ -126,9 +126,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with permissions to install extensions is available in "([^"]*)" namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace)
-	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace)
-	sc.Step(`^(?i)ServiceAccount "([^"]*)" without create permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace)
-	sc.Step(`^(?i)ServiceAccount "([^"]*)" is available in \${TEST_NAMESPACE}$`, ServiceAccountIsAvailableInNamespace)
+	sc.Step(`^(?i)ServiceAccount "([^"]*)" without create permissions is available in test namespace$`, ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace)
+	sc.Step(`^(?i)ServiceAccount "([^"]*)" is available in test namespace$`, ServiceAccountIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" in test namespace is cluster admin$`, ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" in test namespace has permissions to fetch "([^"]+)" metrics$`, ServiceAccountWithFetchMetricsPermissions)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" sends request to "([^"]+)" endpoint of "([^"]+)" service$`, SendMetricsRequest)

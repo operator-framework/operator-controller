@@ -5,7 +5,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     And ClusterCatalog "test" serves bundles
 
   Scenario: Restore removed resource
-    Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -49,12 +49,12 @@ Feature: Recover cluster extension from errors that might occur during its lifet
                 "olm.operatorframework.io/metadata.name": test-catalog
       """
     And ClusterExtension reports Progressing as True with Reason Retrying
-    When ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    When ServiceAccount "olm-sa" with needed permissions is available in test namespace
     Then ClusterExtension is available
     And ClusterExtension reports Progressing as True with Reason Succeeded
 
   Scenario: Install ClusterExtension after conflicting resource is removed
-    Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
     And resource is applied
       """
       apiVersion: apps/v1
@@ -118,7 +118,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
   @PreflightPermissions
   Scenario: ClusterExtension installation succeeds after service account gets the required missing permissions to
     manage the bundle's resources
-    Given ServiceAccount "olm-sa" is available in ${TEST_NAMESPACE}
+    Given ServiceAccount "olm-sa" is available in test namespace
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -145,7 +145,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
       """
       Namespace:"" APIGroups:[apiextensions.k8s.io] Resources:[customresourcedefinitions] ResourceNames:[olme2etests.olm.operatorframework.io] Verbs:[delete,get,patch,update]
       """
-    When ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    When ServiceAccount "olm-sa" with needed permissions is available in test namespace
     Then ClusterExtension is available
     And ClusterExtension reports Progressing as True with Reason Succeeded
     And ClusterExtension reports Installed as True
@@ -163,7 +163,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     # - If the controller stopped reconciling, the configmap would stay deleted
     # - Resource restoration is an observable event that PROVES active reconciliation
     # - The deployment staying healthy proves the workload continues running
-    Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -203,7 +203,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     # - Reconciliation completing (observedGeneration == generation) proves the spec was processed
     # - Progressing=Succeeded proves the controller didn't block on missing catalog
     # - Extension staying Available proves workload continues running
-    Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
+    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
