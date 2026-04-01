@@ -524,12 +524,15 @@ Feature: Install ClusterExtension
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
-    And ClusterObjectSet "${NAME}-1" phase objects use refs
-    And ClusterObjectSet "${NAME}-1" ref Secrets exist in "olmv1-system" namespace
-    And ClusterObjectSet "${NAME}-1" ref Secrets are immutable
-    And ClusterObjectSet "${NAME}-1" ref Secrets are labeled with revision and owner
-    And ClusterObjectSet "${NAME}-1" ref Secrets have ownerReference to the revision
-    And ClusterObjectSet "${NAME}-1" ref Secrets have type "olm.operatorframework.io/object-data"
+    And ClusterObjectSet "${NAME}-1" phase objects are managed in Kubernetes secrets
+    And ClusterObjectSet "${NAME}-1" referred secrets exist in "olmv1-system" namespace
+    And ClusterObjectSet "${NAME}-1" referred secrets are immutable
+    And ClusterObjectSet "${NAME}-1" referred secrets contain labels
+      | key                                          | value     |
+      | olm.operatorframework.io/revision-name       | ${NAME}-1 |
+      | olm.operatorframework.io/owner-name          | ${NAME}   |
+    And ClusterObjectSet "${NAME}-1" referred secrets are owned by the object set
+    And ClusterObjectSet "${NAME}-1" referred secrets have type "olm.operatorframework.io/object-data"
 
   @DeploymentConfig
   Scenario: deploymentConfig nodeSelector is applied to the operator deployment
