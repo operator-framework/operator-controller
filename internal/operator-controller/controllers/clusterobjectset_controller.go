@@ -38,7 +38,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -643,7 +642,7 @@ func buildProgressionProbes(progressionProbes []ocv1.ProgressionProbe) (probing.
 				fieldsEqualProbe := probing.FieldsEqualProbe(probe.FieldsEqual)
 				assertions = append(assertions, &fieldsEqualProbe)
 			case ocv1.ProbeTypeFieldValue:
-				fieldValueProbe := applier.FieldValueProbe(probe.FieldValue)
+				fieldValueProbe := probing.FieldValueProbe(probe.FieldValue)
 				assertions = append(assertions, &fieldValueProbe)
 			default:
 				return nil, fmt.Errorf("unknown progressionProbe assertion probe type: %s", probe.Type)
