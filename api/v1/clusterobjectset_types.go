@@ -395,7 +395,7 @@ type ClusterObjectSetPhase struct {
 //
 // Exactly one of object or ref must be set.
 //
-// +kubebuilder:validation:XValidation:rule="has(self.object) != has(self.ref)",message="exactly one of object or ref must be set"
+// +kubebuilder:validation:ExactlyOneOf={object,ref}
 type ClusterObjectSetObject struct {
 	// object is an optional embedded Kubernetes object to be applied.
 	//
