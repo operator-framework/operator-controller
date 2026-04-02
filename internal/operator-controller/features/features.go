@@ -2,7 +2,7 @@ package features
 
 import (
 	"github.com/go-logr/logr"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/component-base/featuregate"
 
 	featuregatesutil "github.com/operator-framework/operator-controller/internal/shared/util/featuregates"
@@ -17,9 +17,9 @@ const (
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
-	BoxcutterRuntime           featuregate.Feature = "BoxcutterRuntime"
-	DeploymentConfig           featuregate.Feature = "DeploymentConfig"
-	CompositeVersionComparison featuregate.Feature = "CompositeVersionComparison"
+	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
+	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
+	CompositeVersionComparison        featuregate.Feature = "CompositeVersionComparison"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -106,7 +106,7 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 var OperatorControllerFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()
 
 func init() {
-	utilruntime.Must(OperatorControllerFeatureGate.Add(operatorControllerFeatureGates))
+	runtime.Must(OperatorControllerFeatureGate.Add(operatorControllerFeatureGates))
 }
 
 // LogFeatureGateStates logs the state of all known feature gates.

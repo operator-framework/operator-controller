@@ -211,18 +211,18 @@ func TestByVersionAndRelease_WithCompositeVersionComparison(t *testing.T) {
 	t.Run("feature gate disabled - uses build metadata", func(t *testing.T) {
 		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.CompositeVersionComparison)))
 		result := compare.ByVersionAndRelease(registryV1_b1, registryV1_b2)
-		assert.Greater(t, result, 0, "should sort by build metadata: 1.0.0+2 > 1.0.0+1")
+		assert.Positive(t, result, "should sort by build metadata: 1.0.0+2 > 1.0.0+1")
 	})
 
 	t.Run("feature gate enabled - registry+v1 bundles use build metadata fallback", func(t *testing.T) {
 		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.CompositeVersionComparison)))
 		result := compare.ByVersionAndRelease(registryV1_b1, registryV1_b2)
-		assert.Greater(t, result, 0, "should fallback to build metadata: 1.0.0+2 > 1.0.0+1")
+		assert.Positive(t, result, "should fallback to build metadata: 1.0.0+2 > 1.0.0+1")
 	})
 
 	t.Run("feature gate enabled - new format bundles use .spec.release", func(t *testing.T) {
 		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.CompositeVersionComparison)))
 		result := compare.ByVersionAndRelease(newFormat_b1, newFormat_b2)
-		assert.Greater(t, result, 0, "should use .spec.release: release=2 > release=1")
+		assert.Positive(t, result, "should use .spec.release: release=2 > release=1")
 	})
 }
