@@ -96,12 +96,12 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterObjectSetHasLabelWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects are not found or not owned by the revision$`, ClusterObjectSetObjectsNotFoundOrNotOwned)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects use refs$`, ClusterObjectSetPhaseObjectsUseRefs)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets exist in "([^"]+)" namespace$`, ClusterObjectSetRefSecretsExist)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets are immutable$`, ClusterObjectSetRefSecretsAreImmutable)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets are labeled with revision and owner$`, ClusterObjectSetRefSecretsLabeled)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets have ownerReference to the revision$`, ClusterObjectSetRefSecretsHaveOwnerRef)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" ref Secrets have type "([^"]+)"$`, ClusterObjectSetReferredSecretsHaveType)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects are managed in Kubernetes secrets$`, ClusterObjectSetPhaseObjectsManagedInSecrets)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets exist in "([^"]+)" namespace$`, ClusterObjectSetReferredSecretsExist)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are immutable$`, ClusterObjectSetReferredSecretsAreImmutable)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets contain labels$`, ClusterObjectSetReferredSecretsContainLabels)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are owned by the object set$`, ClusterObjectSetReferredSecretsOwnedByObjectSet)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets have type "([^"]+)"$`, ClusterObjectSetReferredSecretsHaveType)
 
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
@@ -715,9 +715,9 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 	return nil
 }
 
-// ClusterObjectSetPhaseObjectsUseRefs verifies that every object in every phase of the named
+// ClusterObjectSetPhaseObjectsManagedInSecrets verifies that every object in every phase of the named
 // ClusterObjectSet uses a ref (not an inline object). Polls with timeout.
-func ClusterObjectSetPhaseObjectsUseRefs(ctx context.Context, revisionName string) error {
+func ClusterObjectSetPhaseObjectsManagedInSecrets(ctx context.Context, revisionName string) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
@@ -761,14 +761,14 @@ func ClusterObjectSetPhaseObjectsUseRefs(ctx context.Context, revisionName strin
 	return nil
 }
 
-// ClusterObjectSetRefSecretsExist verifies that all Secrets referenced by the named
+// ClusterObjectSetReferredSecretsExist verifies that all Secrets referenced by the named
 // ClusterObjectSet's phase objects exist in the given namespace. Polls with timeout.
-func ClusterObjectSetRefSecretsExist(ctx context.Context, revisionName, namespace string) error {
+func ClusterObjectSetReferredSecretsExist(ctx context.Context, revisionName, namespace string) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
 	namespace = substituteScenarioVars(strings.TrimSpace(namespace), sc)
 
-	secretNames, err := collectRefSecretNames(ctx, revisionName)
+	secretNames, err := collectReferredSecretNames(ctx, revisionName)
 	if err != nil {
 		return err
 	}
@@ -782,64 +782,59 @@ func ClusterObjectSetRefSecretsExist(ctx context.Context, revisionName, namespac
 	return nil
 }
 
-// ClusterObjectSetRefSecretsAreImmutable verifies that all ref Secrets for the named
+// ClusterObjectSetReferredSecretsAreImmutable verifies that all referred Secrets for the named
 // ClusterObjectSet are immutable. Polls with timeout.
-func ClusterObjectSetRefSecretsAreImmutable(ctx context.Context, revisionName string) error {
+func ClusterObjectSetReferredSecretsAreImmutable(ctx context.Context, revisionName string) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
-	secrets, err := listRefSecrets(ctx, revisionName)
+	secrets, err := listReferredSecrets(ctx, revisionName)
 	if err != nil {
 		return err
 	}
 	if len(secrets) == 0 {
-		return fmt.Errorf("no ref Secrets found for revision %q", revisionName)
+		return fmt.Errorf("no referred secrets found for revision %q", revisionName)
 	}
 	for _, s := range secrets {
 		if s.Immutable == nil || !*s.Immutable {
-			return fmt.Errorf("ref Secret %s/%s is not immutable", s.Namespace, s.Name)
+			return fmt.Errorf("referred secret %s/%s is not immutable", s.Namespace, s.Name)
 		}
 	}
 	return nil
 }
 
-// ClusterObjectSetRefSecretsLabeled verifies that all ref Secrets for the named
-// ClusterObjectSet have the expected revision-name and owner-name labels.
-func ClusterObjectSetRefSecretsLabeled(ctx context.Context, revisionName string) error {
+// ClusterObjectSetReferredSecretsContainLabels verifies that all referred Secrets for the named
+// ClusterObjectSet have the expected labels specified in the data table. Polls with timeout.
+func ClusterObjectSetReferredSecretsContainLabels(ctx context.Context, revisionName string, table *godog.Table) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
-	secrets, err := listRefSecrets(ctx, revisionName)
+	expected, err := parseKeyValueTable(table)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid labels table: %w", err)
 	}
-	if len(secrets) == 0 {
-		return fmt.Errorf("no ref Secrets found for revision %q", revisionName)
+	for k, v := range expected {
+		expected[k] = substituteScenarioVars(v, sc)
 	}
 
-	// Get the owner name from the ClusterObjectSet's own labels.
-	cosObj, err := getResource("clusterobjectset", revisionName, "")
-	if err != nil {
-		return fmt.Errorf("getting ClusterObjectSet %q: %w", revisionName, err)
-	}
-	expectedOwner := cosObj.GetLabels()["olm.operatorframework.io/owner-name"]
-
-	for _, s := range secrets {
-		revLabel := s.Labels["olm.operatorframework.io/revision-name"]
-		if revLabel != revisionName {
-			return fmt.Errorf("secret %s/%s has revision-name label %q, expected %q", s.Namespace, s.Name, revLabel, revisionName)
+	waitFor(ctx, func() bool {
+		secrets, err := listReferredSecrets(ctx, revisionName)
+		if err != nil || len(secrets) == 0 {
+			return false
 		}
-		ownerLabel := s.Labels["olm.operatorframework.io/owner-name"]
-		if expectedOwner != "" && ownerLabel != expectedOwner {
-			return fmt.Errorf("secret %s/%s has owner-name label %q, expected %q", s.Namespace, s.Name, ownerLabel, expectedOwner)
+		for _, s := range secrets {
+			if _, _, ok := matchLabels(s.Labels, expected); !ok {
+				return false
+			}
 		}
-	}
+		return true
+	})
 	return nil
 }
 
-// ClusterObjectSetRefSecretsHaveOwnerRef verifies that all ref Secrets for the named
+// ClusterObjectSetReferredSecretsOwnedByObjectSet verifies that all referred Secrets for the named
 // ClusterObjectSet have an ownerReference pointing to the ClusterObjectSet with controller=true.
-func ClusterObjectSetRefSecretsHaveOwnerRef(ctx context.Context, revisionName string) error {
+func ClusterObjectSetReferredSecretsOwnedByObjectSet(ctx context.Context, revisionName string) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
@@ -849,12 +844,12 @@ func ClusterObjectSetRefSecretsHaveOwnerRef(ctx context.Context, revisionName st
 	}
 	cosUID := cosObj.GetUID()
 
-	secrets, err := listRefSecrets(ctx, revisionName)
+	secrets, err := listReferredSecrets(ctx, revisionName)
 	if err != nil {
 		return err
 	}
 	if len(secrets) == 0 {
-		return fmt.Errorf("no ref Secrets found for revision %q", revisionName)
+		return fmt.Errorf("no referred secrets found for revision %q", revisionName)
 	}
 
 	for _, s := range secrets {
@@ -875,18 +870,18 @@ func ClusterObjectSetRefSecretsHaveOwnerRef(ctx context.Context, revisionName st
 	return nil
 }
 
-// ClusterObjectSetReferredSecretsHaveType verifies that all ref Secrets for the named
+// ClusterObjectSetReferredSecretsHaveType verifies that all referred Secrets for the named
 // ClusterObjectSet have the specified Secret type.
 func ClusterObjectSetReferredSecretsHaveType(ctx context.Context, revisionName, expectedType string) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
-	secrets, err := listRefSecrets(ctx, revisionName)
+	secrets, err := listReferredSecrets(ctx, revisionName)
 	if err != nil {
 		return err
 	}
 	if len(secrets) == 0 {
-		return fmt.Errorf("no ref Secrets found for revision %q", revisionName)
+		return fmt.Errorf("no referred secrets found for revision %q", revisionName)
 	}
 
 	for _, s := range secrets {
@@ -897,8 +892,8 @@ func ClusterObjectSetReferredSecretsHaveType(ctx context.Context, revisionName, 
 	return nil
 }
 
-// collectRefSecretNames returns the unique set of Secret names referenced by the ClusterObjectSet's phase objects.
-func collectRefSecretNames(ctx context.Context, revisionName string) ([]string, error) {
+// collectReferredSecretNames returns the unique set of Secret names referenced by the ClusterObjectSet's phase objects.
+func collectReferredSecretNames(ctx context.Context, revisionName string) ([]string, error) {
 	var names []string
 	seen := sets.New[string]()
 
@@ -929,18 +924,18 @@ func collectRefSecretNames(ctx context.Context, revisionName string) ([]string, 
 		}
 	}
 	if len(names) == 0 {
-		return nil, fmt.Errorf("no ref Secret names found in ClusterObjectSet %q", revisionName)
+		return nil, fmt.Errorf("no referred secret names found in ClusterObjectSet %q", revisionName)
 	}
 	return names, nil
 }
 
-// listRefSecrets lists all Secrets in the OLM namespace that have the revision-name label
+// listReferredSecrets lists all Secrets in the OLM namespace that have the revision-name label
 // matching the given revision name.
-func listRefSecrets(_ context.Context, revisionName string) ([]corev1.Secret, error) {
+func listReferredSecrets(_ context.Context, revisionName string) ([]corev1.Secret, error) {
 	out, err := k8sClient("get", "secrets", "-n", olmNamespace,
 		"-l", "olm.operatorframework.io/revision-name="+revisionName, "-o", "json")
 	if err != nil {
-		return nil, fmt.Errorf("listing ref Secrets for revision %q: %w", revisionName, err)
+		return nil, fmt.Errorf("listing referred secrets for revision %q: %w", revisionName, err)
 	}
 	var secretList corev1.SecretList
 	if err := json.Unmarshal([]byte(out), &secretList); err != nil {
@@ -1797,6 +1792,17 @@ func ResourceHasAnnotations(ctx context.Context, resourceName string, table *god
 	return nil
 }
 
+// matchLabels checks that actual labels contain all expected key-value pairs.
+// Returns the first mismatched key, the actual value, and false if a mismatch is found.
+func matchLabels(actual, expected map[string]string) (string, string, bool) {
+	for k, v := range expected {
+		if a, found := actual[k]; !found || a != v {
+			return k, a, false
+		}
+	}
+	return "", "", true
+}
+
 // ResourceHasLabels waits for a resource to have all labels specified in the data table.
 // The table must have "key" and "value" columns.
 // Only supports namespaced resources (always uses sc.namespace).
@@ -1823,12 +1829,9 @@ func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Ta
 		if err := json.Unmarshal([]byte(out), &obj); err != nil {
 			return false
 		}
-		labels := obj.GetLabels()
-		for k, v := range expected {
-			if actual, found := labels[k]; !found || actual != v {
-				logger.V(1).Info("Label not yet present or value mismatch", "resource", resourceName, "key", k, "expected", v, "actual", actual)
-				return false
-			}
+		if key, got, ok := matchLabels(obj.GetLabels(), expected); !ok {
+			logger.V(1).Info("Label not yet present or value mismatch", "resource", resourceName, "key", key, "expected", expected[key], "actual", got)
+			return false
 		}
 		return true
 	})
