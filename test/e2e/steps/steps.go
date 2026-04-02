@@ -310,6 +310,16 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 		sc.clusterExtensionName = res.GetName()
 	} else if res.GetKind() == "ClusterObjectSet" {
 		sc.clusterObjectSetName = res.GetName()
+	} else {
+		namespace := res.GetNamespace()
+		if namespace == "" {
+			namespace = sc.namespace
+		}
+		sc.addedResources = append(sc.addedResources, resource{
+			name:      res.GetName(),
+			kind:      strings.ToLower(res.GetKind()),
+			namespace: namespace,
+		})
 	}
 	return nil
 }

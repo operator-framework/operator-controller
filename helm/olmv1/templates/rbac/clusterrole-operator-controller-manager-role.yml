@@ -87,6 +87,12 @@ rules:
       - list
       - watch
   - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+  - apiGroups:
       - olm.operatorframework.io
     resources:
       - clusterobjectsets

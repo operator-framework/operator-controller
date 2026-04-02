@@ -30,6 +30,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.podman.io/image/v5/types"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -697,8 +698,13 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		return fmt.Errorf("unable to create revision engine factory: %w", err)
 	}
 
+	cosClient := &secretFallbackClient{
+		Client:          c.mgr.GetClient(),
+		apiReader:       c.mgr.GetAPIReader(),
+		systemNamespace: cfg.systemNamespace,
+	}
 	if err = (&controllers.ClusterObjectSetReconciler{
-		Client:                c.mgr.GetClient(),
+		Client:                cosClient,
 		RevisionEngineFactory: revisionEngineFactory,
 		TrackingCache:         trackingCache,
 	}).SetupWithManager(c.mgr); err != nil {
@@ -790,4 +796,19 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// secretFallbackClient wraps a cached client.Client and falls back to direct
+// API reads for Secrets outside the system namespace, where the cache does not watch.
+type secretFallbackClient struct {
+	client.Client
+	apiReader       client.Reader
+	systemNamespace string
+}
+
+func (c *secretFallbackClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	if _, isSecret := obj.(*corev1.Secret); isSecret && key.Namespace != c.systemNamespace {
+		return c.apiReader.Get(ctx, key, obj, opts...)
+	}
+	return c.Client.Get(ctx, key, obj, opts...)
 }
