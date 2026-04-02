@@ -35,10 +35,10 @@ func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Chann
 		ExactVersionRelease(*installedVersionRelease),
 	}
 
-	// If release version priority is enabled, also consider bundles
+	// If CompositeVersionComparison is enabled, also consider bundles
 	// with the same semantic version but higher release as valid successors.
 	// This allows upgrades to re-released bundles (e.g., 2.0.0+1 -> 2.0.0+2).
-	if features.OperatorControllerFeatureGate.Enabled(features.ReleaseVersionPriority) {
+	if features.OperatorControllerFeatureGate.Enabled(features.CompositeVersionComparison) {
 		predicates = append(predicates, SameVersionHigherRelease(*installedVersionRelease))
 	}
 

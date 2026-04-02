@@ -243,14 +243,14 @@ func TestLegacySuccessor(t *testing.T) {
 	assert.False(t, f(emptyBundle))
 }
 
-// TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateDisabled verifies higher releases
-// are NOT successors when ReleaseVersionPriority gate is disabled (testing the default behavior).
-func TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateDisabled(t *testing.T) {
+// TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateDisabled verifies higher releases
+// are NOT successors when CompositeVersionComparison gate is disabled (testing the default behavior).
+func TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateDisabled(t *testing.T) {
 	// Explicitly disable the feature gate for this test
-	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.ReleaseVersionPriority)
-	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.ReleaseVersionPriority)))
+	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.CompositeVersionComparison)
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.CompositeVersionComparison)))
 	t.Cleanup(func() {
-		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.ReleaseVersionPriority, prevEnabled)))
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.CompositeVersionComparison, prevEnabled)))
 	})
 
 	channel := declcfg.Channel{
@@ -282,14 +282,14 @@ func TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateDisabled(t *testing.
 	assert.False(t, predicate(higherRelease))
 }
 
-// TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateEnabled verifies higher releases
-// as valid successors when ReleaseVersionPriority gate is enabled.
-func TestSuccessorsOf_WithReleaseVersionPriority_FeatureGateEnabled(t *testing.T) {
+// TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateEnabled verifies higher releases
+// as valid successors when CompositeVersionComparison gate is enabled.
+func TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateEnabled(t *testing.T) {
 	// Enable the feature gate for this test
-	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.ReleaseVersionPriority)
-	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.ReleaseVersionPriority)))
+	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.CompositeVersionComparison)
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.CompositeVersionComparison)))
 	t.Cleanup(func() {
-		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.ReleaseVersionPriority, prevEnabled)))
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.CompositeVersionComparison, prevEnabled)))
 	})
 
 	channel := declcfg.Channel{

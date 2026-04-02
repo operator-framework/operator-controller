@@ -17,9 +17,9 @@ const (
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
-	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
-	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
-	ReleaseVersionPriority            featuregate.Feature = "ReleaseVersionPriority"
+	BoxcutterRuntime           featuregate.Feature = "BoxcutterRuntime"
+	DeploymentConfig           featuregate.Feature = "DeploymentConfig"
+	CompositeVersionComparison featuregate.Feature = "CompositeVersionComparison"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -91,11 +91,12 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 		LockToDefault: false,
 	},
 
-	// ReleaseVersionPriority enables considering bundles with higher release versions
-	// as valid upgrade successors. When enabled, bundles with the same semantic version
-	// but higher release values (e.g., 2.0.0+2 as a successor to 2.0.0+1) are included
-	// in the upgrade candidate set during resolution.
-	ReleaseVersionPriority: {
+	// CompositeVersionComparison enables bundle comparison using CompositeVersion
+	// from operator-registry, which reads the explicit pkg.Release field from the
+	// olm.package property. When this comparison returns equal, build metadata is
+	// used as a tiebreaker. This supports both new bundle formats (with explicit
+	// release) and registry+v1 bundles (with build metadata).
+	CompositeVersionComparison: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,

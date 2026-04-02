@@ -2,6 +2,7 @@ package compare_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
 func TestNewVersionRange(t *testing.T) {
@@ -167,4 +169,60 @@ func TestByDeprecationFunc(t *testing.T) {
 	assert.Equal(t, -1, byDeprecation(c, a))
 	assert.Equal(t, 0, byDeprecation(c, d))
 	assert.Equal(t, 0, byDeprecation(d, c))
+}
+
+// TestByVersionAndRelease_WithCompositeVersionComparison tests the feature-gated hybrid comparison:
+// When disabled: uses build metadata (backward compatible)
+// When enabled: uses Bundle.Compare() with build metadata fallback for registry+v1
+func TestByVersionAndRelease_WithCompositeVersionComparison(t *testing.T) {
+	// Registry+v1 bundles: same version, different build metadata
+	registryV1_b1 := declcfg.Bundle{
+		Name: "package1.v1.0.0+1",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "package1", "version": "1.0.0+1"}`)},
+		},
+	}
+	registryV1_b2 := declcfg.Bundle{
+		Name: "package1.v1.0.0+2",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "package1", "version": "1.0.0+2"}`)},
+		},
+	}
+
+	// New format bundles: same version, different .spec.release
+	newFormat_b1 := declcfg.Bundle{
+		Name: "package2.v1.0.0-rel.1",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "package2", "version": "1.0.0", "release": "1"}`)},
+		},
+	}
+	newFormat_b2 := declcfg.Bundle{
+		Name: "package2.v1.0.0-rel.2",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "package2", "version": "1.0.0", "release": "2"}`)},
+		},
+	}
+
+	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.CompositeVersionComparison)
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.CompositeVersionComparison, prevEnabled)))
+	})
+
+	t.Run("feature gate disabled - uses build metadata", func(t *testing.T) {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.CompositeVersionComparison)))
+		result := compare.ByVersionAndRelease(registryV1_b1, registryV1_b2)
+		assert.Greater(t, result, 0, "should sort by build metadata: 1.0.0+2 > 1.0.0+1")
+	})
+
+	t.Run("feature gate enabled - registry+v1 bundles use build metadata fallback", func(t *testing.T) {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.CompositeVersionComparison)))
+		result := compare.ByVersionAndRelease(registryV1_b1, registryV1_b2)
+		assert.Greater(t, result, 0, "should fallback to build metadata: 1.0.0+2 > 1.0.0+1")
+	})
+
+	t.Run("feature gate enabled - new format bundles use .spec.release", func(t *testing.T) {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.CompositeVersionComparison)))
+		result := compare.ByVersionAndRelease(newFormat_b1, newFormat_b2)
+		assert.Greater(t, result, 0, "should use .spec.release: release=2 > release=1")
+	})
 }
