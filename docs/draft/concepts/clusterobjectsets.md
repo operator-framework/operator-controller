@@ -149,7 +149,7 @@ When operator-controller creates ClusterObjectSets for ClusterExtensions, it aut
 - Objects larger than 900 KiB are gzip-compressed before storage (ref resolution auto-detects and transparently decompresses gzip-compressed values so consumers see the original JSON manifest)
 - Content-addressable naming (based on SHA-256 hashes of the data) ensures that Secret names and data keys are deterministic, making creation idempotent and safe to retry
 
-For a detailed design discussion, see [Large Bundle Support](../../concepts/large-bundle-support.md).
+For a detailed design discussion, see [Large Bundle Support](large-bundle-support.md).
 
 ## Status conditions
 

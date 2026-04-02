@@ -10,6 +10,6 @@ You can reach out to the OLM community for feedbacks/discussions/contributions i
 
 * Kubernetes Slack channel: [#olm-dev](https://kubernetes.slack.com/messages/olm-dev)
 * [Operator Framework on Google Groups](https://groups.google.com/forum/#!forum/operator-framework)
-* Weekly in-person Working Group meeting: [olm-wg](https://github.com/operator-framework/community#operator-lifecycle-manager-working-group)
+* Biweekly (every two weeks) in-person Working Group meeting: [olm-wg](https://github.com/operator-framework/community#operator-lifecycle-manager-working-group)
 
 For further information on contributing, please consult the [Contribution Guide](../contribute/contributing.md)
