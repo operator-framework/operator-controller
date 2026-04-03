@@ -279,7 +279,7 @@ func TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateDisabled(t *test
 	require.NoError(t, err)
 
 	// Higher release should NOT match without feature gate
-	assert.False(t, predicate(higherRelease))
+	assert.False(t, predicate(higherRelease), "1.0.0+2 should NOT be a successor of 1.0.0+1 when feature gate disabled")
 }
 
 // TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateEnabled verifies higher releases
@@ -318,5 +318,5 @@ func TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateEnabled(t *testi
 	require.NoError(t, err)
 
 	// Higher release should match when feature gate is enabled
-	assert.True(t, predicate(higherRelease))
+	assert.True(t, predicate(higherRelease), "1.0.0+2 should be a successor of 1.0.0+1 when feature gate enabled")
 }
