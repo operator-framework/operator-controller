@@ -381,11 +381,26 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	localStorage = &storage.LocalDirV1{
-		RootDir:            storeDir,
-		RootURL:            baseStorageURL,
-		EnableMetasHandler: features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler),
+	var metasMode storage.MetasHandlerMode
+	if features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler) {
+		metasMode = storage.MetasHandlerEnabled
+	} else {
+		metasMode = storage.MetasHandlerDisabled
 	}
+
+	var graphqlMode storage.GraphQLQueriesMode
+	if features.CatalogdFeatureGate.Enabled(features.GraphQLCatalogQueries) {
+		graphqlMode = storage.GraphQLQueriesEnabled
+	} else {
+		graphqlMode = storage.GraphQLQueriesDisabled
+	}
+
+	localStorage = storage.NewLocalDirV1(
+		storeDir,
+		baseStorageURL,
+		metasMode,
+		graphqlMode,
+	)
 
 	// Config for the catalogd web server
 	catalogServerConfig := serverutil.CatalogServerConfig{
