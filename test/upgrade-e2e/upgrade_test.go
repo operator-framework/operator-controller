@@ -28,6 +28,13 @@ func TestMain(m *testing.M) {
 	pflag.Parse()
 	opts.Paths = pflag.Args()
 
+	// Run standard Go tests first (e.g., post_upgrade_test.go)
+	exitCode := m.Run()
+	if exitCode != 0 {
+		os.Exit(exitCode)
+	}
+
+	// Run Godog BDD tests
 	sc := godog.TestSuite{
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
 			sc.Before(steps.CreateScenarioContext)
