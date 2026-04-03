@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -16,6 +17,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
@@ -239,4 +241,82 @@ func TestLegacySuccessor(t *testing.T) {
 	assert.True(t, f(b4))
 	assert.True(t, f(b5))
 	assert.False(t, f(emptyBundle))
+}
+
+// TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateDisabled verifies higher releases
+// are NOT successors when CompositeVersionComparison gate is disabled (testing the default behavior).
+func TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateDisabled(t *testing.T) {
+	// Explicitly disable the feature gate for this test
+	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.CompositeVersionComparison)
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.CompositeVersionComparison)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.CompositeVersionComparison, prevEnabled)))
+	})
+
+	channel := declcfg.Channel{
+		Entries: []declcfg.ChannelEntry{
+			{Name: "test-package.v1.0.0+1"},
+			{
+				Name:     "test-package.v2.0.0",
+				Replaces: "test-package.v1.0.0+1",
+			},
+		},
+	}
+	installedBundle := ocv1.BundleMetadata{
+		Name:    "test-package.v1.0.0+1",
+		Version: "1.0.0+1",
+	}
+
+	higherRelease := declcfg.Bundle{
+		Name:    "test-package.v1.0.0+2",
+		Package: "test-package",
+		Properties: []property.Property{
+			property.MustBuildPackage("test-package", "1.0.0+2"),
+		},
+	}
+
+	predicate, err := SuccessorsOf(installedBundle, channel)
+	require.NoError(t, err)
+
+	// Higher release should NOT match without feature gate
+	assert.False(t, predicate(higherRelease), "1.0.0+2 should NOT be a successor of 1.0.0+1 when feature gate disabled")
+}
+
+// TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateEnabled verifies higher releases
+// as valid successors when CompositeVersionComparison gate is enabled.
+func TestSuccessorsOf_WithCompositeVersionComparison_FeatureGateEnabled(t *testing.T) {
+	// Enable the feature gate for this test
+	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.CompositeVersionComparison)
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.CompositeVersionComparison)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.CompositeVersionComparison, prevEnabled)))
+	})
+
+	channel := declcfg.Channel{
+		Entries: []declcfg.ChannelEntry{
+			{Name: "test-package.v1.0.0+1"},
+			{
+				Name:     "test-package.v2.0.0",
+				Replaces: "test-package.v1.0.0+1",
+			},
+		},
+	}
+	installedBundle := ocv1.BundleMetadata{
+		Name:    "test-package.v1.0.0+1",
+		Version: "1.0.0+1",
+	}
+
+	higherRelease := declcfg.Bundle{
+		Name:    "test-package.v1.0.0+2",
+		Package: "test-package",
+		Properties: []property.Property{
+			property.MustBuildPackage("test-package", "1.0.0+2"),
+		},
+	}
+
+	predicate, err := SuccessorsOf(installedBundle, channel)
+	require.NoError(t, err)
+
+	// Higher release should match when feature gate is enabled
+	assert.True(t, predicate(higherRelease), "1.0.0+2 should be a successor of 1.0.0+1 when feature gate enabled")
 }

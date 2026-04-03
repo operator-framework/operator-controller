@@ -10,6 +10,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	slicesutil "github.com/operator-framework/operator-controller/internal/shared/util/slices"
 )
 
@@ -39,15 +40,40 @@ func newMastermindsRange(versionRange string) (bsemver.Range, error) {
 }
 
 // ByVersionAndRelease is a comparison function that compares bundles by
-// version and release. Bundles with lower versions/releases are
-// considered less than bundles with higher versions/releases.
+// version and release. When the CompositeVersionComparison feature gate is
+// enabled, it uses Bundle.Compare() (which reads pkg.Release from olm.package)
+// and falls back to build metadata comparison if equal. When disabled, it uses
+// version+release from build metadata (backward compatible).
 func ByVersionAndRelease(b1, b2 declcfg.Bundle) int {
+	if features.OperatorControllerFeatureGate.Enabled(features.CompositeVersionComparison) {
+		// Use CompositeVersion comparison (reads pkg.Release from olm.package)
+		result := b2.Compare(&b1)
+		if result != 0 {
+			return result
+		}
+		// If CompositeVersion comparison is equal, fall back to build metadata
+		return compareByBuildMetadata(b1, b2)
+	}
+
+	// Default: use version+release from build metadata (backward compatible)
 	vr1, err1 := bundleutil.GetVersionAndRelease(b1)
 	vr2, err2 := bundleutil.GetVersionAndRelease(b2)
 
 	// We don't really expect errors, because we expect well-formed/validated
 	// FBC as input. However, just in case we'll check the errors and sort
 	// invalid bundles as "lower" than valid bundles.
+	if err1 != nil || err2 != nil {
+		return compareErrors(err2, err1)
+	}
+	return vr2.Compare(*vr1)
+}
+
+// compareByBuildMetadata compares bundles using build metadata parsing.
+// This is used as a fallback when CompositeVersion comparison returns equal.
+func compareByBuildMetadata(b1, b2 declcfg.Bundle) int {
+	vr1, err1 := bundleutil.GetVersionAndRelease(b1)
+	vr2, err2 := bundleutil.GetVersionAndRelease(b2)
+
 	if err1 != nil || err2 != nil {
 		return compareErrors(err2, err1)
 	}

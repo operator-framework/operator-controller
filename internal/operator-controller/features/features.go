@@ -2,7 +2,7 @@ package features
 
 import (
 	"github.com/go-logr/logr"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/component-base/featuregate"
 
 	featuregatesutil "github.com/operator-framework/operator-controller/internal/shared/util/featuregates"
@@ -19,6 +19,7 @@ const (
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
 	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
 	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
+	CompositeVersionComparison        featuregate.Feature = "CompositeVersionComparison"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -89,12 +90,23 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
 	},
+
+	// CompositeVersionComparison enables bundle comparison using CompositeVersion
+	// from operator-registry, which reads the explicit pkg.Release field from the
+	// olm.package property. When this comparison returns equal, build metadata is
+	// used as a tiebreaker. This supports both new bundle formats (with explicit
+	// release) and registry+v1 bundles (with build metadata).
+	CompositeVersionComparison: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
 }
 
 var OperatorControllerFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()
 
 func init() {
-	utilruntime.Must(OperatorControllerFeatureGate.Add(operatorControllerFeatureGates))
+	runtime.Must(OperatorControllerFeatureGate.Add(operatorControllerFeatureGates))
 }
 
 // LogFeatureGateStates logs the state of all known feature gates.

@@ -2,6 +2,7 @@ package compare_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
 func TestNewVersionRange(t *testing.T) {
@@ -138,13 +140,13 @@ func TestByVersionAndRelease(t *testing.T) {
 	t.Run("all bundles valid", func(t *testing.T) {
 		toSort := []declcfg.Bundle{b3_1, b2, b3_2, b1}
 		slices.SortStableFunc(toSort, compare.ByVersionAndRelease)
-		assert.Equal(t, []declcfg.Bundle{b1, b3_2, b3_1, b2}, toSort)
+		assert.Equal(t, []declcfg.Bundle{b1, b3_2, b3_1, b2}, toSort, "should sort descending: 1.0.0 > 1.0.0-alpha+2 > 1.0.0-alpha+1 > 0.0.1")
 	})
 
 	t.Run("some bundles are missing version", func(t *testing.T) {
 		toSort := []declcfg.Bundle{b3_1, b4noVersion, b2, b3_2, b5empty, b1}
 		slices.SortStableFunc(toSort, compare.ByVersionAndRelease)
-		assert.Equal(t, []declcfg.Bundle{b1, b3_2, b3_1, b2, b4noVersion, b5empty}, toSort)
+		assert.Equal(t, []declcfg.Bundle{b1, b3_2, b3_1, b2, b4noVersion, b5empty}, toSort, "bundles with invalid/missing versions should sort last")
 	})
 }
 
@@ -161,10 +163,47 @@ func TestByDeprecationFunc(t *testing.T) {
 	c := declcfg.Bundle{Name: "c"}
 	d := declcfg.Bundle{Name: "d"}
 
-	assert.Equal(t, 0, byDeprecation(a, b))
-	assert.Equal(t, 0, byDeprecation(b, a))
-	assert.Equal(t, 1, byDeprecation(a, c))
-	assert.Equal(t, -1, byDeprecation(c, a))
-	assert.Equal(t, 0, byDeprecation(c, d))
-	assert.Equal(t, 0, byDeprecation(d, c))
+	assert.Equal(t, 0, byDeprecation(a, b), "both deprecated bundles are equal")
+	assert.Equal(t, 0, byDeprecation(b, a), "both deprecated bundles are equal")
+	assert.Equal(t, 1, byDeprecation(a, c), "deprecated bundle 'a' should sort after non-deprecated 'c'")
+	assert.Equal(t, -1, byDeprecation(c, a), "non-deprecated bundle 'c' should sort before deprecated 'a'")
+	assert.Equal(t, 0, byDeprecation(c, d), "both non-deprecated bundles are equal")
+	assert.Equal(t, 0, byDeprecation(d, c), "both non-deprecated bundles are equal")
+}
+
+// TestByVersionAndRelease_WithCompositeVersionComparison tests the feature-gated hybrid comparison
+// for registry+v1 bundles. When the feature gate is enabled, Bundle.Compare() is called but returns
+// 0 for registry+v1 bundles (no explicit release field), so we fall back to build metadata parsing.
+// This maintains backward compatibility while preparing for future bundle formats with explicit release.
+func TestByVersionAndRelease_WithCompositeVersionComparison(t *testing.T) {
+	// Registry+v1 bundles: same version, different build metadata
+	b1 := declcfg.Bundle{
+		Name: "package1.v1.0.0+1",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "package1", "version": "1.0.0+1"}`)},
+		},
+	}
+	b2 := declcfg.Bundle{
+		Name: "package1.v1.0.0+2",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "package1", "version": "1.0.0+2"}`)},
+		},
+	}
+
+	prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.CompositeVersionComparison)
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=%t", features.CompositeVersionComparison, prevEnabled)))
+	})
+
+	t.Run("feature gate disabled - uses build metadata only", func(t *testing.T) {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.CompositeVersionComparison)))
+		result := compare.ByVersionAndRelease(b1, b2)
+		assert.Positive(t, result, "should sort by build metadata: 1.0.0+2 > 1.0.0+1")
+	})
+
+	t.Run("feature gate enabled - registry+v1 bundles still work via build metadata fallback", func(t *testing.T) {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.CompositeVersionComparison)))
+		result := compare.ByVersionAndRelease(b1, b2)
+		assert.Positive(t, result, "Bundle.Compare() returns 0, fallback to build metadata: 1.0.0+2 > 1.0.0+1")
+	})
 }
