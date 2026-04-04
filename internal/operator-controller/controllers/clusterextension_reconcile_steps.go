@@ -18,9 +18,15 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+	"sort"
 
+	bsemver "github.com/blang/semver/v4"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +38,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -140,14 +147,14 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 
-		// If already rolling out, use existing revision and set deprecation to Unknown (no catalog check)
-		if len(state.revisionStates.RollingOut) > 0 {
-			installedBundleName := ""
-			if state.revisionStates.Installed != nil {
-				installedBundleName = state.revisionStates.Installed.Name
-			}
-			SetDeprecationStatus(ext, installedBundleName, nil, false)
-			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
+		// When revisions are actively rolling out, we check whether the admin has
+		// changed the resolution-relevant spec fields (version, channels, selector,
+		// upgradeConstraintPolicy). If so, we re-engage the resolver to honor
+		// the new spec immediately.
+		//
+		// If the spec hasn't changed, we reuse the matching rolling-out revision
+		// to avoid unnecessary catalog lookups and provide resilience during catalog outages.
+		if reuseRollingOutRevision(ctx, state, ext) {
 			return nil, nil
 		}
 
@@ -201,6 +208,172 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 	}
 }
 
+// reuseRollingOutRevision checks whether an active rollout should continue using its
+// current revision. Returns true if a matching revision was found and set on the state
+// (caller should return early). Returns false if the resolver should be called instead.
+//
+// Re-resolution is triggered when no rolling-out revision was resolved from the same
+// catalog spec as the current ClusterExtension spec. This detects any change to
+// resolution-relevant fields (version, channels, selector, upgradeConstraintPolicy)
+// — even when the rolling-out version still satisfies the new version constraint.
+func reuseRollingOutRevision(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) bool {
+	if len(state.revisionStates.RollingOut) == 0 {
+		return false
+	}
+
+	l := log.FromContext(ctx)
+
+	// RollingOut is ordered by revision number ascending (oldest first, newest last).
+	latestRollingOut := state.revisionStates.RollingOut[len(state.revisionStates.RollingOut)-1]
+
+	currentHash := CatalogSpecHash(ext)
+
+	// Guard: if the hash can't be computed (e.g., non-catalog source), preserve the
+	// previous behavior and reuse the latest rolling-out revision.
+	if currentHash == "" {
+		installedBundleName := ""
+		if state.revisionStates.Installed != nil {
+			installedBundleName = state.revisionStates.Installed.Name
+		}
+		SetDeprecationStatus(ext, installedBundleName, nil, false)
+		state.resolvedRevisionMetadata = latestRollingOut
+		return true
+	}
+
+	anyHasHash := false
+	for i := len(state.revisionStates.RollingOut) - 1; i >= 0; i-- {
+		rollingOut := state.revisionStates.RollingOut[i]
+		if rollingOut.SourceSpecHash != "" {
+			anyHasHash = true
+			if rollingOut.SourceSpecHash == currentHash {
+				installedBundleName := ""
+				if state.revisionStates.Installed != nil {
+					installedBundleName = state.revisionStates.Installed.Name
+				}
+				SetDeprecationStatus(ext, installedBundleName, nil, false)
+				state.resolvedRevisionMetadata = rollingOut
+				return true
+			}
+		}
+	}
+
+	// Backward compatibility: if no rolling-out revision has a hash (pre-upgrade
+	// revisions), reuse the latest to avoid unnecessary catalog churn.
+	if !anyHasHash {
+		installedBundleName := ""
+		if state.revisionStates.Installed != nil {
+			installedBundleName = state.revisionStates.Installed.Name
+		}
+		SetDeprecationStatus(ext, installedBundleName, nil, false)
+		state.resolvedRevisionMetadata = latestRollingOut
+		return true
+	}
+
+	l.Info("no rolling-out revision matches current catalog spec hash, re-resolving bundle",
+		"rollingOutCount", len(state.revisionStates.RollingOut),
+		"currentSpecHash", currentHash,
+	)
+	return false
+}
+
+// versionMatchesSpec checks whether a given version string satisfies the version constraint
+// in the ClusterExtension spec. Returns true if the spec has no version constraint, or if
+// the version falls within the specified range. Returns false if there is a mismatch or
+// if either the constraint or the version string is unparseable.
+func versionMatchesSpec(version string, ext *ocv1.ClusterExtension) bool {
+	if ext.Spec.Source.Catalog == nil {
+		return true
+	}
+	specVersion := ext.Spec.Source.Catalog.Version
+	if specVersion == "" {
+		return true
+	}
+	if version == "" {
+		return false
+	}
+	versionRange, err := compare.NewVersionRange(specVersion)
+	if err != nil {
+		return false
+	}
+	v, err := bsemver.Parse(version)
+	if err != nil {
+		return false
+	}
+	return versionRange(v)
+}
+
+// normalizeLabelSelector returns a deep copy of the selector with MatchExpressions
+// and their Values sorted so that semantically equivalent selectors produce the
+// same JSON serialization (and therefore the same hash).
+func normalizeLabelSelector(sel *metav1.LabelSelector) *metav1.LabelSelector {
+	if sel == nil {
+		return nil
+	}
+	// A selector with no MatchLabels and no MatchExpressions is semantically
+	// equivalent to nil (both match everything). Canonicalize to nil so they
+	// hash identically.
+	if len(sel.MatchLabels) == 0 && len(sel.MatchExpressions) == 0 {
+		return nil
+	}
+	n := sel.DeepCopy()
+	for i := range n.MatchExpressions {
+		sort.Strings(n.MatchExpressions[i].Values)
+	}
+	sort.Slice(n.MatchExpressions, func(i, j int) bool {
+		a, b := n.MatchExpressions[i], n.MatchExpressions[j]
+		if a.Key != b.Key {
+			return a.Key < b.Key
+		}
+		if a.Operator != b.Operator {
+			return string(a.Operator) < string(b.Operator)
+		}
+		if len(a.Values) != len(b.Values) {
+			return len(a.Values) < len(b.Values)
+		}
+		for k := range a.Values {
+			if a.Values[k] != b.Values[k] {
+				return a.Values[k] < b.Values[k]
+			}
+		}
+		return false
+	})
+	return n
+}
+
+// CatalogSpecHash returns a SHA-256 hex digest of the resolution-relevant fields
+// from the ClusterExtension's catalog spec. Two specs that would drive the resolver
+// to evaluate different candidate sets produce different hashes.
+func CatalogSpecHash(ext *ocv1.ClusterExtension) string {
+	if ext.Spec.Source.Catalog == nil {
+		return ""
+	}
+	cat := ext.Spec.Source.Catalog
+
+	// Sort a copy of channels so that order differences don't change the hash.
+	channels := slices.Clone(cat.Channels)
+	sort.Strings(channels)
+
+	data := struct {
+		PackageName             string                       `json:"p"`
+		Version                 string                       `json:"v,omitempty"`
+		Channels                []string                     `json:"ch,omitempty"`
+		Selector                *metav1.LabelSelector        `json:"s,omitempty"`
+		UpgradeConstraintPolicy ocv1.UpgradeConstraintPolicy `json:"u,omitempty"`
+	}{
+		PackageName:             cat.PackageName,
+		Version:                 cat.Version,
+		Channels:                channels,
+		Selector:                normalizeLabelSelector(cat.Selector),
+		UpgradeConstraintPolicy: cat.UpgradeConstraintPolicy,
+	}
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	h := sha256.Sum256(raw)
+	return hex.EncodeToString(h[:])
+}
+
 // handleResolutionError handles the case when bundle resolution fails.
 //
 // Decision logic (evaluated in order):
@@ -226,15 +399,15 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 		return nil, err
 	}
 
-	// Check if the spec is requesting a specific version that differs from installed
-	specVersion := ""
-	if ext.Spec.Source.Catalog != nil {
-		specVersion = ext.Spec.Source.Catalog.Version
-	}
-	installedVersion := state.revisionStates.Installed.Version
-
-	// If spec requests a different version, we cannot fall back - must fail and retry
-	if specVersion != "" && specVersion != installedVersion {
+	// Check if the spec is requesting a version that differs from what's installed.
+	// Uses semver range matching so that ranges like ">=1.0.0, <2.0.0" are correctly
+	// recognized as satisfied by "1.0.0".
+	if !versionMatchesSpec(state.revisionStates.Installed.Version, ext) {
+		specVersion := ""
+		if ext.Spec.Source.Catalog != nil {
+			specVersion = ext.Spec.Source.Catalog.Version
+		}
+		installedVersion := state.revisionStates.Installed.Version
 		msg := fmt.Sprintf("unable to upgrade to version %s: %v (currently installed: %s)", specVersion, err, installedVersion)
 		l.Error(err, "resolution failed and spec requests version change - cannot fall back",
 			"requestedVersion", specVersion,
@@ -413,6 +586,7 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
 			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
 			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
+			labels.SourceSpecHashKey:  CatalogSpecHash(ext),
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
