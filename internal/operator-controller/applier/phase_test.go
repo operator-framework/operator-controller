@@ -163,6 +163,17 @@ func Test_PhaseSort(t *testing.T) {
 				{
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{
+							"apiVersion": "cert-manager.io/v1",
+							"kind":       "Certificate",
+							"metadata": map[string]interface{}{
+								"name": "test",
+							},
+						},
+					},
+				},
+				{
+					Object: &unstructured.Unstructured{
+						Object: map[string]interface{}{
 							"apiVersion": "autoscaling.k8s.io/v1",
 							"kind":       "VerticalPodAutoscaler",
 						},
@@ -309,6 +320,17 @@ func Test_PhaseSort(t *testing.T) {
 								},
 							},
 						},
+						{
+							Object: &unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "cert-manager.io/v1",
+									"kind":       "Certificate",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
 					},
 				},
 				{
@@ -449,7 +471,7 @@ func Test_PhaseSort(t *testing.T) {
 			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{},
 		},
 		{
-			name: "sort by group within same phase",
+			name: "sort by group across infrastructure and deploy phases",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
 					Object: &unstructured.Unstructured{
@@ -476,6 +498,22 @@ func Test_PhaseSort(t *testing.T) {
 			},
 			want: []*ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 				{
+					Name: ptr.To(string(applier.PhaseInfrastructure)),
+					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
+						{
+							Object: &unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "cert-manager.io/v1",
+									"kind":       "Certificate",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
 					Name: ptr.To(string(applier.PhaseDeploy)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
@@ -483,17 +521,6 @@ func Test_PhaseSort(t *testing.T) {
 								Object: map[string]interface{}{
 									"apiVersion": "apps/v1",
 									"kind":       "Deployment",
-									"metadata": map[string]interface{}{
-										"name": "test",
-									},
-								},
-							},
-						},
-						{
-							Object: &unstructured.Unstructured{
-								Object: map[string]interface{}{
-									"apiVersion": "cert-manager.io/v1",
-									"kind":       "Certificate",
 									"metadata": map[string]interface{}{
 										"name": "test",
 									},
