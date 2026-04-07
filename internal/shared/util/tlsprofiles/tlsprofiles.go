@@ -69,17 +69,19 @@ func cipherSuiteId(name string) uint16 {
 
 // This is primarily so that we don't have to rewrite curve values in mozilla_data.go
 const (
-	X25519     tls.CurveID = tls.X25519
-	prime256v1 tls.CurveID = tls.CurveP256
-	secp384r1  tls.CurveID = tls.CurveP384
-	secp521r1  tls.CurveID = tls.CurveP521
+	X25519MLKEM768 tls.CurveID = tls.X25519MLKEM768
+	X25519         tls.CurveID = tls.X25519
+	prime256v1     tls.CurveID = tls.CurveP256
+	secp384r1      tls.CurveID = tls.CurveP384
+	secp521r1      tls.CurveID = tls.CurveP521
 )
 
 var curves = map[string]tls.CurveID{
-	"X25519":     tls.X25519,
-	"prime256v1": tls.CurveP256,
-	"secp384r1":  tls.CurveP384,
-	"secp521r1":  tls.CurveP521,
+	"X25519MLKEM768": tls.X25519MLKEM768,
+	"X25519":         tls.X25519,
+	"prime256v1":     tls.CurveP256,
+	"secp384r1":      tls.CurveP384,
+	"secp521r1":      tls.CurveP521,
 }
 
 // Returns 0 for an invalid curve name

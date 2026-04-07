@@ -8,7 +8,7 @@ if [ -z "${JQ}" ]; then
 fi
 
 OUTPUT=internal/shared/util/tlsprofiles/mozilla_data.go
-INPUT=https://ssl-config.mozilla.org/guidelines/latest.json
+INPUT=https://ssl-config.mozilla.org/guidelines/5.8.json
 
 TMPFILE="$(mktemp)"
 trap 'rm -rf "$TMPFILE"' EXIT
@@ -38,7 +38,7 @@ cipherNums: []uint16{
 EOF
 
     ${JQ} -r ".configurations.$1.ciphersuites.[] | . |= \"tls.\" + . + \",\"" ${TMPFILE} >> ${OUTPUT}
-    ${JQ} -r ".configurations.$1.ciphers.go[] | . |= \"tls.\" + . + \",\"" ${TMPFILE} >> ${OUTPUT}
+    ${JQ} -r ".configurations.$1.ciphers.iana[] | . |= \"tls.\" + . + \",\"" ${TMPFILE} >> ${OUTPUT}
 
     cat >> ${OUTPUT} <<EOF
 },
@@ -64,6 +64,10 @@ EOF
 generate_profile "modern"
 generate_profile "intermediate"
 generate_profile "old"
+
+# Remove unsupported ciphers from Go's crypto/tls package (Mozilla v5.8 includes these but Go doesn't support them)
+sed -i.bak '/TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384/d; /TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384/d; /TLS_RSA_WITH_AES_256_CBC_SHA256/d' ${OUTPUT}
+rm -f ${OUTPUT}.bak
 
 # Make go happy
 go fmt ${OUTPUT}
