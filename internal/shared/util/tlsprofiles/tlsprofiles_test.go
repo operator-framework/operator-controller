@@ -163,4 +163,6 @@ func TestProfilesMapCompleteness(t *testing.T) {
 		require.NotNilf(t, p, "profile %q must not be nil", name)
 	}
 	require.GreaterOrEqual(t, len(profiles), 4, "profiles map must contain at least the required built-in profiles")
+	_, err := findTLSProfile(tlsProfileName("does-not-exist"))
+	require.Error(t, err, "looking up a non-existent profile must return an error")
 }
