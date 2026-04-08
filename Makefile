@@ -221,8 +221,8 @@ fmt: $(YAMLFMT) #EXHELP Formats code
 	$(YAMLFMT) -gitignore_excludes testdata
 
 .PHONY: update-tls-profiles
-update-tls-profiles: $(GOJQ) #EXHELP Update TLS profiles from the Mozilla wiki
-	env JQ=$(GOJQ) hack/tools/update-tls-profiles.sh
+update-tls-profiles: #EXHELP Update TLS profiles from the Mozilla wiki
+	hack/tools/update-tls-profiles.sh
 
 .PHONY: update-registryv1-bundle-schema
 update-registryv1-bundle-schema: #EXHELP Update registry+v1 bundle configuration JSON schema

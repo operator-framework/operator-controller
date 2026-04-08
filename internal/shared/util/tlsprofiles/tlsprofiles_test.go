@@ -166,3 +166,21 @@ func TestProfilesMapCompleteness(t *testing.T) {
 	_, err := findTLSProfile(tlsProfileName("does-not-exist"))
 	require.Error(t, err, "looking up a non-existent profile must return an error")
 }
+
+// TestNoSkippedCiphers verifies that all ciphers in mozilla_data.json are
+// supported by Go's crypto/tls. If this fails, the JSON contains a cipher that
+// needs to be handled — either it has been added to Go's crypto/tls, or it must
+// be explicitly excluded from the profiles.
+func TestNoSkippedCiphers(t *testing.T) {
+	require.Empty(t, skippedCiphers,
+		"cipher(s) in mozilla_data.json are not supported by Go's crypto/tls and were omitted: %v", skippedCiphers)
+}
+
+// TestNoSkippedCurves verifies that all curves in mozilla_data.json are
+// supported by Go's crypto/tls. If this fails, the JSON contains a curve that
+// needs to be handled — either it has been added to Go's crypto/tls, or it must
+// be explicitly excluded from the profiles.
+func TestNoSkippedCurves(t *testing.T) {
+	require.Empty(t, skippedCurves,
+		"curve(s) in mozilla_data.json are not supported by Go's crypto/tls and were omitted: %v", skippedCurves)
+}
