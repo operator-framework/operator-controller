@@ -1070,6 +1070,190 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 	}
 }
 
+// Test_ClusterObjectSetReconciler_Reconcile_ArchivalAfterProgressDeadlineExceeded verifies that
+// a COS with ProgressDeadlineExceeded can still be archived. It simulates the real scenario:
+// the COS starts as Active with ProgressDeadlineExceeded, then a spec patch sets
+// lifecycleState to Archived (as a succeeding revision would do), and a subsequent
+// reconcile processes the archival.
+func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAfterProgressDeadlineExceeded(t *testing.T) {
+	const clusterObjectSetName = "test-ext-1"
+
+	testScheme := newScheme(t)
+	require.NoError(t, corev1.AddToScheme(testScheme))
+
+	ext := newTestClusterExtension()
+	rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+	rev1.Spec.ProgressDeadlineMinutes = 1
+	rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-2 * time.Minute))
+	rev1.Finalizers = []string{"olm.operatorframework.io/teardown"}
+	meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterObjectSetTypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1.ReasonProgressDeadlineExceeded,
+		Message:            "Revision has not rolled out for 1 minute(s).",
+		ObservedGeneration: rev1.Generation,
+	})
+
+	testClient := fake.NewClientBuilder().
+		WithScheme(testScheme).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+		WithObjects(rev1, ext).
+		Build()
+
+	// Simulate the patch that a succeeding revision would apply.
+	patch := []byte(`{"spec":{"lifecycleState":"Archived"}}`)
+	require.NoError(t, testClient.Patch(t.Context(),
+		&ocv1.ClusterObjectSet{ObjectMeta: metav1.ObjectMeta{Name: clusterObjectSetName}},
+		client.RawPatch(types.MergePatchType, patch),
+	))
+
+	mockEngine := &mockRevisionEngine{
+		teardown: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+			return &mockRevisionTeardownResult{isComplete: true}, nil
+		},
+	}
+
+	result, err := (&controllers.ClusterObjectSetReconciler{
+		Client:                testClient,
+		RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
+		TrackingCache:         &mockTrackingCache{client: testClient},
+		Clock:                 clock.RealClock{},
+	}).Reconcile(t.Context(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Name: clusterObjectSetName},
+	})
+	require.NoError(t, err)
+	require.Equal(t, ctrl.Result{}, result)
+
+	rev := &ocv1.ClusterObjectSet{}
+	require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, rev))
+
+	cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectSetReasonArchived, cond.Reason)
+
+	cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionUnknown, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectSetReasonArchived, cond.Reason)
+}
+
+// Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadlineExceeded_StaysSticky verifies that
+// once ProgressDeadlineExceeded is set, it is not overwritten when the reconciler runs again
+// and sees objects still in transition. The Progressing condition should stay at
+// ProgressDeadlineExceeded instead of being set back to RollingOut.
+func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadlineExceeded_StaysSticky(t *testing.T) {
+	const clusterObjectSetName = "test-ext-1"
+
+	testScheme := newScheme(t)
+	require.NoError(t, corev1.AddToScheme(testScheme))
+
+	ext := newTestClusterExtension()
+	rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+	rev1.Spec.ProgressDeadlineMinutes = 1
+	rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-5 * time.Minute))
+	meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterObjectSetTypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1.ReasonProgressDeadlineExceeded,
+		Message:            "Revision has not rolled out for 1 minute(s).",
+		ObservedGeneration: rev1.Generation,
+	})
+
+	testClient := fake.NewClientBuilder().
+		WithScheme(testScheme).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+		WithObjects(rev1, ext).
+		Build()
+
+	mockEngine := &mockRevisionEngine{
+		reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			return &mockRevisionResult{inTransition: true}, nil
+		},
+	}
+
+	result, err := (&controllers.ClusterObjectSetReconciler{
+		Client:                testClient,
+		RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
+		TrackingCache:         &mockTrackingCache{client: testClient},
+		Clock:                 clock.RealClock{},
+	}).Reconcile(t.Context(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Name: clusterObjectSetName},
+	})
+	require.NoError(t, err)
+	require.Equal(t, ctrl.Result{}, result)
+
+	rev := &ocv1.ClusterObjectSet{}
+	require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, rev))
+
+	cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status, "Progressing should stay False")
+	require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cond.Reason, "Reason should stay ProgressDeadlineExceeded")
+}
+
+// Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadlineExceeded_SucceededOverrides verifies
+// that if a revision's objects eventually complete rolling out after the deadline was exceeded,
+// the COS can still transition to Succeeded. ProgressDeadlineExceeded should not prevent a
+// revision from completing when its objects become ready.
+func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadlineExceeded_SucceededOverrides(t *testing.T) {
+	const clusterObjectSetName = "test-ext-1"
+
+	testScheme := newScheme(t)
+	require.NoError(t, corev1.AddToScheme(testScheme))
+
+	ext := newTestClusterExtension()
+	rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+	rev1.Spec.ProgressDeadlineMinutes = 1
+	rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-5 * time.Minute))
+	meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterObjectSetTypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1.ReasonProgressDeadlineExceeded,
+		Message:            "Revision has not rolled out for 1 minute(s).",
+		ObservedGeneration: rev1.Generation,
+	})
+
+	testClient := fake.NewClientBuilder().
+		WithScheme(testScheme).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+		WithObjects(rev1, ext).
+		Build()
+
+	mockEngine := &mockRevisionEngine{
+		reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			return &mockRevisionResult{isComplete: true}, nil
+		},
+	}
+
+	result, err := (&controllers.ClusterObjectSetReconciler{
+		Client:                testClient,
+		RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
+		TrackingCache:         &mockTrackingCache{client: testClient},
+		Clock:                 clock.RealClock{},
+	}).Reconcile(t.Context(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Name: clusterObjectSetName},
+	})
+	require.NoError(t, err)
+	require.Equal(t, ctrl.Result{}, result)
+
+	rev := &ocv1.ClusterObjectSet{}
+	require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, rev))
+
+	cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionTrue, cond.Status, "Progressing should transition to True")
+	require.Equal(t, ocv1.ReasonSucceeded, cond.Reason, "Reason should be Succeeded")
+
+	cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionTrue, cond.Status)
+
+	cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionTrue, cond.Status)
+}
+
 func newTestClusterExtension() *ocv1.ClusterExtension {
 	return &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{

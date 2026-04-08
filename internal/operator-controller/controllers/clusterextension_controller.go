@@ -499,9 +499,10 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 }
 
 type RevisionMetadata struct {
-	RevisionName string
-	Package      string
-	Image        string
+	RevisionName     string
+	Package          string
+	Image            string
+	ResolutionDigest string
 	ocv1.BundleMetadata
 	Conditions []metav1.Condition
 }
@@ -535,8 +536,9 @@ func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *o
 	for _, rel := range relhis {
 		if rel.Info != nil && rel.Info.Status == release.StatusDeployed {
 			rs.Installed = &RevisionMetadata{
-				Package: rel.Labels[labels.PackageNameKey],
-				Image:   rel.Labels[labels.BundleReferenceKey],
+				Package:          rel.Labels[labels.PackageNameKey],
+				Image:            rel.Labels[labels.BundleReferenceKey],
+				ResolutionDigest: rel.Labels[labels.ResolutionDigestKey],
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    rel.Labels[labels.BundleNameKey],
 					Version: rel.Labels[labels.BundleVersionKey],

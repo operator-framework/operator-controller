@@ -57,4 +57,9 @@ const (
 	// that were created during migration from Helm releases. This label is used
 	// to distinguish migrated revisions from those created by normal Boxcutter operation.
 	MigratedFromHelmKey = "olm.operatorframework.io/migrated-from-helm"
+
+	// ResolutionDigestKey stores a base64-encoded SHA256 hash of the catalog filter inputs
+	// (packageName, version, channels, selector, upgradeConstraintPolicy) used during bundle resolution.
+	// The controller compares this digest to detect spec changes that require re-resolution.
+	ResolutionDigestKey = "olm.operatorframework.io/resolution-digest"
 )

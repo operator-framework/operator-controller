@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -234,4 +235,114 @@ func (m *mockTrackingCacheInternal) Watch(ctx context.Context, user client.Objec
 
 func (m *mockTrackingCacheInternal) Source(h handler.EventHandler, predicates ...predicate.Predicate) source.Source {
 	return nil
+}
+
+func Test_markAsProgressing_doesNotOverwriteProgressDeadlineExceeded(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		generation         int64
+		existingConditions []metav1.Condition
+		reason             string
+		expectProgressing  metav1.ConditionStatus
+		expectReason       string
+	}{
+		{
+			name:               "sets Progressing when no condition exists",
+			generation:         1,
+			existingConditions: nil,
+			reason:             ocv1.ReasonRollingOut,
+			expectProgressing:  metav1.ConditionTrue,
+			expectReason:       ocv1.ReasonRollingOut,
+		},
+		{
+			name:       "sets Progressing when currently RollingOut",
+			generation: 1,
+			existingConditions: []metav1.Condition{
+				{
+					Type:               ocv1.ClusterObjectSetTypeProgressing,
+					Status:             metav1.ConditionTrue,
+					Reason:             ocv1.ReasonRollingOut,
+					ObservedGeneration: 1,
+				},
+			},
+			reason:            ocv1.ReasonSucceeded,
+			expectProgressing: metav1.ConditionTrue,
+			expectReason:      ocv1.ReasonSucceeded,
+		},
+		{
+			name:       "does not overwrite ProgressDeadlineExceeded with RollingOut (same generation)",
+			generation: 1,
+			existingConditions: []metav1.Condition{
+				{
+					Type:               ocv1.ClusterObjectSetTypeProgressing,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ReasonProgressDeadlineExceeded,
+					ObservedGeneration: 1,
+				},
+			},
+			reason:            ocv1.ReasonRollingOut,
+			expectProgressing: metav1.ConditionFalse,
+			expectReason:      ocv1.ReasonProgressDeadlineExceeded,
+		},
+		{
+			name:       "allows Succeeded to overwrite ProgressDeadlineExceeded",
+			generation: 1,
+			existingConditions: []metav1.Condition{
+				{
+					Type:               ocv1.ClusterObjectSetTypeProgressing,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ReasonProgressDeadlineExceeded,
+					ObservedGeneration: 1,
+				},
+			},
+			reason:            ocv1.ReasonSucceeded,
+			expectProgressing: metav1.ConditionTrue,
+			expectReason:      ocv1.ReasonSucceeded,
+		},
+		{
+			name:       "allows Retrying to overwrite ProgressDeadlineExceeded (same generation)",
+			generation: 1,
+			existingConditions: []metav1.Condition{
+				{
+					Type:               ocv1.ClusterObjectSetTypeProgressing,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ReasonProgressDeadlineExceeded,
+					ObservedGeneration: 1,
+				},
+			},
+			reason:            ocv1.ClusterObjectSetReasonRetrying,
+			expectProgressing: metav1.ConditionTrue,
+			expectReason:      ocv1.ClusterObjectSetReasonRetrying,
+		},
+		{
+			name:       "allows RollingOut when generation changed since ProgressDeadlineExceeded",
+			generation: 2,
+			existingConditions: []metav1.Condition{
+				{
+					Type:               ocv1.ClusterObjectSetTypeProgressing,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ReasonProgressDeadlineExceeded,
+					ObservedGeneration: 1,
+				},
+			},
+			reason:            ocv1.ReasonRollingOut,
+			expectProgressing: metav1.ConditionTrue,
+			expectReason:      ocv1.ReasonRollingOut,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cos := &ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{Generation: tc.generation},
+				Status: ocv1.ClusterObjectSetStatus{
+					Conditions: tc.existingConditions,
+				},
+			}
+			markAsProgressing(cos, tc.reason, "test message")
+
+			cnd := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+			require.NotNil(t, cnd)
+			require.Equal(t, tc.expectProgressing, cnd.Status)
+			require.Equal(t, tc.expectReason, cnd.Reason)
+		})
+	}
 }

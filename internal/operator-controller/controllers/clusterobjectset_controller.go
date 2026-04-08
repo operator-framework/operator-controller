@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -81,7 +80,10 @@ func (c *ClusterObjectSetReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	reconciledRev := existingRev.DeepCopy()
 	res, reconcileErr := c.reconcile(ctx, reconciledRev)
 
-	if pd := existingRev.Spec.ProgressDeadlineMinutes; pd > 0 {
+	// Progress deadline enforcement only applies to Active revisions, not Archived ones.
+	// Archived revisions may need to retry teardown operations and should not have their
+	// Progressing condition or requeue behavior overridden by the deadline check.
+	if pd := existingRev.Spec.ProgressDeadlineMinutes; pd > 0 && reconciledRev.Spec.LifecycleState != ocv1.ClusterObjectSetLifecycleStateArchived {
 		cnd := meta.FindStatusCondition(reconciledRev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
 		isStillProgressing := cnd != nil && cnd.Status == metav1.ConditionTrue && cnd.Reason != ocv1.ReasonSucceeded
 		succeeded := meta.IsStatusConditionTrue(reconciledRev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
@@ -333,29 +335,12 @@ type Sourcoser interface {
 }
 
 func (c *ClusterObjectSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	skipProgressDeadlineExceededPredicate := predicate.Funcs{
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			rev, ok := e.ObjectNew.(*ocv1.ClusterObjectSet)
-			if !ok {
-				return true
-			}
-			// allow deletions to happen
-			if !rev.DeletionTimestamp.IsZero() {
-				return true
-			}
-			if cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing); cnd != nil && cnd.Status == metav1.ConditionFalse && cnd.Reason == ocv1.ReasonProgressDeadlineExceeded {
-				return false
-			}
-			return true
-		},
-	}
 	c.Clock = clock.RealClock{}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&ocv1.ClusterObjectSet{},
 			builder.WithPredicates(
 				predicate.ResourceVersionChangedPredicate{},
-				skipProgressDeadlineExceededPredicate,
 			),
 		).
 		WatchesRawSource(
@@ -638,7 +623,33 @@ func setRetryingConditions(cos *ocv1.ClusterObjectSet, message string) {
 	}
 }
 
+// markAsProgressing sets the Progressing condition to True with the given reason.
+//
+// Once ProgressDeadlineExceeded has been set for the current generation, this function
+// blocks only the RollingOut reason to prevent a reconcile loop for Active revisions.
+// The loop would occur when reconcile() sees in-transition objects and sets
+// Progressing=True/RollingOut, then the progress deadline check immediately resets it
+// to ProgressDeadlineExceeded, causing a status-only update that triggers another reconcile.
+//
+// Archived revisions are exempt because they skip progress deadline enforcement entirely,
+// so their status updates won't be overridden.
+//
+// Other reasons like Succeeded and Retrying are always allowed because:
+// - Succeeded represents terminal success (rollout eventually completed)
+// - Retrying represents transient errors that need to be visible in status
+//
+// If the generation changed since ProgressDeadlineExceeded was recorded, the guard
+// allows all updates through so the condition reflects the new generation.
 func markAsProgressing(cos *ocv1.ClusterObjectSet, reason, message string) {
+	if cnd := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing); cnd != nil &&
+		cnd.Status == metav1.ConditionFalse && cnd.Reason == ocv1.ReasonProgressDeadlineExceeded &&
+		cnd.ObservedGeneration == cos.Generation &&
+		reason == ocv1.ReasonRollingOut &&
+		cos.Spec.LifecycleState != ocv1.ClusterObjectSetLifecycleStateArchived {
+		log.Log.V(1).Info("skipping markAsProgressing: ProgressDeadlineExceeded is sticky for RollingOut on Active revisions",
+			"requestedReason", reason, "revision", cos.Name, "lifecycleState", cos.Spec.LifecycleState)
+		return
+	}
 	meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
 		Type:               ocv1.ClusterObjectSetTypeProgressing,
 		Status:             metav1.ConditionTrue,
