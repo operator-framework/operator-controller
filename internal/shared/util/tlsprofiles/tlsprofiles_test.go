@@ -1,40 +1,20 @@
 package tlsprofiles
 
 import (
+	"crypto/tls"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
-
-func TestGetProfiles(t *testing.T) {
-	tests := []struct {
-		name   tlsProfileName
-		result bool
-	}{
-		{"modern", true},
-		{"intermediate", true},
-		{"old", true},
-		{"custom", true},
-		{"does-not-exist", false},
-	}
-
-	for _, test := range tests {
-		p, err := findTLSProfile(test.name)
-		if !test.result {
-			require.Error(t, err)
-		} else {
-			require.NoError(t, err)
-			require.NotNil(t, p)
-		}
-	}
-}
 
 func TestGetTLSConfigFunc(t *testing.T) {
 	f, err := GetTLSConfigFunc()
 	require.NoError(t, err)
 	require.NotNil(t, f)
 
-	// Set an invalid profile
+	// Set an invalid profile and restore afterwards
+	orig := configuredProfile
+	t.Cleanup(func() { configuredProfile = orig })
 	configuredProfile = "does-not-exist"
 	f, err = GetTLSConfigFunc()
 	require.Error(t, err)
@@ -114,6 +94,7 @@ func TestSetCustomCurves(t *testing.T) {
 		name   string
 		result bool
 	}{
+		{"X25519MLKEM768", true}, // Post-quantum hybrid curve (Go 1.24+)
 		{"X25519", true},
 		{"prime256v1", true},
 		{"secp384r1", true},
@@ -157,4 +138,29 @@ func TestSetCustomVersion(t *testing.T) {
 			require.Error(t, err)
 		}
 	}
+}
+
+func TestOldProfileMinVersion(t *testing.T) {
+	require.EqualValues(t, tls.VersionTLS10, oldTLSProfile.minTLSVersion)
+}
+
+func TestOldProfileCiphers(t *testing.T) {
+	ciphers := oldTLSProfile.ciphers.cipherNums
+	// v5.8 old profile has exactly 21 ciphers
+	require.Len(t, ciphers, 21, "old profile cipher count changed unexpectedly")
+	// Legacy CBC cipher present in old but not modern/intermediate
+	require.Contains(t, ciphers, tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA)
+	// Most legacy cipher (3DES insecure)
+	require.Contains(t, ciphers, tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA)
+	// TLS 1.3 cipher shared with all profiles
+	require.Contains(t, ciphers, tls.TLS_AES_128_GCM_SHA256)
+}
+
+func TestProfilesMapCompleteness(t *testing.T) {
+	for _, name := range []string{"modern", "intermediate", "old", "custom"} {
+		p, err := findTLSProfile(tlsProfileName(name))
+		require.NoErrorf(t, err, "profile %q must be in profiles map", name)
+		require.NotNilf(t, p, "profile %q must not be nil", name)
+	}
+	require.GreaterOrEqual(t, len(profiles), 4, "profiles map must contain at least the required built-in profiles")
 }
