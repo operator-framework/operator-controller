@@ -38,14 +38,14 @@ require (
 	k8s.io/api v0.35.3
 	k8s.io/apiextensions-apiserver v0.35.3
 	k8s.io/apimachinery v0.35.3
-	k8s.io/apiserver v0.35.2
+	k8s.io/apiserver v0.35.3
 	k8s.io/cli-runtime v0.35.1
 	k8s.io/client-go v1.5.2
-	k8s.io/component-base v0.35.2
+	k8s.io/component-base v0.35.3
 	k8s.io/klog/v2 v2.140.0
 	k8s.io/kubernetes v1.35.0
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5
-	pkg.package-operator.run/boxcutter v0.13.0
+	pkg.package-operator.run/boxcutter v0.13.1
 	sigs.k8s.io/controller-runtime v0.23.3
 	sigs.k8s.io/controller-tools v0.20.1
 	sigs.k8s.io/crdify v0.5.1-0.20260309184313-54162f2e3097
@@ -107,7 +107,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
+	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.8.0 // indirect
