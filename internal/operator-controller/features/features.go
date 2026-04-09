@@ -19,6 +19,7 @@ const (
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
 	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
 	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
+	BundleReleaseSupport              featuregate.Feature = "BundleReleaseSupport"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -85,6 +86,17 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// DeploymentConfig enables support for customizing operator deployments
 	// via spec.config.inline.deploymentConfig in ClusterExtension resources.
 	DeploymentConfig: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// BundleReleaseSupport enables parsing of the explicit pkg.Release field
+	// from the olm.package property. When enabled, bundles with an explicit
+	// pkg.Release field have their release value parsed separately from the version,
+	// allowing build metadata to serve its proper semver purpose (e.g., git commit).
+	// When disabled, release values are parsed from version build metadata (registry+v1 legacy).
+	BundleReleaseSupport: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,

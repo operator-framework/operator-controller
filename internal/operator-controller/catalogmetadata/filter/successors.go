@@ -13,14 +13,36 @@ import (
 )
 
 func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
-	// TODO: We do not have an explicit field in our BundleMetadata for a bundle's release value.
-	//    Legacy registry+v1 bundles embed the release value inside their versions as build metadata
-	//    (in violation of the semver spec). If/when we add explicit release metadata to bundles and/or
-	//    we support a new bundle format, we need to revisit the assumption that all bundles are
-	//    registry+v1 and embed release in build metadata.
-	installedVersionRelease, err := bundle.NewLegacyRegistryV1VersionRelease(installedBundle.Version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get version and release of installed bundle: %v", err)
+	// Construct VersionRelease from BundleMetadata.
+	// If the Release field is populated, parse version and release separately.
+	// Otherwise, parse release from version build metadata (registry+v1 legacy format).
+	var installedVersionRelease *bundle.VersionRelease
+	var err error
+
+	if installedBundle.Release != "" {
+		// Bundle has explicit release field - parse version and release from separate fields.
+		// Note: We can't use NewLegacyRegistryV1VersionRelease here because the version might
+		// already contain build metadata (e.g., "1.0.0+git.abc"), which serves its proper
+		// semver purpose when using explicit pkg.Release. Concatenating would create invalid
+		// semver like "1.0.0+git.abc+2".
+		version, err := bsemver.Parse(installedBundle.Version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse installed bundle version %q: %w", installedBundle.Version, err)
+		}
+		release, err := bundle.NewRelease(installedBundle.Release)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse installed bundle release %q: %w", installedBundle.Release, err)
+		}
+		installedVersionRelease = &bundle.VersionRelease{
+			Version: version,
+			Release: release,
+		}
+	} else {
+		// Legacy registry+v1: release embedded in version's build metadata
+		installedVersionRelease, err = bundle.NewLegacyRegistryV1VersionRelease(installedBundle.Version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get version and release of installed bundle: %w", err)
+		}
 	}
 
 	successorsPredicate, err := legacySuccessor(installedBundle, channels...)

@@ -69,6 +69,7 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 			BundleMetadata: ocv1.BundleMetadata{
 				Name:    rev.Annotations[labels.BundleNameKey],
 				Version: rev.Annotations[labels.BundleVersionKey],
+				Release: rev.Annotations[labels.BundleReleaseKey],
 			},
 		}
 
@@ -104,6 +105,7 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
 			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
 			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
+			labels.BundleReleaseKey:   state.resolvedRevisionMetadata.Release,
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,

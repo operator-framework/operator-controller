@@ -540,6 +540,7 @@ func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *o
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    rel.Labels[labels.BundleNameKey],
 					Version: rel.Labels[labels.BundleVersionKey],
+					Release: rel.Labels[labels.BundleReleaseKey],
 				},
 			}
 			break

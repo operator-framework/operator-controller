@@ -2596,6 +2596,7 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 						labels.BundleNameKey:      "test-ext",
 						labels.BundleVersionKey:   "1.0",
 						labels.BundleReferenceKey: "bundle-ref",
+						labels.BundleReleaseKey:   "2",
 					},
 				},
 			},
@@ -2604,6 +2605,7 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    "test-ext",
 					Version: "1.0",
+					Release: "2",
 				},
 				Image: "bundle-ref",
 			}, nil,

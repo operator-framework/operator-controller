@@ -29,6 +29,13 @@ type BundleMetadataApplyConfiguration struct {
 	// version is required and references the version that this bundle represents.
 	// It follows the semantic versioning standard as defined in https://semver.org/.
 	Version *string `json:"version,omitempty"`
+	// release is an optional field that references the release value for this bundle.
+	// The release follows pre-release/build metadata syntax as defined in https://semver.org/,
+	// consisting of dot-separated identifiers where numeric identifiers must not have leading zeros.
+	// For bundles with explicit pkg.Release metadata, this field contains that release value.
+	// For registry+v1 bundles, this field contains the release extracted from version's build metadata (e.g., '2' from '1.0.0+2').
+	// This field may be omitted if there is no explicit release and the version contains no parseable build metadata.
+	Release *string `json:"release,omitempty"`
 }
 
 // BundleMetadataApplyConfiguration constructs a declarative configuration of the BundleMetadata type for use with
@@ -50,5 +57,13 @@ func (b *BundleMetadataApplyConfiguration) WithName(value string) *BundleMetadat
 // If called multiple times, the Version field is set to the value of the last call.
 func (b *BundleMetadataApplyConfiguration) WithVersion(value string) *BundleMetadataApplyConfiguration {
 	b.Version = &value
+	return b
+}
+
+// WithRelease sets the Release field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Release field is set to the value of the last call.
+func (b *BundleMetadataApplyConfiguration) WithRelease(value string) *BundleMetadataApplyConfiguration {
+	b.Release = &value
 	return b
 }

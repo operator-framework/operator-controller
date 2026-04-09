@@ -67,6 +67,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `name` _string_ | name is required and follows the DNS subdomain standard as defined in [RFC 1123].<br />It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.),<br />start and end with an alphanumeric character, and be no longer than 253 characters. |  | Required: \{\} <br /> |
 | `version` _string_ | version is required and references the version that this bundle represents.<br />It follows the semantic versioning standard as defined in https://semver.org/. |  | Required: \{\} <br /> |
+| `release` _string_ | release is an optional field that references the release value for this bundle.<br />The release follows pre-release/build metadata syntax as defined in https://semver.org/,<br />consisting of dot-separated identifiers where numeric identifiers must not have leading zeros.<br />For bundles with explicit pkg.Release metadata, this field contains that release value.<br />For registry+v1 bundles, this field contains the release extracted from version's build metadata (e.g., '2' from '1.0.0+2').<br />This field may be omitted if there is no explicit release and the version contains no parseable build metadata. |  | Optional: \{\} <br /> |
 
 
 #### CRDUpgradeSafetyEnforcement

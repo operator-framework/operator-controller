@@ -4,7 +4,6 @@ import (
 	"slices"
 	"testing"
 
-	bsemver "github.com/blang/semver/v4"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
@@ -14,10 +13,21 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
+
+// mustVersionRelease is a test helper that parses a version string into a VersionRelease.
+// For registry+v1 bundles, build metadata is interpreted as release (e.g., "1.0.0+2" -> Version: 1.0.0, Release: 2).
+func mustVersionRelease(versionStr string) bundle.VersionRelease {
+	vr, err := bundle.NewLegacyRegistryV1VersionRelease(versionStr)
+	if err != nil {
+		panic(err)
+	}
+	return *vr
+}
 
 func TestSuccessorsPredicate(t *testing.T) {
 	const testPackageName = "test-package"
@@ -122,7 +132,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 	}{
 		{
 			name:            "respect replaces directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0", bsemver.MustParse("2.0.0")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0", mustVersionRelease("2.0.0")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which replaces the current version
@@ -133,7 +143,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 		},
 		{
 			name:            "respect skips directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.2.1", bsemver.MustParse("2.2.1")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.2.1", mustVersionRelease("2.2.1")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which skips the current version
@@ -144,7 +154,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 		},
 		{
 			name:            "respect skipRange directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.3.0", bsemver.MustParse("2.3.0")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.3.0", mustVersionRelease("2.3.0")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which is skipRanges the current version
@@ -155,7 +165,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 		},
 		{
 			name:            "installed bundle matcher is exact",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0+1", bsemver.MustParse("2.0.0+1")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0+1", mustVersionRelease("2.0.0+1")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				//   - the one which is skips the current version

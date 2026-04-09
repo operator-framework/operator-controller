@@ -466,6 +466,17 @@ type BundleMetadata struct {
 	// +required
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^([0-9]+)(\\\\.[0-9]+)?(\\\\.[0-9]+)?(-([-0-9A-Za-z]+(\\\\.[-0-9A-Za-z]+)*))?(\\\\+([-0-9A-Za-z]+(-\\\\.[-0-9A-Za-z]+)*))?\")",message="version must be well-formed semver"
 	Version string `json:"version"`
+
+	// release is an optional field that references the release value for this bundle.
+	// The release follows pre-release/build metadata syntax as defined in https://semver.org/,
+	// consisting of dot-separated identifiers where numeric identifiers must not have leading zeros.
+	// For bundles with explicit pkg.Release metadata, this field contains that release value.
+	// For registry+v1 bundles, this field contains the release extracted from version's build metadata (e.g., '2' from '1.0.0+2').
+	// This field may be omitted if there is no explicit release and the version contains no parseable build metadata.
+	//
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^$|^(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*$\")",message="release must be empty or well-formed pre-release/build metadata (dot-separated identifiers, numeric parts without leading zeros)"
+	Release string `json:"release,omitempty"`
 }
 
 // RevisionStatus defines the observed state of a ClusterObjectSet.
