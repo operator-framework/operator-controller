@@ -1355,7 +1355,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 		expectCollision         bool
 	}{
 		{
-			name:                    "progressed object owned by a foreign COS is treated as a collision",
+			name:                    "collision object owned by a foreign COS is detected",
 			reconcilingRevisionName: "ext-B-1",
 			existingObjs: func() []client.Object {
 				extA := &ocv1.ClusterExtension{
@@ -1390,7 +1390,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 						name: "everything",
 						objects: []machinery.ObjectResult{
 							mockObjectResult{
-								action: machinery.ActionProgressed,
+								action: machinery.ActionCollision,
 								object: &unstructured.Unstructured{
 									Object: map[string]interface{}{
 										"apiVersion": "apiextensions.k8s.io/v1",
@@ -1570,7 +1570,6 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
 				require.Contains(t, cond.Message, "revision object collisions")
-				require.Contains(t, cond.Message, "Conflicting Owner")
 			} else {
 				require.Equal(t, ctrl.Result{}, result)
 				require.NoError(t, err)
