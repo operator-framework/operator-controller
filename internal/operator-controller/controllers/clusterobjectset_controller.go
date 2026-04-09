@@ -493,6 +493,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 	opts := []boxcutter.RevisionReconcileOption{
 		boxcutter.WithPreviousOwners(previousObjs),
 		boxcutter.WithProbe(boxcutter.ProgressProbeType, progressionProbes),
+		boxcutter.WithAggregatePhaseReconcileErrors(),
 	}
 
 	phases := make([]boxcutter.Phase, 0)
