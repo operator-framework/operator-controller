@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
@@ -2596,6 +2597,7 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 						labels.BundleNameKey:      "test-ext",
 						labels.BundleVersionKey:   "1.0",
 						labels.BundleReferenceKey: "bundle-ref",
+						labels.BundleReleaseKey:   "2",
 					},
 				},
 			},
@@ -2604,6 +2606,7 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    "test-ext",
 					Version: "1.0",
+					Release: ptr.To("2"),
 				},
 				Image: "bundle-ref",
 			}, nil,

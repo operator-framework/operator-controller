@@ -85,6 +85,9 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		if v := helmRelease.Labels[labels.BundleVersionKey]; v != "" {
 			annotationUpdates[labels.BundleVersionKey] = v
 		}
+		if v, ok := helmRelease.Labels[labels.BundleReleaseKey]; ok {
+			annotationUpdates[labels.BundleReleaseKey] = v
+		}
 		if v := helmRelease.Labels[labels.PackageNameKey]; v != "" {
 			annotationUpdates[labels.PackageNameKey] = v
 		}
@@ -96,12 +99,16 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 			WithObject(obj))
 	}
 
-	rev := r.buildClusterObjectSet(objs, ext, map[string]string{
+	revisionAnnotations := map[string]string{
 		labels.BundleNameKey:      helmRelease.Labels[labels.BundleNameKey],
 		labels.PackageNameKey:     helmRelease.Labels[labels.PackageNameKey],
 		labels.BundleVersionKey:   helmRelease.Labels[labels.BundleVersionKey],
 		labels.BundleReferenceKey: helmRelease.Labels[labels.BundleReferenceKey],
-	})
+	}
+	if v, ok := helmRelease.Labels[labels.BundleReleaseKey]; ok {
+		revisionAnnotations[labels.BundleReleaseKey] = v
+	}
+	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
 	rev.WithName(fmt.Sprintf("%s-1", ext.Name))
 	rev.Spec.WithRevision(1)
 	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionNone) // allow to adopt objects from previous release

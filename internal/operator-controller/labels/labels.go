@@ -28,6 +28,14 @@ const (
 	// associated with a ClusterObjectSet.
 	BundleVersionKey = "olm.operatorframework.io/bundle-version"
 
+	// BundleReleaseKey is the storage key used to record the bundle release value
+	// across supported metadata backends, including Helm release labels and
+	// ClusterObjectSet annotations. For bundles with explicit pkg.Release metadata,
+	// this field contains that release value. For registry+v1 bundles, this field contains
+	// a release derived from the version's build metadata only when that metadata is
+	// parseable as a release value (e.g., '2' from '1.0.0+2').
+	BundleReleaseKey = "olm.operatorframework.io/bundle-release"
+
 	// BundleReferenceKey is the label key used to record an external reference
 	// (such as an image or catalog reference) to the bundle for a
 	// ClusterObjectSet.

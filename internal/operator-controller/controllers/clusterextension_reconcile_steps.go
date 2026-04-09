@@ -191,11 +191,13 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		state.resolvedRevisionMetadata = &RevisionMetadata{
 			Package: resolvedBundle.Package,
 			Image:   resolvedBundle.Image,
-			// TODO: Right now, operator-controller only supports registry+v1 bundles and has no concept
-			//   of a "release" field. If/when we add a release field concept or a new bundle format
-			//   we need to re-evaluate use of `AsLegacyRegistryV1Version` so that we avoid propagating
-			//   registry+v1's semver spec violations of treating build metadata as orderable.
-			BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, resolvedBundleVersion.AsLegacyRegistryV1Version()),
+			// MetadataFor accepts VersionRelease input and normalizes bundle metadata.
+			// - With BundleReleaseSupport enabled, it stores release information in BundleMetadata.Release
+			//   (whether provided explicitly via pkg.Release or extracted from registry+v1 build metadata,
+			//   e.g. "1.0.0+2" -> Release "2").
+			// - Without BundleReleaseSupport, it preserves legacy behavior by embedding release information
+			//   back into BundleMetadata.Version instead of emitting a separate Release field.
+			BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
 		}
 		return nil, nil
 	}
@@ -413,6 +415,9 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
 			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
 			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
+		}
+		if state.resolvedRevisionMetadata.Release != nil {
+			revisionAnnotations[labels.BundleReleaseKey] = *state.resolvedRevisionMetadata.Release
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
