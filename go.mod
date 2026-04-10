@@ -20,7 +20,7 @@ require (
 	github.com/klauspost/compress v1.18.5
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/operator-framework/api v0.41.0
+	github.com/operator-framework/api v0.42.0
 	github.com/operator-framework/helm-operator-plugins v0.8.0
 	github.com/operator-framework/operator-registry v1.64.0
 	github.com/prometheus/client_golang v1.23.2
