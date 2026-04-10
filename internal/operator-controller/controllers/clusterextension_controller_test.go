@@ -785,7 +785,12 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 		// the same inputs the runtime would see.
 		d.RevisionStatesGetter = &MockRevisionStatesGetter{
 			RevisionStates: &controllers.RevisionStates{
-				RollingOut: []*controllers.RevisionMetadata{{}},
+				RollingOut: []*controllers.RevisionMetadata{{
+					// Different digest from current spec - ensures we call the resolver
+					// (This simulates a rolling-out revision from a previous reconcile)
+					ResolutionDigest: "different-digest-from-previous-reconcile",
+					BundleMetadata:   ocv1.BundleMetadata{Version: "1.0.0"},
+				}},
 			},
 		}
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
@@ -845,21 +850,18 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 
 	deprecatedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeDeprecated)
 	require.NotNil(t, deprecatedCond)
-	require.Equal(t, metav1.ConditionUnknown, deprecatedCond.Status, "no catalog data during rollout, so Unknown")
-	require.Equal(t, ocv1.ReasonDeprecationStatusUnknown, deprecatedCond.Reason)
-	require.Equal(t, "deprecation status unknown: catalog data unavailable", deprecatedCond.Message)
+	require.Equal(t, metav1.ConditionFalse, deprecatedCond.Status, "catalog data available from resolution, not deprecated")
+	require.Equal(t, ocv1.ReasonNotDeprecated, deprecatedCond.Reason)
 
 	packageCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypePackageDeprecated)
 	require.NotNil(t, packageCond)
-	require.Equal(t, metav1.ConditionUnknown, packageCond.Status, "no catalog data during rollout, so Unknown")
-	require.Equal(t, ocv1.ReasonDeprecationStatusUnknown, packageCond.Reason)
-	require.Equal(t, "deprecation status unknown: catalog data unavailable", packageCond.Message)
+	require.Equal(t, metav1.ConditionFalse, packageCond.Status, "catalog data available from resolution, package not deprecated")
+	require.Equal(t, ocv1.ReasonNotDeprecated, packageCond.Reason)
 
 	channelCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeChannelDeprecated)
 	require.NotNil(t, channelCond)
-	require.Equal(t, metav1.ConditionUnknown, channelCond.Status, "no catalog data during rollout, so Unknown")
-	require.Equal(t, ocv1.ReasonDeprecationStatusUnknown, channelCond.Reason)
-	require.Equal(t, "deprecation status unknown: catalog data unavailable", channelCond.Message)
+	require.Equal(t, metav1.ConditionFalse, channelCond.Status, "catalog data available from resolution, channel not deprecated")
+	require.Equal(t, ocv1.ReasonNotDeprecated, channelCond.Reason)
 
 	bundleCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeBundleDeprecated)
 	require.NotNil(t, bundleCond)

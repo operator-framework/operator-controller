@@ -18,8 +18,12 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -36,6 +40,58 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
+
+// resolutionInputs captures the catalog filter fields that affect bundle resolution.
+// Changes to any of these fields require re-resolution.
+type resolutionInputs struct {
+	PackageName             string   `json:"packageName"`
+	Version                 string   `json:"version"`
+	Channels                []string `json:"channels,omitempty"`
+	Selector                string   `json:"selector,omitempty"`
+	UpgradeConstraintPolicy string   `json:"upgradeConstraintPolicy,omitempty"`
+}
+
+// calculateResolutionDigest computes a SHA256 hash of the catalog filter inputs
+// that affect bundle resolution. This digest enables detection of spec changes that
+// require re-resolution versus when a rolling-out revision can be reused.
+//
+// The digest is base64 URL-safe encoded (43 characters) to fit within Kubernetes
+// label value limits (63 characters max) when stored in Helm release metadata.
+func calculateResolutionDigest(catalog *ocv1.CatalogFilter) (string, error) {
+	if catalog == nil {
+		return "", nil
+	}
+
+	// Sort channels for deterministic hashing
+	channels := slices.Clone(catalog.Channels)
+	slices.Sort(channels)
+
+	inputs := resolutionInputs{
+		PackageName:             catalog.PackageName,
+		Version:                 catalog.Version,
+		Channels:                channels,
+		UpgradeConstraintPolicy: string(catalog.UpgradeConstraintPolicy),
+	}
+
+	// Convert selector to canonical string representation for deterministic hashing
+	if catalog.Selector != nil {
+		selector, err := metav1.LabelSelectorAsSelector(catalog.Selector)
+		if err != nil {
+			return "", fmt.Errorf("converting selector: %w", err)
+		}
+		inputs.Selector = selector.String()
+	}
+
+	// Marshal to JSON for consistent hashing
+	inputsBytes, err := json.Marshal(inputs)
+	if err != nil {
+		return "", fmt.Errorf("marshaling resolution inputs: %w", err)
+	}
+
+	// Compute SHA256 hash and encode as base64 URL-safe (43 chars, fits in label value limit)
+	hash := sha256.Sum256(inputsBytes)
+	return base64.RawURLEncoding.EncodeToString(hash[:]), nil
+}
 
 func HandleFinalizers(f finalizer.Finalizer) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
@@ -140,15 +196,32 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 
-		// If already rolling out, use existing revision and set deprecation to Unknown (no catalog check)
+		// If already rolling out, check if the latest rolling-out revision matches the current spec.
+		// If spec has changed (e.g., version, channels, selector, upgradeConstraintPolicy), we need
+		// to resolve a new bundle instead of reusing the rolling-out revision.
+		//
+		// Note: RollingOut slice is sorted oldest→newest, so use the last element (most recent).
+		// This avoids re-resolving when a newer revision already matches the spec, even if an
+		// older revision is still stuck rolling out.
 		if len(state.revisionStates.RollingOut) > 0 {
-			installedBundleName := ""
-			if state.revisionStates.Installed != nil {
-				installedBundleName = state.revisionStates.Installed.Name
+			latestRollingOutRevision := state.revisionStates.RollingOut[len(state.revisionStates.RollingOut)-1]
+
+			// Calculate digest of current spec's catalog filter
+			currentDigest, err := calculateResolutionDigest(ext.Spec.Source.Catalog)
+			if err != nil {
+				l.Error(err, "failed to calculate resolution digest from spec")
+				// On digest calculation error, fall through to re-resolve for safety
+			} else if currentDigest == latestRollingOutRevision.ResolutionDigest {
+				// Resolution inputs haven't changed - reuse the rolling-out revision
+				installedBundleName := ""
+				if state.revisionStates.Installed != nil {
+					installedBundleName = state.revisionStates.Installed.Name
+				}
+				SetDeprecationStatus(ext, installedBundleName, nil, false)
+				state.resolvedRevisionMetadata = latestRollingOutRevision
+				return nil, nil
 			}
-			SetDeprecationStatus(ext, installedBundleName, nil, false)
-			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
-			return nil, nil
+			// Resolution inputs changed - fall through to resolve new bundle from catalog
 		}
 
 		// Resolve a new bundle from the catalog
@@ -188,9 +261,17 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 			return handleResolutionError(ctx, c, state, ext, err)
 		}
 
+		// Calculate digest of the resolution inputs for change detection
+		digest, err := calculateResolutionDigest(ext.Spec.Source.Catalog)
+		if err != nil {
+			l.Error(err, "failed to calculate resolution digest, continuing without it")
+			digest = ""
+		}
+
 		state.resolvedRevisionMetadata = &RevisionMetadata{
-			Package: resolvedBundle.Package,
-			Image:   resolvedBundle.Image,
+			Package:          resolvedBundle.Package,
+			Image:            resolvedBundle.Image,
+			ResolutionDigest: digest,
 			// TODO: Right now, operator-controller only supports registry+v1 bundles and has no concept
 			//   of a "release" field. If/when we add a release field concept or a new bundle format
 			//   we need to re-evaluate use of `AsLegacyRegistryV1Version` so that we avoid propagating
@@ -409,10 +490,11 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		revisionAnnotations := map[string]string{
-			labels.BundleNameKey:      state.resolvedRevisionMetadata.Name,
-			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
-			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
-			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
+			labels.BundleNameKey:       state.resolvedRevisionMetadata.Name,
+			labels.PackageNameKey:      state.resolvedRevisionMetadata.Package,
+			labels.BundleVersionKey:    state.resolvedRevisionMetadata.Version,
+			labels.BundleReferenceKey:  state.resolvedRevisionMetadata.Image,
+			labels.ResolutionDigestKey: state.resolvedRevisionMetadata.ResolutionDigest,
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
