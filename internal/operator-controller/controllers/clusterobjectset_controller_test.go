@@ -988,7 +988,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 			revisionResult: &mockRevisionResult{
 				inTransition: true,
 			},
-			reconcileResult: ctrl.Result{RequeueAfter: 62 * time.Second},
+			reconcileResult: ctrl.Result{RequeueAfter: 60 * time.Second},
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
