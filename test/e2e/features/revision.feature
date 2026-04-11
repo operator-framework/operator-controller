@@ -601,3 +601,72 @@ Feature: Install ClusterObjectSet
       """
     And ClusterObjectSet "${COS_NAME}" reconciliation is triggered
     Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
+
+
+  @ProgressDeadline
+  Scenario: Archiving a COS with ProgressDeadlineExceeded cleans up its resources
+    Given min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    When ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        annotations:
+          olm.operatorframework.io/service-account-name: olm-sa
+          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
+        name: ${COS_NAME}
+      spec:
+        lifecycleState: Active
+        collisionProtection: Prevent
+        progressDeadlineMinutes: 1
+        progressionProbes:
+        - selector:
+            type: GroupKind
+            groupKind:
+              group: apps
+              kind: Deployment
+          assertions:
+          - type: ConditionEqual
+            conditionEqual:
+              type: Available
+              status: "True"
+        phases:
+        - name: resources
+          objects:
+          - object:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: test-configmap
+                namespace: ${TEST_NAMESPACE}
+              data:
+                foo: bar
+          - object:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: test-deployment
+                namespace: ${TEST_NAMESPACE}
+              spec:
+                replicas: 1
+                selector:
+                  matchLabels:
+                    app: never-ready
+                template:
+                  metadata:
+                    labels:
+                      app: never-ready
+                  spec:
+                    containers:
+                    - name: never-ready
+                      image: does-not-exist:latest
+        revision: 1
+      """
+    Then resource "configmap/test-configmap" is installed
+    And resource "deployment/test-deployment" is installed
+    And ClusterObjectSet "${COS_NAME}" reports Progressing as False with Reason ProgressDeadlineExceeded
+    When ClusterObjectSet "${COS_NAME}" lifecycle is set to "Archived"
+    Then ClusterObjectSet "${COS_NAME}" is archived
+    And resource "configmap/test-configmap" is eventually not found
+    And resource "deployment/test-deployment" is eventually not found
