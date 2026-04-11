@@ -213,7 +213,8 @@ func TestMetadataFor(t *testing.T) {
 		result := bundleutil.MetadataFor("test-bundle", vr)
 		require.Equal(t, "test-bundle", result.Name)
 		require.Equal(t, "1.0.0", result.Version)
-		require.Equal(t, "2", result.Release)
+		require.NotNil(t, result.Release)
+		require.Equal(t, "2", *result.Release)
 	})
 
 	t.Run("without release", func(t *testing.T) {
@@ -224,6 +225,18 @@ func TestMetadataFor(t *testing.T) {
 		result := bundleutil.MetadataFor("test-bundle", vr)
 		require.Equal(t, "test-bundle", result.Name)
 		require.Equal(t, "1.0.0", result.Version)
-		require.Empty(t, result.Release)
+		require.Nil(t, result.Release)
+	})
+
+	t.Run("with explicit empty release", func(t *testing.T) {
+		vr := bundle.VersionRelease{
+			Version: bsemver.MustParse("1.0.0"),
+			Release: bundle.Release([]bsemver.PRVersion{}),
+		}
+		result := bundleutil.MetadataFor("test-bundle", vr)
+		require.Equal(t, "test-bundle", result.Name)
+		require.Equal(t, "1.0.0", result.Version)
+		require.NotNil(t, result.Release)
+		require.Empty(t, *result.Release)
 	})
 }

@@ -3,7 +3,6 @@ package bundleutil
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	bsemver "github.com/blang/semver/v4"
 
@@ -13,7 +12,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
-	slicesutil "github.com/operator-framework/operator-controller/internal/shared/util/slices"
 )
 
 func GetVersionAndRelease(b declcfg.Bundle) (*bundle.VersionRelease, error) {
@@ -52,6 +50,11 @@ func parseVersionRelease(pkgData json.RawMessage) (*bundle.VersionRelease, error
 	}
 
 	// Fall back to legacy registry+v1 behavior (release in build metadata)
+	//
+	// TODO: For now, we assume that all bundles are registry+v1 bundles.
+	//   In the future, for supporting other bundle formats, we should not
+	//   use the legacy registry+v1 mechanism (i.e. using build metadata in
+	//   the version) to determine the bundle's release.
 	vr, err := bundle.NewLegacyRegistryV1VersionRelease(pkg.Version)
 	if err != nil {
 		return nil, err
@@ -65,9 +68,9 @@ func MetadataFor(bundleName string, vr bundle.VersionRelease) ocv1.BundleMetadat
 		Name:    bundleName,
 		Version: vr.Version.String(),
 	}
-	if len(vr.Release) > 0 {
-		parts := slicesutil.Map(vr.Release, func(pr bsemver.PRVersion) string { return pr.String() })
-		bm.Release = strings.Join(parts, ".")
+	if vr.Release != nil {
+		relStr := vr.Release.String()
+		bm.Release = &relStr
 	}
 	return bm
 }

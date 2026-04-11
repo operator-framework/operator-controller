@@ -467,16 +467,27 @@ type BundleMetadata struct {
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^([0-9]+)(\\\\.[0-9]+)?(\\\\.[0-9]+)?(-([-0-9A-Za-z]+(\\\\.[-0-9A-Za-z]+)*))?(\\\\+([-0-9A-Za-z]+(-\\\\.[-0-9A-Za-z]+)*))?\")",message="version must be well-formed semver"
 	Version string `json:"version"`
 
-	// release is an optional field that references the release value for this bundle.
-	// The release follows pre-release/build metadata syntax as defined in https://semver.org/,
-	// consisting of dot-separated identifiers where numeric identifiers must not have leading zeros.
+	// release is an optional field that identifies a specific release of this bundle's version.
+	// A release represents a re-publication of the same version, typically used to deliver
+	// packaging or metadata changes without changing the version number. When multiple
+	// releases exist for the same version, higher releases are preferred. An unset release
+	// is less preferred than all other release values.
+	//
+	// The value consists of dot-separated identifiers, where each identifier is either a
+	// numeric value (without leading zeros) or an alphanumeric string (e.g., "2", "1.el9",
+	// "3.alpha.1"). Releases are compared identifier by identifier: numeric identifiers are
+	// compared as integers, alphanumeric identifiers are compared lexically, and numeric
+	// identifiers always sort before alphanumeric identifiers.
+	//
 	// For bundles with explicit pkg.Release metadata, this field contains that release value.
-	// For registry+v1 bundles, this field contains the release extracted from version's build metadata (e.g., '2' from '1.0.0+2').
-	// This field may be omitted if there is no explicit release and the version contains no parseable build metadata.
+	// For registry+v1 bundles lacking an explicit release value, this field contains the release
+	// extracted from version's build metadata (e.g., '2' from '1.0.0+2').
+	// This field is omitted when the bundle's release value is unset.
 	//
 	// +optional
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^$|^(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*$\")",message="release must be empty or well-formed pre-release/build metadata (dot-separated identifiers, numeric parts without leading zeros)"
-	Release string `json:"release,omitempty"`
+	// <opcon:experimental>
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^$|^(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*$\")",message="release must be empty or consist of dot-separated identifiers (numeric without leading zeros, or alphanumeric)"
+	Release *string `json:"release,omitempty"`
 }
 
 // RevisionStatus defines the observed state of a ClusterObjectSet.

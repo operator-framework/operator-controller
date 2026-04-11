@@ -408,12 +408,16 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 func ApplyBundle(a Applier) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
+		releaseValue := ""
+		if state.resolvedRevisionMetadata.Release != nil {
+			releaseValue = *state.resolvedRevisionMetadata.Release
+		}
 		revisionAnnotations := map[string]string{
 			labels.BundleNameKey:      state.resolvedRevisionMetadata.Name,
 			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
 			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
 			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
-			labels.BundleReleaseKey:   state.resolvedRevisionMetadata.Release,
+			labels.BundleReleaseKey:   releaseValue,
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,

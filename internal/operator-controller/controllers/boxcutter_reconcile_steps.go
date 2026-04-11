@@ -69,8 +69,11 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 			BundleMetadata: ocv1.BundleMetadata{
 				Name:    rev.Annotations[labels.BundleNameKey],
 				Version: rev.Annotations[labels.BundleVersionKey],
-				Release: rev.Annotations[labels.BundleReleaseKey],
 			},
+		}
+		// Only set Release if the annotation key exists (to distinguish "not set" from "explicitly empty")
+		if releaseValue, ok := rev.Annotations[labels.BundleReleaseKey]; ok {
+			rm.Release = &releaseValue
 		}
 
 		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded) {
@@ -100,12 +103,16 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error)) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
+		releaseValue := ""
+		if state.resolvedRevisionMetadata.Release != nil {
+			releaseValue = *state.resolvedRevisionMetadata.Release
+		}
 		revisionAnnotations := map[string]string{
 			labels.BundleNameKey:      state.resolvedRevisionMetadata.Name,
 			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
 			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
 			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
-			labels.BundleReleaseKey:   state.resolvedRevisionMetadata.Release,
+			labels.BundleReleaseKey:   releaseValue,
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,

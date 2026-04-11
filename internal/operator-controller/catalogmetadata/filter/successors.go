@@ -14,13 +14,13 @@ import (
 
 func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
 	// Construct VersionRelease from BundleMetadata.
-	// If the Release field is populated, parse version and release separately.
-	// Otherwise, parse release from version build metadata (registry+v1 legacy format).
+	// If the Release field is not nil (even if empty string), use it as the explicit release.
+	// If the Release field is nil, parse release from version build metadata (registry+v1 legacy format).
 	var installedVersionRelease *bundle.VersionRelease
 	var err error
 
-	if installedBundle.Release != "" {
-		// Bundle has explicit release field - parse version and release from separate fields.
+	if installedBundle.Release != nil {
+		// Bundle has explicit release field (or explicitly empty) - parse version and release from separate fields.
 		// Note: We can't use NewLegacyRegistryV1VersionRelease here because the version might
 		// already contain build metadata (e.g., "1.0.0+git.abc"), which serves its proper
 		// semver purpose when using explicit pkg.Release. Concatenating would create invalid
@@ -29,9 +29,9 @@ func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Chann
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse installed bundle version %q: %w", installedBundle.Version, err)
 		}
-		release, err := bundle.NewRelease(installedBundle.Release)
+		release, err := bundle.NewRelease(*installedBundle.Release)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse installed bundle release %q: %w", installedBundle.Release, err)
+			return nil, fmt.Errorf("failed to parse installed bundle release %q: %w", *installedBundle.Release, err)
 		}
 		installedVersionRelease = &bundle.VersionRelease{
 			Version: version,

@@ -29,12 +29,24 @@ type BundleMetadataApplyConfiguration struct {
 	// version is required and references the version that this bundle represents.
 	// It follows the semantic versioning standard as defined in https://semver.org/.
 	Version *string `json:"version,omitempty"`
-	// release is an optional field that references the release value for this bundle.
-	// The release follows pre-release/build metadata syntax as defined in https://semver.org/,
-	// consisting of dot-separated identifiers where numeric identifiers must not have leading zeros.
+	// release is an optional field that identifies a specific release of this bundle's version.
+	// A release represents a re-publication of the same version, typically used to deliver
+	// packaging or metadata changes without changing the version number. When multiple
+	// releases exist for the same version, higher releases are preferred. An unset release
+	// is less preferred than all other release values.
+	//
+	// The value consists of dot-separated identifiers, where each identifier is either a
+	// numeric value (without leading zeros) or an alphanumeric string (e.g., "2", "1.el9",
+	// "3.alpha.1"). Releases are compared identifier by identifier: numeric identifiers are
+	// compared as integers, alphanumeric identifiers are compared lexically, and numeric
+	// identifiers always sort before alphanumeric identifiers.
+	//
 	// For bundles with explicit pkg.Release metadata, this field contains that release value.
-	// For registry+v1 bundles, this field contains the release extracted from version's build metadata (e.g., '2' from '1.0.0+2').
-	// This field may be omitted if there is no explicit release and the version contains no parseable build metadata.
+	// For registry+v1 bundles lacking an explicit release value, this field contains the release
+	// extracted from version's build metadata (e.g., '2' from '1.0.0+2').
+	// This field is omitted when the bundle's release value is unset.
+	//
+	// <opcon:experimental>
 	Release *string `json:"release,omitempty"`
 }
 
