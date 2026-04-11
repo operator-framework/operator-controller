@@ -1945,6 +1945,49 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              observedPhases:
+                description: |-
+                  observedPhases records the content hashes of resolved phases
+                  at first successful reconciliation. This is used to detect if
+                  referenced object sources were deleted and recreated with
+                  different content. Each entry covers all fully-resolved object
+                  manifests within a phase, making it source-agnostic.
+                items:
+                  description: ObservedPhase records the observed content digest of
+                    a resolved phase.
+                  properties:
+                    digest:
+                      description: |-
+                        digest is the digest of the phase's resolved object content
+                        at first successful resolution, in the format "<algorithm>:<hex>".
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                      x-kubernetes-validations:
+                      - message: digest must be in the format '<algorithm>:<hex>'
+                        rule: self.matches('^[a-z0-9]+:[a-f0-9]+$')
+                    name:
+                      description: name is the phase name matching a phase in spec.phases.
+                      maxLength: 63
+                      minLength: 1
+                      type: string
+                      x-kubernetes-validations:
+                      - message: the value must consist of only lowercase alphanumeric
+                          characters and hyphens, and must start with an alphabetic
+                          character and end with an alphanumeric character.
+                        rule: '!format.dns1123Label().validate(self).hasValue()'
+                  required:
+                  - digest
+                  - name
+                  type: object
+                maxItems: 20
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
+                x-kubernetes-validations:
+                - message: observedPhases is immutable
+                  rule: self == oldSelf || oldSelf.size() == 0
             type: object
         type: object
     served: true

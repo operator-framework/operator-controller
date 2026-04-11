@@ -2,17 +2,25 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -234,4 +242,265 @@ func (m *mockTrackingCacheInternal) Watch(ctx context.Context, user client.Objec
 
 func (m *mockTrackingCacheInternal) Source(h handler.EventHandler, predicates ...predicate.Predicate) source.Source {
 	return nil
+}
+
+func TestComputePhaseDigest(t *testing.T) {
+	makeObj := func(apiVersion, kind, name string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": apiVersion,
+				"kind":       kind,
+				"metadata":   map[string]interface{}{"name": name},
+			},
+		}
+	}
+
+	t.Run("deterministic for same content", func(t *testing.T) {
+		objs := []client.Object{makeObj("v1", "ConfigMap", "cm1")}
+		hash, err := computePhaseDigest("deploy", objs)
+		require.NoError(t, err)
+		assert.Equal(t, "sha256:e159e3f2c46b65df156d02407c44936c0fd7349149a89dadf190d27c67019edc", hash)
+	})
+
+	t.Run("deterministic with many objects", func(t *testing.T) {
+		objs := make([]client.Object, 100)
+		for i := range objs {
+			objs[i] = makeObj("v1", "ConfigMap", fmt.Sprintf("cm-%d", i))
+		}
+		var first string
+		for i := range 100 {
+			digest, err := computePhaseDigest("deploy", objs)
+			require.NoError(t, err)
+			if i == 0 {
+				first = digest
+			} else {
+				assert.Equal(t, first, digest, "digest changed on iteration %d", i)
+			}
+		}
+	})
+
+	t.Run("different for different object content", func(t *testing.T) {
+		h1, err := computePhaseDigest("deploy", []client.Object{makeObj("v1", "ConfigMap", "cm1")})
+		require.NoError(t, err)
+		h2, err := computePhaseDigest("deploy", []client.Object{makeObj("v1", "ConfigMap", "cm2")})
+		require.NoError(t, err)
+		assert.NotEqual(t, h1, h2)
+	})
+
+	t.Run("different for different phase names", func(t *testing.T) {
+		objs := []client.Object{makeObj("v1", "ConfigMap", "cm1")}
+		h1, err := computePhaseDigest("deploy", objs)
+		require.NoError(t, err)
+		h2, err := computePhaseDigest("crds", objs)
+		require.NoError(t, err)
+		assert.NotEqual(t, h1, h2)
+	})
+
+	t.Run("different order produces different digest", func(t *testing.T) {
+		obj1 := makeObj("v1", "ConfigMap", "cm1")
+		obj2 := makeObj("v1", "ConfigMap", "cm2")
+		h1, err := computePhaseDigest("deploy", []client.Object{obj1, obj2})
+		require.NoError(t, err)
+		h2, err := computePhaseDigest("deploy", []client.Object{obj2, obj1})
+		require.NoError(t, err)
+		assert.NotEqual(t, h1, h2)
+	})
+
+	t.Run("empty phase produces valid digest", func(t *testing.T) {
+		hash, err := computePhaseDigest("empty", nil)
+		require.NoError(t, err)
+		assert.NotEmpty(t, hash)
+	})
+
+	t.Run("digest has sha256 prefix", func(t *testing.T) {
+		digest, err := computePhaseDigest("deploy", []client.Object{makeObj("v1", "ConfigMap", "cm1")})
+		require.NoError(t, err)
+		assert.True(t, strings.HasPrefix(digest, "sha256:"), "digest should start with sha256: prefix, got %s", digest)
+	})
+}
+
+func TestVerifyObservedPhases(t *testing.T) {
+	t.Run("passes when digests match", func(t *testing.T) {
+		stored := []ocv1.ObservedPhase{{Name: "deploy", Digest: "sha256:abc123"}}
+		current := []ocv1.ObservedPhase{{Name: "deploy", Digest: "sha256:abc123"}}
+		assert.NoError(t, verifyObservedPhases(stored, current))
+	})
+
+	t.Run("fails when digest changes", func(t *testing.T) {
+		stored := []ocv1.ObservedPhase{{Name: "deploy", Digest: "sha256:abc123"}}
+		current := []ocv1.ObservedPhase{{Name: "deploy", Digest: "sha256:def456"}}
+		err := verifyObservedPhases(stored, current)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `resolved content of 1 phase(s) has changed`)
+		assert.Contains(t, err.Error(), `phase "deploy"`)
+	})
+
+	t.Run("reports all mismatched phases", func(t *testing.T) {
+		stored := []ocv1.ObservedPhase{
+			{Name: "deploy", Digest: "sha256:aaa"},
+			{Name: "crds", Digest: "sha256:bbb"},
+			{Name: "rbac", Digest: "sha256:ccc"},
+		}
+		current := []ocv1.ObservedPhase{
+			{Name: "deploy", Digest: "sha256:xxx"},
+			{Name: "crds", Digest: "sha256:yyy"},
+			{Name: "rbac", Digest: "sha256:ccc"},
+		}
+		err := verifyObservedPhases(stored, current)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `resolved content of 2 phase(s) has changed`)
+		assert.Contains(t, err.Error(), `phase "deploy"`)
+		assert.Contains(t, err.Error(), `phase "crds"`)
+		assert.NotContains(t, err.Error(), `phase "rbac"`)
+	})
+
+	t.Run("fails when phase count changes", func(t *testing.T) {
+		stored := []ocv1.ObservedPhase{{Name: "deploy", Digest: "sha256:abc123"}}
+		current := []ocv1.ObservedPhase{
+			{Name: "deploy", Digest: "sha256:abc123"},
+			{Name: "crds", Digest: "sha256:def456"},
+		}
+		err := verifyObservedPhases(stored, current)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "number of phases has changed")
+	})
+
+	t.Run("fails with empty stored", func(t *testing.T) {
+		current := []ocv1.ObservedPhase{{Name: "deploy", Digest: "sha256:abc123"}}
+		err := verifyObservedPhases(nil, current)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unexpectedly empty")
+	})
+}
+
+func TestVerifyReferencedSecretsImmutable(t *testing.T) {
+	testScheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(testScheme))
+	require.NoError(t, corev1.AddToScheme(testScheme))
+
+	immutableSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-secret",
+			Namespace: "test-ns",
+		},
+		Immutable: ptr.To(true),
+		Data: map[string][]byte{
+			"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+		},
+	}
+
+	t.Run("succeeds when all secrets are immutable", func(t *testing.T) {
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(immutableSecret.DeepCopy()).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "test-secret",
+							Namespace: "test-ns",
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+
+		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects non-immutable secret", func(t *testing.T) {
+		mutableSecret := immutableSecret.DeepCopy()
+		mutableSecret.Immutable = nil
+
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(mutableSecret).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "test-secret",
+							Namespace: "test-ns",
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+
+		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not immutable")
+	})
+
+	t.Run("skips phases with inline objects only", func(t *testing.T) {
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name:    "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						// Inline object, no ref
+					}},
+				}},
+			},
+		}
+
+		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		require.NoError(t, err)
+	})
+
+	t.Run("checks secret only once when referenced multiple times", func(t *testing.T) {
+		var secretGetCount atomic.Int32
+		secret := immutableSecret.DeepCopy()
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(secret).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+					if _, ok := obj.(*corev1.Secret); ok {
+						secretGetCount.Add(1)
+					}
+					return c.Get(ctx, key, obj, opts...)
+				},
+			}).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{
+						{Ref: ocv1.ObjectSourceRef{Name: "test-secret", Namespace: "test-ns", Key: "obj"}},
+						{Ref: ocv1.ObjectSourceRef{Name: "test-secret", Namespace: "test-ns", Key: "obj2"}},
+					},
+				}},
+			},
+		}
+
+		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		require.NoError(t, err)
+		assert.Equal(t, int32(1), secretGetCount.Load(), "secret should be fetched only once despite multiple references")
+	})
 }

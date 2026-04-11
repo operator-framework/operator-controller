@@ -1,5 +1,5 @@
 processor:
-  ignoreTypes: [ClusterObjectSet, ClusterObjectSetList]
+  ignoreTypes: [ClusterObjectSet, ClusterObjectSetList, ObservedPhase]
   ignoreFields: []
 
 render:

@@ -510,6 +510,39 @@ type ClusterObjectSetStatus struct {
 	// +listMapKey=type
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// observedPhases records the content hashes of resolved phases
+	// at first successful reconciliation. This is used to detect if
+	// referenced object sources were deleted and recreated with
+	// different content. Each entry covers all fully-resolved object
+	// manifests within a phase, making it source-agnostic.
+	//
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0",message="observedPhases is immutable"
+	// +kubebuilder:validation:MaxItems=20
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	ObservedPhases []ObservedPhase `json:"observedPhases,omitempty"`
+}
+
+// ObservedPhase records the observed content digest of a resolved phase.
+type ObservedPhase struct {
+	// name is the phase name matching a phase in spec.phases.
+	//
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start with an alphabetic character and end with an alphanumeric character."
+	Name string `json:"name"`
+
+	// digest is the digest of the phase's resolved object content
+	// at first successful resolution, in the format "<algorithm>:<hex>".
+	//
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]+:[a-f0-9]+$')`,message="digest must be in the format '<algorithm>:<hex>'"
+	Digest string `json:"digest"`
 }
 
 // +genclient

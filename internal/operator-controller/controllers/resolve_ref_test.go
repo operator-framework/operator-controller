@@ -14,6 +14,7 @@ import (
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clocktesting "k8s.io/utils/clock/testing"
+	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -51,6 +52,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 			Name:      "test-secret",
 			Namespace: "olmv1-system",
 		},
+		Immutable: ptr.To(true),
 		Data: map[string][]byte{
 			"my-key": cmData,
 		},
@@ -112,6 +114,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 			Name:      "test-secret-gz",
 			Namespace: "olmv1-system",
 		},
+		Immutable: ptr.To(true),
 		Data: map[string][]byte{
 			"my-key": buf.Bytes(),
 		},
@@ -184,6 +187,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 			Name:      "test-secret-nokey",
 			Namespace: "olmv1-system",
 		},
+		Immutable: ptr.To(true),
 		Data: map[string][]byte{
 			"other-key": []byte("{}"),
 		},
@@ -223,6 +227,7 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 			Name:      "test-secret-invalid",
 			Namespace: "olmv1-system",
 		},
+		Immutable: ptr.To(true),
 		Data: map[string][]byte{
 			"my-key": []byte("not-valid-json"),
 		},

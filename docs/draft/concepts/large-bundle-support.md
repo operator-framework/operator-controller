@@ -142,14 +142,18 @@ Recommended conventions:
 1. **Secret type**: Secrets should use the dedicated type
    `olm.operatorframework.io/object-data` to distinguish them from user-created
    Secrets and enable easy identification. The system always sets this type on
-   Secrets it creates. The reconciler does not enforce the type when resolving
-   refs — Secrets with any type are accepted — but producers should set it for
-   consistency.
+   Secrets it creates. The reconciler does not enforce the Secret type when
+   resolving refs, but it does enforce that referenced Secrets have
+   `immutable: true` set and that their content has not changed since first
+   resolution.
 
-2. **Immutability**: Secrets should set `immutable: true`. Because COS phases
-   are immutable, the content backing a ref should not change after creation.
-   Mutable referenced Secrets are not rejected, but modifying them after the
-   COS is created leads to undefined behavior.
+2. **Immutability**: Secrets must set `immutable: true`. The reconciler verifies
+   that all referenced Secrets have `immutable: true` set before proceeding.
+   Mutable referenced Secrets are rejected and reconciliation is blocked with
+   `Progressing=False, Reason=Blocked`. Additionally, the reconciler records
+   content hashes of the resolved phases on first successful reconciliation
+   and blocks reconciliation if the content changes (e.g., if a Secret is
+   deleted and recreated with the same name but different data).
 
 3. **Owner references**: Referenced Secrets should carry an ownerReference to
    the COS so that Kubernetes garbage collection removes them when the COS is
@@ -387,6 +391,14 @@ Key properties:
   from phase immutability).
 
 ### COS reconciler behavior
+
+Before resolving individual object refs, the reconciler verifies that all
+referenced Secrets have `immutable: true` set. After successfully building
+the phases (resolving all refs), the reconciler computes a per-phase content
+digest and compares it against the digests recorded in `.status.observedPhases`
+(if present). If any phase's content has changed, reconciliation is blocked
+with `Progressing=False, Reason=Blocked`. On first successful build, phase
+content digests are persisted to status for future comparisons.
 
 When processing a COS phase:
 - For each object entry in the phase:
