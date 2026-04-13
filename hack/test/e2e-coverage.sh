@@ -22,8 +22,9 @@ rm -rf ${COVERAGE_DIR} && mkdir -p ${COVERAGE_DIR}
 kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" scale deployment/"$OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME" --replicas=0
 kubectl -n "$CATALOGD_NAMESPACE" scale deployment/"$CATALOGD_MANAGER_DEPLOYMENT_NAME" --replicas=0
 
-# Wait for the copy pod to be ready
-kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" wait --for=condition=ready pod "$COPY_POD_NAME"
+# Wait for manager pods to terminate so coverage data is flushed to the PVC
+kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" wait --for=delete pods -l control-plane="$OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME" --timeout=60s
+kubectl -n "$CATALOGD_NAMESPACE" wait --for=delete pods -l control-plane="$CATALOGD_MANAGER_DEPLOYMENT_NAME" --timeout=60s
 
 # Copy the coverage data from the temporary pod
 kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" cp "$COPY_POD_NAME":/e2e-coverage/ "$COVERAGE_DIR"
