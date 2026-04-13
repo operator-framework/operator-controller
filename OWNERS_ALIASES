@@ -10,9 +10,7 @@ aliases:
    - tmshort
 
    olmv1-reviewers:
-   - anik120
    - ankitathomas
-   - bentito
    - camilamacedo86
    - dtfranz
    - fgiudici
@@ -22,7 +20,6 @@ aliases:
    - OchiengEd
    - perdasilva
    - rashmigottipati
-   - thetechnick
    - tmshort
    - trgeiger
    - pedjak
