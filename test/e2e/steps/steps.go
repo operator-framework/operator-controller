@@ -90,8 +90,11 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutReason)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectSetReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterObjectSetReportsConditionWithMsg)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterObjectSetReportsConditionWithMessageFragment)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
 	sc.Step(`^(?i)ClusterObjectSet is applied(?:\s+.*)?$`, ResourceIsApplied)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reconciliation is triggered$`, TriggerClusterObjectSetReconciliation)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has observed phase "([^"]+)" with a non-empty digest$`, ClusterObjectSetHasObservedPhase)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is archived$`, ClusterObjectSetIsArchived)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterObjectSetHasLabelWithValue)
@@ -508,7 +511,8 @@ func ClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, co
 	if msgFragment != nil {
 		expectedMsgFragment := substituteScenarioVars(strings.Join(strings.Fields(msgFragment.Content), " "), scenarioCtx(ctx))
 		msgCmp = func(actualMsg string) bool {
-			return strings.Contains(actualMsg, expectedMsgFragment)
+			normalizedActual := strings.Join(strings.Fields(actualMsg), " ")
+			return strings.Contains(normalizedActual, expectedMsgFragment)
 		}
 	}
 	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, msgCmp)
@@ -595,6 +599,48 @@ func ClusterObjectSetReportsConditionWithoutMsg(ctx context.Context, revisionNam
 // matching type, status, reason, and message. Polls with timeout.
 func ClusterObjectSetReportsConditionWithMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
 	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageComparison(ctx, msg))
+}
+
+// ClusterObjectSetReportsConditionWithMessageFragment waits for the named ClusterObjectSet to have a condition
+// matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
+func ClusterObjectSetReportsConditionWithMessageFragment(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
+	msgCmp := alwaysMatch
+	if msgFragment != nil {
+		expectedMsgFragment := substituteScenarioVars(strings.Join(strings.Fields(msgFragment.Content), " "), scenarioCtx(ctx))
+		msgCmp = func(actualMsg string) bool {
+			normalizedActual := strings.Join(strings.Fields(actualMsg), " ")
+			return strings.Contains(normalizedActual, expectedMsgFragment)
+		}
+	}
+	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, msgCmp)
+}
+
+// TriggerClusterObjectSetReconciliation annotates the named ClusterObjectSet
+// to trigger a new reconciliation cycle.
+func TriggerClusterObjectSetReconciliation(ctx context.Context, cosName string) error {
+	sc := scenarioCtx(ctx)
+	cosName = substituteScenarioVars(cosName, sc)
+	_, err := k8sClient("annotate", "clusterobjectset", cosName, "--overwrite",
+		fmt.Sprintf("e2e-trigger=%d", time.Now().UnixNano()))
+	return err
+}
+
+// ClusterObjectSetHasObservedPhase waits for the named ClusterObjectSet to have
+// an observedPhases entry matching the given phase name with a non-empty digest. Polls with timeout.
+func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName string) error {
+	sc := scenarioCtx(ctx)
+	cosName = substituteScenarioVars(cosName, sc)
+	phaseName = substituteScenarioVars(phaseName, sc)
+
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("get", "clusterobjectset", cosName, "-o",
+			fmt.Sprintf(`jsonpath={.status.observedPhases[?(@.name=="%s")].digest}`, phaseName))
+		if err != nil {
+			return false
+		}
+		return strings.TrimSpace(out) != ""
+	})
+	return nil
 }
 
 // ClusterObjectSetIsArchived waits for the named ClusterObjectSet to have Progressing=False

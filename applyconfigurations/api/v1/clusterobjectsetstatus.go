@@ -46,6 +46,12 @@ type ClusterObjectSetStatusApplyConfiguration struct {
 	// The Succeeded condition represents whether the revision has successfully completed its rollout:
 	// - When status is True and reason is Succeeded, the ClusterObjectSet has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	// observedPhases records the content hashes of resolved phases
+	// at first successful reconciliation. This is used to detect if
+	// referenced object sources were deleted and recreated with
+	// different content. Each entry covers all fully-resolved object
+	// manifests within a phase, making it source-agnostic.
+	ObservedPhases []ObservedPhaseApplyConfiguration `json:"observedPhases,omitempty"`
 }
 
 // ClusterObjectSetStatusApplyConfiguration constructs a declarative configuration of the ClusterObjectSetStatus type for use with
@@ -63,6 +69,19 @@ func (b *ClusterObjectSetStatusApplyConfiguration) WithConditions(values ...*met
 			panic("nil value passed to WithConditions")
 		}
 		b.Conditions = append(b.Conditions, *values[i])
+	}
+	return b
+}
+
+// WithObservedPhases adds the given value to the ObservedPhases field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ObservedPhases field.
+func (b *ClusterObjectSetStatusApplyConfiguration) WithObservedPhases(values ...*ObservedPhaseApplyConfiguration) *ClusterObjectSetStatusApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithObservedPhases")
+		}
+		b.ObservedPhases = append(b.ObservedPhases, *values[i])
 	}
 	return b
 }

@@ -443,3 +443,161 @@ Feature: Install ClusterObjectSet
     And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
     And resource "configmap/test-configmap-ref" is installed
     And resource "deployment/test-httpd" is installed
+    And ClusterObjectSet "${COS_NAME}" has observed phase "resources" with a non-empty digest
+
+  Scenario: ClusterObjectSet blocks reconciliation when referenced Secret is mutable
+    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    And resource is applied
+      """
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ${COS_NAME}-mutable-secret
+        namespace: ${TEST_NAMESPACE}
+      type: olm.operatorframework.io/object-data
+      stringData:
+        configmap: |
+          {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+              "name": "test-cm-mutable",
+              "namespace": "${TEST_NAMESPACE}"
+            },
+            "data": {
+              "key": "value"
+            }
+          }
+      """
+    When ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        annotations:
+          olm.operatorframework.io/service-account-name: olm-sa
+          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
+        name: ${COS_NAME}
+      spec:
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - ref:
+              name: ${COS_NAME}-mutable-secret
+              namespace: ${TEST_NAMESPACE}
+              key: configmap
+        revision: 1
+      """
+    Then ClusterObjectSet "${COS_NAME}" reports Progressing as False with Reason Blocked and Message:
+    """
+      the following secrets are not immutable (referenced secrets must have immutable set to true): ${TEST_NAMESPACE}/${COS_NAME}-mutable-secret
+    """
+
+  Scenario: ClusterObjectSet blocks reconciliation when referenced Secret content changes
+    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    When resource is applied
+      """
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ${COS_NAME}-change-secret
+        namespace: ${TEST_NAMESPACE}
+      immutable: true
+      type: olm.operatorframework.io/object-data
+      stringData:
+        configmap: |
+          {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+              "name": "test-cm-change",
+              "namespace": "${TEST_NAMESPACE}"
+            },
+            "data": {
+              "key": "original-value"
+            }
+          }
+      """
+    And ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        annotations:
+          olm.operatorframework.io/service-account-name: olm-sa
+          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
+        name: ${COS_NAME}
+      spec:
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - ref:
+              name: ${COS_NAME}-change-secret
+              namespace: ${TEST_NAMESPACE}
+              key: configmap
+        revision: 1
+      """
+    Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
+    And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${COS_NAME}" has observed phase "resources" with a non-empty digest
+    # Delete the immutable Secret and recreate with different content
+    When resource "secret/${COS_NAME}-change-secret" is removed
+    And resource is applied
+      """
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ${COS_NAME}-change-secret
+        namespace: ${TEST_NAMESPACE}
+      immutable: true
+      type: olm.operatorframework.io/object-data
+      stringData:
+        configmap: |
+          {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+              "name": "test-cm-change",
+              "namespace": "${TEST_NAMESPACE}"
+            },
+            "data": {
+              "key": "TAMPERED-value"
+            }
+          }
+      """
+    And ClusterObjectSet "${COS_NAME}" reconciliation is triggered
+    Then ClusterObjectSet "${COS_NAME}" reports Progressing as False with Reason Blocked and Message includes:
+    """
+      resolved content of 1 phase(s) has changed: phase "resources"
+    """
+    # Restore original content — COS should recover
+    When resource "secret/${COS_NAME}-change-secret" is removed
+    And resource is applied
+      """
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ${COS_NAME}-change-secret
+        namespace: ${TEST_NAMESPACE}
+      immutable: true
+      type: olm.operatorframework.io/object-data
+      stringData:
+        configmap: |
+          {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+              "name": "test-cm-change",
+              "namespace": "${TEST_NAMESPACE}"
+            },
+            "data": {
+              "key": "original-value"
+            }
+          }
+      """
+    And ClusterObjectSet "${COS_NAME}" reconciliation is triggered
+    Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded

@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -144,10 +146,24 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return c.delete(ctx, cos)
 	}
 
-	phases, opts, err := c.buildBoxcutterPhases(ctx, cos)
+	if err := c.verifyReferencedSecretsImmutable(ctx, cos); err != nil {
+		l.Error(err, "referenced Secret verification failed, blocking reconciliation")
+		markAsNotProgressing(cos, ocv1.ClusterObjectSetReasonBlocked, err.Error())
+		return ctrl.Result{}, nil
+	}
+
+	phases, currentPhases, opts, err := c.buildBoxcutterPhases(ctx, cos)
 	if err != nil {
 		setRetryingConditions(cos, err.Error())
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
+	}
+
+	if len(cos.Status.ObservedPhases) == 0 {
+		cos.Status.ObservedPhases = currentPhases
+	} else if err := verifyObservedPhases(cos.Status.ObservedPhases, currentPhases); err != nil {
+		l.Error(err, "resolved phases content changed, blocking reconciliation")
+		markAsNotProgressing(cos, ocv1.ClusterObjectSetReasonBlocked, err.Error())
+		return ctrl.Result{}, nil
 	}
 
 	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cos)
@@ -462,10 +478,10 @@ func (c *ClusterObjectSetReconciler) listPreviousRevisions(ctx context.Context, 
 	return previous, nil
 }
 
-func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]boxcutter.Phase, []boxcutter.RevisionReconcileOption, error) {
+func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]boxcutter.Phase, []ocv1.ObservedPhase, []boxcutter.RevisionReconcileOption, error) {
 	previous, err := c.listPreviousRevisions(ctx, cos)
 	if err != nil {
-		return nil, nil, fmt.Errorf("listing previous revisions: %w", err)
+		return nil, nil, nil, fmt.Errorf("listing previous revisions: %w", err)
 	}
 
 	// Convert to []client.Object for boxcutter
@@ -476,7 +492,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 
 	progressionProbes, err := buildProgressionProbes(cos.Spec.ProgressionProbes)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	opts := []boxcutter.RevisionReconcileOption{
@@ -485,9 +501,10 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 		boxcutter.WithAggregatePhaseReconcileErrors(),
 	}
 
-	phases := make([]boxcutter.Phase, 0)
+	phases := make([]boxcutter.Phase, 0, len(cos.Spec.Phases))
+	observedPhases := make([]ocv1.ObservedPhase, 0, len(cos.Spec.Phases))
 	for _, specPhase := range cos.Spec.Phases {
-		objs := make([]client.Object, 0)
+		objs := make([]client.Object, 0, len(specPhase.Objects))
 		for _, specObj := range specPhase.Objects {
 			var obj *unstructured.Unstructured
 			switch {
@@ -496,13 +513,25 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 			case specObj.Ref.Name != "":
 				resolved, err := c.resolveObjectRef(ctx, specObj.Ref)
 				if err != nil {
-					return nil, nil, fmt.Errorf("resolving ref in phase %q: %w", specPhase.Name, err)
+					return nil, nil, nil, fmt.Errorf("resolving ref in phase %q: %w", specPhase.Name, err)
 				}
 				obj = resolved
 			default:
-				return nil, nil, fmt.Errorf("object in phase %q has neither object nor ref", specPhase.Name)
+				return nil, nil, nil, fmt.Errorf("object in phase %q has neither object nor ref", specPhase.Name)
 			}
 
+			objs = append(objs, obj)
+		}
+
+		// Compute digest from the user-provided objects before controller mutations.
+		digest, err := computePhaseDigest(specPhase.Name, objs)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("computing phase digest: %w", err)
+		}
+		observedPhases = append(observedPhases, ocv1.ObservedPhase{Name: specPhase.Name, Digest: digest})
+
+		// Apply controller mutations after digest computation.
+		for i, obj := range objs {
 			objLabels := obj.GetLabels()
 			if objLabels == nil {
 				objLabels = map[string]string{}
@@ -510,17 +539,16 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 			objLabels[labels.OwnerNameKey] = cos.Labels[labels.OwnerNameKey]
 			obj.SetLabels(objLabels)
 
-			switch cp := EffectiveCollisionProtection(cos.Spec.CollisionProtection, specPhase.CollisionProtection, specObj.CollisionProtection); cp {
+			switch cp := EffectiveCollisionProtection(cos.Spec.CollisionProtection, specPhase.CollisionProtection, specPhase.Objects[i].CollisionProtection); cp {
 			case ocv1.CollisionProtectionIfNoController, ocv1.CollisionProtectionNone:
 				opts = append(opts, boxcutter.WithObjectReconcileOptions(
 					obj, boxcutter.WithCollisionProtection(cp)))
 			}
-
-			objs = append(objs, obj)
 		}
+
 		phases = append(phases, boxcutter.NewPhase(specPhase.Name, objs))
 	}
-	return phases, opts, nil
+	return phases, observedPhases, opts, nil
 }
 
 // resolveObjectRef fetches the referenced Secret, reads the value at the specified key,
@@ -692,4 +720,100 @@ func markAsArchived(cos *ocv1.ClusterObjectSet) bool {
 	const msg = "revision is archived"
 	updated := markAsNotProgressing(cos, ocv1.ClusterObjectSetReasonArchived, msg)
 	return markAsAvailableUnknown(cos, ocv1.ClusterObjectSetReasonArchived, msg) || updated
+}
+
+// computePhaseDigest computes a deterministic SHA-256 digest of a phase's
+// resolved content (name + objects) before any controller mutations.
+// JSON serialization of unstructured objects produces a canonical encoding
+// with sorted map keys.
+func computePhaseDigest(name string, objects []client.Object) (string, error) {
+	phaseMap := map[string]any{
+		"name":    name,
+		"objects": objects,
+	}
+	data, err := json.Marshal(phaseMap)
+	if err != nil {
+		return "", fmt.Errorf("marshaling phase %q: %w", name, err)
+	}
+	h := sha256.Sum256(data)
+	return fmt.Sprintf("sha256:%x", h), nil
+}
+
+// verifyObservedPhases compares current per-phase digests against stored
+// digests. Returns an error listing all mismatched phases.
+func verifyObservedPhases(stored, current []ocv1.ObservedPhase) error {
+	if len(stored) == 0 {
+		return fmt.Errorf("stored observedPhases is unexpectedly empty")
+	}
+	if len(stored) != len(current) {
+		return fmt.Errorf("number of phases has changed (expected %d phases, got %d)", len(stored), len(current))
+	}
+	storedMap := make(map[string]string, len(stored))
+	for _, s := range stored {
+		storedMap[s.Name] = s.Digest
+	}
+	var mismatches []string
+	for _, c := range current {
+		if prev, ok := storedMap[c.Name]; ok && prev != c.Digest {
+			mismatches = append(mismatches, fmt.Sprintf(
+				"phase %q (expected digest %s, got %s)", c.Name, prev, c.Digest))
+		}
+	}
+	if len(mismatches) > 0 {
+		return fmt.Errorf(
+			"resolved content of %d phase(s) has changed: %s; "+
+				"a referenced object source may have been deleted and recreated with different content",
+			len(mismatches), strings.Join(mismatches, "; "))
+	}
+	return nil
+}
+
+// verifyReferencedSecretsImmutable checks that all referenced Secrets
+// have Immutable set to true. It collects all violations and returns
+// a single error listing every misconfigured Secret.
+func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx context.Context, cos *ocv1.ClusterObjectSet) error {
+	type secretRef struct {
+		name      string
+		namespace string
+	}
+	seen := make(map[secretRef]struct{})
+	var refs []secretRef
+
+	for _, phase := range cos.Spec.Phases {
+		for _, obj := range phase.Objects {
+			if obj.Ref.Name == "" {
+				continue
+			}
+			sr := secretRef{name: obj.Ref.Name, namespace: obj.Ref.Namespace}
+			if _, ok := seen[sr]; !ok {
+				seen[sr] = struct{}{}
+				refs = append(refs, sr)
+			}
+		}
+	}
+
+	var mutableSecrets []string
+	for _, ref := range refs {
+		secret := &corev1.Secret{}
+		key := client.ObjectKey{Name: ref.name, Namespace: ref.namespace}
+		if err := c.Client.Get(ctx, key, secret); err != nil {
+			if apierrors.IsNotFound(err) {
+				// Secret not yet available — skip verification.
+				// resolveObjectRef will handle the not-found with a retryable error.
+				continue
+			}
+			return fmt.Errorf("getting Secret %s/%s: %w", ref.namespace, ref.name, err)
+		}
+
+		if secret.Immutable == nil || !*secret.Immutable {
+			mutableSecrets = append(mutableSecrets, fmt.Sprintf("%s/%s", ref.namespace, ref.name))
+		}
+	}
+
+	if len(mutableSecrets) > 0 {
+		return fmt.Errorf("the following secrets are not immutable (referenced secrets must have immutable set to true): %s",
+			strings.Join(mutableSecrets, ", "))
+	}
+
+	return nil
 }
