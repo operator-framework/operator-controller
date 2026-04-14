@@ -10,7 +10,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 )
 
 // Test_ErrorFormatting_SchemaLibraryVersion verifies error messages from the JSON schema
@@ -122,7 +122,7 @@ func Test_ErrorFormatting_SchemaLibraryVersion(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rv1 := bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("test-operator").
 					WithInstallModeSupportFor(tc.supportedInstallModes...).
 					Build(),
@@ -177,7 +177,7 @@ func Test_ErrorFormatting_YAMLParseErrors(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rv1 := bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("test-operator").
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).
 					Build(),

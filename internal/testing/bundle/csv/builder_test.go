@@ -1,4 +1,4 @@
-package clusterserviceversion_test
+package csv_test
 
 import (
 	"testing"
@@ -9,12 +9,12 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 )
 
 func Test_Builder(t *testing.T) {
 	t.Run("builds an empty csv by default", func(t *testing.T) {
-		obj := clusterserviceversion.Builder().Build()
+		obj := csv.Builder().Build()
 		require.Equal(t, v1alpha1.ClusterServiceVersion{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ClusterServiceVersion",
@@ -24,7 +24,7 @@ func Test_Builder(t *testing.T) {
 	})
 
 	t.Run("WithName sets csv .metadata.name", func(t *testing.T) {
-		obj := clusterserviceversion.Builder().WithName("some-name").Build()
+		obj := csv.Builder().WithName("some-name").Build()
 		require.Equal(t, v1alpha1.ClusterServiceVersion{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ClusterServiceVersion",
@@ -37,7 +37,7 @@ func Test_Builder(t *testing.T) {
 	})
 
 	t.Run("WithStrategyDeploymentSpecs sets csv .spec.install.spec.deployments", func(t *testing.T) {
-		obj := clusterserviceversion.Builder().WithStrategyDeploymentSpecs(
+		obj := csv.Builder().WithStrategyDeploymentSpecs(
 			v1alpha1.StrategyDeploymentSpec{
 				Name: "spec-one",
 			},
@@ -69,7 +69,7 @@ func Test_Builder(t *testing.T) {
 	})
 
 	t.Run("WithPermissions sets csv .spec.install.spec.permissions", func(t *testing.T) {
-		obj := clusterserviceversion.Builder().WithPermissions(
+		obj := csv.Builder().WithPermissions(
 			v1alpha1.StrategyDeploymentPermissions{
 				ServiceAccountName: "service-account",
 				Rules: []rbacv1.PolicyRule{
@@ -115,7 +115,7 @@ func Test_Builder(t *testing.T) {
 	})
 
 	t.Run("WithClusterPermissions sets csv .spec.install.spec.clusterPermissions", func(t *testing.T) {
-		obj := clusterserviceversion.Builder().WithClusterPermissions(
+		obj := csv.Builder().WithClusterPermissions(
 			v1alpha1.StrategyDeploymentPermissions{
 				ServiceAccountName: "service-account",
 				Rules: []rbacv1.PolicyRule{
@@ -161,7 +161,7 @@ func Test_Builder(t *testing.T) {
 	})
 
 	t.Run("WithClusterPermissions sets csv .spec.customresourcedefinitions.owned", func(t *testing.T) {
-		obj := clusterserviceversion.Builder().WithOwnedCRDs(
+		obj := csv.Builder().WithOwnedCRDs(
 			v1alpha1.CRDDescription{Name: "a.crd.something"},
 			v1alpha1.CRDDescription{Name: "b.crd.something"},
 		).Build()
@@ -183,7 +183,7 @@ func Test_Builder(t *testing.T) {
 	})
 
 	t.Run("WithInstallModeSupportFor adds all install modes to .spec.installModes and sets supported to true for the given supported install modes", func(t *testing.T) {
-		obj := clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace).Build()
+		obj := csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace).Build()
 
 		require.Equal(t, v1alpha1.ClusterServiceVersion{
 			TypeMeta: metav1.TypeMeta{

@@ -37,14 +37,14 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	bundlecsv "github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
+	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
 )
 
 var (
 	dummyBundle = bundlefs.Builder().
 		WithPackageName("test-package").
-		WithCSV(clusterserviceversion.Builder().WithName("test-csv").Build()).
+		WithCSV(bundlecsv.Builder().WithName("test-csv").Build()).
 		Build()
 )
 
@@ -313,7 +313,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.
 			WithPackageName("test-package").
 			WithBundleProperty("olm.bundle.property", "some-value").
 			WithBundleProperty("olm.another.bundle.property", "some-other-value").
-			WithCSV(clusterserviceversion.Builder().WithName("test-csv").Build()).
+			WithCSV(bundlecsv.Builder().WithName("test-csv").Build()).
 			Build()
 
 		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{})
@@ -327,7 +327,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.
 	t.Run("olm.properties should not be present if there are no bundle properties", func(t *testing.T) {
 		bundleFS := bundlefs.Builder().
 			WithPackageName("test-package").
-			WithCSV(clusterserviceversion.Builder().WithName("test-csv").Build()).
+			WithCSV(bundlecsv.Builder().WithName("test-csv").Build()).
 			Build()
 
 		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{})
@@ -342,7 +342,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.
 		bundleFS := bundlefs.Builder().
 			WithPackageName("test-package").
 			WithBundleProperty("olm.bundle.property", "some-value").
-			WithCSV(clusterserviceversion.Builder().
+			WithCSV(bundlecsv.Builder().
 				WithName("test-csv").
 				WithAnnotations(map[string]string{
 					"some.csv.annotation": "some-other-value",

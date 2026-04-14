@@ -13,7 +13,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 )
 
 func Test_UnmarshalConfig(t *testing.T) {
@@ -296,7 +296,7 @@ func Test_UnmarshalConfig(t *testing.T) {
 			var rv1 bundle.RegistryV1
 			if tc.supportedInstallModes != nil {
 				rv1 = bundle.RegistryV1{
-					CSV: clusterserviceversion.Builder().
+					CSV: csv.Builder().
 						WithName("test-operator").
 						WithInstallModeSupportFor(tc.supportedInstallModes...).
 						Build(),

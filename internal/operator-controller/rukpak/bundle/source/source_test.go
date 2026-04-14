@@ -13,8 +13,8 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
+	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
 )
 
 const (
@@ -34,7 +34,7 @@ func Test_FromFS_Success(t *testing.T) {
 	bundleFS := bundlefs.Builder().
 		WithPackageName("test").
 		WithBundleProperty("from-file-key", "from-file-value").
-		WithBundleResource("csv.yaml", ptr.To(clusterserviceversion.Builder().
+		WithBundleResource("csv.yaml", ptr.To(csv.Builder().
 			WithName("test.v1.0.0").
 			WithAnnotations(map[string]string{
 				"olm.properties": `[{"type":"from-csv-annotations-key", "value":"from-csv-annotations-value"}]`,
@@ -72,12 +72,12 @@ func Test_FromFS_Fails(t *testing.T) {
 			name: "bundle missing metadata/annotations.yaml",
 			FS: bundlefs.Builder().
 				WithBundleProperty("foo", "bar").
-				WithBundleResource("csv.yaml", ptr.To(clusterserviceversion.Builder().Build())).Build(),
+				WithBundleResource("csv.yaml", ptr.To(csv.Builder().Build())).Build(),
 		}, {
 			name: "metadata/annotations.yaml missing package name annotation",
 			FS: bundlefs.Builder().
 				WithBundleProperty("foo", "bar").
-				WithBundleResource("csv.yaml", ptr.To(clusterserviceversion.Builder().Build())).Build(),
+				WithBundleResource("csv.yaml", ptr.To(csv.Builder().Build())).Build(),
 		}, {
 			name: "bundle missing manifests directory",
 			FS: bundlefs.Builder().

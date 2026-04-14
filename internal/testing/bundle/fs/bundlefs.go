@@ -1,4 +1,4 @@
-package bundlefs
+package fs
 
 import (
 	"fmt"

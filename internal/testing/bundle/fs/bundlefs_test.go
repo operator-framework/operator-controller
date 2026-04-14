@@ -1,4 +1,4 @@
-package bundlefs_test
+package fs_test
 
 import (
 	"testing"
@@ -8,18 +8,18 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
+	"github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
 )
 
 func Test_BundleFSBuilder(t *testing.T) {
 	t.Run("returns empty bundle file system by default", func(t *testing.T) {
-		bundleFs := bundlefs.Builder().Build()
+		bundleFs := fs.Builder().Build()
 		assert.Empty(t, bundleFs)
 	})
 
 	t.Run("WithPackageName sets the bundle package annotation", func(t *testing.T) {
-		bundleFs := bundlefs.Builder().WithPackageName("test").Build()
+		bundleFs := fs.Builder().WithPackageName("test").Build()
 		require.Contains(t, bundleFs, "metadata/annotations.yaml")
 		require.Equal(t, []byte(`annotations:
   operators.operatorframework.io.bundle.channel.default.v1: ""
@@ -29,7 +29,7 @@ func Test_BundleFSBuilder(t *testing.T) {
 	})
 
 	t.Run("WithChannels sets the bundle channels annotation", func(t *testing.T) {
-		bundleFs := bundlefs.Builder().WithChannels("alpha", "beta", "stable").Build()
+		bundleFs := fs.Builder().WithChannels("alpha", "beta", "stable").Build()
 		require.Contains(t, bundleFs, "metadata/annotations.yaml")
 		require.Equal(t, []byte(`annotations:
   operators.operatorframework.io.bundle.channel.default.v1: ""
@@ -39,7 +39,7 @@ func Test_BundleFSBuilder(t *testing.T) {
 	})
 
 	t.Run("WithDefaultChannel sets the bundle default channel annotation", func(t *testing.T) {
-		bundleFs := bundlefs.Builder().WithDefaultChannel("stable").Build()
+		bundleFs := fs.Builder().WithDefaultChannel("stable").Build()
 		require.Contains(t, bundleFs, "metadata/annotations.yaml")
 		require.Equal(t, []byte(`annotations:
   operators.operatorframework.io.bundle.channel.default.v1: stable
@@ -49,7 +49,7 @@ func Test_BundleFSBuilder(t *testing.T) {
 	})
 
 	t.Run("WithBundleProperty sets the bundle properties", func(t *testing.T) {
-		bundleFs := bundlefs.Builder().
+		bundleFs := fs.Builder().
 			WithBundleProperty("foo", "bar").
 			WithBundleProperty("key", "value").
 			Build()
@@ -64,7 +64,7 @@ func Test_BundleFSBuilder(t *testing.T) {
 	})
 
 	t.Run("WithBundleResource adds a resource to the manifests directory", func(t *testing.T) {
-		bundleFs := bundlefs.Builder().WithBundleResource("service.yaml", &corev1.Service{
+		bundleFs := fs.Builder().WithBundleResource("service.yaml", &corev1.Service{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: corev1.SchemeGroupVersion.String(),
 				Kind:       "Service",
@@ -85,7 +85,7 @@ status:
 	})
 
 	t.Run("WithCSV adds a csv to the manifests directory", func(t *testing.T) {
-		bundleFs := bundlefs.Builder().WithCSV(clusterserviceversion.Builder().WithName("some-csv").Build()).Build()
+		bundleFs := fs.Builder().WithCSV(csv.Builder().WithName("some-csv").Build()).Build()
 		require.Contains(t, bundleFs, "manifests/csv.yaml")
 		require.Equal(t, []byte(`apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion

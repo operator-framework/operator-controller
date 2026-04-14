@@ -26,7 +26,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 )
 
 func Test_ResourceGenerators(t *testing.T) {
@@ -70,7 +70,7 @@ func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates deployment resources",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithAnnotations(map[string]string{
 						"csv": "annotation",
 					}).
@@ -176,7 +176,7 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 	}
 
 	b := &bundle.RegistryV1{
-		CSV: clusterserviceversion.Builder().
+		CSV: csv.Builder().
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:           v1alpha1.ValidatingAdmissionWebhook,
@@ -371,7 +371,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -396,7 +396,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -470,7 +470,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -588,7 +588,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -704,7 +704,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -800,7 +800,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -920,7 +920,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -1032,7 +1032,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -1120,7 +1120,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 				InstallNamespace: "install-namespace",
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -1206,7 +1206,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 				InstallNamespace: "install-namespace",
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
@@ -1289,7 +1289,7 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Succeeds(t *testing.T) {
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
 		},
-		CSV: clusterserviceversion.Builder().
+		CSV: csv.Builder().
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:                    v1alpha1.ConversionWebhook,
@@ -1373,7 +1373,7 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Fails(t *testing.T) {
 				},
 			},
 		},
-		CSV: clusterserviceversion.Builder().
+		CSV: csv.Builder().
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:                    v1alpha1.ConversionWebhook,
@@ -1413,7 +1413,7 @@ func Test_BundleCRDGenerator_WithCertProvider_Succeeds(t *testing.T) {
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
 		},
-		CSV: clusterserviceversion.Builder().
+		CSV: csv.Builder().
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:           v1alpha1.ConversionWebhook,
@@ -1502,7 +1502,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates validating webhook configuration resources described in the bundle's cluster service version",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
@@ -1595,7 +1595,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
@@ -1696,7 +1696,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates validating webhook configuration resources with certificate provider modifications",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
@@ -1782,7 +1782,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates validating webhook configuration resources described in the bundle's cluster service version",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
@@ -1877,7 +1877,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
@@ -1980,7 +1980,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates validating webhook configuration resources with certificate provider modifications",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
@@ -2066,7 +2066,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using container port 443 and target port 443 by default",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2110,7 +2110,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using the given container port and setting target port the same as the container port if not given",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2155,7 +2155,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using given container port of 443 and given target port",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2203,7 +2203,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using given container port and target port",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2252,7 +2252,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using referenced deployment defined label selector",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2311,7 +2311,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "aggregates all webhook definitions referencing the same deployment into a single service",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2408,7 +2408,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "applies cert provider modifiers to webhook service",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2482,7 +2482,7 @@ func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
 	}
 
 	objs, err := generators.CertProviderResourceGenerator(&bundle.RegistryV1{
-		CSV: clusterserviceversion.Builder().
+		CSV: csv.Builder().
 			WithWebhookDefinitions(
 				// only generate resources for deployments referenced by webhook definitions
 				v1alpha1.WebhookDescription{
@@ -2521,7 +2521,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies env vars from deployment config",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -2587,7 +2587,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies resources from deployment config",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -2633,7 +2633,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies tolerations from deployment config",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -2678,7 +2678,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies node selector from deployment config",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -2717,7 +2717,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies affinity from deployment config",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -2769,7 +2769,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "empty affinity erases bundle affinity",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -2853,7 +2853,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "empty nodeAffinity erases only nodeAffinity",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -2922,7 +2922,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "empty nodeAffinity with empty nodeSelectorTerms erases only nodeAffinity",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -2996,7 +2996,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "nil affinity preserves bundle affinity",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3045,7 +3045,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "partial affinity override preserves unspecified fields",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3133,7 +3133,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "empty sub-fields erase to nil affinity",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3202,7 +3202,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "empty nodeAffinity without bundle affinity stays nil",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3237,7 +3237,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "empty affinity without bundle affinity stays nil",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3270,7 +3270,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies annotations from deployment config",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithAnnotations(map[string]string{
 						"csv-annotation": "csv-value",
 					}).
@@ -3326,7 +3326,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies volumes and volume mounts from deployment config",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3381,7 +3381,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies envFrom from deployment config",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3434,7 +3434,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies all config fields together",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3498,7 +3498,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "applies config to multiple containers",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3550,7 +3550,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "nil deployment config does nothing",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3589,7 +3589,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "merges volumes from deployment config - overrides matching names",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",
@@ -3696,7 +3696,7 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 		{
 			name: "merges volumeMounts from deployment config - overrides matching names",
 			bundle: &bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().
+				CSV: csv.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "test-deployment",

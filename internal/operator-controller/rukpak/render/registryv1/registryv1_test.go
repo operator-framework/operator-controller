@@ -17,7 +17,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/validators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 )
 
 func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
@@ -68,7 +68,7 @@ func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
 func Test_Renderer_Success(t *testing.T) {
 	someBundle := bundle.RegistryV1{
 		PackageName: "my-package",
-		CSV: clusterserviceversion.Builder().
+		CSV: csv.Builder().
 			WithName("test-bundle").
 			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		Others: []unstructured.Unstructured{
@@ -101,7 +101,7 @@ func Test_Renderer_Success(t *testing.T) {
 func Test_Renderer_Failure_UnsupportedKind(t *testing.T) {
 	someBundle := bundle.RegistryV1{
 		PackageName: "my-package",
-		CSV: clusterserviceversion.Builder().
+		CSV: csv.Builder().
 			WithName("test-bundle").
 			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		Others: []unstructured.Unstructured{
