@@ -144,26 +144,15 @@ func reconcileEndingCheck(leaderPod, resourceName string) func() bool {
 	}
 }
 
-// ResourceTypeIsReconciled waits for the component's deployment to be ready and
-// then verifies that the scenario's resource of the given type has been reconciled
+// ClusterExtensionIsReconciled waits for the ClusterExtension to be reconciled
 // by checking the leader pod's logs for a "reconcile ending" entry.
-func ResourceTypeIsReconciled(ctx context.Context, resourceType string) error {
+func ClusterExtensionIsReconciled(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 
-	component, ok := resourceTypeToComponent[resourceType]
-	if !ok {
-		return fmt.Errorf("unknown resource type: %s", resourceType)
-	}
-
-	var resourceName string
-	switch resourceType {
-	case "ClusterCatalog":
-		resourceName = sc.clusterCatalogName
-	case "ClusterExtension":
-		resourceName = sc.clusterExtensionName
-	}
+	component := "operator-controller"
+	resourceName := sc.clusterExtensionName
 	if resourceName == "" {
-		return fmt.Errorf("no %s found in scenario context", resourceType)
+		return fmt.Errorf("no ClusterExtension found in scenario context")
 	}
 
 	if err := ComponentIsReadyToReconcile(ctx, component); err != nil {
@@ -172,13 +161,6 @@ func ResourceTypeIsReconciled(ctx context.Context, resourceType string) error {
 
 	leaderPod := sc.leaderPods[component]
 	waitFor(ctx, reconcileEndingCheck(leaderPod, resourceName))
-
-	// For ClusterCatalog, also verify that lastUnpacked is after the leader pod's creation.
-	// This mitigates flakiness caused by https://github.com/operator-framework/operator-controller/issues/1626
-	if resourceType == "ClusterCatalog" {
-		waitFor(ctx, clusterCatalogUnpackedAfterPodCreation(resourceName, leaderPod))
-	}
-
 	return nil
 }
 
@@ -254,11 +236,38 @@ func allResourcesAreReconciled(ctx context.Context, resourceType string) error {
 	return nil
 }
 
-// ClusterCatalogReportsCondition waits for the ClusterCatalog to have the specified condition type, status, and reason.
-func ClusterCatalogReportsCondition(ctx context.Context, conditionType, conditionStatus, conditionReason string) error {
+// ScenarioCatalogIsReconciled waits for a named per-scenario ClusterCatalog to be reconciled by checking leader pod logs.
+func ScenarioCatalogIsReconciled(ctx context.Context, catalogUserName string) error {
 	sc := scenarioCtx(ctx)
-	if sc.clusterCatalogName == "" {
-		return fmt.Errorf("cluster catalog name not set; run 'ClusterCatalog serves bundles' first")
+	catalogName, ok := sc.catalogs[catalogUserName]
+	if !ok {
+		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
 	}
-	return waitForCondition(ctx, "clustercatalog", sc.clusterCatalogName, conditionType, conditionStatus, &conditionReason, nil)
+
+	component := "catalogd"
+	if err := ComponentIsReadyToReconcile(ctx, component); err != nil {
+		return err
+	}
+
+	leaderPod, ok := sc.leaderPods[component]
+	if !ok {
+		return fmt.Errorf("leader pod not found for component %s", component)
+	}
+
+	waitFor(ctx, reconcileEndingCheck(leaderPod, catalogName))
+
+	// Also verify that lastUnpacked is after the leader pod's creation.
+	// This mitigates flakiness caused by https://github.com/operator-framework/operator-controller/issues/1626
+	waitFor(ctx, clusterCatalogUnpackedAfterPodCreation(catalogName, leaderPod))
+	return nil
+}
+
+// ScenarioCatalogReportsCondition waits for a named per-scenario ClusterCatalog to have the specified condition.
+func ScenarioCatalogReportsCondition(ctx context.Context, catalogUserName, conditionType, conditionStatus, conditionReason string) error {
+	sc := scenarioCtx(ctx)
+	catalogName, ok := sc.catalogs[catalogUserName]
+	if !ok {
+		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
+	}
+	return waitForCondition(ctx, "clustercatalog", catalogName, conditionType, conditionStatus, &conditionReason, nil)
 }

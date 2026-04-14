@@ -320,7 +320,7 @@ test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: COVERAGE_NAME := e2e
 test-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 test-e2e: export INSTALL_DEFAULT_CATALOGS := false
-test-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: test-experimental-e2e
 test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
@@ -332,7 +332,7 @@ test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-experimental-e2e: PROMETHEUS_VALUES := helm/prom_experimental.yaml
 test-experimental-e2e: E2E_TIMEOUT := 15m
-test-experimental-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
+test-experimental-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
