@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -19,7 +20,38 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	testregistry "github.com/operator-framework/operator-controller/test/internal/registry"
 )
+
+const (
+	catalogTag = "e2e/test-catalog:v1"
+	regPkgName = "registry-operator"
+)
+
+func TestMain(m *testing.M) {
+	cfg := ctrl.GetConfigOrDie()
+	if err := testregistry.Deploy(context.Background(), cfg, testregistry.DefaultNamespace, testregistry.DefaultName); err != nil {
+		panic(fmt.Sprintf("failed to deploy image registry: %v", err))
+	}
+
+	clusterRegistryHost := os.Getenv("CLUSTER_REGISTRY_HOST")
+	if clusterRegistryHost == "" {
+		panic("CLUSTER_REGISTRY_HOST environment variable must be set")
+	}
+
+	// Set env vars for setup.sh — single source of truth
+	os.Setenv("CATALOG_TAG", catalogTag)
+	os.Setenv("REG_PKG_NAME", regPkgName)
+
+	cmd := exec.Command("./setup.sh") //nolint:gosec // test-only setup script
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		panic(fmt.Sprintf("failed to run setup.sh: %v", err))
+	}
+
+	os.Exit(m.Run())
+}
 
 func TestExtensionDeveloper(t *testing.T) {
 	t.Parallel()
@@ -28,12 +60,8 @@ func TestExtensionDeveloper(t *testing.T) {
 	scheme := runtime.NewScheme()
 
 	require.NoError(t, ocv1.AddToScheme(scheme))
-	require.NoError(t, ocv1.AddToScheme(scheme))
 	require.NoError(t, corev1.AddToScheme(scheme))
 	require.NoError(t, rbacv1.AddToScheme(scheme))
-
-	require.NotEmpty(t, os.Getenv("CATALOG_IMG"), "environment variable CATALOG_IMG must be set")
-	require.NotEmpty(t, os.Getenv("REG_PKG_NAME"), "environment variable REG_PKG_NAME must be set")
 
 	c, err := client.New(cfg, client.Options{Scheme: scheme})
 	require.NoError(t, err)
@@ -48,7 +76,7 @@ func TestExtensionDeveloper(t *testing.T) {
 			Source: ocv1.CatalogSource{
 				Type: ocv1.SourceTypeImage,
 				Image: &ocv1.ImageSource{
-					Ref: os.Getenv("CATALOG_IMG"),
+					Ref: os.Getenv("CLUSTER_REGISTRY_HOST") + "/" + catalogTag,
 				},
 			},
 		},
@@ -73,7 +101,7 @@ func TestExtensionDeveloper(t *testing.T) {
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
 				Catalog: &ocv1.CatalogFilter{
-					PackageName: os.Getenv("REG_PKG_NAME"),
+					PackageName: regPkgName,
 				},
 			},
 			Namespace: installNamespace,

@@ -11,35 +11,28 @@ following bundle formats:
 This script will ensure that all images built are loaded onto
 a KinD cluster with the name specified in the arguments.
 The following environment variables are required for configuring this script:
-- \$E2E_TEST_CATALOG_V1 - the tag for the catalog image that contains the registry+v1 bundle.
-- \$REG_PKG_NAME - the name of the package for the extension that uses the registry+v1 bundle format.
-setup.sh also takes 5 arguments.
+- \$OPERATOR_SDK - path to the operator-sdk binary.
+- \$CONTAINER_RUNTIME - container runtime to use (e.g. docker, podman).
+- \$LOCAL_REGISTRY_HOST - registry address accessible from the test process.
+- \$CLUSTER_REGISTRY_HOST - registry address accessible from inside the cluster.
+- \$CATALOG_TAG - OCI tag for the catalog image (e.g. e2e/test-catalog:v1).
+- \$REG_PKG_NAME - the name of the package for the extension.
 
 Usage:
-  setup.sh [OPERATOR_SDK] [CONTAINER_RUNTIME] [KUSTOMIZE] [LOCAL_REGISTRY_HOST] [CLUSTER_REGISTRY_HOST]
+  setup.sh
 "
 
 ########################################
 # Input validation
 ########################################
 
-if [[ "$#" -ne 5 ]]; then
-  echo "Illegal number of arguments passed"
-  echo "${help}"
-  exit 1
-fi
-
-if [[ -z "${E2E_TEST_CATALOG_V1}" ]]; then
-  echo "\$E2E_TEST_CATALOG_V1 is required to be set"
-  echo "${help}"
-  exit 1
-fi
-
-if [[ -z "${REG_PKG_NAME}" ]]; then
-  echo "\$REG_PKG_NAME is required to be set"
-  echo "${help}"
-  exit 1
-fi
+for var in OPERATOR_SDK CONTAINER_RUNTIME LOCAL_REGISTRY_HOST CLUSTER_REGISTRY_HOST CATALOG_TAG REG_PKG_NAME; do
+  if [[ -z "${!var:-}" ]]; then
+    echo "\$$var is required to be set"
+    echo "${help}"
+    exit 1
+  fi
+done
 
 ########################################
 # Setup temp dir and local variables
@@ -54,13 +47,12 @@ DOMAIN=oc-opdev-e2e.operatorframework.io
 REG_DIR="${TMP_ROOT}/registry"
 mkdir -p "${REG_DIR}"
 
-operator_sdk=$1
-container_tool=$2
-kustomize=$3
+operator_sdk="${OPERATOR_SDK}"
+container_tool="${CONTAINER_RUNTIME}"
 # The path we use to push the image from _outside_ the cluster
-local_registry_host=$4
+local_registry_host="${LOCAL_REGISTRY_HOST}"
 # The path we use _inside_ the cluster
-cluster_registry_host=$5
+cluster_registry_host="${CLUSTER_REGISTRY_HOST}"
 
 tls_flag=""
 if [[ "$container_tool" == "podman" ]]; then
@@ -68,7 +60,7 @@ if [[ "$container_tool" == "podman" ]]; then
   tls_flag="--tls-verify=false"
 fi
 
-catalog_push_tag="${local_registry_host}/${E2E_TEST_CATALOG_V1}"
+catalog_push_tag="${local_registry_host}/${CATALOG_TAG}"
 reg_pkg_name="${REG_PKG_NAME}"
 
 reg_img="${DOMAIN}/registry:v0.0.1"
@@ -102,6 +94,7 @@ reg_bundle_push_tag="${local_registry_host}/${reg_bundle_path}"
     --resource --controller && \
   export OPERATOR_SDK="${operator_sdk}" && \
   make generate manifests && \
+  sed -i -e 's/$(CONTAINER_TOOL) build/$(CONTAINER_TOOL) build --provenance=false/' Makefile && \
   make docker-build IMG="${reg_img}" && \
   sed -i -e 's/$(OPERATOR_SDK) generate kustomize manifests -q/$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false/g' Makefile && \
   make bundle IMG="${reg_img}" VERSION=0.0.1 && \
@@ -153,5 +146,5 @@ cat <<EOF > "${TMP_ROOT}"/catalog/index.yaml
 }
 EOF
 
-${container_tool} build -f "${TMP_ROOT}/catalog.Dockerfile" -t "${catalog_push_tag}" "${TMP_ROOT}/"
+${container_tool} build --provenance=false -f "${TMP_ROOT}/catalog.Dockerfile" -t "${catalog_push_tag}" "${TMP_ROOT}/"
 ${container_tool} push ${catalog_push_tag} ${tls_flag}
