@@ -151,6 +151,18 @@ func TestGetVersionAndRelease_WithBundleReleaseSupport(t *testing.T) {
 				},
 				wantErr: true,
 			},
+			{
+				name: "explicit empty release - preserves build metadata in version",
+				pkgProperty: &property.Property{
+					Type:  property.TypePackage,
+					Value: json.RawMessage(`{"version": "1.0.0+2", "release": ""}`),
+				},
+				wantVersionRelease: &bundle.VersionRelease{
+					Version: bsemver.MustParse("1.0.0+2"),          // Build metadata preserved (not extracted as release)
+					Release: bundle.Release([]bsemver.PRVersion{}), // Explicit empty release
+				},
+				wantErr: false,
+			},
 		}
 
 		for _, tc := range tests {
@@ -205,38 +217,76 @@ func TestGetVersionAndRelease_WithBundleReleaseSupport(t *testing.T) {
 }
 
 func TestMetadataFor(t *testing.T) {
-	t.Run("with release", func(t *testing.T) {
-		vr := bundle.VersionRelease{
-			Version: bsemver.MustParse("1.0.0"),
-			Release: bundle.Release([]bsemver.PRVersion{{VersionNum: 2, IsNum: true}}),
-		}
-		result := bundleutil.MetadataFor("test-bundle", vr)
-		require.Equal(t, "test-bundle", result.Name)
-		require.Equal(t, "1.0.0", result.Version)
-		require.NotNil(t, result.Release)
-		require.Equal(t, "2", *result.Release)
+	t.Run("with feature gate enabled", func(t *testing.T) {
+		prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.BundleReleaseSupport)
+		require.NoError(t, features.OperatorControllerFeatureGate.Set("BundleReleaseSupport=true"))
+		t.Cleanup(func() {
+			require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("BundleReleaseSupport=%t", prevEnabled)))
+		})
+
+		t.Run("with release", func(t *testing.T) {
+			vr := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+				Release: bundle.Release([]bsemver.PRVersion{{VersionNum: 2, IsNum: true}}),
+			}
+			result := bundleutil.MetadataFor("test-bundle", vr)
+			require.Equal(t, "test-bundle", result.Name)
+			require.Equal(t, "1.0.0", result.Version)
+			require.NotNil(t, result.Release)
+			require.Equal(t, "2", *result.Release)
+		})
+
+		t.Run("without release", func(t *testing.T) {
+			vr := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+				Release: nil,
+			}
+			result := bundleutil.MetadataFor("test-bundle", vr)
+			require.Equal(t, "test-bundle", result.Name)
+			require.Equal(t, "1.0.0", result.Version)
+			require.Nil(t, result.Release)
+		})
+
+		t.Run("with explicit empty release", func(t *testing.T) {
+			vr := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+				Release: bundle.Release([]bsemver.PRVersion{}),
+			}
+			result := bundleutil.MetadataFor("test-bundle", vr)
+			require.Equal(t, "test-bundle", result.Name)
+			require.Equal(t, "1.0.0", result.Version)
+			require.NotNil(t, result.Release)
+			require.Empty(t, *result.Release)
+		})
 	})
 
-	t.Run("without release", func(t *testing.T) {
-		vr := bundle.VersionRelease{
-			Version: bsemver.MustParse("1.0.0"),
-			Release: nil,
-		}
-		result := bundleutil.MetadataFor("test-bundle", vr)
-		require.Equal(t, "test-bundle", result.Name)
-		require.Equal(t, "1.0.0", result.Version)
-		require.Nil(t, result.Release)
-	})
+	t.Run("with feature gate disabled (legacy mode)", func(t *testing.T) {
+		prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.BundleReleaseSupport)
+		require.NoError(t, features.OperatorControllerFeatureGate.Set("BundleReleaseSupport=false"))
+		t.Cleanup(func() {
+			require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("BundleReleaseSupport=%t", prevEnabled)))
+		})
 
-	t.Run("with explicit empty release", func(t *testing.T) {
-		vr := bundle.VersionRelease{
-			Version: bsemver.MustParse("1.0.0"),
-			Release: bundle.Release([]bsemver.PRVersion{}),
-		}
-		result := bundleutil.MetadataFor("test-bundle", vr)
-		require.Equal(t, "test-bundle", result.Name)
-		require.Equal(t, "1.0.0", result.Version)
-		require.NotNil(t, result.Release)
-		require.Empty(t, *result.Release)
+		t.Run("reconstitutes build metadata in version", func(t *testing.T) {
+			vr := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+				Release: bundle.Release([]bsemver.PRVersion{{VersionNum: 2, IsNum: true}}),
+			}
+			result := bundleutil.MetadataFor("test-bundle", vr)
+			require.Equal(t, "test-bundle", result.Name)
+			require.Equal(t, "1.0.0+2", result.Version) // Build metadata reconstituted
+			require.Nil(t, result.Release)              // Release field not used in legacy mode
+		})
+
+		t.Run("preserves original build metadata when no release", func(t *testing.T) {
+			vr := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+				Release: nil,
+			}
+			result := bundleutil.MetadataFor("test-bundle", vr)
+			require.Equal(t, "test-bundle", result.Name)
+			require.Equal(t, "1.0.0", result.Version)
+			require.Nil(t, result.Release)
+		})
 	})
 }

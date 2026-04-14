@@ -103,16 +103,14 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error)) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
-		releaseValue := ""
-		if state.resolvedRevisionMetadata.Release != nil {
-			releaseValue = *state.resolvedRevisionMetadata.Release
-		}
 		revisionAnnotations := map[string]string{
 			labels.BundleNameKey:      state.resolvedRevisionMetadata.Name,
 			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
 			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
 			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
-			labels.BundleReleaseKey:   releaseValue,
+		}
+		if state.resolvedRevisionMetadata.Release != nil {
+			revisionAnnotations[labels.BundleReleaseKey] = *state.resolvedRevisionMetadata.Release
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,

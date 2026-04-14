@@ -187,6 +187,28 @@ func TestSuccessorsPredicate(t *testing.T) {
 			},
 			expectedResult: []declcfg.Bundle{},
 		},
+		{
+			name: "explicit release field - non-empty",
+			installedBundle: ocv1.BundleMetadata{
+				Name:    "test-package.v1.0.0",
+				Version: "1.0.0",
+				Release: func() *string { s := "2"; return &s }(),
+			},
+			// No matches expected: this bundle name doesn't exist in catalog.
+			// This test exercises the Release != nil code path in parseInstalledBundleVersionRelease.
+			expectedResult: []declcfg.Bundle{},
+		},
+		{
+			name: "explicit empty release with build metadata preserves build metadata",
+			installedBundle: ocv1.BundleMetadata{
+				Name:    "test-package.v1.0.0+git",
+				Version: "1.0.0+git",
+				Release: func() *string { s := ""; return &s }(),
+			},
+			// No matches expected: this bundle name doesn't exist in catalog.
+			// This test exercises the empty string handling in parseInstalledBundleVersionRelease.
+			expectedResult: []declcfg.Bundle{},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			successors, err := SuccessorsOf(tt.installedBundle, channelSet[testPackageName])

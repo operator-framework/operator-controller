@@ -191,10 +191,12 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		state.resolvedRevisionMetadata = &RevisionMetadata{
 			Package: resolvedBundle.Package,
 			Image:   resolvedBundle.Image,
-			// MetadataFor accepts VersionRelease and populates both Version and Release fields.
-			// - With BundleReleaseSupport enabled + explicit pkg.Release: Release from pkg.Release field
-			// - Registry+v1 bundles (e.g., "1.0.0+2"): Release extracted from build metadata (e.g., "2")
-			// - Both result in separate Version and Release fields in BundleMetadata for roundtripping
+			// MetadataFor accepts VersionRelease input and normalizes bundle metadata.
+			// - With BundleReleaseSupport enabled, it stores release information in BundleMetadata.Release
+			//   (whether provided explicitly via pkg.Release or extracted from registry+v1 build metadata,
+			//   e.g. "1.0.0+2" -> Release "2").
+			// - Without BundleReleaseSupport, it preserves legacy behavior by embedding release information
+			//   back into BundleMetadata.Version instead of emitting a separate Release field.
 			BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
 		}
 		return nil, nil
@@ -408,16 +410,14 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 func ApplyBundle(a Applier) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
-		releaseValue := ""
-		if state.resolvedRevisionMetadata.Release != nil {
-			releaseValue = *state.resolvedRevisionMetadata.Release
-		}
 		revisionAnnotations := map[string]string{
 			labels.BundleNameKey:      state.resolvedRevisionMetadata.Name,
 			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
 			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
 			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
-			labels.BundleReleaseKey:   releaseValue,
+		}
+		if state.resolvedRevisionMetadata.Release != nil {
+			revisionAnnotations[labels.BundleReleaseKey] = *state.resolvedRevisionMetadata.Release
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,

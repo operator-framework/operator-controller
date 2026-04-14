@@ -12,37 +12,51 @@ import (
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
-func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
-	// Construct VersionRelease from BundleMetadata.
-	// If the Release field is not nil (even if empty string), use it as the explicit release.
-	// If the Release field is nil, parse release from version build metadata (registry+v1 legacy format).
-	var installedVersionRelease *bundle.VersionRelease
-	var err error
-
-	if installedBundle.Release != nil {
-		// Bundle has explicit release field (or explicitly empty) - parse version and release from separate fields.
-		// Note: We can't use NewLegacyRegistryV1VersionRelease here because the version might
-		// already contain build metadata (e.g., "1.0.0+git.abc"), which serves its proper
-		// semver purpose when using explicit pkg.Release. Concatenating would create invalid
-		// semver like "1.0.0+git.abc+2".
-		version, err := bsemver.Parse(installedBundle.Version)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse installed bundle version %q: %w", installedBundle.Version, err)
-		}
-		release, err := bundle.NewRelease(*installedBundle.Release)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse installed bundle release %q: %w", *installedBundle.Release, err)
-		}
-		installedVersionRelease = &bundle.VersionRelease{
-			Version: version,
-			Release: release,
-		}
-	} else {
-		// Legacy registry+v1: release embedded in version's build metadata
-		installedVersionRelease, err = bundle.NewLegacyRegistryV1VersionRelease(installedBundle.Version)
+// parseInstalledBundleVersionRelease constructs a VersionRelease from BundleMetadata.
+// If the Release field is not nil (even if empty string), use it as the explicit release.
+// If the Release field is nil, parse release from version build metadata (registry+v1 legacy format).
+func parseInstalledBundleVersionRelease(installedBundle ocv1.BundleMetadata) (*bundle.VersionRelease, error) {
+	// Handle legacy registry+v1 format: release embedded in version's build metadata
+	if installedBundle.Release == nil {
+		vr, err := bundle.NewLegacyRegistryV1VersionRelease(installedBundle.Version)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get version and release of installed bundle: %w", err)
 		}
+		return vr, nil
+	}
+
+	// Bundle has explicit release field (or explicitly empty) - parse version and release from separate fields.
+	// Note: We can't use NewLegacyRegistryV1VersionRelease here because the version might
+	// already contain build metadata (e.g., "1.0.0+git.abc"), which serves its proper
+	// semver purpose when using explicit pkg.Release. Concatenating would create invalid
+	// semver like "1.0.0+git.abc+2".
+	version, err := bsemver.Parse(installedBundle.Version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse installed bundle version %q: %w", installedBundle.Version, err)
+	}
+
+	var release bundle.Release
+	if *installedBundle.Release == "" {
+		// Explicit empty release: use empty slice (not nil) to match catalog parsing behavior.
+		// NewRelease("") returns nil, but we need empty slice for roundtrip correctness.
+		release = bundle.Release([]bsemver.PRVersion{})
+	} else {
+		release, err = bundle.NewRelease(*installedBundle.Release)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse installed bundle release %q: %w", *installedBundle.Release, err)
+		}
+	}
+
+	return &bundle.VersionRelease{
+		Version: version,
+		Release: release,
+	}, nil
+}
+
+func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
+	installedVersionRelease, err := parseInstalledBundleVersionRelease(installedBundle)
+	if err != nil {
+		return nil, err
 	}
 
 	successorsPredicate, err := legacySuccessor(installedBundle, channels...)
