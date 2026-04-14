@@ -290,3 +290,52 @@ func TestMetadataFor(t *testing.T) {
 		})
 	})
 }
+
+func TestGetVersionAndRelease_Errors(t *testing.T) {
+	t.Run("invalid JSON for release field detection", func(t *testing.T) {
+		// Enable gate for this test
+		prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.BundleReleaseSupport)
+		require.NoError(t, features.OperatorControllerFeatureGate.Set("BundleReleaseSupport=true"))
+		t.Cleanup(func() {
+			require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("BundleReleaseSupport=%t", prevEnabled)))
+		})
+
+		// Malformed JSON that can't be unmarshalled for release detection
+		bundle := declcfg.Bundle{
+			Name: "test-bundle",
+			Properties: []property.Property{
+				{
+					Type:  property.TypePackage,
+					Value: json.RawMessage(`{"version": "1.0.0", "release": invalid}`),
+				},
+			},
+		}
+
+		_, err := bundleutil.GetVersionAndRelease(bundle)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "error unmarshalling package")
+	})
+
+	t.Run("invalid version in explicit release path", func(t *testing.T) {
+		// Enable gate for this test
+		prevEnabled := features.OperatorControllerFeatureGate.Enabled(features.BundleReleaseSupport)
+		require.NoError(t, features.OperatorControllerFeatureGate.Set("BundleReleaseSupport=true"))
+		t.Cleanup(func() {
+			require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("BundleReleaseSupport=%t", prevEnabled)))
+		})
+
+		bundle := declcfg.Bundle{
+			Name: "test-bundle",
+			Properties: []property.Property{
+				{
+					Type:  property.TypePackage,
+					Value: json.RawMessage(`{"version": "not-a-version", "release": "1"}`),
+				},
+			},
+		}
+
+		_, err := bundleutil.GetVersionAndRelease(bundle)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "error parsing version")
+	})
+}

@@ -272,3 +272,52 @@ func TestLegacySuccessor(t *testing.T) {
 	assert.True(t, f(b5))
 	assert.False(t, f(emptyBundle))
 }
+
+func stringPtr(s string) *string {
+	return &s
+}
+
+func TestParseInstalledBundleVersionRelease_Errors(t *testing.T) {
+	t.Run("invalid version - legacy format", func(t *testing.T) {
+		installedBundle := ocv1.BundleMetadata{
+			Name:    "test",
+			Version: "invalid-version",
+		}
+		_, err := parseInstalledBundleVersionRelease(installedBundle)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to get version and release")
+	})
+
+	t.Run("invalid version - explicit release format", func(t *testing.T) {
+		installedBundle := ocv1.BundleMetadata{
+			Name:    "test",
+			Version: "invalid-version",
+			Release: stringPtr("1"),
+		}
+		_, err := parseInstalledBundleVersionRelease(installedBundle)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to parse installed bundle version")
+	})
+
+	t.Run("invalid release - explicit release format", func(t *testing.T) {
+		installedBundle := ocv1.BundleMetadata{
+			Name:    "test",
+			Version: "1.0.0",
+			Release: stringPtr("001"),
+		}
+		_, err := parseInstalledBundleVersionRelease(installedBundle)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to parse installed bundle release")
+	})
+}
+
+func TestSuccessorsOf_Errors(t *testing.T) {
+	t.Run("invalid installed bundle version", func(t *testing.T) {
+		installedBundle := ocv1.BundleMetadata{
+			Name:    "test",
+			Version: "invalid",
+		}
+		_, err := SuccessorsOf(installedBundle)
+		require.Error(t, err)
+	})
+}
