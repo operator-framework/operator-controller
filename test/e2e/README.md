@@ -277,7 +277,6 @@ go test test/e2e/features_test.go --log.debug --k8s.cli=oc
 
 - `KUBECONFIG`: Path to kubeconfig file (defaults to `~/.kube/config`)
 - `E2E_SUMMARY_OUTPUT`: Path to write test summary (optional)
-- `LOCAL_REGISTRY_HOST`: Local registry host for pushing catalog images (default: `localhost:30000`)
 - `CLUSTER_REGISTRY_HOST`: In-cluster registry host for pulling catalog images
 
 ## Design Patterns

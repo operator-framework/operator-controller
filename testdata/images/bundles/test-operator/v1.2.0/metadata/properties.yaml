@@ -1,3 +1,0 @@
-properties:
-  - type: olm.test-property
-    value: "some-value"

@@ -260,7 +260,6 @@ e2e: #EXHELP Run the e2e tests.
 	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT)
 
 export CLUSTER_REGISTRY_HOST := docker-registry.operator-controller-e2e.svc:5000
-export LOCAL_REGISTRY_HOST := localhost:30000
 .PHONY: extension-developer-e2e
 extension-developer-e2e: export OPERATOR_SDK := $(OPERATOR_SDK)
 extension-developer-e2e: export CONTAINER_RUNTIME := $(CONTAINER_RUNTIME)

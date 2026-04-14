@@ -117,7 +117,7 @@ type BuildResult struct {
 // and returns the image refs needed to create a ClusterCatalog.
 //
 // tag is the image tag for the catalog image (e.g. "v1", "latest").
-// localRegistry is the registry address accessible from the test process (e.g. localhost:30000).
+// localRegistry is the registry address accessible from the test process (obtained via port-forward).
 // clusterRegistry is the registry address accessible from inside the cluster
 // (e.g. docker-registry.operator-controller-e2e.svc.cluster.local:5000).
 func (c *Catalog) Build(ctx context.Context, tag, localRegistry, clusterRegistry string) (*BuildResult, error) {

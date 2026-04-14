@@ -29,9 +29,18 @@ const (
 )
 
 func TestMain(m *testing.M) {
+	ctx := context.Background()
 	cfg := ctrl.GetConfigOrDie()
-	if err := testregistry.Deploy(context.Background(), cfg, testregistry.DefaultNamespace, testregistry.DefaultName); err != nil {
+	if err := testregistry.Deploy(ctx, cfg, testregistry.DefaultNamespace, testregistry.DefaultName); err != nil {
 		panic(fmt.Sprintf("failed to deploy image registry: %v", err))
+	}
+
+	// Port-forward lives for the duration of the test process;
+	// the stop function is not needed because the goroutine is
+	// cleaned up on process exit.
+	localAddr, _, err := testregistry.PortForward(ctx, cfg, testregistry.DefaultNamespace, testregistry.DefaultName)
+	if err != nil {
+		panic(fmt.Sprintf("failed to port-forward to registry: %v", err))
 	}
 
 	clusterRegistryHost := os.Getenv("CLUSTER_REGISTRY_HOST")
@@ -40,6 +49,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Set env vars for setup.sh — single source of truth
+	os.Setenv("LOCAL_REGISTRY_HOST", localAddr)
 	os.Setenv("CATALOG_TAG", catalogTag)
 	os.Setenv("REG_PKG_NAME", regPkgName)
 

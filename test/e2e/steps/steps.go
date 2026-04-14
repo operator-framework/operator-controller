@@ -72,6 +72,23 @@ var (
 		}
 		return testregistry.Deploy(context.Background(), cfg, testregistry.DefaultNamespace, testregistry.DefaultName)
 	})
+	startRegistryPortForward = sync.OnceValues(func() (string, error) {
+		if err := deployImageRegistry(); err != nil {
+			return "", err
+		}
+		cfg, err := ctrl.GetConfig()
+		if err != nil {
+			return "", fmt.Errorf("failed to get kubeconfig: %w", err)
+		}
+		// Port-forward lives for the duration of the test process;
+		// the stop function is not needed because the goroutine is
+		// cleaned up on process exit.
+		localAddr, _, err := testregistry.PortForward(context.Background(), cfg, testregistry.DefaultNamespace, testregistry.DefaultName)
+		if err != nil {
+			return "", fmt.Errorf("failed to start port-forward to registry: %w", err)
+		}
+		return localAddr, nil
+	})
 )
 
 func RegisterSteps(sc *godog.ScenarioContext) {
@@ -226,18 +243,19 @@ func projectRootDir() string {
 	}
 }
 
-// registryHosts returns the local and in-cluster registry addresses from environment
-// variables, falling back to defaults suitable for kind clusters.
-func registryHosts() (string, string) {
-	local := os.Getenv("LOCAL_REGISTRY_HOST")
-	if local == "" {
-		local = "localhost:30000"
+// registryHosts returns the local and in-cluster registry addresses.
+// The local address is obtained by port-forwarding to the in-cluster registry,
+// which works regardless of the cluster's network topology.
+func registryHosts() (string, string, error) {
+	local, err := startRegistryPortForward()
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get local registry address: %w", err)
 	}
 	cluster := os.Getenv("CLUSTER_REGISTRY_HOST")
 	if cluster == "" {
 		cluster = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"
 	}
-	return local, cluster
+	return local, cluster, nil
 }
 
 // ImageRegistryIsAvailable ensures the in-cluster image registry is deployed and ready.
@@ -1445,7 +1463,10 @@ func CatalogVersionWithPackages(ctx context.Context, catalogUserName, version st
 	}
 
 	cat := catalog.NewCatalog(catalogUserName, sc.id, pkgOpts...)
-	localRegistry, clusterRegistry := registryHosts()
+	localRegistry, clusterRegistry, err := registryHosts()
+	if err != nil {
+		return err
+	}
 
 	result, err := cat.Build(ctx, version, localRegistry, clusterRegistry)
 	if err != nil {
@@ -1495,7 +1516,10 @@ func ScenarioCatalogIsUpdatedToVersion(ctx context.Context, catalogUserName, ver
 
 // ScenarioCatalogTagImage tags an existing per-scenario catalog image with a new tag.
 func ScenarioCatalogTagImage(ctx context.Context, catalogUserName, oldTag, newTag string) error {
-	localRegistry, _ := registryHosts()
+	localRegistry, _, err := registryHosts()
+	if err != nil {
+		return err
+	}
 	sc := scenarioCtx(ctx)
 	imageRef := fmt.Sprintf("%s/e2e/%s-catalog-%s:%s", localRegistry, catalogUserName, sc.id, oldTag)
 	return crane.Tag(imageRef, newTag, crane.Insecure)
@@ -1592,7 +1616,10 @@ func CatalogWithPackages(ctx context.Context, catalogUserName string, table *god
 	}
 
 	cat := catalog.NewCatalog(catalogUserName, sc.id, pkgOpts...)
-	localRegistry, clusterRegistry := registryHosts()
+	localRegistry, clusterRegistry, err := registryHosts()
+	if err != nil {
+		return err
+	}
 
 	result, err := cat.Build(ctx, "v1", localRegistry, clusterRegistry)
 	if err != nil {

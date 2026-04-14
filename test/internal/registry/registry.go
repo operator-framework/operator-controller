@@ -5,6 +5,8 @@ package registry
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"time"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -13,20 +15,24 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	appsv1ac "k8s.io/client-go/applyconfigurations/apps/v1"
 	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
 	metav1ac "k8s.io/client-go/applyconfigurations/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	DefaultNamespace = "operator-controller-e2e"
 	DefaultName      = "docker-registry"
-	NodePort         = int32(30000)
+	nodePort         = int32(30000)
 )
 
 // Deploy ensures the image registry namespace, TLS certificate, deployment,
@@ -118,7 +124,9 @@ func Deploy(ctx context.Context, cfg *rest.Config, namespace, name string) error
 		return fmt.Errorf("failed to apply deployment: %w", err)
 	}
 
-	// Apply service
+	// Apply service — NodePort so that containerd on the kind node can
+	// reach the registry via localhost:30000 (configured in hosts.toml).
+	// Test runners access the registry via port-forward instead.
 	svc := corev1ac.Service(name, namespace).
 		WithSpec(corev1ac.ServiceSpec().
 			WithSelector(podLabels).
@@ -127,7 +135,7 @@ func Deploy(ctx context.Context, cfg *rest.Config, namespace, name string) error
 				WithName("http").
 				WithPort(5000).
 				WithTargetPort(intstr.FromInt32(5000)).
-				WithNodePort(NodePort),
+				WithNodePort(nodePort),
 			),
 		)
 	if err := c.Apply(ctx, svc, fieldOwner, client.ForceOwnership); err != nil {
@@ -155,4 +163,68 @@ func Deploy(ctx context.Context, cfg *rest.Config, namespace, name string) error
 	}
 
 	return nil
+}
+
+// PortForward establishes a port-forward to the registry pod and returns
+// the local address (e.g. "localhost:12345") that can be used to push images.
+// The returned stop function should be called to clean up the port-forward.
+func PortForward(ctx context.Context, cfg *rest.Config, namespace, name string) (localAddr string, stop func(), err error) {
+	clientset, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create kubernetes client: %w", err)
+	}
+
+	pods, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "app=registry",
+		FieldSelector: "status.phase=Running",
+	})
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to list registry pods: %w", err)
+	}
+	if len(pods.Items) == 0 {
+		return "", nil, fmt.Errorf("no running registry pods found in %s", namespace)
+	}
+	podName := pods.Items[0].Name
+
+	transport, upgrader, err := spdy.RoundTripperFor(cfg)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create SPDY round tripper: %w", err)
+	}
+
+	req := clientset.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Namespace(namespace).
+		Name(podName).
+		SubResource("portforward")
+
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", req.URL())
+
+	stopChan := make(chan struct{})
+	readyChan := make(chan struct{})
+
+	fw, err := portforward.New(dialer, []string{"0:5000"}, stopChan, readyChan, io.Discard, io.Discard)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create port forwarder: %w", err)
+	}
+
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- fw.ForwardPorts()
+	}()
+
+	select {
+	case <-readyChan:
+		ports, err := fw.GetPorts()
+		if err != nil {
+			close(stopChan)
+			return "", nil, fmt.Errorf("failed to get forwarded ports: %w", err)
+		}
+		localPort := ports[0].Local
+		return fmt.Sprintf("localhost:%d", localPort), func() { close(stopChan) }, nil
+	case err := <-errChan:
+		return "", nil, fmt.Errorf("port-forward failed: %w", err)
+	case <-ctx.Done():
+		close(stopChan)
+		return "", nil, ctx.Err()
+	}
 }
