@@ -27,6 +27,14 @@ type resource struct {
 	namespace string
 }
 
+// deploymentRestore records the original container args of a deployment so that
+// it can be patched back to its pre-test state during scenario cleanup.
+type deploymentRestore struct {
+	namespace      string
+	deploymentName string
+	originalArgs   []string
+}
+
 type scenarioContext struct {
 	id                   string
 	namespace            string
@@ -38,6 +46,7 @@ type scenarioContext struct {
 	backGroundCmds       []*exec.Cmd
 	metricsResponse      map[string]string
 	leaderPods           map[string]string // component name -> leader pod name
+	deploymentRestores   []deploymentRestore
 
 	extensionObjects []client.Object
 }
@@ -182,6 +191,23 @@ func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context
 			_ = p.Kill()
 		}
 	}
+
+	// Always restore deployments whose args were modified during the scenario,
+	// even when the scenario failed, so that a misconfigured TLS profile does
+	// not leak into subsequent scenarios.  Restore in reverse order so that
+	// multiple patches to the same deployment unwind back to the true original.
+	for i := len(sc.deploymentRestores) - 1; i >= 0; i-- {
+		dr := sc.deploymentRestores[i]
+		if err2 := patchDeploymentArgs(dr.namespace, dr.deploymentName, dr.originalArgs); err2 != nil {
+			logger.Info("Error restoring deployment args", "name", dr.deploymentName, "error", err2)
+			continue
+		}
+		if _, err2 := k8sClient("rollout", "status", "-n", dr.namespace,
+			fmt.Sprintf("deployment/%s", dr.deploymentName), "--timeout=2m"); err2 != nil {
+			logger.Info("Timeout waiting for deployment rollout after restore", "name", dr.deploymentName)
+		}
+	}
+
 	if err != nil {
 		return ctx, err
 	}
