@@ -289,9 +289,10 @@ func configureDeploymentCustomTLS(ctx context.Context, component, version, ciphe
 
 	sc := scenarioCtx(ctx)
 	sc.deploymentRestores = append(sc.deploymentRestores, deploymentRestore{
-		namespace:      olmNamespace,
-		deploymentName: deploymentName,
-		originalArgs:   origArgs,
+		name:         deploymentName,
+		namespace:    olmNamespace,
+		patchedArgs:  true,
+		originalArgs: origArgs,
 	})
 
 	newArgs := buildCustomTLSArgs(origArgs, version, ciphers, curves)
