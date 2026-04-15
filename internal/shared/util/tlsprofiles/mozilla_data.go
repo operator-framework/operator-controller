@@ -96,6 +96,13 @@ func parseProfile(name string, cfg mozillaConfiguration) (tlsProfile, []string, 
 		panic(fmt.Sprintf("tlsprofiles: profile %q has unrecognized tls_versions[0] %q: %v", name, cfg.TLSVersions[0], err))
 	}
 
+	if len(curveNums) == 0 {
+		panic(fmt.Sprintf("tlsprofiles: profile %q resolved no supported tls_curves from embedded mozilla_data.json", name))
+	}
+	if version < tlsVersion(tls.VersionTLS13) && len(cipherNums) == 0 {
+		panic(fmt.Sprintf("tlsprofiles: profile %q resolved no supported cipher suites from embedded mozilla_data.json", name))
+	}
+
 	return tlsProfile{
 		ciphers:       cipherSlice{cipherNums: cipherNums},
 		curves:        curveSlice{curveNums: curveNums},
