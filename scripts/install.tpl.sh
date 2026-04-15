@@ -94,7 +94,16 @@ kubectl_wait_for_query() {
     done
 }
 
-kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
+# Install cert-manager only if it is not already present on the cluster.
+# Check both the CRD and the controller deployments to avoid false positives
+# from stale CRDs left behind by a partial or incomplete installation.
+if kubectl get crd certificates.cert-manager.io &>/dev/null && \
+   kubectl get deployment -n cert-manager cert-manager-webhook &>/dev/null && \
+   kubectl get deployment -n cert-manager cert-manager-cainjector &>/dev/null; then
+    echo "cert-manager is already installed, skipping installation"
+else
+    kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
+fi
 # Wait for cert-manager to be fully ready
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 kubectl_wait "cert-manager" "deployment/cert-manager-cainjector" "60s"
