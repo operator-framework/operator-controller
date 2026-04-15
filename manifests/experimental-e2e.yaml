@@ -1474,8 +1474,8 @@ spec:
                       type: string
                       x-kubernetes-validations:
                       - message: the value must consist of only lowercase alphanumeric
-                          characters and hyphens, and must start with an alphabetic
-                          character and end with an alphanumeric character.
+                          characters and hyphens, and must start and end with an alphanumeric
+                          character.
                         rule: '!format.dns1123Label().validate(self).hasValue()'
                     objects:
                       description: |-
@@ -1973,8 +1973,8 @@ spec:
                       type: string
                       x-kubernetes-validations:
                       - message: the value must consist of only lowercase alphanumeric
-                          characters and hyphens, and must start with an alphabetic
-                          character and end with an alphanumeric character.
+                          characters and hyphens, and must start and end with an alphanumeric
+                          character.
                         rule: '!format.dns1123Label().validate(self).hasValue()'
                   required:
                   - digest
