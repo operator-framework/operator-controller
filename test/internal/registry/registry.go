@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -32,7 +33,6 @@ import (
 const (
 	DefaultNamespace = "operator-controller-e2e"
 	DefaultName      = "docker-registry"
-	nodePort         = int32(30000)
 )
 
 // Deploy ensures the image registry namespace, TLS certificate, deployment,
@@ -124,18 +124,14 @@ func Deploy(ctx context.Context, cfg *rest.Config, namespace, name string) error
 		return fmt.Errorf("failed to apply deployment: %w", err)
 	}
 
-	// Apply service — NodePort so that containerd on the kind node can
-	// reach the registry via localhost:30000 (configured in hosts.toml).
-	// Test runners access the registry via port-forward instead.
+	// Apply service
 	svc := corev1ac.Service(name, namespace).
 		WithSpec(corev1ac.ServiceSpec().
 			WithSelector(podLabels).
-			WithType(corev1.ServiceTypeNodePort).
 			WithPorts(corev1ac.ServicePort().
 				WithName("http").
 				WithPort(5000).
-				WithTargetPort(intstr.FromInt32(5000)).
-				WithNodePort(nodePort),
+				WithTargetPort(intstr.FromInt32(5000)),
 			),
 		)
 	if err := c.Apply(ctx, svc, fieldOwner, client.ForceOwnership); err != nil {
@@ -168,21 +164,26 @@ func Deploy(ctx context.Context, cfg *rest.Config, namespace, name string) error
 // PortForward establishes a port-forward to the registry pod and returns
 // the local address (e.g. "localhost:12345") that can be used to push images.
 // The returned stop function should be called to clean up the port-forward.
-func PortForward(ctx context.Context, cfg *rest.Config, namespace, name string) (localAddr string, stop func(), err error) {
+func PortForward(ctx context.Context, cfg *rest.Config, namespace, name string) (string, func(), error) {
 	clientset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 
+	deploy, err := clientset.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get deployment %s/%s: %w", namespace, name, err)
+	}
+	labelSelector := metav1.FormatLabelSelector(deploy.Spec.Selector)
 	pods, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: "app=registry",
+		LabelSelector: labelSelector,
 		FieldSelector: "status.phase=Running",
 	})
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to list registry pods: %w", err)
+		return "", nil, fmt.Errorf("failed to list pods for deployment %s: %w", name, err)
 	}
 	if len(pods.Items) == 0 {
-		return "", nil, fmt.Errorf("no running registry pods found in %s", namespace)
+		return "", nil, fmt.Errorf("no running pods found for deployment %s/%s", namespace, name)
 	}
 	podName := pods.Items[0].Name
 
@@ -220,7 +221,8 @@ func PortForward(ctx context.Context, cfg *rest.Config, namespace, name string) 
 			return "", nil, fmt.Errorf("failed to get forwarded ports: %w", err)
 		}
 		localPort := ports[0].Local
-		return fmt.Sprintf("localhost:%d", localPort), func() { close(stopChan) }, nil
+		stop := sync.OnceFunc(func() { close(stopChan) })
+		return fmt.Sprintf("localhost:%d", localPort), stop, nil
 	case err := <-errChan:
 		return "", nil, fmt.Errorf("port-forward failed: %w", err)
 	case <-ctx.Done():

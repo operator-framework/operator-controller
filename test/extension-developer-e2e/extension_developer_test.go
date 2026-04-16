@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -49,7 +52,6 @@ func TestMain(m *testing.M) {
 	}
 
 	// Set env vars for setup.sh — single source of truth
-	os.Setenv("LOCAL_REGISTRY_HOST", localAddr)
 	os.Setenv("CATALOG_TAG", catalogTag)
 	os.Setenv("REG_PKG_NAME", regPkgName)
 
@@ -60,7 +62,52 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("failed to run setup.sh: %v", err))
 	}
 
+	// Push images via crane through the port-forward.
+	// setup.sh tags images with CLUSTER_REGISTRY_HOST. We export them
+	// from the container runtime via "save" and push through the
+	// port-forward with crane.
+	containerRuntime := os.Getenv("CONTAINER_RUNTIME")
+	bundlePath := "bundles/registry-v1/registry-bundle:v0.0.1"
+	for _, path := range []string{bundlePath, catalogTag} {
+		srcRef := fmt.Sprintf("%s/%s", clusterRegistryHost, path)
+		pushRef := fmt.Sprintf("%s/%s", localAddr, path)
+		if err := saveAndPush(containerRuntime, srcRef, pushRef); err != nil {
+			panic(fmt.Sprintf("failed to push image %s: %v", pushRef, err))
+		}
+	}
+
 	os.Exit(m.Run())
+}
+
+// saveAndPush exports an image from the container runtime to a temp file,
+// then loads and pushes it to the registry via crane.
+func saveAndPush(containerRuntime, srcRef, pushRef string) error {
+	f, err := os.CreateTemp("", "image-*.tar")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(f.Name())
+	defer f.Close()
+
+	saveCmd := exec.Command(containerRuntime, "save", srcRef) //nolint:gosec
+	saveCmd.Stdout = f
+	saveCmd.Stderr = os.Stderr
+	if err := saveCmd.Run(); err != nil {
+		return fmt.Errorf("failed to save image %s: %w", srcRef, err)
+	}
+
+	tag, err := name.NewTag(srcRef)
+	if err != nil {
+		return fmt.Errorf("failed to parse tag %s: %w", srcRef, err)
+	}
+	img, err := tarball.ImageFromPath(f.Name(), &tag)
+	if err != nil {
+		return fmt.Errorf("failed to load image %s from tarball: %w", srcRef, err)
+	}
+	if err := crane.Push(img, pushRef, crane.Insecure); err != nil {
+		return fmt.Errorf("failed to push image %s: %w", pushRef, err)
+	}
+	return nil
 }
 
 func TestExtensionDeveloper(t *testing.T) {

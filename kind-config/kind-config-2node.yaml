@@ -20,9 +20,6 @@ nodes:
           kubeletExtraArgs:
             node-labels: "ingress-ready=true"
           taints: []
-    extraMounts:
-      - hostPath: ./hack/kind-config/containerd/certs.d
-        containerPath: /etc/containerd/certs.d
   - role: control-plane
     kubeadmConfigPatches:
       - |
@@ -31,10 +28,3 @@ nodes:
           kubeletExtraArgs:
             node-labels: "ingress-ready=true"
           taints: []
-    extraMounts:
-      - hostPath: ./hack/kind-config/containerd/certs.d
-        containerPath: /etc/containerd/certs.d
-containerdConfigPatches:
-  - |-
-    [plugins."io.containerd.grpc.v1.cri".registry]
-      config_path = "/etc/containerd/certs.d"

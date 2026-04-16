@@ -8,12 +8,11 @@ help="setup.sh is used to build extensions using the operator-sdk and
 build the image + bundle image, and create a FBC image for the
 following bundle formats:
 - registry+v1
-This script will ensure that all images built are loaded onto
-a KinD cluster with the name specified in the arguments.
+Images are built and tagged locally; pushing to the registry is
+handled by the Go test code via crane + port-forward.
 The following environment variables are required for configuring this script:
 - \$OPERATOR_SDK - path to the operator-sdk binary.
 - \$CONTAINER_RUNTIME - container runtime to use (e.g. docker, podman).
-- \$LOCAL_REGISTRY_HOST - registry address accessible from the test process.
 - \$CLUSTER_REGISTRY_HOST - registry address accessible from inside the cluster.
 - \$CATALOG_TAG - OCI tag for the catalog image (e.g. e2e/test-catalog:v1).
 - \$REG_PKG_NAME - the name of the package for the extension.
@@ -26,7 +25,7 @@ Usage:
 # Input validation
 ########################################
 
-for var in OPERATOR_SDK CONTAINER_RUNTIME LOCAL_REGISTRY_HOST CLUSTER_REGISTRY_HOST CATALOG_TAG REG_PKG_NAME; do
+for var in OPERATOR_SDK CONTAINER_RUNTIME CLUSTER_REGISTRY_HOST CATALOG_TAG REG_PKG_NAME; do
   if [[ -z "${!var:-}" ]]; then
     echo "\$$var is required to be set"
     echo "${help}"
@@ -49,25 +48,13 @@ mkdir -p "${REG_DIR}"
 
 operator_sdk="${OPERATOR_SDK}"
 container_tool="${CONTAINER_RUNTIME}"
-# The path we use to push the image from _outside_ the cluster
-local_registry_host="${LOCAL_REGISTRY_HOST}"
-# The path we use _inside_ the cluster
 cluster_registry_host="${CLUSTER_REGISTRY_HOST}"
 
-tls_flag=""
-if [[ "$container_tool" == "podman" ]]; then
-  echo "Using podman container runtime; adding tls disable flag"
-  tls_flag="--tls-verify=false"
-fi
-
-catalog_push_tag="${local_registry_host}/${CATALOG_TAG}"
+catalog_tag="${cluster_registry_host}/${CATALOG_TAG}"
 reg_pkg_name="${REG_PKG_NAME}"
 
 reg_img="${DOMAIN}/registry:v0.0.1"
-reg_bundle_path="bundles/registry-v1/registry-bundle:v0.0.1"
-
-reg_bundle_img="${cluster_registry_host}/${reg_bundle_path}"
-reg_bundle_push_tag="${local_registry_host}/${reg_bundle_path}"
+reg_bundle_img="${cluster_registry_host}/bundles/registry-v1/registry-bundle:v0.0.1"
 
 ########################################
 # Create the registry+v1 based extension
@@ -98,9 +85,13 @@ reg_bundle_push_tag="${local_registry_host}/${reg_bundle_path}"
   make docker-build IMG="${reg_img}" && \
   sed -i -e 's/$(OPERATOR_SDK) generate kustomize manifests -q/$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false/g' Makefile && \
   make bundle IMG="${reg_img}" VERSION=0.0.1 && \
-  make bundle-build BUNDLE_IMG="${reg_bundle_push_tag}"
-  ${container_tool} push ${reg_bundle_push_tag} ${tls_flag}
+  make bundle-build BUNDLE_IMG="${reg_bundle_img}"
 )
+
+# Push is handled by the Go test via crane + port-forward,
+# because docker push goes through the Docker daemon which
+# may be in a different network context (e.g. colima VM).
+
 
 ###############################
 # Create the FBC that contains
@@ -146,5 +137,6 @@ cat <<EOF > "${TMP_ROOT}"/catalog/index.yaml
 }
 EOF
 
-${container_tool} build --provenance=false -f "${TMP_ROOT}/catalog.Dockerfile" -t "${catalog_push_tag}" "${TMP_ROOT}/"
-${container_tool} push ${catalog_push_tag} ${tls_flag}
+${container_tool} build --provenance=false -f "${TMP_ROOT}/catalog.Dockerfile" -t "${catalog_tag}" "${TMP_ROOT}/"
+
+# Push is handled by the Go test via crane + port-forward.
