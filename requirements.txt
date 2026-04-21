@@ -8,7 +8,7 @@ cssselect==1.4.0
 ghp-import==2.1.0
 idna==3.11
 Jinja2==3.1.6
-lxml==6.0.2
+lxml==6.1.0
 Markdown==3.10.2
 markdown2==2.5.5
 MarkupSafe==3.0.3
