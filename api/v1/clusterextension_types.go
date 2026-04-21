@@ -486,6 +486,7 @@ type BundleMetadata struct {
 	//
 	// +optional
 	// <opcon:experimental>
+	// +kubebuilder:validation:MaxLength=20
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^$|^(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*$\")",message="release must be empty or consist of dot-separated identifiers (numeric without leading zeros, or alphanumeric)"
 	Release *string `json:"release,omitempty"`
 }

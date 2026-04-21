@@ -1279,6 +1279,7 @@ spec:
                           For registry+v1 bundles lacking an explicit release value, this field contains the release
                           extracted from version's build metadata (e.g., '2' from '1.0.0+2').
                           This field is omitted when the bundle's release value is unset.
+                        maxLength: 20
                         type: string
                         x-kubernetes-validations:
                         - message: release must be empty or consist of dot-separated
