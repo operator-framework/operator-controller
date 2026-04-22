@@ -78,6 +78,16 @@ Examples:
 - **Release branches:** `release-v{MAJOR}.{MINOR}` (e.g., `release-v1.2`)
 - **Feature branches:** Created from `main`, typically in contributor forks, merged via PR
 
+## Issue Labels
+
+| Label | Purpose |
+|---|---|
+| `epic` | Marks an issue as an epic (a significant body of work) |
+| `refined` | Indicates the epic has been refined and is ready for implementation |
+| `done` | Marks a completed epic; used to resolve dependency chains |
+
+An epic is eligible for work when it has both `epic` and `refined` labels, is unassigned, and all linked blocking issues carry the `done` label.
+
 ## Git Remotes
 
 Fork-based development workflow:

@@ -357,7 +357,7 @@ This project uses spec-driven development. Governing specs live in `specs/`:
 
 | Command | Purpose |
 |---|---|
-| `/sdd-plan-next-phase` | Plan the next development phase: create branch and spec directory |
+| `/sdd-plan-next-phase` | Pick an eligible GitHub epic (`epic`+`refined`, unassigned, deps resolved), assign it, create branch and spec directory |
 | `/sdd-implement` | Implement a phase spec: follow task groups, run checks |
 | `/sdd-review` | Review branch changes for consistency with specs and conventions |
 | `/sdd-ship` | Verify, commit, and publish: run checks, create PR with conventions |

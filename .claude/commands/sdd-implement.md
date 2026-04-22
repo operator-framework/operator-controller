@@ -1,8 +1,8 @@
-Implement the current phase spec for operator-controller.
+Implement the current epic spec for operator-controller.
 
 ## Steps
 
-1. Identify the active phase spec. Look for a `specs/*/plan.md` file on the current branch. If multiple exist or none are found, use AskUserQuestion to clarify which phase to implement.
+1. Identify the active epic spec. Look for a `specs/*/plan.md` file on the current branch. If multiple exist or none are found, use AskUserQuestion to clarify which epic to implement.
 
 2. Read all spec files for the phase:
    - `plan.md` — understand the goals and approach

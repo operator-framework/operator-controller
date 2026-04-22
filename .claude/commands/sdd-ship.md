@@ -80,4 +80,9 @@ Verify, commit, and publish the current branch for operator-controller.
    )"
    ```
 
-6. Report the PR URL when done.
+6. If this branch is linked to a GitHub epic (check `specs/*/plan.md` for an issue reference), use AskUserQuestion to ask whether to add the `done` label to the epic:
+   ```
+   gh issue edit {number} --repo operator-framework/operator-controller --add-label done
+   ```
+
+7. Report the PR URL when done.

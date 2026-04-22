@@ -84,6 +84,9 @@ This document captures the historical evolution of operator-controller in phases
 
 ## Next Steps
 
-<!-- The team will iterate on these. Add upcoming phases here as priorities become clear. -->
+Future work is tracked via GitHub issues on the upstream repository rather than phases in this file. The `/sdd-plan-next-phase` command discovers the next available epic automatically.
 
-- **Phase 7:** _TBD - to be defined by the team_
+An issue is eligible for work when it has:
+- Labels: `epic` and `refined`
+- No assignee
+- No unresolved dependencies (all linked blocking issues have the `done` label)
