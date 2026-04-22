@@ -91,6 +91,19 @@ type deps struct {
 	Validators           []controllers.ClusterExtensionValidator
 }
 
+// specHashFor computes the CatalogSpecHash for the given catalog filter with CRD-level
+// defaults applied (UpgradeConstraintPolicy defaults to CatalogProvided). This mirrors
+// the state the API server produces when the ClusterExtension is created.
+func specHashFor(cat *ocv1.CatalogFilter) string {
+	cf := *cat
+	if cf.UpgradeConstraintPolicy == "" {
+		cf.UpgradeConstraintPolicy = ocv1.UpgradeConstraintPolicyCatalogProvided
+	}
+	return controllers.CatalogSpecHash(&ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{Source: ocv1.SourceConfig{Catalog: &cf}},
+	})
+}
+
 func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 
