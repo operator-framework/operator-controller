@@ -120,7 +120,7 @@ func (r *catalogServerRunnable) Start(ctx context.Context) error {
 	}()
 
 	if err := r.server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return err
+		return fmt.Errorf("catalog server on %q failed: %w", r.cfg.CatalogAddr, err)
 	}
 	return nil
 }
