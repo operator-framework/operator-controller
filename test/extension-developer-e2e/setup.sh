@@ -92,7 +92,6 @@ reg_bundle_img="${cluster_registry_host}/bundles/registry-v1/registry-bundle:v0.
 # because docker push goes through the Docker daemon which
 # may be in a different network context (e.g. colima VM).
 
-
 ###############################
 # Create the FBC that contains
 # the registry+v1 extensions

@@ -134,17 +134,29 @@ func TestCatalog_FBCGeneration(t *testing.T) {
 		t.Errorf("expected 2 channels, got %d", len(pkg.channels))
 	}
 
-	// Verify alpha channel has 1 entry
-	alpha := pkg.channels[0]
-	if alpha.name != "alpha" {
-		t.Errorf("expected channel 'alpha', got %q", alpha.name)
+	// Verify channels by name rather than by index so the test is robust to ordering changes.
+	var alpha, beta *channelDef
+	for i := range pkg.channels {
+		switch pkg.channels[i].name {
+		case "alpha":
+			alpha = &pkg.channels[i]
+		case "beta":
+			beta = &pkg.channels[i]
+		}
 	}
+	if alpha == nil {
+		t.Fatal("alpha channel not found")
+	}
+	if beta == nil {
+		t.Fatal("beta channel not found")
+	}
+
+	// Verify alpha channel has 1 entry
 	if len(alpha.entries) != 1 {
 		t.Errorf("expected 1 alpha entry, got %d", len(alpha.entries))
 	}
 
 	// Verify beta channel has replaces edge
-	beta := pkg.channels[1]
 	if len(beta.entries) != 2 {
 		t.Fatalf("expected 2 beta entries, got %d", len(beta.entries))
 	}

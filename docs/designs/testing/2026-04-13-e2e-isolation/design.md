@@ -12,7 +12,7 @@ Each scenario dynamically builds and pushes its own bundle and catalog OCI image
 parameterized by scenario ID. All cluster-scoped resource names include the scenario ID, making
 conflicts structurally impossible.
 
-```
+```text
 Scenario starts
   -> Generate parameterized bundle manifests (CRD names, deployments, etc. include scenario ID)
   -> Build + push bundle OCI images to e2e registry via go-containerregistry
