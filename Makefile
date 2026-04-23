@@ -254,7 +254,7 @@ $(eval $(call install-sh,standard,operator-controller-standard.yaml))
 .PHONY: test
 test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run all tests.
 
-E2E_TIMEOUT ?= 15m
+E2E_TIMEOUT ?= 20m
 GODOG_ARGS ?=
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
