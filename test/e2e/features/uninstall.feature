@@ -5,7 +5,10 @@ Feature: Uninstall ClusterExtension
 
   Background:
     Given OLM is available
-    And ClusterCatalog "test" serves bundles
+    And an image registry is available
+    And a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
     And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     And ClusterExtension is applied
       """
@@ -20,12 +23,12 @@ Feature: Uninstall ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
-    And bundle "test-operator.1.2.0" is installed in version "1.2.0"
+    And bundle "${PACKAGE:test}.1.2.0" is installed in version "1.2.0"
     And ClusterExtension is rolled out
     And ClusterExtension resources are created and labeled
 

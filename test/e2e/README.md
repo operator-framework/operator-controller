@@ -32,15 +32,13 @@ test/e2e/
 └── steps/                      # Step definitions and test utilities
     ├── steps.go                # Step definition implementations
     ├── hooks.go                # Test hooks and scenario context
-    └── testdata/               # Test data (RBAC templates, catalogs)
+    └── testdata/               # Test data (RBAC templates)
         ├── serviceaccount-template.yaml
         ├── olm-sa-helm-rbac-template.yaml
         ├── olm-sa-boxcutter-rbac-template.yaml
         ├── pvc-probe-sa-boxcutter-rbac-template.yaml
         ├── cluster-admin-rbac-template.yaml
-        ├── metrics-reader-rbac-template.yaml
-        ├── test-catalog-template.yaml
-        └── extra-catalog-template.yaml
+        └── metrics-reader-rbac-template.yaml
 ```
 
 ## Architecture
@@ -149,7 +147,7 @@ Manages test lifecycle and scenario-specific context.
 
 **Variable Substitution:**
 
-Replaces `${TEST_NAMESPACE}`, `${NAME}`, and `${CATALOG_IMG}` with scenario-specific values.
+Replaces `${TEST_NAMESPACE}`, `${NAME}`, `${SCENARIO_ID}`, `${PACKAGE:<name>}`, and `${CATALOG:<name>}` with scenario-specific values.
 
 ## Writing Tests
 
@@ -203,7 +201,9 @@ Use these variables in YAML templates:
 - `${NAME}`: Scenario-specific ClusterExtension name (e.g., `ce-123`)
 - `${COS_NAME}`: Scenario-specific ClusterObjectSet name (e.g., `cos-123`; for applying ClusterObjectSets directly)
 - `${TEST_NAMESPACE}`: Scenario-specific namespace (e.g., `ns-123`)
-- `${CATALOG_IMG}`: Catalog image reference (defaults to in-cluster registry, overridable via `CATALOG_IMG` env var)
+- `${SCENARIO_ID}`: Unique scenario identifier used for resource name isolation
+- `${PACKAGE:<name>}`: Parameterized package name (e.g., `${PACKAGE:test}` expands to `test-<scenario-id>`)
+- `${CATALOG:<name>}`: Catalog resource name (e.g., `${CATALOG:test}` expands to `test-catalog-<scenario-id>`)
 
 ### 5. Feature Tags
 
@@ -277,8 +277,7 @@ go test test/e2e/features_test.go --log.debug --k8s.cli=oc
 
 - `KUBECONFIG`: Path to kubeconfig file (defaults to `~/.kube/config`)
 - `E2E_SUMMARY_OUTPUT`: Path to write test summary (optional)
-- `CATALOG_IMG`: Override default catalog image reference (optional)
-- `LOCAL_REGISTRY_HOST`: Local registry host for catalog images
+- `CLUSTER_REGISTRY_HOST`: In-cluster registry host for pulling catalog images
 
 ## Design Patterns
 
@@ -293,8 +292,8 @@ Each scenario runs in its own namespace with unique resource names, ensuring com
 
 The `ScenarioCleanup` hook ensures all resources are deleted after each scenario:
 
-- Kills background processes (e.g., kubectl port-forward)
-- Deletes ClusterExtensions
+- Deletes ClusterExtensions and ClusterObjectSets
+- Deletes ClusterCatalogs
 - Deletes namespaces
 - Deletes added resources
 

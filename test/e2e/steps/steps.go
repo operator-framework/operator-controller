@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,11 +37,16 @@ import (
 	k8sresource "k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/component-base/featuregate"
 	"k8s.io/utils/ptr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
+	"github.com/operator-framework/operator-controller/test/internal/catalog"
+	testregistry "github.com/operator-framework/operator-controller/test/internal/registry"
 )
 
 const (
@@ -54,24 +60,40 @@ var (
 	kubeconfigPath      string
 	k8sCli              string
 	deployImageRegistry = sync.OnceValue(func() error {
-		if os.Getenv("KIND_CLUSTER_NAME") == "" {
+		// Only deploy the registry on kind clusters
+		providerID, err := k8sClient("get", "nodes", "-o", "jsonpath={.items[0].spec.providerID}")
+		if err != nil || !strings.HasPrefix(providerID, "kind://") {
 			return nil
 		}
-		cmd := exec.Command("bash", "-c", "make image-registry")
-		dir, _ := os.LookupEnv("ROOT_DIR")
-		if dir == "" {
-			return fmt.Errorf("ROOT_DIR environment variable not set")
+
+		cfg, err := ctrl.GetConfig()
+		if err != nil {
+			return fmt.Errorf("failed to get kubeconfig: %w", err)
 		}
-		cmd.Dir = dir
-		cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
+		return testregistry.Deploy(context.Background(), cfg, testregistry.DefaultNamespace, testregistry.DefaultName)
+	})
+	startRegistryPortForward = sync.OnceValues(func() (string, error) {
+		if err := deployImageRegistry(); err != nil {
+			return "", err
+		}
+		cfg, err := ctrl.GetConfig()
+		if err != nil {
+			return "", fmt.Errorf("failed to get kubeconfig: %w", err)
+		}
+		// Port-forward lives for the duration of the test process;
+		// the stop function is not needed because the goroutine is
+		// cleaned up on process exit.
+		localAddr, _, err := testregistry.PortForward(context.Background(), cfg, testregistry.DefaultNamespace, testregistry.DefaultName)
+		if err != nil {
+			return "", fmt.Errorf("failed to start port-forward to registry: %w", err)
+		}
+		return localAddr, nil
 	})
 )
 
 func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^OLM is available$`, OLMisAvailable)
+	sc.Step(`^(?i)an image registry is available$`, ImageRegistryIsAvailable)
 	sc.Step(`^(?i)bundle "([^"]+)" is installed in version "([^"]+)"$`, BundleInstalled)
 
 	sc.Step(`^(?i)ClusterExtension is applied(?:\s+.*)?$`, ResourceIsApplied)
@@ -112,7 +134,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is (?:eventually not found|not installed)$`, ResourceEventuallyNotFound)
 	sc.Step(`^(?i)resource "([^"]+)" exists$`, ResourceAvailable)
 	sc.Step(`^(?i)resource is applied$`, ResourceIsApplied)
-	sc.Step(`^(?i)resource "deployment/test-operator" reports as (not ready|ready)$`, MarkTestOperatorNotReady)
+	sc.Step(`^(?i)deployment "([^"]+)" reports as (not ready|ready)$`, MarkDeploymentReadiness)
 
 	sc.Step(`^(?i)resource apply fails with error msg containing "([^"]+)"$`, ResourceApplyFails)
 	sc.Step(`^(?i)resource "([^"]+)" is eventually restored$`, ResourceRestored)
@@ -135,13 +157,11 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" in test namespace has permissions to fetch "([^"]+)" metrics$`, ServiceAccountWithFetchMetricsPermissions)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" sends request to "([^"]+)" endpoint of "([^"]+)" service$`, SendMetricsRequest)
 
-	sc.Step(`^"([^"]+)" catalog is updated to version "([^"]+)"$`, CatalogIsUpdatedToVersion)
-	sc.Step(`^(?i)ClusterCatalog "([^"]+)" is updated to version "([^"]+)"$`, CatalogIsUpdatedToVersion)
-	sc.Step(`^"([^"]+)" catalog serves bundles$`, CatalogServesBundles)
-	sc.Step(`^(?i)ClusterCatalog "([^"]+)" serves bundles$`, CatalogServesBundles)
-	sc.Step(`^"([^"]+)" catalog image version "([^"]+)" is also tagged as "([^"]+)"$`, TagCatalogImage)
-	sc.Step(`^(?i)ClusterCatalog "([^"]+)" image version "([^"]+)" is also tagged as "([^"]+)"$`, TagCatalogImage)
-	sc.Step(`^(?i)ClusterCatalog "([^"]+)" is deleted$`, CatalogIsDeleted)
+	sc.Step(`^(?i)catalog "([^"]+)" is deleted$`, ScenarioCatalogIsDeleted)
+	sc.Step(`^(?i)catalog "([^"]+)" is updated to version "([^"]+)"$`, ScenarioCatalogIsUpdatedToVersion)
+	sc.Step(`^(?i)catalog "([^"]+)" version "([^"]+)" with packages:$`, CatalogVersionWithPackages)
+	sc.Step(`^(?i)catalog "([^"]+)" image version "([^"]+)" is also tagged as "([^"]+)"$`, ScenarioCatalogTagImage)
+	sc.Step(`^(?i)a catalog "([^"]+)" with packages:$`, CatalogWithPackages)
 
 	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
@@ -167,8 +187,9 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)OLM is upgraded$`, OLMIsUpgraded)
 	sc.Step(`^(?i)(catalogd|operator-controller) is ready to reconcile resources$`, ComponentIsReadyToReconcile)
 	sc.Step(`^(?i)all (ClusterCatalog|ClusterExtension) resources are reconciled$`, allResourcesAreReconciled)
-	sc.Step(`^(?i)(ClusterCatalog|ClusterExtension) is reconciled$`, ResourceTypeIsReconciled)
-	sc.Step(`^(?i)ClusterCatalog reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterCatalogReportsCondition)
+	sc.Step(`^(?i)ClusterExtension is reconciled$`, ClusterExtensionIsReconciled)
+	sc.Step(`^(?i)catalog "([^"]+)" is reconciled$`, ScenarioCatalogIsReconciled)
+	sc.Step(`^(?i)catalog "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ScenarioCatalogReportsCondition)
 }
 
 func init() {
@@ -206,6 +227,43 @@ func k8scliWithInput(yaml string, args ...string) (string, error) {
 	return string(b), err
 }
 
+// projectRootDir finds the project root by walking up from the source file until go.mod is found.
+func projectRootDir() string {
+	_, thisFile, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(thisFile)
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			panic("could not find project root (no go.mod found)")
+		}
+		dir = parent
+	}
+}
+
+// registryHosts returns the local and in-cluster registry addresses.
+// The local address is obtained by port-forwarding to the in-cluster registry,
+// which works regardless of the cluster's network topology.
+func registryHosts() (string, string, error) {
+	local, err := startRegistryPortForward()
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get local registry address: %w", err)
+	}
+	cluster := os.Getenv("CLUSTER_REGISTRY_HOST")
+	if cluster == "" {
+		cluster = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"
+	}
+	return local, cluster, nil
+}
+
+// ImageRegistryIsAvailable ensures the in-cluster image registry is deployed and ready.
+// This is needed for scenarios that build and push per-scenario catalog images.
+func ImageRegistryIsAvailable() error {
+	return deployImageRegistry()
+}
+
 // OLMisAvailable waits for the OLM operator-controller deployment to become available. Polls with timeout.
 func OLMisAvailable(ctx context.Context) error {
 	require.Eventually(godog.T(ctx), func() bool {
@@ -221,6 +279,7 @@ func OLMisAvailable(ctx context.Context) error {
 // BundleInstalled waits for the ClusterExtension to report the specified bundle name and version as installed. Polls with timeout.
 func BundleInstalled(ctx context.Context, name, version string) error {
 	sc := scenarioCtx(ctx)
+	name = substituteScenarioVars(name, sc)
 	waitFor(ctx, func() bool {
 		v, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.install.bundle}")
 		if err != nil {
@@ -248,10 +307,13 @@ func substituteScenarioVars(content string, sc *scenarioContext) string {
 		"TEST_NAMESPACE": sc.namespace,
 		"NAME":           sc.clusterExtensionName,
 		"COS_NAME":       sc.clusterObjectSetName,
-		"CATALOG_IMG":    "docker-registry.operator-controller-e2e.svc.cluster.local:5000/e2e/test-catalog:v1",
+		"SCENARIO_ID":    sc.id,
 	}
-	if v, found := os.LookupEnv("CATALOG_IMG"); found {
-		vars["CATALOG_IMG"] = v
+	for orig, param := range sc.catalogPackageNames {
+		vars[fmt.Sprintf("PACKAGE:%s", orig)] = param
+	}
+	for name, catalogName := range sc.catalogs {
+		vars[fmt.Sprintf("CATALOG:%s", name)] = catalogName
 	}
 	return templateContent(content, vars)
 }
@@ -877,12 +939,9 @@ func ClusterObjectSetReferredSecretsContainLabels(ctx context.Context, revisionN
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
-	expected, err := parseKeyValueTable(table)
+	expected, err := parseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
-	}
-	for k, v := range expected {
-		expected[k] = substituteScenarioVars(v, sc)
 	}
 
 	waitFor(ctx, func() bool {
@@ -1181,15 +1240,31 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 	}, keyValue...)
 
 	_, thisFile, _, _ := runtime.Caller(0)
-	yaml, err := templateYaml(filepath.Join(filepath.Dir(thisFile), "testdata", rbacTemplate), vars)
+	rbacYaml, err := templateYaml(filepath.Join(filepath.Dir(thisFile), "testdata", rbacTemplate), vars)
 	if err != nil {
 		return fmt.Errorf("failed to template RBAC yaml: %v", err)
 	}
 
 	// Apply the RBAC configuration
-	_, err = k8scliWithInput(yaml, "apply", "-f", "-")
+	_, err = k8scliWithInput(rbacYaml, "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply RBAC configuration: %v: %s", err, stderrOutput(err))
+	}
+
+	// Track cluster-scoped RBAC resources for cleanup
+	for _, doc := range strings.Split(rbacYaml, "---") {
+		doc = strings.TrimSpace(doc)
+		if doc == "" {
+			continue
+		}
+		res, err := toUnstructured(doc)
+		if err != nil {
+			continue
+		}
+		kind := res.GetKind()
+		if kind == "ClusterRole" || kind == "ClusterRoleBinding" {
+			sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: strings.ToLower(kind)})
+		}
 	}
 
 	return nil
@@ -1231,6 +1306,7 @@ func ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace(ctx contex
 // ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace creates a ServiceAccount and enables creation of any cluster extension on behalf of this account.
 func ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace(ctx context.Context, serviceAccount string, ns string) error {
 	sc := scenarioCtx(ctx)
+	ns = substituteScenarioVars(ns, sc)
 	sc.addedResources = append(sc.addedResources, resource{name: ns, kind: "namespace"})
 	if err := applyServiceAccount(ctx, serviceAccount, "TEST_NAMESPACE", ns); err != nil {
 		return err
@@ -1361,9 +1437,58 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 	return nil
 }
 
-// CatalogIsUpdatedToVersion patches the ClusterCatalog's image reference to the specified version tag.
-func CatalogIsUpdatedToVersion(name, version string) error {
-	ref, err := k8sClient("get", "clustercatalog", fmt.Sprintf("%s-catalog", name), "-o", "jsonpath={.spec.source.image.ref}")
+// ScenarioCatalogIsDeleted deletes a named per-scenario ClusterCatalog and waits for it to be removed.
+func ScenarioCatalogIsDeleted(ctx context.Context, catalogUserName string) error {
+	sc := scenarioCtx(ctx)
+	catalogName, ok := sc.catalogs[catalogUserName]
+	if !ok {
+		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
+	}
+	_, err := k8sClient("delete", "clustercatalog", catalogName, "--ignore-not-found=true", "--wait=true")
+	if err != nil {
+		return fmt.Errorf("failed to delete catalog %q: %v", catalogUserName, err)
+	}
+	return nil
+}
+
+// CatalogVersionWithPackages builds an additional version of a per-scenario catalog image.
+// It pushes a new catalog image with the specified tag but does NOT update the ClusterCatalog.
+// Use ScenarioCatalogIsUpdatedToVersion to patch the ClusterCatalog to use the new version.
+func CatalogVersionWithPackages(ctx context.Context, catalogUserName, version string, table *godog.Table) error {
+	sc := scenarioCtx(ctx)
+
+	pkgOpts, err := parseCatalogTable(table)
+	if err != nil {
+		return err
+	}
+
+	cat := catalog.NewCatalog(catalogUserName, sc.id, pkgOpts...)
+	localRegistry, clusterRegistry, err := registryHosts()
+	if err != nil {
+		return err
+	}
+
+	result, err := cat.Build(ctx, version, localRegistry, clusterRegistry)
+	if err != nil {
+		return fmt.Errorf("failed to build catalog version %s: %w", version, err)
+	}
+
+	// Accumulate package names (bundles may differ between versions)
+	for orig, param := range result.PackageNames {
+		sc.catalogPackageNames[orig] = param
+	}
+
+	return nil
+}
+
+// ScenarioCatalogIsUpdatedToVersion patches a named per-scenario ClusterCatalog's image ref to a new version tag.
+func ScenarioCatalogIsUpdatedToVersion(ctx context.Context, catalogUserName, version string) error {
+	sc := scenarioCtx(ctx)
+	catalogName, ok := sc.catalogs[catalogUserName]
+	if !ok {
+		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
+	}
+	ref, err := k8sClient("get", "clustercatalog", catalogName, "-o", "jsonpath={.spec.source.image.ref}")
 	if err != nil {
 		return err
 	}
@@ -1385,46 +1510,194 @@ func CatalogIsUpdatedToVersion(name, version string) error {
 	if err != nil {
 		return err
 	}
-	_, err = k8sClient("patch", "clustercatalog", fmt.Sprintf("%s-catalog", name), "--type", "merge", "-p", string(pb))
+	_, err = k8sClient("patch", "clustercatalog", catalogName, "--type", "merge", "-p", string(pb))
 	return err
 }
 
-// CatalogServesBundles applies the ClusterCatalog YAML template to create a catalog that serves bundles.
-func CatalogServesBundles(ctx context.Context, catalogName string) error {
-	if err := deployImageRegistry(); err != nil {
+// ScenarioCatalogTagImage tags an existing per-scenario catalog image with a new tag.
+func ScenarioCatalogTagImage(ctx context.Context, catalogUserName, oldTag, newTag string) error {
+	localRegistry, _, err := registryHosts()
+	if err != nil {
 		return err
 	}
 	sc := scenarioCtx(ctx)
-	sc.clusterCatalogName = fmt.Sprintf("%s-catalog", catalogName)
-
-	_, thisFile, _, _ := runtime.Caller(0)
-	yamlContent, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "testdata", fmt.Sprintf("%s-catalog-template.yaml", catalogName)))
-	if err != nil {
-		return fmt.Errorf("failed to read catalog yaml: %v", err)
-	}
-
-	_, err = k8scliWithInput(substituteScenarioVars(string(yamlContent), sc), "apply", "-f", "-")
-	if err != nil {
-		return fmt.Errorf("failed to apply catalog: %v", err)
-	}
-
-	return nil
-}
-
-// TagCatalogImage adds a new tag to a catalog container image in the local registry using crane.
-func TagCatalogImage(name, oldTag, newTag string) error {
-	imageRef := fmt.Sprintf("%s/%s", os.Getenv("LOCAL_REGISTRY_HOST"), fmt.Sprintf("e2e/%s-catalog:%s", name, oldTag))
+	imageRef := fmt.Sprintf("%s/e2e/%s-catalog-%s:%s", localRegistry, catalogUserName, sc.id, oldTag)
 	return crane.Tag(imageRef, newTag, crane.Insecure)
 }
 
-// CatalogIsDeleted deletes the named ClusterCatalog resource and waits for it to be removed.
-func CatalogIsDeleted(ctx context.Context, catalogName string) error {
-	catalogFullName := fmt.Sprintf("%s-catalog", catalogName)
-	_, err := k8sClient("delete", "clustercatalog", catalogFullName, "--ignore-not-found=true", "--wait=true")
-	if err != nil {
-		return fmt.Errorf("failed to delete catalog: %v", err)
+// parseCatalogTable parses a Gherkin data table into catalog.PackageOption slices.
+// Table columns: package | version | channel | replaces | contents
+func parseCatalogTable(table *godog.Table) ([]catalog.PackageOption, error) {
+	type bundleKey struct {
+		pkg     string
+		version string
 	}
+	type bundleEntry struct {
+		opts []catalog.BundleOption
+	}
+	type channelEntry struct {
+		version  string
+		replaces string
+	}
+
+	bundleDefs := make(map[bundleKey]*bundleEntry)
+	var bundleOrder []bundleKey
+	packageChannels := make(map[string]map[string][]channelEntry)
+	var packageOrder []string
+	packageSeen := make(map[string]bool)
+
+	for _, row := range table.Rows[1:] { // skip header
+		pkg := row.Cells[0].Value
+		version := row.Cells[1].Value
+		channel := row.Cells[2].Value
+		replaces := row.Cells[3].Value
+		contents := row.Cells[4].Value
+
+		if !packageSeen[pkg] {
+			packageOrder = append(packageOrder, pkg)
+			packageSeen[pkg] = true
+		}
+
+		bk := bundleKey{pkg: pkg, version: version}
+		if _, exists := bundleDefs[bk]; exists {
+			if strings.TrimSpace(contents) != "" {
+				return nil, fmt.Errorf("duplicate bundle %s/%s: contents must be empty for repeated versions", pkg, version)
+			}
+		} else {
+			opts := parseContents(contents)
+			bundleDefs[bk] = &bundleEntry{opts: opts}
+			bundleOrder = append(bundleOrder, bk)
+		}
+
+		if packageChannels[pkg] == nil {
+			packageChannels[pkg] = make(map[string][]channelEntry)
+		}
+		packageChannels[pkg][channel] = append(packageChannels[pkg][channel], channelEntry{
+			version:  version,
+			replaces: replaces,
+		})
+	}
+
+	var pkgOpts []catalog.PackageOption
+	for _, pkgName := range packageOrder {
+		var opts []catalog.PackageOption
+
+		for _, bk := range bundleOrder {
+			if bk.pkg == pkgName {
+				opts = append(opts, catalog.Bundle(bk.version, bundleDefs[bk].opts...))
+			}
+		}
+
+		for chName, entries := range packageChannels[pkgName] {
+			var chOpts []catalog.ChannelOption
+			for _, e := range entries {
+				if e.replaces != "" {
+					chOpts = append(chOpts, catalog.Entry(e.version, catalog.Replaces(e.replaces)))
+				} else {
+					chOpts = append(chOpts, catalog.Entry(e.version))
+				}
+			}
+			opts = append(opts, catalog.Channel(chName, chOpts...))
+		}
+
+		pkgOpts = append(pkgOpts, catalog.WithPackage(pkgName, opts...))
+	}
+	return pkgOpts, nil
+}
+
+// CatalogWithPackages builds a per-scenario catalog from a Gherkin data table.
+// Table columns: package | version | channel | replaces | contents
+func CatalogWithPackages(ctx context.Context, catalogUserName string, table *godog.Table) error {
+	sc := scenarioCtx(ctx)
+
+	pkgOpts, err := parseCatalogTable(table)
+	if err != nil {
+		return err
+	}
+
+	cat := catalog.NewCatalog(catalogUserName, sc.id, pkgOpts...)
+	localRegistry, clusterRegistry, err := registryHosts()
+	if err != nil {
+		return err
+	}
+
+	result, err := cat.Build(ctx, "v1", localRegistry, clusterRegistry)
+	if err != nil {
+		return fmt.Errorf("failed to build catalog: %w", err)
+	}
+
+	sc.catalogs[catalogUserName] = result.CatalogName
+	for orig, param := range result.PackageNames {
+		sc.catalogPackageNames[orig] = param
+	}
+
+	catalogYAML := fmt.Sprintf(`apiVersion: olm.operatorframework.io/v1
+kind: ClusterCatalog
+metadata:
+  name: %s
+spec:
+  priority: 0
+  source:
+    type: Image
+    image:
+      pollIntervalMinutes: 1
+      ref: %s
+`, result.CatalogName, result.CatalogImageRef)
+
+	if _, err := k8scliWithInput(catalogYAML, "apply", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to apply ClusterCatalog: %w", err)
+	}
+
 	return nil
+}
+
+func parseContents(contents string) []catalog.BundleOption {
+	contents = strings.TrimSpace(contents)
+	if contents == "" {
+		return nil
+	}
+	if strings.EqualFold(contents, "BadImage") {
+		return []catalog.BundleOption{catalog.BadImage()}
+	}
+	var opts []catalog.BundleOption
+	for _, part := range strings.Split(contents, ",") {
+		part = strings.TrimSpace(part)
+		switch {
+		case part == "CRD":
+			opts = append(opts, catalog.WithCRD())
+		case part == "Deployment":
+			opts = append(opts, catalog.WithDeployment())
+		case part == "ConfigMap":
+			opts = append(opts, catalog.WithConfigMap())
+		case strings.HasPrefix(part, "Property(") && strings.HasSuffix(part, ")"):
+			// Property(type=value)
+			inner := part[len("Property(") : len(part)-1]
+			if k, v, ok := strings.Cut(inner, "="); ok {
+				opts = append(opts, catalog.WithBundleProperty(k, v))
+			}
+		case strings.HasPrefix(part, "InstallMode(") && strings.HasSuffix(part, ")"):
+			// InstallMode(SingleNamespace) or InstallMode(OwnNamespace)
+			mode := part[len("InstallMode(") : len(part)-1]
+			opts = append(opts, catalog.WithInstallMode(v1alpha1.InstallModeType(mode)))
+		case strings.HasPrefix(part, "LargeCRD(") && strings.HasSuffix(part, ")"):
+			// LargeCRD(250)
+			countStr := part[len("LargeCRD(") : len(part)-1]
+			count, err := strconv.Atoi(countStr)
+			if err == nil {
+				opts = append(opts, catalog.WithLargeCRD(count))
+			}
+		case strings.HasPrefix(part, "ClusterRegistry(") && strings.HasSuffix(part, ")"):
+			// ClusterRegistry(mirrored-registry.operator-controller-e2e.svc.cluster.local:5000)
+			host := part[len("ClusterRegistry(") : len(part)-1]
+			opts = append(opts, catalog.WithClusterRegistry(host))
+		case strings.HasPrefix(part, "StaticBundleDir(") && strings.HasSuffix(part, ")"):
+			// StaticBundleDir(testdata/images/bundles/webhook-operator/v0.0.1)
+			dir := part[len("StaticBundleDir(") : len(part)-1]
+			absDir := filepath.Join(projectRootDir(), dir)
+			opts = append(opts, catalog.StaticBundleDir(absDir))
+		}
+	}
+	return opts
 }
 
 // PrometheusMetricsAreReturned validates that each pod's stored metrics response is non-empty and parses as valid Prometheus text format.
@@ -1449,6 +1722,7 @@ func PrometheusMetricsAreReturned(ctx context.Context) error {
 // OperatorTargetNamespace asserts that the operator deployment has the expected olm.targetNamespaces annotation.
 func OperatorTargetNamespace(ctx context.Context, operator, namespace string) error {
 	sc := scenarioCtx(ctx)
+	operator = substituteScenarioVars(operator, sc)
 	namespace = substituteScenarioVars(namespace, sc)
 	raw, err := k8sClient("get", "deployment", "-n", sc.namespace, operator, "-o", "json")
 	if err != nil {
@@ -1465,10 +1739,11 @@ func OperatorTargetNamespace(ctx context.Context, operator, namespace string) er
 	return nil
 }
 
-// MarkTestOperatorNotReady controls the test-operator's readiness probe by removing or creating the readiness file in its pod.
-func MarkTestOperatorNotReady(ctx context.Context, state string) error {
+// MarkDeploymentReadiness controls a deployment's readiness probe by removing or creating the readiness file in its pod.
+func MarkDeploymentReadiness(ctx context.Context, deploymentName, state string) error {
 	sc := scenarioCtx(ctx)
-	v, err := k8sClient("get", "deployment", "-n", sc.namespace, "test-operator", "-o", "jsonpath={.spec.selector.matchLabels}")
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+	v, err := k8sClient("get", "deployment", "-n", sc.namespace, deploymentName, "-o", "jsonpath={.spec.selector.matchLabels}")
 	if err != nil {
 		return err
 	}
@@ -1773,7 +2048,7 @@ func AnnotationsAreAdded(ctx context.Context, resourceName string, table *godog.
 	sc := scenarioCtx(ctx)
 	resourceName = substituteScenarioVars(resourceName, sc)
 
-	pairs, err := parseKeyValueTable(table)
+	pairs, err := parseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid annotations table: %w", err)
 	}
@@ -1801,7 +2076,7 @@ func LabelsAreAdded(ctx context.Context, resourceName string, table *godog.Table
 	sc := scenarioCtx(ctx)
 	resourceName = substituteScenarioVars(resourceName, sc)
 
-	pairs, err := parseKeyValueTable(table)
+	pairs, err := parseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
 	}
@@ -1829,7 +2104,7 @@ func ResourceHasAnnotations(ctx context.Context, resourceName string, table *god
 	sc := scenarioCtx(ctx)
 	resourceName = substituteScenarioVars(resourceName, sc)
 
-	expected, err := parseKeyValueTable(table)
+	expected, err := parseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid annotations table: %w", err)
 	}
@@ -1878,7 +2153,7 @@ func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Ta
 	sc := scenarioCtx(ctx)
 	resourceName = substituteScenarioVars(resourceName, sc)
 
-	expected, err := parseKeyValueTable(table)
+	expected, err := parseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
 	}
@@ -1926,7 +2201,8 @@ func nestedString(obj map[string]interface{}, keys ...string) (string, bool) {
 
 // parseKeyValueTable extracts key-value pairs from a godog data table.
 // The table must have a header row with "key" and "value" columns.
-func parseKeyValueTable(table *godog.Table) (map[string]string, error) {
+// If sc is non-nil, variable substitution is applied to both keys and values.
+func parseKeyValueTable(table *godog.Table, sc *scenarioContext) (map[string]string, error) {
 	if len(table.Rows) < 2 {
 		return nil, fmt.Errorf("table must have a header row and at least one data row")
 	}
@@ -1955,7 +2231,13 @@ func parseKeyValueTable(table *godog.Table) (map[string]string, error) {
 		if len(row.Cells) <= maxIdx {
 			return nil, fmt.Errorf("table row %d has %d cells, expected at least %d", rowIdx+2, len(row.Cells), maxIdx+1)
 		}
-		result[row.Cells[keyIdx].Value] = row.Cells[valueIdx].Value
+		key := row.Cells[keyIdx].Value
+		value := row.Cells[valueIdx].Value
+		if sc != nil {
+			key = substituteScenarioVars(key, sc)
+			value = substituteScenarioVars(value, sc)
+		}
+		result[key] = value
 	}
 	return result, nil
 }

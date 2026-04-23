@@ -22,8 +22,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+	bundlecsv "github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
+	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
 )
 
 func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
@@ -53,7 +53,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 		// The contents of the bundle are not important for this tesy, only that it be a valid bundle
 		// to avoid errors in the deserialization process
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -83,7 +83,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 		// The contents of the bundle are not important for this tesy, only that it be a valid bundle
 		// to avoid errors in the deserialization process
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
 
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -116,7 +116,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 
 		// Bundle with SingleNamespace install mode requiring watchNamespace config
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
 
 		// ClusterExtension without required config
 		ext := &ocv1.ClusterExtension{
@@ -138,7 +138,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 			BundleRenderer: registryv1.Renderer,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
 			WithBundleResource("service.yaml", &corev1.Service{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: corev1.SchemeGroupVersion.String(),
@@ -179,7 +179,7 @@ func Test_RegistryV1ManifestProvider_APIServiceSupport(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{Name: "test-apiservice"}).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{Name: "test-apiservice"}).Build()).Build()
 
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -200,7 +200,7 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build()).Build()
 
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -220,7 +220,7 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build()).Build()
 
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -241,7 +241,7 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
 			WithCSV(
-				clusterserviceversion.Builder().
+				bundlecsv.Builder().
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build()).
 			Build()
@@ -264,7 +264,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -281,7 +281,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -303,7 +303,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			IsSingleOwnNamespaceEnabled: false,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
@@ -329,7 +329,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -351,7 +351,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -377,7 +377,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			IsSingleOwnNamespaceEnabled: true,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: installNamespace,
@@ -397,7 +397,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			IsSingleOwnNamespaceEnabled: true,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
@@ -412,7 +412,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			IsSingleOwnNamespaceEnabled: true,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
@@ -435,7 +435,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			IsSingleOwnNamespaceEnabled: true,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build()).Build()
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
@@ -466,7 +466,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -498,7 +498,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -531,7 +531,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -574,7 +574,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -611,7 +611,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -641,7 +641,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		// Provide deploymentConfig with invalid structure - env should be array, not string
 		// Schema validation catches this before conversion
@@ -676,7 +676,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -708,7 +708,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -771,7 +771,7 @@ func Test_RegistryV1HelmChartProvider_Chart(t *testing.T) {
 
 	bundleFS := bundlefs.Builder().WithPackageName("test").
 		WithCSV(
-			clusterserviceversion.Builder().
+			bundlecsv.Builder().
 				WithAnnotations(map[string]string{"foo": "bar"}).
 				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 				Build()).

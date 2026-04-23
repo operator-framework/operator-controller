@@ -259,21 +259,14 @@ E2E_TIMEOUT ?= 10m
 e2e: #EXHELP Run the e2e tests.
 	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT)
 
-E2E_REGISTRY_NAME := docker-registry
-E2E_REGISTRY_NAMESPACE := operator-controller-e2e
-
-export REG_PKG_NAME := registry-operator
-export CLUSTER_REGISTRY_HOST := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
-export LOCAL_REGISTRY_HOST := localhost:30000
-export E2E_TEST_CATALOG_V1 := e2e/test-catalog:v1
-export E2E_TEST_CATALOG_V2 := e2e/test-catalog:v2
-export CATALOG_IMG := $(CLUSTER_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
+export CLUSTER_REGISTRY_HOST := docker-registry.operator-controller-e2e.svc:5000
 .PHONY: extension-developer-e2e
-extension-developer-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) #EXHELP Run extension create, upgrade and delete tests.
-	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) ${LOCAL_REGISTRY_HOST} ${CLUSTER_REGISTRY_HOST}
+extension-developer-e2e: export OPERATOR_SDK := $(OPERATOR_SDK)
+extension-developer-e2e: export CONTAINER_RUNTIME := $(CONTAINER_RUNTIME)
+extension-developer-e2e: $(OPERATOR_SDK) #EXHELP Run extension create, upgrade and delete tests.
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
-UNIT_TEST_DIRS := $(shell go list ./... | grep -vE "/test/|/testutils")
+UNIT_TEST_DIRS := $(shell go list ./... | grep -vE "/test/|/testutils") $(shell go list ./test/internal/...)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 
 .PHONY: envtest-k8s-bins #HELP Uses setup-envtest to download and install the binaries required to run ENVTEST-test based locally at the project/bin directory.
@@ -298,15 +291,6 @@ test-regression: #HELP Run regression test
 	rm -rf $(COVERAGE_REGRESSION_DIR) && mkdir -p $(COVERAGE_REGRESSION_DIR)
 	go test -count=1 -v ./test/regression/... -cover -coverprofile ${ROOT_DIR}/coverage/regression.out -test.gocoverdir=$(COVERAGE_REGRESSION_DIR)
 
-.PHONY: image-registry
-E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
-image-registry: export GOOS=linux
-image-registry: export GOARCH=amd64
-image-registry: ## Build the testdata catalog used for e2e tests and push it to the image registry
-	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
-	$(CONTAINER_RUNTIME) build -f ./testdata/Dockerfile -t $(E2E_REGISTRY_IMAGE) ./testdata
-	$(KIND) load docker-image $(E2E_REGISTRY_IMAGE) --name $(KIND_CLUSTER_NAME)
-	./testdata/build-test-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME) $(E2E_REGISTRY_IMAGE)
 
 # When running the e2e suite, you can set the ARTIFACT_PATH variable to the absolute path
 # of the directory for the operator-controller e2e tests to store the artifacts, which
@@ -320,7 +304,7 @@ test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: COVERAGE_NAME := e2e
 test-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 test-e2e: export INSTALL_DEFAULT_CATALOGS := false
-test-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: test-experimental-e2e
 test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
@@ -331,8 +315,8 @@ test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-experimental-e2e: PROMETHEUS_VALUES := helm/prom_experimental.yaml
-test-experimental-e2e: E2E_TIMEOUT := 15m
-test-experimental-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
+test-experimental-e2e: E2E_TIMEOUT := 20m
+test-experimental-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
@@ -349,7 +333,7 @@ test-extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
 test-extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-extension-developer-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
-test-extension-developer-e2e: run-internal image-registry extension-developer-e2e kind-clean #HELP Run extension-developer e2e on local kind cluster
+test-extension-developer-e2e: run-internal extension-developer-e2e kind-clean #HELP Run extension-developer e2e on local kind cluster
 
 .PHONY: run-latest-release
 run-latest-release:

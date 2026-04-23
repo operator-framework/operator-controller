@@ -5,7 +5,10 @@ Feature: Report status of the managed ClusterExtension workload
 
   Background:
     Given OLM is available
-    And ClusterCatalog "test" serves bundles
+    And an image registry is available
+    And a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.0.0   | alpha   |          | CRD, Deployment, ConfigMap |
     And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     And ClusterExtension is applied
       """
@@ -20,10 +23,10 @@ Feature: Report status of the managed ClusterExtension workload
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
             version: 1.0.0
       """
     And ClusterExtension is rolled out
@@ -31,15 +34,15 @@ Feature: Report status of the managed ClusterExtension workload
 
   @BoxcutterRuntime
   Scenario: Report availability change when managed workload is not ready
-    When resource "deployment/test-operator" reports as not ready
+    When deployment "test-operator-${SCENARIO_ID}" reports as not ready
     Then ClusterExtension reports Available as False with Reason ProbeFailure
     And ClusterObjectSet "${NAME}-1" reports Available as False with Reason ProbeFailure
 
   @BoxcutterRuntime
   Scenario: Report availability change when managed workload restores its readiness
-    Given resource "deployment/test-operator" reports as not ready
+    Given deployment "test-operator-${SCENARIO_ID}" reports as not ready
     And ClusterExtension reports Available as False with Reason ProbeFailure
     And ClusterObjectSet "${NAME}-1" reports Available as False with Reason ProbeFailure
-    When resource "deployment/test-operator" reports as ready
+    When deployment "test-operator-${SCENARIO_ID}" reports as ready
     Then ClusterExtension is available
     And ClusterObjectSet "${NAME}-1" reports Available as True with Reason ProbesSucceeded

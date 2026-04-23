@@ -1,3 +1,0 @@
-[host."https://localhost:30000"]
-  capabilities = ["pull", "resolve"]
-  skip_verify = true

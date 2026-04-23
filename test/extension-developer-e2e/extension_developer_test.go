@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"testing"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +23,92 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	testregistry "github.com/operator-framework/operator-controller/test/internal/registry"
 )
+
+const (
+	catalogTag = "e2e/test-catalog:v1"
+	regPkgName = "registry-operator"
+)
+
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+	cfg := ctrl.GetConfigOrDie()
+	if err := testregistry.Deploy(ctx, cfg, testregistry.DefaultNamespace, testregistry.DefaultName); err != nil {
+		panic(fmt.Sprintf("failed to deploy image registry: %v", err))
+	}
+
+	// Port-forward lives for the duration of the test process;
+	// the stop function is not needed because the goroutine is
+	// cleaned up on process exit.
+	localAddr, _, err := testregistry.PortForward(ctx, cfg, testregistry.DefaultNamespace, testregistry.DefaultName)
+	if err != nil {
+		panic(fmt.Sprintf("failed to port-forward to registry: %v", err))
+	}
+
+	clusterRegistryHost := os.Getenv("CLUSTER_REGISTRY_HOST")
+	if clusterRegistryHost == "" {
+		panic("CLUSTER_REGISTRY_HOST environment variable must be set")
+	}
+
+	// Set env vars for setup.sh — single source of truth
+	os.Setenv("CATALOG_TAG", catalogTag)
+	os.Setenv("REG_PKG_NAME", regPkgName)
+
+	cmd := exec.Command("./setup.sh") //nolint:gosec // test-only setup script
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		panic(fmt.Sprintf("failed to run setup.sh: %v", err))
+	}
+
+	// Push images via crane through the port-forward.
+	// setup.sh tags images with CLUSTER_REGISTRY_HOST. We export them
+	// from the container runtime via "save" and push through the
+	// port-forward with crane.
+	containerRuntime := os.Getenv("CONTAINER_RUNTIME")
+	bundlePath := "bundles/registry-v1/registry-bundle:v0.0.1"
+	for _, path := range []string{bundlePath, catalogTag} {
+		srcRef := fmt.Sprintf("%s/%s", clusterRegistryHost, path)
+		pushRef := fmt.Sprintf("%s/%s", localAddr, path)
+		if err := saveAndPush(containerRuntime, srcRef, pushRef); err != nil {
+			panic(fmt.Sprintf("failed to push image %s: %v", pushRef, err))
+		}
+	}
+
+	os.Exit(m.Run())
+}
+
+// saveAndPush exports an image from the container runtime to a temp file,
+// then loads and pushes it to the registry via crane.
+func saveAndPush(containerRuntime, srcRef, pushRef string) error {
+	f, err := os.CreateTemp("", "image-*.tar")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(f.Name())
+	defer f.Close()
+
+	saveCmd := exec.Command(containerRuntime, "save", srcRef) //nolint:gosec
+	saveCmd.Stdout = f
+	saveCmd.Stderr = os.Stderr
+	if err := saveCmd.Run(); err != nil {
+		return fmt.Errorf("failed to save image %s: %w", srcRef, err)
+	}
+
+	tag, err := name.NewTag(srcRef)
+	if err != nil {
+		return fmt.Errorf("failed to parse tag %s: %w", srcRef, err)
+	}
+	img, err := tarball.ImageFromPath(f.Name(), &tag)
+	if err != nil {
+		return fmt.Errorf("failed to load image %s from tarball: %w", srcRef, err)
+	}
+	if err := crane.Push(img, pushRef, crane.Insecure); err != nil {
+		return fmt.Errorf("failed to push image %s: %w", pushRef, err)
+	}
+	return nil
+}
 
 func TestExtensionDeveloper(t *testing.T) {
 	t.Parallel()
@@ -28,12 +117,8 @@ func TestExtensionDeveloper(t *testing.T) {
 	scheme := runtime.NewScheme()
 
 	require.NoError(t, ocv1.AddToScheme(scheme))
-	require.NoError(t, ocv1.AddToScheme(scheme))
 	require.NoError(t, corev1.AddToScheme(scheme))
 	require.NoError(t, rbacv1.AddToScheme(scheme))
-
-	require.NotEmpty(t, os.Getenv("CATALOG_IMG"), "environment variable CATALOG_IMG must be set")
-	require.NotEmpty(t, os.Getenv("REG_PKG_NAME"), "environment variable REG_PKG_NAME must be set")
 
 	c, err := client.New(cfg, client.Options{Scheme: scheme})
 	require.NoError(t, err)
@@ -48,7 +133,7 @@ func TestExtensionDeveloper(t *testing.T) {
 			Source: ocv1.CatalogSource{
 				Type: ocv1.SourceTypeImage,
 				Image: &ocv1.ImageSource{
-					Ref: os.Getenv("CATALOG_IMG"),
+					Ref: os.Getenv("CLUSTER_REGISTRY_HOST") + "/" + catalogTag,
 				},
 			},
 		},
@@ -73,7 +158,7 @@ func TestExtensionDeveloper(t *testing.T) {
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
 				Catalog: &ocv1.CatalogFilter{
-					PackageName: os.Getenv("REG_PKG_NAME"),
+					PackageName: regPkgName,
 				},
 			},
 			Namespace: installNamespace,

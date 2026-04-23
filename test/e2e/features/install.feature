@@ -5,10 +5,13 @@ Feature: Install ClusterExtension
 
   Background:
     Given OLM is available
-    And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    And an image registry is available
 
   Scenario:  Install latest available version
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -22,20 +25,24 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
-    And bundle "test-operator.1.2.0" is installed in version "1.2.0"
-    And resource "networkpolicy/test-operator-network-policy" is installed
-    And resource "configmap/test-configmap" is installed
-    And resource "deployment/test-operator" is installed
+    And bundle "${PACKAGE:test}.1.2.0" is installed in version "1.2.0"
+    And resource "networkpolicy/test-operator-${SCENARIO_ID}-network-policy" is installed
+    And resource "configmap/test-configmap-${SCENARIO_ID}" is installed
+    And resource "deployment/test-operator-${SCENARIO_ID}" is installed
 
   @mirrored-registry
-  Scenario Outline: Install latest available version from mirrored registry
+  Scenario: Install latest available version from mirrored registry
+    Given a catalog "test" with packages:
+      | package       | version | channel | replaces | contents                                                                                                                    |
+      | test-mirrored | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap, ClusterRegistry(mirrored-registry.operator-controller-e2e.svc.cluster.local:5000) |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -49,26 +56,27 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: <package-name>
+            packageName: ${PACKAGE:test-mirrored}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
-    And bundle "<package-name>-operator.1.2.0" is installed in version "1.2.0"
-    And resource "networkpolicy/test-operator-network-policy" is installed
-    And resource "configmap/test-configmap" is installed
-    And resource "deployment/test-operator" is installed
-
-    Examples:
-      | package-name  |
-      | test-mirrored |
-      | dynamic       |
+    And bundle "${PACKAGE:test-mirrored}.1.2.0" is installed in version "1.2.0"
+    And resource "networkpolicy/test-operator-${SCENARIO_ID}-network-policy" is installed
+    And resource "configmap/test-configmap-${SCENARIO_ID}" is installed
+    And resource "deployment/test-operator-${SCENARIO_ID}" is installed
 
 
   Scenario: Report that bundle cannot be installed when it exists in multiple catalogs with same priority
-    Given ClusterCatalog "extra" serves bundles
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
+    And a catalog "extra" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -82,14 +90,17 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
       """
-    Then ClusterExtension reports Progressing as True with Reason Retrying and Message:
+    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
-      found bundles for package "test" in multiple catalogs with the same priority [extra-catalog test-catalog]
+      found bundles for package "${PACKAGE:test}" in multiple catalogs with the same priority
       """
 
   Scenario: Report error when ServiceAccount does not exist
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -103,10 +114,10 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
@@ -115,7 +126,10 @@ Feature: Install ClusterExtension
 
   @SingleOwnNamespaceInstallSupport
   Scenario: watchNamespace config is required for extension supporting single namespace
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    Given a catalog "test" with packages:
+      | package                  | version | channel | replaces | contents                                        |
+      | single-namespace-operator | 1.0.0   | alpha   |          | CRD, Deployment, InstallMode(SingleNamespace)    |
+    And ServiceAccount "olm-admin" in test namespace is cluster admin
     And resource is applied
       """
       apiVersion: v1
@@ -136,14 +150,13 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: single-namespace-operator
+            packageName: ${PACKAGE:single-namespace-operator}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
-    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
+    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
       """
-      error for resolved bundle "single-namespace-operator.1.0.0" with version "1.0.0":
       invalid ClusterExtension configuration: invalid configuration: required field "watchNamespace" is missing
       """
     When ClusterExtension is updated to set config.watchNamespace field
@@ -163,18 +176,21 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: single-namespace-operator
+            packageName: ${PACKAGE:single-namespace-operator}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension reports Installed as True
-    And bundle "single-namespace-operator.1.0.0" is installed in version "1.0.0"
-    And operator "single-namespace-operator" target namespace is "single-namespace-operator-target"
+    And bundle "${PACKAGE:single-namespace-operator}.1.0.0" is installed in version "1.0.0"
+    And operator "test-operator-${SCENARIO_ID}" target namespace is "single-namespace-operator-target"
 
   @SingleOwnNamespaceInstallSupport
   Scenario: watchNamespace config is required for extension supporting own namespace
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    Given a catalog "test" with packages:
+      | package              | version | channel | replaces | contents                                    |
+      | own-namespace-operator | 1.0.0   | alpha   |          | CRD, Deployment, InstallMode(OwnNamespace)   |
+    And ServiceAccount "olm-admin" in test namespace is cluster admin
     And ClusterExtension is applied without the watchNamespace configuration
       """
       apiVersion: olm.operatorframework.io/v1
@@ -188,16 +204,14 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: own-namespace-operator
+            packageName: ${PACKAGE:own-namespace-operator}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
-    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
+    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
       """
-      error for resolved bundle "own-namespace-operator.1.0.0" with version
-      "1.0.0": invalid ClusterExtension configuration: invalid configuration: required
-      field "watchNamespace" is missing
+      invalid ClusterExtension configuration: invalid configuration: required field "watchNamespace" is missing
       """
     And ClusterExtension is updated to include the watchNamespace configuration
       """
@@ -216,18 +230,14 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: own-namespace-operator
+            packageName: ${PACKAGE:own-namespace-operator}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
-    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
+    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
       """
-      error for resolved bundle "own-namespace-operator.1.0.0" with version
-      "1.0.0": invalid ClusterExtension configuration: invalid configuration: invalid
-      format for field "watchNamespace": 'some-ns' is not valid ownNamespaceInstallMode:
-      invalid value "some-ns": must be "${TEST_NAMESPACE}" (the namespace where the
-      operator is installed) because this operator only supports OwnNamespace install mode
+      invalid value "some-ns": must be "${TEST_NAMESPACE}"
       """
     When ClusterExtension is updated to set watchNamespace to own namespace value
       """
@@ -246,18 +256,21 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: own-namespace-operator
+            packageName: ${PACKAGE:own-namespace-operator}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
-    And operator "own-namespace-operator" target namespace is "${TEST_NAMESPACE}"
+    And operator "test-operator-${SCENARIO_ID}" target namespace is "${TEST_NAMESPACE}"
 
   @WebhookProviderCertManager
   Scenario: Install operator having webhooks
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    Given a catalog "test" with packages:
+      | package          | version | channel | replaces | contents                                                               |
+      | webhook-operator | 0.0.1   | alpha   |          | StaticBundleDir(testdata/images/bundles/webhook-operator/v0.0.1)        |
+    And ServiceAccount "olm-admin" in test namespace is cluster admin
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -271,10 +284,10 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: webhook-operator
+            packageName: ${PACKAGE:webhook-operator}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
@@ -324,7 +337,10 @@ Feature: Install ClusterExtension
 
   @SingleOwnNamespaceInstallSupport
   Scenario: Report failure when watchNamespace has invalid DNS-1123 name
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    Given a catalog "test" with packages:
+      | package                  | version | channel | replaces | contents                                        |
+      | single-namespace-operator | 1.0.0   | alpha   |          | CRD, Deployment, InstallMode(SingleNamespace)    |
+    And ServiceAccount "olm-admin" in test namespace is cluster admin
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -342,10 +358,10 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: single-namespace-operator
+            packageName: ${PACKAGE:single-namespace-operator}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
       """
@@ -355,7 +371,10 @@ Feature: Install ClusterExtension
   @SingleOwnNamespaceInstallSupport
   @WebhookProviderCertManager
   Scenario: Reject watchNamespace for operator that does not support Single/OwnNamespace install modes
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    Given a catalog "test" with packages:
+      | package          | version | channel | replaces | contents                                                               |
+      | webhook-operator | 0.0.1   | alpha   |          | StaticBundleDir(testdata/images/bundles/webhook-operator/v0.0.1)        |
+    And ServiceAccount "olm-admin" in test namespace is cluster admin
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -373,10 +392,10 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: webhook-operator
+            packageName: ${PACKAGE:webhook-operator}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
       """
@@ -386,7 +405,11 @@ Feature: Install ClusterExtension
   @BoxcutterRuntime
   @ProgressDeadline
   Scenario: Report ClusterExtension as not progressing if the rollout does not become available within given timeout
-    Given min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents |
+      | test    | 1.0.2   | alpha   |          | BadImage |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
     And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
     When ClusterExtension is applied
       """
@@ -402,12 +425,12 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             # bundle refers bad image references, so that the deployment never becomes available
             version: 1.0.2
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterObjectSet "${NAME}-1" reports Progressing as False with Reason ProgressDeadlineExceeded
     And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded and Message:
@@ -419,7 +442,11 @@ Feature: Install ClusterExtension
   @BoxcutterRuntime
   @ProgressDeadline
   Scenario: Report ClusterExtension as not progressing if the rollout does not complete within given timeout
-    Given min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents |
+      | test    | 1.0.3   | alpha   |          | BadImage |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
     And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
     When ClusterExtension is applied
       """
@@ -435,11 +462,11 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             version: 1.0.3
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterObjectSet "${NAME}-1" reports Progressing as False with Reason ProgressDeadlineExceeded
     And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded and Message:
@@ -450,6 +477,10 @@ Feature: Install ClusterExtension
 
   @BoxcutterRuntime
   Scenario:  ClusterObjectSet is annotated with bundle properties
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                                                          |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap, Property(olm.test-property=some-value) |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -463,11 +494,11 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             version: 1.2.0
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     # The annotation key and value come from the bundle's metadata/properties.yaml file
     Then ClusterObjectSet "${NAME}-1" contains annotation "olm.properties" with value
@@ -477,6 +508,10 @@ Feature: Install ClusterExtension
 
   @BoxcutterRuntime
   Scenario: ClusterObjectSet is labeled with owner information
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -490,11 +525,11 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             version: 1.2.0
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
@@ -503,6 +538,10 @@ Feature: Install ClusterExtension
 
   @BoxcutterRuntime
   Scenario: ClusterObjectSet objects are externalized to immutable Secrets
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -516,11 +555,11 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             version: 1.2.0
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
@@ -536,6 +575,10 @@ Feature: Install ClusterExtension
 
   @DeploymentConfig
   Scenario: deploymentConfig nodeSelector is applied to the operator deployment
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -555,12 +598,12 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
-    Then resource "deployment/test-operator" matches
+    Then resource "deployment/test-operator-${SCENARIO_ID}" matches
       """
       spec:
         template:
@@ -571,6 +614,10 @@ Feature: Install ClusterExtension
 
   @BoxcutterRuntime
   Scenario: Install bundle with large CRD
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                       |
+      | test    | 1.0.0   | beta    |          | LargeCRD(250), Deployment      |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -584,21 +631,23 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: large-crd-operator
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
-    And bundle "large-crd-operator.1.0.0" is installed in version "1.0.0"
-    And resource "customresourcedefinition/largecrdtests.largecrd.operatorframework.io" is installed
-    And resource "deployment/large-crd-operator" is installed
+    And bundle "${PACKAGE:test}.1.0.0" is installed in version "1.0.0"
+    And resource "deployment/test-operator-${SCENARIO_ID}" is installed
 
   @BoxcutterRuntime
   @PreflightPermissions
   Scenario: Boxcutter preflight check detects missing CREATE permissions
-    Given ServiceAccount "olm-sa" without create permissions is available in test namespace
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
+    And ServiceAccount "olm-sa" without create permissions is available in test namespace
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -612,10 +661,10 @@ Feature: Install ClusterExtension
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     And ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
