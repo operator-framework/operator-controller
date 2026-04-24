@@ -18,10 +18,13 @@ func BuildHTTPClient(cpw *CertPoolWatcher) (*http.Client, error) {
 		RootCAs:    pool,
 		MinVersion: tls.VersionTLS12,
 	}
-	tlsTransport := &http.Transport{
+	httpClient.Transport = &http.Transport{
 		TLSClientConfig: tlsConfig,
+		// Proxy must be set explicitly; a nil Proxy field means "no proxy" and
+		// ignores HTTPS_PROXY/NO_PROXY env vars.  Only http.DefaultTransport sets
+		// this by default; custom transports must opt in.
+		Proxy: http.ProxyFromEnvironment,
 	}
-	httpClient.Transport = tlsTransport
 
 	return httpClient, nil
 }

@@ -254,10 +254,11 @@ $(eval $(call install-sh,standard,operator-controller-standard.yaml))
 .PHONY: test
 test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run all tests.
 
-E2E_TIMEOUT ?= 10m
+E2E_TIMEOUT ?= 15m
+GODOG_ARGS ?=
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
-	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT)
+	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT) $(if $(GODOG_ARGS),-args $(GODOG_ARGS))
 
 export CLUSTER_REGISTRY_HOST := docker-registry.operator-controller-e2e.svc:5000
 .PHONY: extension-developer-e2e

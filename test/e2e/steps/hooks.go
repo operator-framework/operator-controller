@@ -28,12 +28,15 @@ type resource struct {
 	namespace string
 }
 
-// deploymentRestore records the original container args of a deployment so that
-// it can be patched back to its pre-test state during scenario cleanup.
+// deploymentRestore records the original state of a deployment so it can be
+// rolled back after a test that modifies deployment configuration.
 type deploymentRestore struct {
-	namespace      string
-	deploymentName string
-	originalArgs   []string
+	name          string // deployment name
+	namespace     string
+	containerName string   // container to patch (for env var restores)
+	patchedArgs   bool     // true when container args were modified (for TLS profile patches)
+	originalArgs  []string // original container args; may be nil if args were unset
+	originalEnv   []string // original env vars as "NAME=VALUE" (for proxy patches)
 }
 
 type scenarioContext struct {
@@ -48,8 +51,8 @@ type scenarioContext struct {
 	metricsResponse      map[string]string
 	leaderPods           map[string]string // component name -> leader pod name
 	deploymentRestores   []deploymentRestore
-
-	extensionObjects []client.Object
+	extensionObjects     []client.Object
+	proxy                *recordingProxy
 }
 
 // GatherClusterExtensionObjects collects all resources related to the ClusterExtension container in
@@ -190,19 +193,27 @@ func stderrOutput(err error) string {
 
 func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context.Context, error) {
 	sc := scenarioCtx(ctx)
-	// Always restore deployments whose args were modified during the scenario,
-	// even when the scenario failed, so that a misconfigured TLS profile does
-	// not leak into subsequent scenarios.  Restore in reverse order so that
-	// multiple patches to the same deployment unwind back to the true original.
+	// Stop the in-process recording proxy if one was started.
+	if sc.proxy != nil {
+		sc.proxy.stop()
+	}
+
+	// Restore any deployments that were modified during the scenario.  Runs
+	// unconditionally (even on failure) to prevent a misconfigured deployment
+	// from bleeding into subsequent scenarios.  Restored in LIFO order so that
+	// multiple patches to the same deployment unwind to the true original.
 	for i := len(sc.deploymentRestores) - 1; i >= 0; i-- {
 		dr := sc.deploymentRestores[i]
-		if err2 := patchDeploymentArgs(dr.namespace, dr.deploymentName, dr.originalArgs); err2 != nil {
-			logger.Info("Error restoring deployment args", "name", dr.deploymentName, "error", err2)
-			continue
+		if dr.patchedArgs {
+			if err2 := patchDeploymentArgs(dr.namespace, dr.name, dr.originalArgs); err2 != nil {
+				logger.Info("Error restoring deployment args", "name", dr.name, "error", err2)
+			} else if _, err2 := k8sClient("rollout", "status", "-n", dr.namespace,
+				fmt.Sprintf("deployment/%s", dr.name), "--timeout=2m"); err2 != nil {
+				logger.Info("Timeout waiting for deployment rollout after restore", "name", dr.name)
+			}
 		}
-		if _, err2 := k8sClient("rollout", "status", "-n", dr.namespace,
-			fmt.Sprintf("deployment/%s", dr.deploymentName), "--timeout=2m"); err2 != nil {
-			logger.Info("Timeout waiting for deployment rollout after restore", "name", dr.deploymentName)
+		if err2 := restoreDeployment(dr); err2 != nil {
+			logger.Info("Error restoring deployment env", "deployment", dr.name, "namespace", dr.namespace, "error", err2)
 		}
 	}
 
