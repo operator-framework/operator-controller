@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/cucumber/godog"
 	"github.com/go-logr/logr"
@@ -90,6 +91,7 @@ var (
 		features.HelmChartSupport:                  false,
 		features.BoxcutterRuntime:                  false,
 		features.DeploymentConfig:                  false,
+		catalogdHAFeature:                          false,
 	}
 	logger logr.Logger
 )
@@ -131,6 +133,14 @@ func BeforeSuite() {
 		logger = textlogger.NewLogger(textlogger.NewConfig())
 	}
 
+	// Enable HA scenarios when the cluster has at least 2 nodes.  This runs
+	// unconditionally so that upgrade scenarios (which install OLM in a Background
+	// step and return early below) still get the gate set correctly.
+	if out, err := k8sClient("get", "nodes", "--no-headers", "-o", "name"); err == nil &&
+		len(strings.Fields(strings.TrimSpace(out))) >= 2 {
+		featureGates[catalogdHAFeature] = true
+	}
+
 	olm, err := detectOLMDeployment()
 	if err != nil {
 		logger.Info("OLM deployments not found; skipping feature gate detection (upgrade scenarios will install OLM in Background)")
@@ -152,6 +162,7 @@ func BeforeSuite() {
 			}
 		}
 	}
+
 	logger.Info(fmt.Sprintf("Enabled feature gates: %v", featureGates))
 }
 

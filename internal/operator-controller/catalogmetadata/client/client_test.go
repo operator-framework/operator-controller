@@ -234,13 +234,6 @@ func TestClientPopulateCache(t *testing.T) {
 					}},
 				}, nil
 			},
-			putFuncConstructor: func(t *testing.T) func(source string, errToCache error) (fs.FS, error) {
-				return func(source string, errToCache error) (fs.FS, error) {
-					assert.Empty(t, source)
-					assert.Error(t, errToCache)
-					return nil, errToCache
-				}
-			},
 			assert: func(t *testing.T, fs fs.FS, err error) {
 				assert.Nil(t, fs)
 				assert.ErrorContains(t, err, "received unexpected response status code 500")

@@ -316,7 +316,7 @@ test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-experimental-e2e: PROMETHEUS_VALUES := helm/prom_experimental.yaml
-test-experimental-e2e: E2E_TIMEOUT := 20m
+test-experimental-e2e: E2E_TIMEOUT := 25m
 test-experimental-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus

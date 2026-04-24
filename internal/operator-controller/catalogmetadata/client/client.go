@@ -106,8 +106,10 @@ func (c *Client) PopulateCache(ctx context.Context, catalog *ocv1.ClusterCatalog
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		errToCache := fmt.Errorf("error: received unexpected response status code %d", resp.StatusCode)
-		return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.Ref, nil, errToCache)
+		// Do not cache non-200 responses (e.g. 404 from a non-leader catalogd pod).
+		// Returning the error directly lets the next reconcile retry a fresh HTTP
+		// request and eventually hit the leader.
+		return nil, fmt.Errorf("error: received unexpected response status code %d", resp.StatusCode)
 	}
 
 	return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.Ref, resp.Body, nil)
