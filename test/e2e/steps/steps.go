@@ -194,6 +194,9 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)the "([^"]+)" component is configured with HTTPS_PROXY "([^"]+)"$`, ConfigureDeploymentWithHTTPSProxy)
 	sc.Step(`^(?i)the "([^"]+)" component is configured with HTTPS_PROXY pointing to a recording proxy$`, StartRecordingProxyAndConfigureDeployment)
 	sc.Step(`^(?i)the recording proxy received a CONNECT request for the catalogd service$`, RecordingProxyReceivedCONNECTForCatalogd)
+
+	sc.Step(`^(?i)the catalogd leader pod is force-deleted$`, CatalogdLeaderPodIsForceDeleted)
+	sc.Step(`^(?i)a new catalogd leader is elected$`, NewCatalogdLeaderIsElected)
 }
 
 func init() {

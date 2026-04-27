@@ -7,6 +7,8 @@
 # to pull in resources or additions
 options:
   operatorController:
+    deployment:
+      replicas: 2
     features:
       enabled:
         - SingleOwnNamespaceInstallSupport
@@ -20,6 +22,8 @@ options:
 # Use with {{- if has "FeatureGate" .Values.options.catalogd.features.enabled }}
 # to pull in resources or additions
   catalogd:
+    deployment:
+      replicas: 2
     features:
       enabled:
         - APIV1MetasHandler
