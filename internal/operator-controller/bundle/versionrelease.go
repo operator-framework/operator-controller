@@ -85,6 +85,19 @@ func (vr *VersionRelease) AsLegacyRegistryV1Version() bsemver.Version {
 
 type Release []bsemver.PRVersion
 
+// String returns the string representation of the release.
+// Returns an empty string if the release is nil or empty.
+func (r Release) String() string {
+	if len(r) == 0 {
+		return ""
+	}
+	parts := make([]string, len(r))
+	for i, pr := range r {
+		parts[i] = pr.String()
+	}
+	return strings.Join(parts, ".")
+}
+
 // Compare compares two Release values. It returns:
 //
 //	-1 if r < other

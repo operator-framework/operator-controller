@@ -29,6 +29,25 @@ type BundleMetadataApplyConfiguration struct {
 	// version is required and references the version that this bundle represents.
 	// It follows the semantic versioning standard as defined in https://semver.org/.
 	Version *string `json:"version,omitempty"`
+	// release is an optional field that identifies a specific release of this bundle's version.
+	// A release represents a re-publication of the same version, typically used to deliver
+	// packaging or metadata changes without changing the version number. When multiple
+	// releases exist for the same version, higher releases are preferred. An unset release
+	// is less preferred than all other release values.
+	//
+	// The value consists of dot-separated identifiers, where each identifier is either a
+	// numeric value (without leading zeros) or an alphanumeric string (e.g., "2", "1.el9",
+	// "3.alpha.1"). Releases are compared identifier by identifier: numeric identifiers are
+	// compared as integers, alphanumeric identifiers are compared lexically, and numeric
+	// identifiers always sort before alphanumeric identifiers.
+	//
+	// For bundles with explicit pkg.Release metadata, this field contains that release value.
+	// For registry+v1 bundles lacking an explicit release value, this field contains the release
+	// extracted from version's build metadata (e.g., '2' from '1.0.0+2').
+	// This field is omitted when the bundle's release value is unset.
+	//
+	// <opcon:experimental>
+	Release *string `json:"release,omitempty"`
 }
 
 // BundleMetadataApplyConfiguration constructs a declarative configuration of the BundleMetadata type for use with
@@ -50,5 +69,13 @@ func (b *BundleMetadataApplyConfiguration) WithName(value string) *BundleMetadat
 // If called multiple times, the Version field is set to the value of the last call.
 func (b *BundleMetadataApplyConfiguration) WithVersion(value string) *BundleMetadataApplyConfiguration {
 	b.Version = &value
+	return b
+}
+
+// WithRelease sets the Release field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Release field is set to the value of the last call.
+func (b *BundleMetadataApplyConfiguration) WithRelease(value string) *BundleMetadataApplyConfiguration {
+	b.Release = &value
 	return b
 }

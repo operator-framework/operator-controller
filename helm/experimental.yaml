@@ -14,6 +14,7 @@ options:
         - HelmChartSupport
         - BoxcutterRuntime
         - DeploymentConfig
+        - BundleReleaseSupport
       disabled:
         - WebhookProviderOpenshiftServiceCA
 # List of enabled experimental features for catalogd
