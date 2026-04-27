@@ -99,6 +99,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension is applied(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterExtension is updated to version "([^"]+)"$`, ClusterExtensionVersionUpdate)
 	sc.Step(`^(?i)ClusterExtension is updated(?:\s+.*)?$`, ResourceIsApplied)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" lifecycle is set to "([^"]+)"$`, ClusterObjectSetLifecycleUpdate)
 	sc.Step(`^(?i)ClusterExtension is available$`, ClusterExtensionIsAvailable)
 	sc.Step(`^(?i)ClusterExtension is rolled out$`, ClusterExtensionIsRolledOut)
 	sc.Step(`^(?i)ClusterExtension resources are created and labeled$`, ClusterExtensionResourcesCreatedAndAreLabeled)
@@ -374,6 +375,23 @@ func ClusterExtensionVersionUpdate(ctx context.Context, version string) error {
 		return err
 	}
 	_, err = k8sClient("patch", "clusterextension", sc.clusterExtensionName, "--type", "merge", "-p", string(pb))
+	return err
+}
+
+// ClusterObjectSetLifecycleUpdate patches the ClusterObjectSet's lifecycleState to the specified value.
+func ClusterObjectSetLifecycleUpdate(ctx context.Context, cosName, lifecycle string) error {
+	sc := scenarioCtx(ctx)
+	cosName = substituteScenarioVars(cosName, sc)
+	patch := map[string]any{
+		"spec": map[string]any{
+			"lifecycleState": lifecycle,
+		},
+	}
+	pb, err := json.Marshal(patch)
+	if err != nil {
+		return err
+	}
+	_, err = k8sClient("patch", "clusterobjectset", cosName, "--type", "merge", "-p", string(pb))
 	return err
 }
 
