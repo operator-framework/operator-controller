@@ -292,7 +292,7 @@ Each scenario runs in its own namespace with unique resource names, ensuring com
 
 The `ScenarioCleanup` hook ensures all resources are deleted after each scenario:
 
-- Deletes ClusterExtensions and ClusterObjectSets
+- Deletes ClusterExtensions and (when BoxcutterRuntime gate is enabled) ClusterObjectSets
 - Deletes ClusterCatalogs
 - Deletes namespaces
 - Deletes added resources

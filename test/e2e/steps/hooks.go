@@ -8,11 +8,11 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
-	"sync"
 
 	"github.com/cucumber/godog"
 	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
+	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/component-base/featuregate"
@@ -233,20 +233,20 @@ func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context
 	}
 	forDeletion = append(forDeletion, resource{name: sc.namespace, kind: "namespace"})
 
-	var wg sync.WaitGroup
+	g := new(errgroup.Group)
+	g.SetLimit(8)
 	for _, r := range forDeletion {
-		wg.Add(1)
-		go func(res resource) {
-			defer wg.Done()
-			args := []string{"delete", res.kind, res.name, "--ignore-not-found=true"}
-			if res.namespace != "" {
-				args = append(args, "-n", res.namespace)
+		g.Go(func() error {
+			args := []string{"delete", r.kind, r.name, "--ignore-not-found=true"}
+			if r.namespace != "" {
+				args = append(args, "-n", r.namespace)
 			}
 			if _, err := k8sClient(args...); err != nil {
-				logger.Info("Error deleting resource", "name", res.name, "namespace", res.namespace, "stderr", stderrOutput(err))
+				logger.Info("Error deleting resource", "name", r.name, "namespace", r.namespace, "stderr", stderrOutput(err))
 			}
-		}(r)
+			return nil
+		})
 	}
-	wg.Wait()
+	_ = g.Wait()
 	return ctx, nil
 }

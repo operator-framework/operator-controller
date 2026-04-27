@@ -1568,7 +1568,10 @@ func parseCatalogTable(table *godog.Table) ([]catalog.PackageOption, error) {
 				return nil, fmt.Errorf("duplicate bundle %s/%s: contents must be empty for repeated versions", pkg, version)
 			}
 		} else {
-			opts := parseContents(contents)
+			opts, err := parseContents(contents)
+			if err != nil {
+				return nil, fmt.Errorf("bundle %s/%s: %w", pkg, version, err)
+			}
 			bundleDefs[bk] = &bundleEntry{opts: opts}
 			bundleOrder = append(bundleOrder, bk)
 		}
@@ -1655,13 +1658,13 @@ spec:
 	return nil
 }
 
-func parseContents(contents string) []catalog.BundleOption {
+func parseContents(contents string) ([]catalog.BundleOption, error) {
 	contents = strings.TrimSpace(contents)
 	if contents == "" {
-		return nil
+		return nil, nil
 	}
 	if strings.EqualFold(contents, "BadImage") {
-		return []catalog.BundleOption{catalog.BadImage()}
+		return []catalog.BundleOption{catalog.BadImage()}, nil
 	}
 	var opts []catalog.BundleOption
 	for _, part := range strings.Split(contents, ",") {
@@ -1686,10 +1689,11 @@ func parseContents(contents string) []catalog.BundleOption {
 		case strings.HasPrefix(part, "LargeCRD(") && strings.HasSuffix(part, ")"):
 			// LargeCRD(250)
 			countStr := part[len("LargeCRD(") : len(part)-1]
-			count, err := strconv.Atoi(countStr)
-			if err == nil {
-				opts = append(opts, catalog.WithLargeCRD(count))
+			count, err := strconv.ParseInt(countStr, 10, 0)
+			if err != nil || count <= 0 {
+				return nil, fmt.Errorf("invalid LargeCRD field count %q: must be a positive integer", countStr)
 			}
+			opts = append(opts, catalog.WithLargeCRD(int(count)))
 		case strings.HasPrefix(part, "ClusterRegistry(") && strings.HasSuffix(part, ")"):
 			// ClusterRegistry(mirrored-registry.operator-controller-e2e.svc.cluster.local:5000)
 			host := part[len("ClusterRegistry(") : len(part)-1]
@@ -1701,7 +1705,7 @@ func parseContents(contents string) []catalog.BundleOption {
 			opts = append(opts, catalog.StaticBundleDir(absDir))
 		}
 	}
-	return opts
+	return opts, nil
 }
 
 // PrometheusMetricsAreReturned validates that each pod's stored metrics response is non-empty and parses as valid Prometheus text format.

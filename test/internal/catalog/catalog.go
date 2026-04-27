@@ -154,9 +154,9 @@ func (c *Catalog) Build(ctx context.Context, tag, localRegistry, clusterRegistry
 				return nil, fmt.Errorf("failed to set bundle labels for %s:%s: %w", paramPkgName, bd.version, err)
 			}
 
-			tag := fmt.Sprintf("%s/bundles/%s:v%s", localRegistry, paramPkgName, bd.version)
-			if err := crane.Push(img, tag, crane.Insecure, crane.WithContext(ctx)); err != nil {
-				return nil, fmt.Errorf("failed to push bundle image %s: %w", tag, err)
+			bundleTag := fmt.Sprintf("%s/bundles/%s:v%s", localRegistry, paramPkgName, bd.version)
+			if err := crane.Push(img, bundleTag, crane.Insecure, crane.WithContext(ctx)); err != nil {
+				return nil, fmt.Errorf("failed to push bundle image %s: %w", bundleTag, err)
 			}
 			bundleClusterRegistry := clusterRegistry
 			if spec.clusterRegistryOverride != "" {
