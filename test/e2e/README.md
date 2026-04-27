@@ -207,6 +207,10 @@ Use these variables in YAML templates:
 
 ### 5. Feature Tags
 
+Tags can be used for different purposes in the test suite:
+
+#### Feature Gate Tags
+
 Use tags to conditionally run scenarios based on feature gates:
 
 ```gherkin
@@ -215,6 +219,28 @@ Scenario: Install operator having webhooks
 ```
 
 Scenarios are skipped if the feature gate is not enabled on the deployed controller.
+
+#### Serial Execution Tag
+
+By default, scenarios run concurrently (up to 100 parallel scenarios). However, some tests must run serially, typically because they:
+- Modify shared cluster resources (e.g., cluster-wide TLS configuration)
+- Have resource constraints that prevent parallel execution
+- Require exclusive access to a resource
+
+To mark a test for serial execution, add the `@Serial` tag:
+
+```gherkin
+@Serial
+Feature: TLS profile enforcement on metrics endpoints
+
+  Scenario: Test TLS configuration
+    Given the "catalogd" deployment is configured with custom TLS settings
+    ...
+```
+
+The test runner automatically separates scenarios:
+- Scenarios **without** `@Serial` run concurrently in the first test phase
+- Scenarios **with** `@Serial` run sequentially in a separate serial test phase
 
 ## Running Tests
 
@@ -241,6 +267,12 @@ go test test/e2e/features_test.go -- features/install.feature
 
 ```bash
 go test test/e2e/features_test.go --godog.tags="@WebhookProviderCertManager"
+```
+
+Note that setting the tags in this way will disable the automatic test parallelization. If running in parallel with custom tags is desired, set `--godog.concurrency=100` for instance to re-enable. If this is done adding `&& ~@Serial` to the tags as well is highly recommended:
+
+```bash
+go test test/e2e/features_test.go --godog.tags="@WebhookProviderCertManager && ~@Serial" --godog.concurrency=100
 ```
 
 ### Run with Debug Logging
