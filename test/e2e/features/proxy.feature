@@ -1,3 +1,4 @@
+@Serial
 Feature: HTTPS proxy support for outbound catalog requests
 
   OLM's operator-controller fetches catalog data from catalogd over HTTPS.

@@ -207,6 +207,10 @@ Use these variables in YAML templates:
 
 ### 5. Feature Tags
 
+Tags can be used for different purposes in the test suite:
+
+#### Feature Gate Tags
+
 Use tags to conditionally run scenarios based on feature gates:
 
 ```gherkin
@@ -215,6 +219,28 @@ Scenario: Install operator having webhooks
 ```
 
 Scenarios are skipped if the feature gate is not enabled on the deployed controller.
+
+#### Serial Execution Tag
+
+By default, scenarios run concurrently (up to 100 parallel scenarios). However, some tests must run serially, typically because they:
+- Modify shared cluster resources (e.g., cluster-wide TLS configuration)
+- Have resource constraints that prevent parallel execution
+- Require exclusive access to a resource
+
+To mark a test for serial execution, add the `@Serial` tag:
+
+```gherkin
+@Serial
+Feature: TLS profile enforcement on metrics endpoints
+
+  Scenario: Test TLS configuration
+    Given the "catalogd" deployment is configured with custom TLS settings
+    ...
+```
+
+The `Makefile` automatically separates scenarios when run without additional `GODOG_ARGS`:
+- Scenarios **without** `@Serial` run concurrently in the first test phase
+- Scenarios **with** `@Serial` run sequentially in a separate serial test phase
 
 ## Running Tests
 
@@ -230,6 +256,15 @@ or
 make test-experimental-e2e
 ```
 
+Custom godog arguments can be modified by setting the following:
+```bash
+GODOG_ARGS=--godog.tags=@WebhookProviderCertManager make test-experimental-e2e
+```
+
+Note that when this is done the `make` target will no longer automatically split the test run into parallel and serial runs, and test execution time may increase. If you wish to add concurrency back into the arguments, it is recommended to also disable the `@Serial` tests:
+```bash
+GODOG_ARGS="--godog.tags=~@Serial --godog.concurrency=100" make test-experimental-e2e
+```
 
 ### Run Specific Feature
 

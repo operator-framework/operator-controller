@@ -1,3 +1,4 @@
+@Serial
 Feature: HA failover for catalogd
 
   When catalogd is deployed with multiple replicas, the remaining pods must

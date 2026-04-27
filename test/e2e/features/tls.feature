@@ -1,3 +1,4 @@
+@Serial
 Feature: TLS profile enforcement on metrics endpoints
 
   Background:
@@ -6,11 +7,15 @@ Feature: TLS profile enforcement on metrics endpoints
   # Each scenario patches the deployment with the TLS settings under test and
   # restores the original configuration during cleanup, so scenarios are independent.
 
+  # This feature file is run serially to avoid potential issues modifying the catalogd
+  # deployment during functional testing.
+
   # All three scenarios test catalogd only: the enforcement logic lives in the shared
   # tlsprofiles package, so one component is sufficient. TLS 1.2 is used for cipher
   # and curve enforcement because Go's crypto/tls does not allow the server to restrict
   # TLS 1.3 cipher suites — CipherSuites config only applies to TLS 1.2. The e2e cert
   # uses ECDSA, so ECDHE_ECDSA cipher families are required.
+
   @TLSProfile
   Scenario: catalogd metrics endpoint enforces configured minimum TLS version
     Given the "catalogd" deployment is configured with custom TLS minimum version "TLSv1.3"

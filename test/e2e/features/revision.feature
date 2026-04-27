@@ -672,6 +672,7 @@ Feature: Install ClusterObjectSet
     And resource "deployment/test-deployment" is eventually not found
 
   @ProgressDeadline
+  @Serial
   Scenario: COS recovers from ProgressDeadlineExceeded to Succeeded when probes pass
     Given min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
     And ServiceAccount "olm-sa" with needed permissions is available in test namespace
@@ -721,6 +722,7 @@ Feature: Install ClusterObjectSet
                     containers:
                     - name: delayed-ready
                       image: busybox:1.36
+                      imagePullPolicy: IfNotPresent
                       command: ["sleep", "1000"]
                       readinessProbe:
                         exec:

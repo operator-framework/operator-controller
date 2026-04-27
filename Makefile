@@ -254,11 +254,23 @@ $(eval $(call install-sh,standard,operator-controller-standard.yaml))
 .PHONY: test
 test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run all tests.
 
-E2E_TIMEOUT ?= 20m
-GODOG_ARGS ?=
 .PHONY: e2e
+e2e: E2E_TIMEOUT ?= 20m
+e2e: GODOG_ARGS ?=
 e2e: #EXHELP Run the e2e tests.
-	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT) $(if $(GODOG_ARGS),-args $(GODOG_ARGS))
+ifeq ($(strip $(GODOG_ARGS)),)
+	set +e; \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout=${E2E_TIMEOUT} -args --godog.tags="~@Serial" --godog.concurrency=100; \
+	parallelExit=$$?; \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout=${E2E_TIMEOUT} -args --godog.tags="@Serial" --godog.concurrency=1; \
+	serialExit=$$?; \
+	if [[ $$parallelExit -ne 0 ]] || [[ $$serialExit -ne 0 ]]; then \
+		echo "e2e tests failed: parallel=$$parallelExit serial=$$serialExit"; \
+		exit 1; \
+	fi
+else
+	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT) -args $(GODOG_ARGS)
+endif
 
 export CLUSTER_REGISTRY_HOST := docker-registry.operator-controller-e2e.svc:5000
 .PHONY: extension-developer-e2e
@@ -316,7 +328,7 @@ test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-experimental-e2e: PROMETHEUS_VALUES := helm/prom_experimental.yaml
-test-experimental-e2e: E2E_TIMEOUT := 25m
+test-experimental-e2e: E2E_TIMEOUT ?= 25m
 test-experimental-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
