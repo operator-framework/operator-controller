@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -16,9 +15,25 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/klog/v2"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
+
+	"github.com/operator-framework/operator-controller/internal/catalogd/server"
+	"github.com/operator-framework/operator-controller/internal/catalogd/service"
+)
+
+// Re-export enum types and constants from server package for convenience
+type (
+	MetasHandlerMode   = server.MetasHandlerMode
+	GraphQLQueriesMode = server.GraphQLQueriesMode
+)
+
+const (
+	MetasHandlerDisabled   = server.MetasHandlerDisabled
+	MetasHandlerEnabled    = server.MetasHandlerEnabled
+	GraphQLQueriesDisabled = server.GraphQLQueriesDisabled
+	GraphQLQueriesEnabled  = server.GraphQLQueriesEnabled
 )
 
 // LocalDirV1 is a storage Instance. When Storing a new FBC contained in
@@ -27,25 +42,42 @@ import (
 // done so that clients accessing the content stored in RootDir/<catalogName>.json1
 // have an atomic view of the content for a catalog.
 type LocalDirV1 struct {
-	RootDir            string
-	RootURL            *url.URL
-	EnableMetasHandler bool
+	RootDir              string
+	RootURL              *url.URL
+	EnableMetasHandler   MetasHandlerMode
+	EnableGraphQLQueries GraphQLQueriesMode
 
 	m sync.RWMutex
-	// this singleflight Group is used in `getIndex()`` to handle concurrent HTTP requests
-	// optimally. With the use of this slightflight group, the index is loaded from disk
+	// this singleflight Group is used in `GetIndex()` to handle concurrent HTTP requests
+	// optimally. With the use of this singleflight group, the index is loaded from disk
 	// once per concurrent group of HTTP requests being handled by the metas handler.
 	// The single flight instance gives us a way to load the index from disk exactly once
 	// per concurrent group of callers, and then let every concurrent caller have access to
 	// the loaded index. This avoids lots of unnecessary open/decode/close cycles when concurrent
 	// requests are being handled, which improves overall performance and decreases response latency.
 	sf singleflight.Group
+
+	// GraphQL service for handling schema generation and caching
+	graphqlSvc service.GraphQLService
 }
 
 var (
-	_                Instance = (*LocalDirV1)(nil)
-	errInvalidParams          = errors.New("invalid parameters")
+	_ Instance = (*LocalDirV1)(nil)
 )
+
+// NewLocalDirV1 creates a new LocalDirV1 storage instance
+func NewLocalDirV1(rootDir string, rootURL *url.URL, enableMetasHandler MetasHandlerMode, enableGraphQLQueries GraphQLQueriesMode) *LocalDirV1 {
+	s := &LocalDirV1{
+		RootDir:              rootDir,
+		RootURL:              rootURL,
+		EnableMetasHandler:   enableMetasHandler,
+		EnableGraphQLQueries: enableGraphQLQueries,
+	}
+	if enableGraphQLQueries == GraphQLQueriesEnabled {
+		s.graphqlSvc = service.NewCachedGraphQLService()
+	}
+	return s
+}
 
 func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) error {
 	s.m.Lock()
@@ -109,10 +141,32 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 	}
 
 	catalogDir := s.catalogDir(catalog)
-	return errors.Join(
+	err = errors.Join(
 		os.RemoveAll(catalogDir),
 		os.Rename(tmpCatalogDir, catalogDir),
 	)
+	if err != nil {
+		return err
+	}
+
+	// Invalidate and pre-warm GraphQL schema cache if GraphQL service is enabled
+	if s.graphqlSvc != nil {
+		s.graphqlSvc.InvalidateCache(catalog)
+
+		// Pre-warm the GraphQL schema cache using the newly created catalog directory
+		// Use the actual catalog directory filesystem, not the input fsys
+		catalogFS := os.DirFS(catalogDir)
+		if _, err := s.graphqlSvc.GetSchema(catalog, catalogFS); err != nil {
+			// Schema build failed - rollback by removing the catalog directory
+			// to maintain consistency (don't persist catalog without valid schema)
+			if removeErr := os.RemoveAll(catalogDir); removeErr != nil {
+				return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q: %w (rollback also failed: %v)", catalog, err, removeErr)
+			}
+			return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q: %w", catalog, err)
+		}
+	}
+
+	return nil
 }
 
 // removeOrphanedTempDirs removes temporary staging directories that were created by a
@@ -142,6 +196,11 @@ func (s *LocalDirV1) removeOrphanedTempDirs(catalog string) error {
 func (s *LocalDirV1) Delete(catalog string) error {
 	s.m.Lock()
 	defer s.m.Unlock()
+
+	// Invalidate GraphQL cache if service is enabled
+	if s.graphqlSvc != nil {
+		s.graphqlSvc.InvalidateCache(catalog)
+	}
 
 	return os.RemoveAll(s.catalogDir(catalog))
 }
@@ -218,132 +277,59 @@ func (s *LocalDirV1) BaseURL(catalog string) string {
 	return s.RootURL.JoinPath(catalog).String()
 }
 
+// StorageServerHandler returns an HTTP handler for serving catalog content
+// This implements the Instance interface for backward compatibility
 func (s *LocalDirV1) StorageServerHandler() http.Handler {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "all").Path, s.handleV1All)
-	if s.EnableMetasHandler {
-		mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "metas").Path, s.handleV1Metas)
-	}
-	allowedMethodsHandler := func(next http.Handler, allowedMethods ...string) http.Handler {
-		allowedMethodSet := sets.New[string](allowedMethods...)
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !allowedMethodSet.Has(r.Method) {
-				http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
-	return allowedMethodsHandler(mux, http.MethodGet, http.MethodHead)
+	handlers := server.NewCatalogHandlers(s, s.graphqlSvc, s.RootURL, s.EnableMetasHandler, s.EnableGraphQLQueries)
+	return handlers.Handler()
 }
 
-func (s *LocalDirV1) handleV1All(w http.ResponseWriter, r *http.Request) {
+// GetCatalogData returns the catalog file and its metadata
+// Implements server.CatalogStore interface
+func (s *LocalDirV1) GetCatalogData(catalog string) (*os.File, os.FileInfo, error) {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
-	catalog := r.PathValue("catalog")
-	catalogFile, catalogStat, err := s.catalogData(catalog)
-	if err != nil {
-		httpError(w, err)
-		return
-	}
-	w.Header().Add("Content-Type", "application/jsonl")
-	http.ServeContent(w, r, "", catalogStat.ModTime(), catalogFile)
-}
-
-func (s *LocalDirV1) handleV1Metas(w http.ResponseWriter, r *http.Request) {
-	s.m.RLock()
-	defer s.m.RUnlock()
-
-	// Check for unexpected query parameters
-	expectedParams := map[string]bool{
-		"schema":  true,
-		"package": true,
-		"name":    true,
-	}
-
-	for param := range r.URL.Query() {
-		if !expectedParams[param] {
-			httpError(w, errInvalidParams)
-			return
-		}
-	}
-
-	catalog := r.PathValue("catalog")
-	catalogFile, catalogStat, err := s.catalogData(catalog)
-	if err != nil {
-		httpError(w, err)
-		return
-	}
-	defer catalogFile.Close()
-
-	w.Header().Set("Last-Modified", catalogStat.ModTime().UTC().Format(timeFormat))
-	done := checkPreconditions(w, r, catalogStat.ModTime())
-	if done {
-		return
-	}
-
-	schema := r.URL.Query().Get("schema")
-	pkg := r.URL.Query().Get("package")
-	name := r.URL.Query().Get("name")
-
-	if schema == "" && pkg == "" && name == "" {
-		// If no parameters are provided, return the entire catalog (this is the same as /api/v1/all)
-		serveJSONLines(w, r, catalogFile)
-		return
-	}
-	idx, err := s.getIndex(catalog)
-	if err != nil {
-		httpError(w, err)
-		return
-	}
-	indexReader := idx.Get(catalogFile, schema, pkg, name)
-	serveJSONLines(w, r, indexReader)
-}
-
-func (s *LocalDirV1) catalogData(catalog string) (*os.File, os.FileInfo, error) {
 	catalogFile, err := os.Open(catalogFilePath(s.catalogDir(catalog)))
 	if err != nil {
 		return nil, nil, err
 	}
 	catalogFileStat, err := catalogFile.Stat()
 	if err != nil {
+		if closeErr := catalogFile.Close(); closeErr != nil {
+			klog.ErrorS(closeErr, "failed to close catalog file after stat error")
+		}
 		return nil, nil, err
 	}
 	return catalogFile, catalogFileStat, nil
 }
 
-func httpError(w http.ResponseWriter, err error) {
-	var code int
-	switch {
-	case errors.Is(err, fs.ErrNotExist):
-		code = http.StatusNotFound
-	case errors.Is(err, fs.ErrPermission):
-		code = http.StatusForbidden
-	case errors.Is(err, errInvalidParams):
-		code = http.StatusBadRequest
-	default:
-		code = http.StatusInternalServerError
-	}
-	http.Error(w, fmt.Sprintf("%d %s", code, http.StatusText(code)), code)
-}
+// GetCatalogFS returns a filesystem interface for the catalog
+// Implements server.CatalogStore interface
+func (s *LocalDirV1) GetCatalogFS(catalog string) (fs.FS, error) {
+	s.m.RLock()
+	defer s.m.RUnlock()
 
-func serveJSONLines(w http.ResponseWriter, r *http.Request, rs io.Reader) {
-	w.Header().Add("Content-Type", "application/jsonl")
-	// Copy the content of the reader to the response writer
-	// only if it's a Get request
-	if r.Method == http.MethodHead {
-		return
-	}
-	_, err := io.Copy(w, rs)
+	catalogDir := s.catalogDir(catalog)
+	info, err := os.Stat(catalogDir)
 	if err != nil {
-		httpError(w, err)
-		return
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fs.ErrNotExist
+		}
+		return nil, err
 	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("catalog path %q is not a directory", catalogDir)
+	}
+	return os.DirFS(catalogDir), nil
 }
 
-func (s *LocalDirV1) getIndex(catalog string) (*index, error) {
+// GetIndex returns the index for a catalog
+// Implements server.CatalogStore interface
+func (s *LocalDirV1) GetIndex(catalog string) (server.Index, error) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	idx, err, _ := s.sf.Do(catalog, func() (interface{}, error) {
 		indexFile, err := os.Open(catalogIndexFilePath(s.catalogDir(catalog)))
 		if err != nil {
