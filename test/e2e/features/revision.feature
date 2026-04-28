@@ -670,3 +670,72 @@ Feature: Install ClusterObjectSet
     Then ClusterObjectSet "${COS_NAME}" is archived
     And resource "configmap/test-configmap" is eventually not found
     And resource "deployment/test-deployment" is eventually not found
+
+  @ProgressDeadline
+  Scenario: COS recovers from ProgressDeadlineExceeded to Succeeded when probes pass
+    Given min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    When ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        annotations:
+          olm.operatorframework.io/service-account-name: olm-sa
+          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
+        name: ${COS_NAME}
+      spec:
+        lifecycleState: Active
+        collisionProtection: Prevent
+        progressDeadlineMinutes: 1
+        progressionProbes:
+        - selector:
+            type: GroupKind
+            groupKind:
+              group: apps
+              kind: Deployment
+          assertions:
+          - type: ConditionEqual
+            conditionEqual:
+              type: Available
+              status: "True"
+        phases:
+        - name: resources
+          objects:
+          - object:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: test-deployment
+                namespace: ${TEST_NAMESPACE}
+              spec:
+                replicas: 1
+                selector:
+                  matchLabels:
+                    app: delayed-ready
+                template:
+                  metadata:
+                    labels:
+                      app: delayed-ready
+                  spec:
+                    containers:
+                    - name: delayed-ready
+                      image: busybox:1.36
+                      command: ["sleep", "1000"]
+                      readinessProbe:
+                        exec:
+                          command: ["true"]
+                        initialDelaySeconds: 65
+                      securityContext:
+                        runAsNonRoot: true
+                        runAsUser: 1000
+                        allowPrivilegeEscalation: false
+                        capabilities:
+                          drop:
+                          - ALL
+                        seccompProfile:
+                          type: RuntimeDefault
+        revision: 1
+      """
+    Then ClusterObjectSet "${COS_NAME}" reports Progressing as False with Reason ProgressDeadlineExceeded
+    And ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
