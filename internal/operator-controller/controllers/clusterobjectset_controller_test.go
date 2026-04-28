@@ -1001,6 +1001,39 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 			},
 		},
 		{
+			name: "recovery from ProgressDeadlineExceeded to Succeeded when revision completes",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				rev1.Spec.ProgressDeadlineMinutes = 1
+				rev1.CreationTimestamp = metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
+				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
+					Type:               ocv1.ClusterObjectSetTypeProgressing,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ReasonProgressDeadlineExceeded,
+					Message:            "Revision has not rolled out for 1 minute(s). Last status: Revision 1.0.0 is rolling out.",
+					ObservedGeneration: rev1.Generation,
+				})
+				return []client.Object{rev1, ext}
+			},
+			clock: clocktesting.NewFakeClock(time.Date(2022, 1, 1, 0, 5, 0, 0, time.UTC)),
+			revisionResult: &mockRevisionResult{
+				isComplete: true,
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterObjectSet{}
+				err := c.Get(t.Context(), client.ObjectKey{
+					Name: clusterObjectSetName,
+				}, rev)
+				require.NoError(t, err)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+				require.NotNil(t, cnd)
+				require.Equal(t, metav1.ConditionTrue, cnd.Status)
+				require.Equal(t, ocv1.ReasonSucceeded, cnd.Reason)
+				require.Equal(t, "Revision 1.0.0 has rolled out.", cnd.Message)
+			},
+		},
+		{
 			name: "no progression deadline checks on revision recovery",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
