@@ -17,6 +17,89 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
+func TestDurationUntilDeadline(t *testing.T) {
+	creation := time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
+	now := creation.Add(30 * time.Second)
+	clk := clocktesting.NewFakeClock(now)
+
+	for _, tc := range []struct {
+		name              string
+		cos               ocv1.ClusterObjectSet
+		expectDuration    time.Duration
+		expectHasDeadline bool
+	}{
+		{
+			name: "progressDeadlineMinutes is 0 — no deadline",
+			cos: ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{CreationTimestamp: metav1.NewTime(creation)},
+				Spec:       ocv1.ClusterObjectSetSpec{ProgressDeadlineMinutes: 0, LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive},
+			},
+			expectDuration:    0,
+			expectHasDeadline: false,
+		},
+		{
+			name: "Succeeded is true — no deadline",
+			cos: ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{CreationTimestamp: metav1.NewTime(creation)},
+				Spec:       ocv1.ClusterObjectSetSpec{ProgressDeadlineMinutes: 1, LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive},
+				Status: ocv1.ClusterObjectSetStatus{
+					Conditions: []metav1.Condition{{
+						Type:   ocv1.ClusterObjectSetTypeSucceeded,
+						Status: metav1.ConditionTrue,
+					}},
+				},
+			},
+			expectDuration:    0,
+			expectHasDeadline: false,
+		},
+		{
+			name: "lifecycleState is Archived — no deadline",
+			cos: ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{CreationTimestamp: metav1.NewTime(creation)},
+				Spec:       ocv1.ClusterObjectSetSpec{ProgressDeadlineMinutes: 1, LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived},
+			},
+			expectDuration:    0,
+			expectHasDeadline: false,
+		},
+		{
+			name: "DeletionTimestamp is set — no deadline",
+			cos: ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{
+					CreationTimestamp: metav1.NewTime(creation),
+					DeletionTimestamp: &metav1.Time{Time: now},
+				},
+				Spec: ocv1.ClusterObjectSetSpec{ProgressDeadlineMinutes: 1, LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive},
+			},
+			expectDuration:    0,
+			expectHasDeadline: false,
+		},
+		{
+			name: "deadline not yet exceeded — returns positive remaining",
+			cos: ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{CreationTimestamp: metav1.NewTime(creation)},
+				Spec:       ocv1.ClusterObjectSetSpec{ProgressDeadlineMinutes: 1, LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive},
+			},
+			expectDuration:    30 * time.Second,
+			expectHasDeadline: true,
+		},
+		{
+			name: "deadline already exceeded — returns negative remaining",
+			cos: ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{CreationTimestamp: metav1.NewTime(creation.Add(-2 * time.Minute))},
+				Spec:       ocv1.ClusterObjectSetSpec{ProgressDeadlineMinutes: 1, LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive},
+			},
+			expectDuration:    -90 * time.Second,
+			expectHasDeadline: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			duration, hasDeadline := durationUntilDeadline(clk, &tc.cos)
+			require.Equal(t, tc.expectHasDeadline, hasDeadline)
+			require.Equal(t, tc.expectDuration, duration)
+		})
+	}
+}
+
 type fixedRateLimiter struct {
 	duration time.Duration
 }
