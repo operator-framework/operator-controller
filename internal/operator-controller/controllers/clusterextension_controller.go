@@ -542,6 +542,10 @@ func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *o
 					Version: rel.Labels[labels.BundleVersionKey],
 				},
 			}
+			// Only set Release if the label key exists (to distinguish "not set" from "explicitly empty")
+			if releaseValue, ok := rel.Labels[labels.BundleReleaseKey]; ok {
+				rs.Installed.Release = &releaseValue
+			}
 			break
 		}
 	}

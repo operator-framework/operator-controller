@@ -71,6 +71,10 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 				Version: rev.Annotations[labels.BundleVersionKey],
 			},
 		}
+		// Only set Release if the annotation key exists (to distinguish "not set" from "explicitly empty")
+		if releaseValue, ok := rev.Annotations[labels.BundleReleaseKey]; ok {
+			rm.Release = &releaseValue
+		}
 
 		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded) {
 			rs.Installed = rm
@@ -104,6 +108,9 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
 			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
 			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
+		}
+		if state.resolvedRevisionMetadata.Release != nil {
+			revisionAnnotations[labels.BundleReleaseKey] = *state.resolvedRevisionMetadata.Release
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,

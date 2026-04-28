@@ -4,7 +4,6 @@ import (
 	"slices"
 	"testing"
 
-	bsemver "github.com/blang/semver/v4"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
@@ -14,10 +13,21 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
+
+// mustVersionRelease is a test helper that parses a version string into a VersionRelease.
+// For registry+v1 bundles, build metadata is interpreted as release (e.g., "1.0.0+2" -> Version: 1.0.0, Release: 2).
+func mustVersionRelease(versionStr string) bundle.VersionRelease {
+	vr, err := bundle.NewLegacyRegistryV1VersionRelease(versionStr)
+	if err != nil {
+		panic(err)
+	}
+	return *vr
+}
 
 func TestSuccessorsPredicate(t *testing.T) {
 	const testPackageName = "test-package"
@@ -122,7 +132,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 	}{
 		{
 			name:            "respect replaces directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0", bsemver.MustParse("2.0.0")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0", mustVersionRelease("2.0.0")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which replaces the current version
@@ -133,7 +143,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 		},
 		{
 			name:            "respect skips directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.2.1", bsemver.MustParse("2.2.1")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.2.1", mustVersionRelease("2.2.1")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which skips the current version
@@ -144,7 +154,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 		},
 		{
 			name:            "respect skipRange directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.3.0", bsemver.MustParse("2.3.0")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.3.0", mustVersionRelease("2.3.0")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which is skipRanges the current version
@@ -155,7 +165,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 		},
 		{
 			name:            "installed bundle matcher is exact",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0+1", bsemver.MustParse("2.0.0+1")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0+1", mustVersionRelease("2.0.0+1")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				//   - the one which is skips the current version
@@ -175,6 +185,28 @@ func TestSuccessorsPredicate(t *testing.T) {
 				Name:    "test-package.v9.0.0",
 				Version: "9.0.0",
 			},
+			expectedResult: []declcfg.Bundle{},
+		},
+		{
+			name: "explicit release field - non-empty",
+			installedBundle: ocv1.BundleMetadata{
+				Name:    "test-package.v1.0.0",
+				Version: "1.0.0",
+				Release: func() *string { s := "2"; return &s }(),
+			},
+			// No matches expected: this bundle name doesn't exist in catalog.
+			// This test exercises the Release != nil code path in parseInstalledBundleVersionRelease.
+			expectedResult: []declcfg.Bundle{},
+		},
+		{
+			name: "explicit empty release with build metadata preserves build metadata",
+			installedBundle: ocv1.BundleMetadata{
+				Name:    "test-package.v1.0.0+git",
+				Version: "1.0.0+git",
+				Release: func() *string { s := ""; return &s }(),
+			},
+			// No matches expected: this bundle name doesn't exist in catalog.
+			// This test exercises the empty string handling in parseInstalledBundleVersionRelease.
 			expectedResult: []declcfg.Bundle{},
 		},
 	} {
@@ -239,4 +271,53 @@ func TestLegacySuccessor(t *testing.T) {
 	assert.True(t, f(b4))
 	assert.True(t, f(b5))
 	assert.False(t, f(emptyBundle))
+}
+
+func stringPtr(s string) *string {
+	return &s
+}
+
+func TestParseInstalledBundleVersionRelease_Errors(t *testing.T) {
+	t.Run("invalid version - legacy format", func(t *testing.T) {
+		installedBundle := ocv1.BundleMetadata{
+			Name:    "test",
+			Version: "invalid-version",
+		}
+		_, err := parseInstalledBundleVersionRelease(installedBundle)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to get version and release")
+	})
+
+	t.Run("invalid version - explicit release format", func(t *testing.T) {
+		installedBundle := ocv1.BundleMetadata{
+			Name:    "test",
+			Version: "invalid-version",
+			Release: stringPtr("1"),
+		}
+		_, err := parseInstalledBundleVersionRelease(installedBundle)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to parse installed bundle version")
+	})
+
+	t.Run("invalid release - explicit release format", func(t *testing.T) {
+		installedBundle := ocv1.BundleMetadata{
+			Name:    "test",
+			Version: "1.0.0",
+			Release: stringPtr("001"),
+		}
+		_, err := parseInstalledBundleVersionRelease(installedBundle)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to parse installed bundle release")
+	})
+}
+
+func TestSuccessorsOf_Errors(t *testing.T) {
+	t.Run("invalid installed bundle version", func(t *testing.T) {
+		installedBundle := ocv1.BundleMetadata{
+			Name:    "test",
+			Version: "invalid",
+		}
+		_, err := SuccessorsOf(installedBundle)
+		require.Error(t, err)
+	})
 }
