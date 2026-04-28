@@ -127,6 +127,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	remaining, hasDeadline := durationUntilDeadline(c.Clock, cos)
 	isDeadlineExceeded := hasDeadline && remaining <= 0
 
+	// Blocked takes precedence over ProgressDeadlineExceeded: it is more actionable for the user.
 	if err := c.verifyReferencedSecretsImmutable(ctx, cos); err != nil {
 		l.Error(err, "referenced Secret verification failed, blocking reconciliation")
 		markAsNotProgressing(cos, ocv1.ClusterObjectSetReasonBlocked, err.Error())
