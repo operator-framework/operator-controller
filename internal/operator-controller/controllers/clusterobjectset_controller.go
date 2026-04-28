@@ -639,17 +639,17 @@ func setRetryingConditions(cos *ocv1.ClusterObjectSet, message string, isDeadlin
 	}
 }
 
-func markAsProgressing(cos *ocv1.ClusterObjectSet, reason, message string, isDeadlineExceeded bool) {
-	nonTerminalReasons := map[string]struct{}{
-		ocv1.ReasonRollingOut:               {},
-		ocv1.ClusterObjectSetReasonRetrying: {},
-	}
+var nonTerminalProgressingReasons = map[string]struct{}{
+	ocv1.ReasonRollingOut:               {},
+	ocv1.ClusterObjectSetReasonRetrying: {},
+}
 
+func markAsProgressing(cos *ocv1.ClusterObjectSet, reason, message string, isDeadlineExceeded bool) {
 	switch reason {
 	case ocv1.ReasonSucceeded:
 		// Terminal — always apply.
 	default:
-		if _, known := nonTerminalReasons[reason]; !known {
+		if _, known := nonTerminalProgressingReasons[reason]; !known {
 			log.Log.Error(fmt.Errorf("unregistered progressing reason: %q", reason), "treating as non-terminal for deadline enforcement")
 		}
 		if isDeadlineExceeded {
