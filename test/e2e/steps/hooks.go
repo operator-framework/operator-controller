@@ -148,6 +148,23 @@ func BeforeSuite() {
 	}
 	olmNamespace = olm.Namespace
 
+	// Refine CatalogdHA based on actual catalogd replica count now that
+	// olmNamespace is known.  The node-count check above can fire on any
+	// multi-node cluster even when catalogd runs with only 1 replica.
+	// Override the gate: HA scenarios require ≥2 catalogd replicas.
+	// If the deployment is not found (kubectl error), or the replica
+	// count is empty/non-numeric, the gate keeps whatever the node-count
+	// check set.
+	if repOut, err := k8sClient("get", "deployments", "-n", olmNamespace,
+		"-l", "app.kubernetes.io/name=catalogd",
+		"-o", "jsonpath={.items[0].spec.replicas}"); err == nil {
+		if repOut = strings.TrimSpace(repOut); repOut != "" {
+			if replicas, err := strconv.Atoi(repOut); err == nil {
+				featureGates[catalogdHAFeature] = replicas >= 2
+			}
+		}
+	}
+
 	featureGatePattern := regexp.MustCompile(`--feature-gates=([[:alnum:]]+)=(true|false)`)
 	for _, c := range olm.Spec.Template.Spec.Containers {
 		if c.Name == "manager" {
