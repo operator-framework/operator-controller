@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/blang/semver/v4 v4.0.0
 	github.com/cert-manager/cert-manager v1.20.2
-	github.com/containerd/containerd v1.7.30
+	github.com/containerd/containerd v1.7.31
 	github.com/cucumber/godog v0.15.1
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/fsnotify/fsnotify v1.9.0
