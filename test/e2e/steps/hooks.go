@@ -108,22 +108,33 @@ func RegisterHooks(sc *godog.ScenarioContext) {
 	sc.After(ScenarioCleanup)
 }
 
-func detectOLMDeployment() (*appsv1.Deployment, error) {
+// detectOLMDeployments returns the operator-controller deployment (first) and the catalogd
+// deployment (second) found via the app.kubernetes.io/part-of=olm label across all namespaces.
+// The catalogd return value may be nil when OLM is not yet installed (upgrade scenarios
+// install it in a Background step).
+func detectOLMDeployments() (*appsv1.Deployment, *appsv1.Deployment, error) {
 	raw, err := k8sClient("get", "deployments", "-A", "-l", "app.kubernetes.io/part-of=olm", "-o", "jsonpath={.items}")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	dl := []appsv1.Deployment{}
 	if err := json.Unmarshal([]byte(raw), &dl); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal OLM deployments: %v", err)
+		return nil, nil, fmt.Errorf("failed to unmarshal OLM deployments: %v", err)
 	}
 
-	for _, d := range dl {
-		if d.Name == olmDeploymentName {
-			return &d, nil
+	var operatorController, catalogd *appsv1.Deployment
+	for i := range dl {
+		switch dl[i].Name {
+		case olmDeploymentName:
+			operatorController = &dl[i]
+		case catalogdDeploymentName:
+			catalogd = &dl[i]
 		}
 	}
-	return nil, fmt.Errorf("failed to detect OLM Deployment")
+	if operatorController == nil {
+		return nil, nil, fmt.Errorf("failed to detect OLM Deployment")
+	}
+	return operatorController, catalogd, nil
 }
 
 func BeforeSuite() {
@@ -141,27 +152,29 @@ func BeforeSuite() {
 		featureGates[catalogdHAFeature] = true
 	}
 
-	olm, err := detectOLMDeployment()
+	olm, catalogdDep, err := detectOLMDeployments()
 	if err != nil {
 		logger.Info("OLM deployments not found; skipping feature gate detection (upgrade scenarios will install OLM in Background)")
 		return
 	}
 	olmNamespace = olm.Namespace
+	componentNamespaces["operator-controller"] = olmNamespace
 
-	// Refine CatalogdHA based on actual catalogd replica count now that
-	// olmNamespace is known.  The node-count check above can fire on any
-	// multi-node cluster even when catalogd runs with only 1 replica.
-	// Override the gate: HA scenarios require ≥2 catalogd replicas.
-	// If the deployment is not found (kubectl error), or the replica
-	// count is empty/non-numeric, the gate keeps whatever the node-count
-	// check set.
-	if repOut, err := k8sClient("get", "deployments", "-n", olmNamespace,
-		"-l", "app.kubernetes.io/name=catalogd",
-		"-o", "jsonpath={.items[0].spec.replicas}"); err == nil {
-		if repOut = strings.TrimSpace(repOut); repOut != "" {
-			if replicas, err := strconv.Atoi(repOut); err == nil {
-				featureGates[catalogdHAFeature] = replicas >= 2
-			}
+	// Catalogd may be in a different namespace than operator-controller.
+	catalogdNS := olmNamespace
+	if catalogdDep != nil {
+		catalogdNS = catalogdDep.Namespace
+	}
+	componentNamespaces["catalogd"] = catalogdNS
+
+	// Refine CatalogdHA based on actual catalogd replica count now that catalogdNS is
+	// known.  The node-count check above can fire on any multi-node cluster even when
+	// catalogd runs with only 1 replica.  Override the gate: HA scenarios require ≥2
+	// catalogd replicas.  Fall back to whatever the node-count check set when catalogd
+	// was not found or the replica count is not parseable.
+	if catalogdDep != nil {
+		if replicas := catalogdDep.Spec.Replicas; replicas != nil {
+			featureGates[catalogdHAFeature] = *replicas >= 2
 		}
 	}
 
