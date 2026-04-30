@@ -31,7 +31,7 @@ func CatalogdLeaderPodIsForceDeleted(ctx context.Context) error {
 	}
 
 	logger.Info("Force-deleting catalogd leader pod", "pod", leaderPod)
-	if _, err := k8sClient("delete", "pod", leaderPod, "-n", olmNamespace,
+	if _, err := k8sClient("delete", "pod", leaderPod, "-n", namespaceForComponent("catalogd"),
 		"--force", "--grace-period=0"); err != nil {
 		return fmt.Errorf("failed to force-delete catalogd leader pod %q: %w", leaderPod, err)
 	}
@@ -46,7 +46,7 @@ func NewCatalogdLeaderIsElected(ctx context.Context) error {
 	oldLeader := sc.leaderPods["catalogd"]
 
 	waitFor(ctx, func() bool {
-		holder, err := k8sClient("get", "lease", leaseNames["catalogd"], "-n", olmNamespace,
+		holder, err := k8sClient("get", "lease", leaseNames["catalogd"], "-n", namespaceForComponent("catalogd"),
 			"-o", "jsonpath={.spec.holderIdentity}")
 		if err != nil || holder == "" {
 			return false

@@ -29,7 +29,7 @@ var (
 		if err != nil {
 			return err
 		}
-		olm, err := detectOLMDeployment()
+		olm, _, err := detectOLMDeployments()
 		if err != nil {
 			return err
 		}
@@ -82,19 +82,20 @@ func OLMIsUpgraded(ctx context.Context) error {
 // then checks the leader election lease and stores the leader pod name in the scenario context.
 func ComponentIsReadyToReconcile(ctx context.Context, component string) error {
 	sc := scenarioCtx(ctx)
+	ns := namespaceForComponent(component)
 
 	// Wait for deployment rollout to complete
-	depName, err := k8sClient("get", "deployments", "-n", olmNamespace,
+	depName, err := k8sClient("get", "deployments", "-n", ns,
 		"-l", fmt.Sprintf("app.kubernetes.io/name=%s", component),
 		"-o", "jsonpath={.items[0].metadata.name}")
 	if err != nil {
-		return fmt.Errorf("failed to find deployment for component %s: %w", component, err)
+		return fmt.Errorf("failed to find deployment for component %s in namespace %s: %w", component, ns, err)
 	}
 	if depName == "" {
-		return fmt.Errorf("failed to find deployment for component %s: no matching deployments found", component)
+		return fmt.Errorf("failed to find deployment for component %s in namespace %s: no matching deployments found", component, ns)
 	}
 	if _, err := k8sClient("rollout", "status", fmt.Sprintf("deployment/%s", depName),
-		"-n", olmNamespace, fmt.Sprintf("--timeout=%s", timeout)); err != nil {
+		"-n", ns, fmt.Sprintf("--timeout=%s", timeout)); err != nil {
 		return fmt.Errorf("deployment rollout failed for %s: %w", component, err)
 	}
 
@@ -106,7 +107,7 @@ func ComponentIsReadyToReconcile(ctx context.Context, component string) error {
 
 	// Leader election can take up to LeaseDuration (137s) + RetryPeriod (26s) ≈ 163s in the worst case
 	waitFor(ctx, func() bool {
-		output, err := k8sClient("get", "lease", leaseName, "-n", olmNamespace,
+		output, err := k8sClient("get", "lease", leaseName, "-n", ns,
 			"-o", "jsonpath={.spec.holderIdentity}")
 		if err != nil || output == "" {
 			return false
@@ -129,9 +130,9 @@ var resourceTypeToComponent = map[string]string{
 
 // reconcileEndingCheck returns a function that checks whether the leader pod's logs
 // contain a "reconcile ending" entry for the given resource name.
-func reconcileEndingCheck(leaderPod, resourceName string) func() bool {
+func reconcileEndingCheck(namespace, leaderPod, resourceName string) func() bool {
 	return func() bool {
-		logs, err := k8sClient("logs", leaderPod, "-n", olmNamespace, "--all-containers=true", "--tail=1000")
+		logs, err := k8sClient("logs", leaderPod, "-n", namespace, "--all-containers=true", "--tail=1000")
 		if err != nil {
 			return false
 		}
@@ -160,13 +161,13 @@ func ClusterExtensionIsReconciled(ctx context.Context) error {
 	}
 
 	leaderPod := sc.leaderPods[component]
-	waitFor(ctx, reconcileEndingCheck(leaderPod, resourceName))
+	waitFor(ctx, reconcileEndingCheck(namespaceForComponent(component), leaderPod, resourceName))
 	return nil
 }
 
 // clusterCatalogUnpackedAfterPodCreation returns a check function that verifies the
 // ClusterCatalog is serving and its lastUnpacked timestamp is after the leader pod's creation.
-func clusterCatalogUnpackedAfterPodCreation(resourceName, leaderPod string) func() bool {
+func clusterCatalogUnpackedAfterPodCreation(namespace, resourceName, leaderPod string) func() bool {
 	return func() bool {
 		catalogJSON, err := k8sClient("get", "clustercatalog", resourceName, "-o", "json")
 		if err != nil {
@@ -190,7 +191,7 @@ func clusterCatalogUnpackedAfterPodCreation(resourceName, leaderPod string) func
 			return false
 		}
 
-		podJSON, err := k8sClient("get", "pod", leaderPod, "-n", olmNamespace, "-o", "json")
+		podJSON, err := k8sClient("get", "pod", leaderPod, "-n", namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -229,8 +230,9 @@ func allResourcesAreReconciled(ctx context.Context, resourceType string) error {
 		return fmt.Errorf("no %s resources found", resourceType)
 	}
 
+	ns := namespaceForComponent(component)
 	for _, name := range resourceNames {
-		waitFor(ctx, reconcileEndingCheck(leaderPod, name))
+		waitFor(ctx, reconcileEndingCheck(ns, leaderPod, name))
 	}
 
 	return nil
@@ -254,11 +256,12 @@ func ScenarioCatalogIsReconciled(ctx context.Context, catalogUserName string) er
 		return fmt.Errorf("leader pod not found for component %s", component)
 	}
 
-	waitFor(ctx, reconcileEndingCheck(leaderPod, catalogName))
+	ns := namespaceForComponent(component)
+	waitFor(ctx, reconcileEndingCheck(ns, leaderPod, catalogName))
 
 	// Also verify that lastUnpacked is after the leader pod's creation.
 	// This mitigates flakiness caused by https://github.com/operator-framework/operator-controller/issues/1626
-	waitFor(ctx, clusterCatalogUnpackedAfterPodCreation(catalogName, leaderPod))
+	waitFor(ctx, clusterCatalogUnpackedAfterPodCreation(ns, catalogName, leaderPod))
 	return nil
 }
 

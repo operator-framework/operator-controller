@@ -50,13 +50,15 @@ import (
 )
 
 const (
-	olmDeploymentName = "operator-controller-controller-manager"
-	timeout           = 5 * time.Minute
-	tick              = 1 * time.Second
+	olmDeploymentName      = "operator-controller-controller-manager"
+	catalogdDeploymentName = "catalogd-controller-manager"
+	timeout                = 5 * time.Minute
+	tick                   = 1 * time.Second
 )
 
 var (
 	olmNamespace        = "olmv1-system"
+	componentNamespaces = map[string]string{} // keyed by component label (e.g. "catalogd"); falls back to olmNamespace
 	kubeconfigPath      string
 	k8sCli              string
 	deployImageRegistry = sync.OnceValue(func() error {
@@ -212,6 +214,15 @@ func init() {
 		}
 		flagSet.StringVar(&kubeconfigPath, "kubeconfig", filepath.Join(home, ".kube", "config"), "Paths to a kubeconfig. Only required if out-of-cluster.")
 	}
+}
+
+// namespaceForComponent returns the namespace for the named OLM component.
+// Falls back to olmNamespace when the component has no dedicated entry (e.g. upstream single-namespace deployments).
+func namespaceForComponent(component string) string {
+	if ns, ok := componentNamespaces[component]; ok {
+		return ns
+	}
+	return olmNamespace
 }
 
 func k8sClient(args ...string) (string, error) {
