@@ -23,6 +23,7 @@ import (
 	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -147,4 +148,73 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApplyBundleWithBoxcutterInstalledSatisfiesSpecIgnoresStaleRollingProgressing(t *testing.T) {
+	ctx := context.Background()
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-ext",
+			Generation: 3,
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "test",
+					Version:     "1.2.0",
+				},
+			},
+		},
+	}
+
+	state := &reconcileState{
+		revisionStates: &RevisionStates{
+			Installed: &RevisionMetadata{
+				RevisionName: "test-ext-3",
+				BundleMetadata: ocv1.BundleMetadata{
+					Name:    "test.v1.2.0",
+					Version: "1.2.0",
+				},
+				Conditions: []metav1.Condition{
+					{
+						Type:   ocv1.ClusterObjectSetTypeProgressing,
+						Status: metav1.ConditionTrue,
+						Reason: ocv1.ReasonSucceeded,
+					},
+				},
+			},
+			RollingOut: []*RevisionMetadata{{
+				RevisionName: "test-ext-2",
+				BundleMetadata: ocv1.BundleMetadata{
+					Name:    "test.v1.0.2",
+					Version: "1.0.2",
+				},
+				Conditions: []metav1.Condition{
+					{
+						Type:   ocv1.ClusterObjectSetTypeProgressing,
+						Status: metav1.ConditionTrue,
+						Reason: ocv1.ReasonRollingOut,
+					},
+				},
+			}},
+		},
+		resolvedRevisionMetadata: &RevisionMetadata{
+			BundleMetadata: ocv1.BundleMetadata{
+				Name:    "test.v1.2.0",
+				Version: "1.2.0",
+			},
+		},
+		imageFS: fstest.MapFS{},
+	}
+
+	stepFunc := ApplyBundleWithBoxcutter(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string) (bool, string, error) {
+		return true, "", nil
+	})
+	_, err := stepFunc(ctx, state, ext)
+	require.NoError(t, err)
+
+	pcnd := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+	require.NotNil(t, pcnd)
+	require.Equal(t, ocv1.ReasonSucceeded, pcnd.Reason,
+		"stale rolling revision must not overwrite Progressing when installed matches spec")
 }
