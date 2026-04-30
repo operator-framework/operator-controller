@@ -342,4 +342,30 @@ Two manifest variants exist:
 
 ---
 
-**Last Updated:** 2025-12-10
+## Spec-Driven Development
+
+This project uses spec-driven development. Governing specs live in `specs/`:
+
+| Spec | Purpose |
+|---|---|
+| `specs/mission.md` | Goals, non-goals, design principles |
+| `specs/tech-stack.md` | Language, dependencies, build commands, project structure |
+| `specs/roadmap.md` | Historical phases and next steps |
+| `specs/conventions.md` | Commit, PR, and branch conventions |
+
+### Workflow Commands
+
+| Command | Purpose |
+|---|---|
+| `/sdd-plan-next-phase` | Pick an eligible GitHub epic (`epic`+`refined`, unassigned, deps resolved), assign it, create branch and spec directory |
+| `/sdd-implement` | Implement a phase spec: follow task groups, run checks |
+| `/sdd-review` | Review branch changes for consistency with specs and conventions |
+| `/sdd-ship` | Verify, commit, and publish: run checks, create PR with conventions |
+
+Primary check command: `make lint && make test-unit`
+
+API changes in `api/v1/` require: `make generate && make manifests && make crd-ref-docs`
+
+---
+
+**Last Updated:** 2026-04-22
