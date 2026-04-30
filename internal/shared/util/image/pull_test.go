@@ -40,7 +40,16 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 	defer shutdown()
 
 	myModTime := time.Date(1985, 10, 25, 7, 53, 0, 0, time.FixedZone("PDT", -8*60*60))
-	defaultContextFunc := func(context.Context) (*types.SystemContext, error) { return &types.SystemContext{}, nil }
+
+	// Create a default context with insecure policy for tests that don't use buildSourceContextFunc
+	configDir := t.TempDir()
+	policyPath := filepath.Join(configDir, "policy.json")
+	insecurePolicy := `{"default":[{"type":"insecureAcceptAnything"}]}`
+	require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0600))
+
+	defaultContextFunc := func(context.Context) (*types.SystemContext, error) {
+		return &types.SystemContext{SignaturePolicyPath: policyPath}, nil
+	}
 
 	testCases := []struct {
 		name        string
