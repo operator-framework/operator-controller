@@ -122,6 +122,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has observed phase "([^"]+)" with a non-empty digest$`, ClusterObjectSetHasObservedPhase)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is archived$`, ClusterObjectSetIsArchived)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has annotation "([^"]+)" with a non-empty value$`, ClusterObjectSetHasAnnotationWithNonEmptyValue)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" annotation "([^"]+)" differs from ClusterObjectSet "([^"]+)"$`, ClusterObjectSetAnnotationDiffersFrom)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterObjectSetHasLabelWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects are not found or not owned by the revision$`, ClusterObjectSetObjectsNotFoundOrNotOwned)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects are managed in Kubernetes secrets$`, ClusterObjectSetPhaseObjectsManagedInSecrets)
@@ -798,6 +800,69 @@ func ClusterObjectSetHasLabelWithValue(ctx context.Context, revisionName, labelK
 			return false
 		}
 		return obj.GetLabels()[labelKey] == labelValue
+	})
+	return nil
+}
+
+// ClusterObjectSetHasAnnotationWithNonEmptyValue verifies an annotation exists and has a non-empty value.
+// Waits for the condition to be met with timeout.
+func ClusterObjectSetHasAnnotationWithNonEmptyValue(ctx context.Context, name, annotationKey string) error {
+	sc := scenarioCtx(ctx)
+	name = substituteScenarioVars(name, sc)
+
+	waitFor(ctx, func() bool {
+		obj, err := getResource("clusterobjectset", name, "")
+		if err != nil {
+			return false
+		}
+		annotations := obj.GetAnnotations()
+		if annotations == nil {
+			return false
+		}
+
+		value, ok := annotations[annotationKey]
+		if !ok {
+			return false
+		}
+		if value == "" {
+			return false
+		}
+		return true
+	})
+	return nil
+}
+
+// ClusterObjectSetAnnotationDiffersFrom compares annotation values between two ClusterObjectSets.
+// Waits for both ClusterObjectSets to have the annotation with different values.
+func ClusterObjectSetAnnotationDiffersFrom(ctx context.Context, name1, annotationKey, name2 string) error {
+	sc := scenarioCtx(ctx)
+	name1 = substituteScenarioVars(name1, sc)
+	name2 = substituteScenarioVars(name2, sc)
+
+	waitFor(ctx, func() bool {
+		obj1, err := getResource("clusterobjectset", name1, "")
+		if err != nil {
+			return false
+		}
+
+		obj2, err := getResource("clusterobjectset", name2, "")
+		if err != nil {
+			return false
+		}
+
+		annotations1 := obj1.GetAnnotations()
+		annotations2 := obj2.GetAnnotations()
+
+		value1, ok1 := annotations1[annotationKey]
+		value2, ok2 := annotations2[annotationKey]
+
+		if !ok1 || !ok2 {
+			return false
+		}
+		if value1 == value2 {
+			return false
+		}
+		return true
 	})
 	return nil
 }
