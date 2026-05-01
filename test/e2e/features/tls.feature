@@ -1,3 +1,4 @@
+@Serial
 Feature: TLS profile enforcement on metrics endpoints
 
   Background:
