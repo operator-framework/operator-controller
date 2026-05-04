@@ -16,6 +16,7 @@ spec:
   {{- if .Values.options.catalogd.podDisruptionBudget.maxUnavailable }}
   maxUnavailable: {{ .Values.options.catalogd.podDisruptionBudget.maxUnavailable }}
   {{- end }}
+  unhealthyPodEvictionPolicy: AlwaysAllow
   selector:
     matchLabels:
       control-plane: catalogd-controller-manager
