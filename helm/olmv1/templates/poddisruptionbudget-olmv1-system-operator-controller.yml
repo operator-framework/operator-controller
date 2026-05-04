@@ -16,6 +16,7 @@ spec:
   {{- if .Values.options.operatorController.podDisruptionBudget.maxUnavailable }}
   maxUnavailable: {{ .Values.options.operatorController.podDisruptionBudget.maxUnavailable }}
   {{- end }}
+  unhealthyPodEvictionPolicy: AlwaysAllow
   selector:
     matchLabels:
       control-plane: operator-controller-controller-manager

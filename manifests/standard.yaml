@@ -100,6 +100,7 @@ metadata:
     olm.operatorframework.io/feature-set: standard
 spec:
   minAvailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
   selector:
     matchLabels:
       control-plane: catalogd-controller-manager
@@ -117,6 +118,7 @@ metadata:
     olm.operatorframework.io/feature-set: standard
 spec:
   minAvailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
   selector:
     matchLabels:
       control-plane: operator-controller-controller-manager
