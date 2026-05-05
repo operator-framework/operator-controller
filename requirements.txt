@@ -6,7 +6,7 @@ click==8.3.2
 colorama==0.4.6
 cssselect==1.4.0
 ghp-import==2.1.0
-idna==3.11
+idna==3.12
 Jinja2==3.1.6
 lxml==6.1.0
 Markdown==3.10.2
