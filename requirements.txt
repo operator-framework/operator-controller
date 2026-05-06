@@ -1,6 +1,6 @@
 Babel==2.18.0
 beautifulsoup4==4.14.3
-certifi==2026.2.25
+certifi==2026.4.22
 charset-normalizer==3.4.7
 click==8.3.2
 colorama==0.4.6
