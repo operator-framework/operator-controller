@@ -11,8 +11,17 @@ options:
       replicas: 1
       extraArguments: []
     features:
-      enabled: []
-      disabled: []
+      enabled:
+        - WebhookProviderCertManager
+      disabled:
+        - BoxcutterRuntime
+        - BundleReleaseSupport
+        - DeploymentConfig
+        - HelmChartSupport
+        - PreflightPermissions
+        - SingleOwnNamespaceInstallSupport
+        - SyntheticPermissions
+        - WebhookProviderOpenshiftServiceCA
     podDisruptionBudget:
       enabled: true
       minAvailable: 1
@@ -24,7 +33,8 @@ options:
       extraArguments: []
     features:
       enabled: []
-      disabled: []
+      disabled:
+        - APIV1MetasHandler
     podDisruptionBudget:
       enabled: true
       minAvailable: 1

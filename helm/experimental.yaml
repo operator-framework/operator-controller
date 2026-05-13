@@ -11,13 +11,15 @@ options:
       replicas: 2
     features:
       enabled:
-        - SingleOwnNamespaceInstallSupport
-        - PreflightPermissions
-        - HelmChartSupport
         - BoxcutterRuntime
-        - DeploymentConfig
         - BundleReleaseSupport
+        - DeploymentConfig
+        - HelmChartSupport
+        - PreflightPermissions
+        - SingleOwnNamespaceInstallSupport
+        - WebhookProviderCertManager
       disabled:
+        - SyntheticPermissions
         - WebhookProviderOpenshiftServiceCA
 # List of enabled experimental features for catalogd
 # Use with {{- if has "FeatureGate" .Values.options.catalogd.features.enabled }}
@@ -28,5 +30,6 @@ options:
     features:
       enabled:
         - APIV1MetasHandler
+      disabled: []
 # This can be one of: standard or experimental
   featureSet: experimental

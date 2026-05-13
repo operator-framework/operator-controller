@@ -1724,6 +1724,7 @@ spec:
             - --leader-elect
             - --metrics-bind-address=:7443
             - --external-address=catalogd-service.olmv1-system.svc
+            - --feature-gates=APIV1MetasHandler=false
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             - --pull-cas-dir=/var/ca-certs
@@ -1861,6 +1862,15 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=:8443
             - --leader-elect
+            - --feature-gates=WebhookProviderCertManager=true
+            - --feature-gates=BoxcutterRuntime=false
+            - --feature-gates=BundleReleaseSupport=false
+            - --feature-gates=DeploymentConfig=false
+            - --feature-gates=HelmChartSupport=false
+            - --feature-gates=PreflightPermissions=false
+            - --feature-gates=SingleOwnNamespaceInstallSupport=false
+            - --feature-gates=SyntheticPermissions=false
+            - --feature-gates=WebhookProviderOpenshiftServiceCA=false
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             - --catalogd-cas-dir=/var/ca-certs
