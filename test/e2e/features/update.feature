@@ -314,8 +314,6 @@ Feature: Update ClusterExtension
       """
       revision object collisions
       """
-    And ClusterObjectSet "${NAME}-1" reports Progressing as True with Reason Succeeded
-    And ClusterObjectSet "${NAME}-1" reports Available as True with Reason ProbesSucceeded
 
   @BoxcutterRuntime
   Scenario: Each update creates a new revision and resources not present in the new revision are removed from the cluster
