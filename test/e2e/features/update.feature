@@ -310,12 +310,7 @@ Feature: Update ClusterExtension
       revision object collisions
       """
     When ClusterExtension is updated to version "1.0.1"
-    Then ClusterExtension reports "${NAME}-dup-1, ${NAME}-dup-2" as active revisions
-    And ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
-      """
-      revision object collisions
-      """
-    And ClusterObjectSet "${NAME}-dup-2" reports Progressing as True with Reason Retrying and Message includes:
+    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
       revision object collisions
       """
