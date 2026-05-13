@@ -30,6 +30,125 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
+func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
+	testScheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(testScheme))
+
+	for _, tc := range []struct {
+		name         string
+		existingObjs func() []client.Object
+		currentRev   string
+		expectedRevs []string
+	}{
+		{
+			name: "should return both lower and higher revision numbers",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtensionInternal()
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
+				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
+				return []client.Object{ext, rev1, rev2, rev3}
+			},
+			currentRev:   "rev-2",
+			expectedRevs: []string{"rev-1", "rev-3"},
+		},
+		{
+			name: "should exclude archived revisions",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtensionInternal()
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
+				rev2.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
+				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
+				return []client.Object{ext, rev1, rev2, rev3}
+			},
+			currentRev:   "rev-3",
+			expectedRevs: []string{"rev-1"},
+		},
+		{
+			name: "should exclude deleting revisions",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtensionInternal()
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				rev1.Finalizers = []string{"test-finalizer"}
+				rev1.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
+				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
+				return []client.Object{ext, rev1, rev2, rev3}
+			},
+			currentRev:   "rev-2",
+			expectedRevs: []string{"rev-3"},
+		},
+		{
+			name: "should only include revisions matching owner label",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtensionInternal()
+				ext2 := newTestClusterExtensionInternal()
+				ext2.Name = "test-ext-2"
+				ext2.UID = "test-ext-2"
+
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
+				rev2.Labels[labels.OwnerNameKey] = "test-ext-2"
+				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext2, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
+				return []client.Object{ext, ext2, rev1, rev2, rev3}
+			},
+			currentRev:   "rev-1",
+			expectedRevs: []string{"rev-3"},
+		},
+		{
+			name: "should return empty list when owner label missing",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtensionInternal()
+				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
+				delete(rev1.Labels, labels.OwnerNameKey)
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				return []client.Object{ext, rev1}
+			},
+			currentRev:   "rev-1",
+			expectedRevs: []string{},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testClient := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithObjects(tc.existingObjs()...).
+				Build()
+
+			reconciler := &ClusterObjectSetReconciler{
+				Client:        testClient,
+				TrackingCache: &mockTrackingCacheInternal{client: testClient},
+			}
+
+			currentRev := &ocv1.ClusterObjectSet{}
+			err := testClient.Get(t.Context(), client.ObjectKey{Name: tc.currentRev}, currentRev)
+			require.NoError(t, err)
+
+			siblings, err := reconciler.listSiblingRevisions(t.Context(), currentRev)
+			require.NoError(t, err)
+
+			names := make([]string, 0, len(siblings))
+			for _, rev := range siblings {
+				names = append(names, rev.GetName())
+			}
+
+			require.ElementsMatch(t, tc.expectedRevs, names)
+		})
+	}
+}
+
 func Test_ClusterObjectSetReconciler_listPreviousRevisions(t *testing.T) {
 	testScheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(testScheme))

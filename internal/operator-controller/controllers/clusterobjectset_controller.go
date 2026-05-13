@@ -441,6 +441,38 @@ func (c *ClusterObjectSetReconciler) removeFinalizer(ctx context.Context, obj cl
 	return nil
 }
 
+// listSiblingRevisions returns all active revisions belonging to the same ClusterExtension, excluding the current one.
+// This includes both lower and higher revision numbers, enabling boxcutter to properly classify
+// sibling owners and avoid reporting false collisions during revision handover.
+func (c *ClusterObjectSetReconciler) listSiblingRevisions(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
+	ownerLabel, ok := cos.Labels[labels.OwnerNameKey]
+	if !ok {
+		return nil, nil
+	}
+
+	revList := &ocv1.ClusterObjectSetList{}
+	if err := c.TrackingCache.List(ctx, revList, client.MatchingLabels{
+		labels.OwnerNameKey: ownerLabel,
+	}); err != nil {
+		return nil, fmt.Errorf("listing revisions: %w", err)
+	}
+
+	siblings := make([]*ocv1.ClusterObjectSet, 0, len(revList.Items))
+	for i := range revList.Items {
+		r := &revList.Items[i]
+		if r.Name == cos.Name {
+			continue
+		}
+		if r.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived ||
+			!r.DeletionTimestamp.IsZero() {
+			continue
+		}
+		siblings = append(siblings, r)
+	}
+
+	return siblings, nil
+}
+
 // listPreviousRevisions returns active revisions belonging to the same ClusterExtension with lower revision numbers.
 // Filters out the current revision, archived revisions, deleting revisions, and revisions with equal or higher numbers.
 func (c *ClusterObjectSetReconciler) listPreviousRevisions(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
@@ -479,15 +511,14 @@ func (c *ClusterObjectSetReconciler) listPreviousRevisions(ctx context.Context, 
 }
 
 func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]boxcutter.Phase, []ocv1.ObservedPhase, []boxcutter.RevisionReconcileOption, error) {
-	previous, err := c.listPreviousRevisions(ctx, cos)
+	siblings, err := c.listSiblingRevisions(ctx, cos)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("listing previous revisions: %w", err)
+		return nil, nil, nil, fmt.Errorf("listing sibling revisions: %w", err)
 	}
 
-	// Convert to []client.Object for boxcutter
-	previousObjs := make([]client.Object, len(previous))
-	for i, rev := range previous {
-		previousObjs[i] = rev
+	siblingObjs := make([]client.Object, len(siblings))
+	for i, rev := range siblings {
+		siblingObjs[i] = rev
 	}
 
 	progressionProbes, err := buildProgressionProbes(cos.Spec.ProgressionProbes)
@@ -496,7 +527,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 	}
 
 	opts := []boxcutter.RevisionReconcileOption{
-		boxcutter.WithPreviousOwners(previousObjs),
+		boxcutter.WithSiblingOwners(siblingObjs),
 		boxcutter.WithProbe(boxcutter.ProgressProbeType, progressionProbes),
 		boxcutter.WithAggregatePhaseReconcileErrors(),
 	}
