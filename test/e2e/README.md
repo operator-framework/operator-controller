@@ -288,7 +288,23 @@ Each scenario runs in its own namespace with unique resource names, ensuring com
 - Namespace: `ns-{scenario-id}`
 - ClusterExtension: `ce-{scenario-id}`
 
-### 2. Automatic Cleanup
+### 2. Test-Identifying Annotations
+
+Every resource applied during a scenario is automatically annotated with the feature file name and scenario name:
+
+- `e2e.olm.operatorframework.io/feature`: derived from the feature file path (e.g., `install`, `update`, `recover`)
+- `e2e.olm.operatorframework.io/scenario`: the scenario name (e.g., `Install latest available version`)
+
+These annotations are added to all resources created within a scenario.
+
+These annotations make it possible to identify which test scenario produced a given resource when debugging failures on a
+cluster:
+
+```bash
+kubectl get clusterextension -o json | jq '.items[] | {name: .metadata.name, feature: .metadata.annotations["e2e.olm.operatorframework.io/feature"], scenario: .metadata.annotations["e2e.olm.operatorframework.io/scenario"]}'
+```
+
+### 3. Automatic Cleanup
 
 The `ScenarioCleanup` hook ensures all resources are deleted after each scenario:
 
@@ -297,7 +313,7 @@ The `ScenarioCleanup` hook ensures all resources are deleted after each scenario
 - Deletes namespaces
 - Deletes added resources
 
-### 3. Declarative Resource Management
+### 4. Declarative Resource Management
 
 Resources are managed declaratively using YAML templates embedded in feature files as docstrings:
 
@@ -313,7 +329,7 @@ When ClusterExtension is applied
   """
 ```
 
-### 4. Polling with Timeouts
+### 5. Polling with Timeouts
 
 All asynchronous operations use `waitFor` with consistent timeout (300s) and tick (1s):
 
@@ -324,7 +340,7 @@ waitFor(ctx, func() bool {
 })
 ```
 
-### 5. Feature Gate Detection
+### 6. Feature Gate Detection
 
 Tests automatically detect enabled feature gates from the running controller and skip scenarios that require disabled
 features.

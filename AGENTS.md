@@ -167,7 +167,7 @@ make generate
 │   │   └── values.yaml              # Default values
 │   └── prometheus/                  # Prometheus monitoring
 ├── test/                            # Test suites
-│   ├── e2e/                         # End-to-end tests
+│   ├── e2e/                         # End-to-end tests (see test/e2e/README.md)
 │   ├── extension-developer-e2e/     # Extension developer tests
 │   ├── upgrade-e2e/                 # Upgrade tests
 │   └── regression/                  # Regression tests

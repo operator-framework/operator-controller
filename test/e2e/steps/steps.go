@@ -321,6 +321,16 @@ func toUnstructured(yamlContent string) (*unstructured.Unstructured, error) {
 	return &unstructured.Unstructured{Object: u}, nil
 }
 
+func injectTestAnnotations(obj *unstructured.Unstructured, sc *scenarioContext) {
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations["e2e.olm.operatorframework.io/feature"] = sc.featureName
+	annotations["e2e.olm.operatorframework.io/scenario"] = sc.scenarioName
+	obj.SetAnnotations(annotations)
+}
+
 func substituteScenarioVars(content string, sc *scenarioContext) string {
 	vars := map[string]string{
 		"TEST_NAMESPACE": sc.namespace,
@@ -415,7 +425,12 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 	if err != nil {
 		return fmt.Errorf("failed to parse resource yaml: %v", err)
 	}
-	out, err := k8scliWithInput(yamlContent, "apply", "-f", "-")
+	injectTestAnnotations(res, sc)
+	annotatedYAML, err := yaml.Marshal(res.Object)
+	if err != nil {
+		return fmt.Errorf("failed to marshal resource yaml: %w", err)
+	}
+	out, err := k8scliWithInput(string(annotatedYAML), "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply resource %v; err: %w; stderr: %s", out, err, stderrOutput(err))
 	}
@@ -1683,7 +1698,17 @@ spec:
       ref: %s
 `, result.CatalogName, result.CatalogImageRef)
 
-	if _, err := k8scliWithInput(catalogYAML, "apply", "-f", "-"); err != nil {
+	catalogObj, err := toUnstructured(catalogYAML)
+	if err != nil {
+		return fmt.Errorf("failed to parse catalog YAML: %w", err)
+	}
+	injectTestAnnotations(catalogObj, sc)
+	annotatedYAML, err := yaml.Marshal(catalogObj.Object)
+	if err != nil {
+		return fmt.Errorf("failed to marshal catalog YAML: %w", err)
+	}
+
+	if _, err := k8scliWithInput(string(annotatedYAML), "apply", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply ClusterCatalog: %w", err)
 	}
 

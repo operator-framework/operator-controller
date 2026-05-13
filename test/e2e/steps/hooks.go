@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -42,6 +43,8 @@ type deploymentRestore struct {
 
 type scenarioContext struct {
 	id                   string
+	featureName          string
+	scenarioName         string
 	namespace            string
 	clusterExtensionName string
 	clusterObjectSetName string
@@ -209,6 +212,8 @@ func CheckFeatureTags(ctx context.Context, sc *godog.Scenario) (context.Context,
 func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	scCtx := &scenarioContext{
 		id:                   sc.Id,
+		featureName:          strings.TrimSuffix(filepath.Base(sc.Uri), filepath.Ext(sc.Uri)),
+		scenarioName:         sc.Name,
 		namespace:            fmt.Sprintf("ns-%s", sc.Id),
 		clusterExtensionName: fmt.Sprintf("ce-%s", sc.Id),
 		clusterObjectSetName: fmt.Sprintf("cos-%s", sc.Id),
