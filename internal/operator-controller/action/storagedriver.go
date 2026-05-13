@@ -19,6 +19,24 @@ import (
 	"github.com/operator-framework/helm-operator-plugins/pkg/storage"
 )
 
+// chunkedSecretsConfig defines the chunked storage configuration for Helm release secrets.
+//
+// Kubernetes limits the total size of a Secret's data values to 1MB (1,048,576
+// bytes). The index Secret stores two data keys: "chunk" (up to ChunkSize bytes)
+// and "extraChunks" (a JSON array of extra chunk Secret names). ChunkSize is set
+// 8KB below the 1MB limit to leave headroom for the extraChunks field, whose
+// worst-case size is ~2.6KB (10 entries at the 253-char DNS subdomain maximum).
+//
+// MaxWriteChunks is set to 11 so that total capacity (ChunkSize * MaxWriteChunks)
+// exceeds the previous configuration's theoretical maximum (1MB * 10 = 10MB).
+// These values are pinned by tests in storagedriver_test.go and must never
+// decrease, as doing so would cause previously-storable releases to fail.
+var chunkedSecretsConfig = storage.ChunkedSecretsConfig{
+	ChunkSize:      (1024 - 8) * 1024,
+	MaxReadChunks:  11,
+	MaxWriteChunks: 11,
+}
+
 func ChunkedStorageDriverMapper(secretsGetter clientcorev1.SecretsGetter, reader client.Reader, namespace string) helmclient.ObjectToStorageDriverMapper {
 	secretsClient := newSecretsDelegatingClient(secretsGetter, reader, namespace)
 	return func(ctx context.Context, object client.Object, config *rest.Config) (driver.Driver, error) {
@@ -27,12 +45,9 @@ func ChunkedStorageDriverMapper(secretsGetter clientcorev1.SecretsGetter, reader
 		ownerRefSecretClient := helmclient.NewOwnerRefSecretClient(secretsClient, ownerRefs, func(secret *corev1.Secret) bool {
 			return secret.Type == storage.SecretTypeChunkedIndex
 		})
-		return storage.NewChunkedSecrets(ownerRefSecretClient, "operator-controller", storage.ChunkedSecretsConfig{
-			ChunkSize:      1024 * 1024,
-			MaxReadChunks:  10,
-			MaxWriteChunks: 10,
-			Log:            func(format string, args ...interface{}) { log.Info(fmt.Sprintf(format, args...)) },
-		}), nil
+		cfg := chunkedSecretsConfig
+		cfg.Log = func(format string, args ...interface{}) { log.Info(fmt.Sprintf(format, args...)) }
+		return storage.NewChunkedSecrets(ownerRefSecretClient, "operator-controller", cfg), nil
 	}
 }
 
