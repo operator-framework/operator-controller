@@ -310,7 +310,7 @@ Feature: Update ClusterExtension
       revision object collisions
       """
     When ClusterExtension is updated to version "1.0.1"
-    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+    Then ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason Retrying and Message includes:
       """
       revision object collisions
       """
