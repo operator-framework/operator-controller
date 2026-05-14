@@ -43,6 +43,6 @@ Feature: Operator upgrade verification
 
   Scenario: ClusterExtension remains functional after OLM upgrade
     Given ClusterExtension is reconciled
-    When ClusterExtension is updated to version "1.0.1"
+    When ClusterExtension version is updated to "1.0.1"
     Then ClusterExtension is available
     And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"

@@ -38,7 +38,7 @@ Feature: Update ClusterExtension
       """
     And ClusterExtension is rolled out
     And ClusterExtension is available
-    When ClusterExtension is updated to version "1.0.1"
+    When ClusterExtension version is updated to "1.0.1"
     Then ClusterExtension is rolled out
     And ClusterExtension is available
     And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"
@@ -219,7 +219,7 @@ Feature: Update ClusterExtension
     And ClusterExtension is rolled out
     And ClusterExtension is available
     And bundle "${PACKAGE:test}.1.0.0" is installed in version "1.0.0"
-    When ClusterExtension is updated to version "1.0.4"
+    When ClusterExtension version is updated to "1.0.4"
     Then ClusterExtension is rolled out
     And ClusterExtension is available
     And bundle "${PACKAGE:test}.1.0.4" is installed in version "1.0.4"
@@ -247,7 +247,7 @@ Feature: Update ClusterExtension
       """
     And ClusterExtension is rolled out
     And ClusterExtension is available
-    When ClusterExtension is updated to version "1.0.1"
+    When ClusterExtension version is updated to "1.0.1"
     Then ClusterExtension is rolled out
     And ClusterExtension is available
     And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"
@@ -300,7 +300,7 @@ Feature: Update ClusterExtension
       """
     And ClusterExtension is rolled out
     And ClusterExtension is available
-    When ClusterExtension is updated to version "1.2.0"
+    When ClusterExtension version is updated to "1.2.0"
     Then bundle "${PACKAGE:test}.1.2.0" is installed in version "1.2.0"
     And ClusterExtension is rolled out
     And ClusterExtension is available
@@ -334,7 +334,7 @@ Feature: Update ClusterExtension
       """
     And ClusterExtension is rolled out
     And ClusterExtension is available
-    When ClusterExtension is updated to version "1.0.2"
+    When ClusterExtension version is updated to "1.0.2"
     Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
     And ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason RollingOut
     And ClusterObjectSet "${NAME}-2" reports Available as False with Reason ProbeFailure
