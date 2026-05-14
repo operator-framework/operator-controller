@@ -7,7 +7,9 @@ Feature: HTTPS proxy support for outbound catalog requests
 
   Background:
     Given OLM is available
-    And ClusterCatalog "test" serves bundles
+    And a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
     And ServiceAccount "olm-sa" with needed permissions is available in test namespace
 
   @HTTPProxy
@@ -26,10 +28,10 @@ Feature: HTTPS proxy support for outbound catalog requests
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
@@ -57,9 +59,9 @@ Feature: HTTPS proxy support for outbound catalog requests
         source:
           sourceType: Catalog
           catalog:
-            packageName: test
+            packageName: ${PACKAGE:test}
             selector:
               matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then the recording proxy received a CONNECT request for the catalogd service

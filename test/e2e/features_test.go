@@ -20,6 +20,7 @@ var opts = godog.Options{
 	Output:      colors.Colored(os.Stdout),
 	Concurrency: 1,
 	NoColors:    true,
+	Strict:      true,
 }
 
 func init() {
