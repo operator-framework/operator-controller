@@ -27,7 +27,7 @@ func TestInvalidClusterExtensionVersionRange(t *testing.T) {
 	pkgName := randPkg()
 	ce := buildFooClusterExtension(pkgName, []string{}, "foobar", ocv1.UpgradeConstraintPolicyCatalogProvided)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
-	assert.EqualError(t, err, `desired version range "foobar" is invalid: improper constraint: foobar`)
+	assert.EqualError(t, err, `desired version range "foobar" is invalid: improper constraint: "foobar"`)
 }
 
 func TestErrorWalkingCatalogs(t *testing.T) {
