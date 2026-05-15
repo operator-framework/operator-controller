@@ -26,6 +26,11 @@ cover.out
 /install.sh
 /install-experimental.sh
 
+# upgrade-e2e artifacts
+/experimental-install.sh
+/operator-controller-standard.yaml
+/standard-install.sh
+
 # vendored files
 vendor/
 

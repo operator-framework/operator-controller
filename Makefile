@@ -259,10 +259,11 @@ e2e: E2E_TIMEOUT ?= 20m
 e2e: GODOG_ARGS ?=
 e2e: #EXHELP Run the e2e tests.
 ifeq ($(strip $(GODOG_ARGS)),)
+	trap 'exit 130' INT; \
 	set +e; \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout=${E2E_TIMEOUT} -args --godog.tags="~@Serial" --godog.concurrency=100; \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="~@Serial" --godog.concurrency=100; \
 	parallelExit=$$?; \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout=${E2E_TIMEOUT} -args --godog.tags="@Serial" --godog.concurrency=1; \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="@Serial" --godog.concurrency=1; \
 	serialExit=$$?; \
 	if [[ $$parallelExit -ne 0 ]] || [[ $$serialExit -ne 0 ]]; then \
 		echo "e2e tests failed: parallel=$$parallelExit serial=$$serialExit"; \
