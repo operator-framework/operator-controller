@@ -238,7 +238,7 @@ func buildBundle(scenarioID, packageName, version string, opts []BundleOption) (
 					Name: scriptCMName,
 				},
 				Data: map[string]string{
-					"httpd.sh": "#!/bin/sh\necho true > /var/www/started\necho true > /var/www/ready\necho true > /var/www/live\nexec httpd -f -h /var/www -p 80\n",
+					"httpd.sh": "#!/bin/sh\nmkdir -p /tmp/www\necho true > /tmp/www/started\necho true > /tmp/www/ready\necho true > /tmp/www/live\nexec httpd -f -h /tmp/www -p 8080\n",
 				},
 			}).
 			WithBundleResource("networkpolicy.yaml", &networkingv1.NetworkPolicy{
@@ -338,7 +338,7 @@ func buildDeploymentSpec(
 							Image:   containerImage,
 							Command: []string{"/scripts/httpd.sh"},
 							Ports: []corev1.ContainerPort{
-								{ContainerPort: 80},
+								{ContainerPort: 8080},
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -351,7 +351,7 @@ func buildDeploymentSpec(
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/started",
-										Port: intstr.FromInt32(80),
+										Port: intstr.FromInt32(8080),
 									},
 								},
 								FailureThreshold: 30,
@@ -361,7 +361,7 @@ func buildDeploymentSpec(
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/live",
-										Port: intstr.FromInt32(80),
+										Port: intstr.FromInt32(8080),
 									},
 								},
 								FailureThreshold: 1,
@@ -371,7 +371,7 @@ func buildDeploymentSpec(
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/ready",
-										Port: intstr.FromInt32(80),
+										Port: intstr.FromInt32(8080),
 									},
 								},
 								InitialDelaySeconds: 1,

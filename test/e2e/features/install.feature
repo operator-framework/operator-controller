@@ -564,7 +564,7 @@ Feature: Install ClusterExtension
     Then ClusterExtension is rolled out
     And ClusterExtension is available
     And ClusterObjectSet "${NAME}-1" phase objects are managed in Kubernetes secrets
-    And ClusterObjectSet "${NAME}-1" referred secrets exist in "olmv1-system" namespace
+    And ClusterObjectSet "${NAME}-1" referred secrets exist in "${OLM_NAMESPACE}" namespace
     And ClusterObjectSet "${NAME}-1" referred secrets are immutable
     And ClusterObjectSet "${NAME}-1" referred secrets contain labels
       | key                                          | value     |
