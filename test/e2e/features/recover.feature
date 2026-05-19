@@ -85,7 +85,6 @@ Feature: Recover cluster extension from errors that might occur during its lifet
                 name: busybox
                 securityContext:
                   runAsNonRoot: true
-                  runAsUser: 1000
                   allowPrivilegeEscalation: false
                   capabilities:
                     drop:

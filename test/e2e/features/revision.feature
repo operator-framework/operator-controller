@@ -309,8 +309,6 @@ Feature: Install ClusterObjectSet
                   imagePullPolicy: IfNotPresent
                   name: busybox
                   securityContext:
-                    runAsNonRoot: true
-                    runAsUser: 1000
                     allowPrivilegeEscalation: false
                     capabilities:
                       drop:
@@ -397,8 +395,6 @@ Feature: Install ClusterObjectSet
                       "command": ["httpd"],
                       "args": ["-f", "-p", "8080"],
                       "securityContext": {
-                        "runAsNonRoot": true,
-                        "runAsUser": 1000,
                         "allowPrivilegeEscalation": false,
                         "capabilities": {
                           "drop": ["ALL"]
@@ -729,8 +725,6 @@ Feature: Install ClusterObjectSet
                           command: ["true"]
                         initialDelaySeconds: 65
                       securityContext:
-                        runAsNonRoot: true
-                        runAsUser: 1000
                         allowPrivilegeEscalation: false
                         capabilities:
                           drop:

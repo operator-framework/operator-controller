@@ -52,9 +52,21 @@ import (
 const (
 	olmDeploymentName      = "operator-controller-controller-manager"
 	catalogdDeploymentName = "catalogd-controller-manager"
-	timeout                = 5 * time.Minute
+	defaultTimeout         = 5 * time.Minute
 	tick                   = 1 * time.Second
 )
+
+// timeout is the per-step wait timeout. It defaults to defaultTimeout (5m) but
+// can be overridden via E2E_STEP_TIMEOUT to accommodate runtimes (e.g.
+// BoxcutterRuntime) that take longer to complete an installation.
+var timeout = func() time.Duration {
+	if s := os.Getenv("E2E_STEP_TIMEOUT"); s != "" {
+		if d, err := time.ParseDuration(s); err == nil {
+			return d
+		}
+	}
+	return defaultTimeout
+}()
 
 var (
 	olmNamespace        = "olmv1-system"
@@ -337,6 +349,7 @@ func substituteScenarioVars(content string, sc *scenarioContext) string {
 		"NAME":           sc.clusterExtensionName,
 		"COS_NAME":       sc.clusterObjectSetName,
 		"SCENARIO_ID":    sc.id,
+		"OLM_NAMESPACE":  olmNamespace,
 	}
 	for orig, param := range sc.catalogPackageNames {
 		vars[fmt.Sprintf("PACKAGE:%s", orig)] = param
@@ -1833,7 +1846,7 @@ func MarkDeploymentReadiness(ctx context.Context, deploymentName, state string) 
 	default:
 		return fmt.Errorf("invalid state %s", state)
 	}
-	_, err = k8sClient("exec", podName, "-n", sc.namespace, "--", op, "/var/www/ready")
+	_, err = k8sClient("exec", podName, "-n", sc.namespace, "--", op, "/tmp/www/ready")
 	return err
 }
 
