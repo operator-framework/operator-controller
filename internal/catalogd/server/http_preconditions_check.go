@@ -5,7 +5,7 @@
 // Source: Originally from Go's net/http/fs.go
 // https://cs.opensource.google/go/go/+/master:src/net/http/fs.go
 
-package storage
+package server
 
 import (
 	"net/http"
