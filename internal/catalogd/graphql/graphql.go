@@ -584,7 +584,13 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 
 				// Parse arguments
 				limit, _ := p.Args["limit"].(int)
+				if limit <= 0 || limit > 100 {
+					limit = 100 // Clamp to default/max to prevent DoS
+				}
 				offset, _ := p.Args["offset"].(int)
+				if offset < 0 {
+					offset = 0 // Negative offsets make no sense
+				}
 
 				// Apply pagination to pre-parsed objects
 				var results []interface{}
@@ -705,7 +711,7 @@ func PrintCatalogSummary(dynamicSchema *DynamicSchema) {
 	catalogSchema := dynamicSchema.CatalogSchema
 
 	// Print comprehensive summary
-	fmt.Printf("Dynamic GraphQL schema generation complete.\n")
+	fmt.Println("Dynamic GraphQL schema generation complete.")
 	fmt.Printf("Total schemas discovered: %d\n", len(catalogSchema.Schemas))
 
 	for schemaName, info := range catalogSchema.Schemas {
@@ -736,7 +742,8 @@ func PrintCatalogSummary(dynamicSchema *DynamicSchema) {
 
 	fmt.Printf("\nGraphQL endpoints available:\n")
 	for schemaName := range catalogSchema.Schemas {
-		fmt.Printf("  - %ss\n", strings.ToLower(schemaName))
+		sanitized := alphanumericOnlyRE.ReplaceAllString(schemaName, "")
+		fmt.Printf("  - %ss\n", strings.ToLower(sanitized))
 	}
 	fmt.Printf("  - summary\n")
 
@@ -747,10 +754,10 @@ func PrintCatalogSummary(dynamicSchema *DynamicSchema) {
 	fmt.Printf("    schemas { name totalObjects totalFields }\n")
 	fmt.Printf("  }\n")
 	if _, ok := catalogSchema.Schemas[declcfg.SchemaBundle]; ok {
-		fmt.Printf("  bundles(limit: 5) { name package }\n")
+		fmt.Printf("  olmbundles(limit: 5) { name package }\n")
 	}
 	if _, ok := catalogSchema.Schemas[declcfg.SchemaPackage]; ok {
-		fmt.Printf("  packages(limit: 5) { name }\n")
+		fmt.Printf("  olmpackages(limit: 5) { name }\n")
 	}
 	fmt.Printf("}\n")
 }

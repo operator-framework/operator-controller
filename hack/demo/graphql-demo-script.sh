@@ -14,7 +14,7 @@ trap cleanup SIGINT SIGTERM EXIT
 SCRIPTPATH="$(cd -- "$(dirname "$0")" > /dev/null 2>&1; pwd -P)"
 SERVER_PID=""
 PORT=9376
-BASE="http://localhost:${PORT}/catalogs/redhat-operators/api/v1/graphql"
+BASE="http://localhost:${PORT}/catalogs/example-catalog/api/v1/graphql"
 
 cleanup() {
     if [[ -n "${SERVER_PID}" ]]; then
@@ -52,7 +52,7 @@ echo "Starting server on port ${PORT}..."
 "${TMPBIN}" 2>/dev/null &
 SERVER_PID=$!
 sleep 1
-echo "Server ready. Catalog loaded: redhat-operators (5 packages, 11 bundles)"
+echo "Server ready. Catalog loaded: example-catalog (5 packages, 11 bundles)"
 
 # -- 1. Catalog Summary --
 banner "1. Discover catalog contents (summary query)"

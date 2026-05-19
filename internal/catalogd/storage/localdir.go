@@ -313,7 +313,7 @@ func (s *LocalDirV1) GetCatalogFS(catalog string) (fs.FS, error) {
 	catalogDir := s.catalogDir(catalog)
 	info, err := os.Stat(catalogDir)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, fs.ErrNotExist
 		}
 		return nil, err

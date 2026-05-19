@@ -39,6 +39,13 @@ const (
 	GraphQLQueriesEnabled  GraphQLQueriesMode = true
 )
 
+// routeConfig defines allowed HTTP methods for a specific route
+type routeConfig struct {
+	path           string
+	handler        http.HandlerFunc
+	allowedMethods []string
+}
+
 // CatalogHandlers handles HTTP requests for catalog content
 type CatalogHandlers struct {
 	store         CatalogStore
@@ -78,17 +85,32 @@ func NewCatalogHandlers(store CatalogStore, graphqlSvc service.GraphQLService, r
 
 // Handler returns an HTTP handler with all routes configured
 func (h *CatalogHandlers) Handler() http.Handler {
-	mux := http.NewServeMux()
+	// Build route configurations - each service contributes its routes and allowed methods
+	routes := []routeConfig{
+		{
+			path:           h.rootURL.JoinPath("{catalog}", "api", "v1", "all").Path,
+			handler:        h.handleV1All,
+			allowedMethods: []string{http.MethodGet, http.MethodHead},
+		},
+	}
 
-	mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "all").Path, h.handleV1All)
 	if h.enableMetas {
-		mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "metas").Path, h.handleV1Metas)
-	}
-	if h.enableGraphQL {
-		mux.HandleFunc(h.rootURL.JoinPath("{catalog}", "api", "v1", "graphql").Path, h.handleV1GraphQL)
+		routes = append(routes, routeConfig{
+			path:           h.rootURL.JoinPath("{catalog}", "api", "v1", "metas").Path,
+			handler:        h.handleV1Metas,
+			allowedMethods: []string{http.MethodGet, http.MethodHead},
+		})
 	}
 
-	return allowedMethodsHandler(mux, http.MethodGet, http.MethodHead, http.MethodPost)
+	if h.enableGraphQL {
+		routes = append(routes, routeConfig{
+			path:           h.rootURL.JoinPath("{catalog}", "api", "v1", "graphql").Path,
+			handler:        h.handleV1GraphQL,
+			allowedMethods: []string{http.MethodPost},
+		})
+	}
+
+	return h.buildRoutedHandler(routes)
 }
 
 // handleV1All serves the complete catalog content
@@ -166,6 +188,10 @@ func (h *CatalogHandlers) handleV1Metas(w http.ResponseWriter, r *http.Request) 
 func (h *CatalogHandlers) handleV1GraphQL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if h.graphqlSvc == nil {
+		http.Error(w, "GraphQL queries are not enabled", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -263,23 +289,29 @@ func serveJSONLines(w http.ResponseWriter, r *http.Request, rs io.Reader) {
 	}
 }
 
-// allowedMethodsHandler wraps a handler to only allow specific HTTP methods
-func allowedMethodsHandler(next http.Handler, allowedMethods ...string) http.Handler {
-	allowedMethodSet := sets.New[string](allowedMethods...)
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Allow POST requests only for GraphQL endpoints (paths ending with /graphql)
-		if r.Method == http.MethodPost {
-			// Check if this is the GraphQL endpoint - must end with exactly "/api/v1/graphql"
-			if !strings.HasSuffix(r.URL.Path, "/api/v1/graphql") {
-				http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-				return
-			}
-		} else if !allowedMethodSet.Has(r.Method) {
+// buildRoutedHandler creates an HTTP handler from route configurations
+// Each route specifies its own allowed methods, enabling service-dependent method restrictions
+func (h *CatalogHandlers) buildRoutedHandler(routes []routeConfig) http.Handler {
+	mux := http.NewServeMux()
+
+	for _, route := range routes {
+		// Wrap each handler with method checking specific to that route
+		mux.HandleFunc(route.path, methodRestrictedHandler(route.handler, route.allowedMethods...))
+	}
+
+	return mux
+}
+
+// methodRestrictedHandler wraps a handler to only allow specific HTTP methods
+func methodRestrictedHandler(handler http.HandlerFunc, allowedMethods ...string) http.HandlerFunc {
+	allowedSet := sets.New(allowedMethods...)
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !allowedSet.Has(r.Method) {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
-		next.ServeHTTP(w, r)
-	})
+		handler(w, r)
+	}
 }
 
 // isValidCatalogName validates that a catalog name is safe for filesystem operations

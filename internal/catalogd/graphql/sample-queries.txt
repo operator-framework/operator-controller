@@ -37,7 +37,7 @@ Basic Object Queries
 
 # Get first 10 packages
 {
-  packages(limit: 10) {
+  olmpackages(limit: 10) {
     name
     defaultChannel
     icon
@@ -47,7 +47,7 @@ Basic Object Queries
 
 # Get packages with pagination
 {
-  packages(limit: 5, offset: 10) {
+  olmpackages(limit: 5, offset: 10) {
     name
     defaultChannel
     description
@@ -56,7 +56,7 @@ Basic Object Queries
 
 # Get first 10 bundles with basic info
 {
-  bundles(limit: 10) {
+  olmbundles(limit: 10) {
     name
     package
     version
@@ -67,7 +67,7 @@ Basic Object Queries
 
 # Get channels
 {
-  channels(limit: 10) {
+  olmchannels(limit: 10) {
     name
     package
     entries
@@ -185,7 +185,7 @@ Complex Nested Queries
 
 # Comprehensive bundle analysis
 {
-  bundles(limit: 5) {
+  olmbundles(limit: 5) {
     name
     package
     version
@@ -231,7 +231,7 @@ Complex Nested Queries
 
 # Search for specific OpenShift capabilities
 {
-  bundles(limit: 50) {
+  olmbundles(limit: 50) {
     name
     package
     version
@@ -254,12 +254,12 @@ Filtering and Analysis Queries
 
 # Get packages and their default channels
 {
-  packages(limit: 20) {
+  olmpackages(limit: 20) {
     name
     defaultChannel
     description
   }
-  channels(limit: 30) {
+  olmchannels(limit: 30) {
     name
     package
     entries
@@ -268,7 +268,7 @@ Filtering and Analysis Queries
 
 # Get bundles with specific fields
 {
-  bundles(limit: 15) {
+  olmbundles(limit: 15) {
     name
     package
     version
@@ -282,7 +282,7 @@ Filtering and Analysis Queries
 
 # Large dataset exploration
 {
-  bundles(limit: 100, offset: 0) {
+  olmbundles(limit: 100, offset: 0) {
     name
     package
     version
@@ -316,7 +316,7 @@ Property Type Analysis
 
 # Focus on OpenShift features across all bundles
 {
-  bundles(limit: 100) {
+  olmbundles(limit: 100) {
     name
     package
     properties {
@@ -339,7 +339,7 @@ Property Type Analysis
 
 # Check for specific property types
 {
-  bundles(limit: 50) {
+  olmbundles(limit: 50) {
     name
     package
     properties {
@@ -354,10 +354,10 @@ Performance Queries
 
 # Small result set for quick testing
 {
-  packages(limit: 3) {
+  olmpackages(limit: 3) {
     name
   }
-  bundles(limit: 3) {
+  olmbundles(limit: 3) {
     name
     package
   }
@@ -365,7 +365,7 @@ Performance Queries
 
 # Larger result set for comprehensive analysis
 {
-  bundles(limit: 200) {
+  olmbundles(limit: 200) {
     name
     package
     version
