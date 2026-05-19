@@ -18,9 +18,15 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+	"sort"
 
+	bsemver "github.com/blang/semver/v4"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +38,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -140,14 +147,7 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 
-		// If already rolling out, use existing revision and set deprecation to Unknown (no catalog check)
-		if len(state.revisionStates.RollingOut) > 0 {
-			installedBundleName := ""
-			if state.revisionStates.Installed != nil {
-				installedBundleName = state.revisionStates.Installed.Name
-			}
-			SetDeprecationStatus(ext, installedBundleName, nil, false)
-			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
+		if reuseRollingOutRevision(ctx, state, ext) {
 			return nil, nil
 		}
 
@@ -203,6 +203,138 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 	}
 }
 
+func setRollingOutRevisionAsResolved(state *reconcileState, ext *ocv1.ClusterExtension, revision *RevisionMetadata) {
+	installedBundleName := ""
+	if state.revisionStates.Installed != nil {
+		installedBundleName = state.revisionStates.Installed.Name
+	}
+	SetDeprecationStatus(ext, installedBundleName, nil, false)
+	state.resolvedRevisionMetadata = revision
+}
+
+// Re-resolution is triggered when no rolling-out revision was resolved from the same
+// catalog spec, detecting changes to resolution-relevant fields (packageName, version, channels, selector, upgradeConstraintPolicy).
+func reuseRollingOutRevision(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) bool {
+	if len(state.revisionStates.RollingOut) == 0 {
+		return false
+	}
+
+	l := log.FromContext(ctx)
+
+	// RollingOut is ordered by revision number ascending (oldest first, newest last).
+	latestRollingOut := state.revisionStates.RollingOut[len(state.revisionStates.RollingOut)-1]
+
+	currentDigest := CatalogSpecDigest(ext)
+
+	if currentDigest == "" {
+		setRollingOutRevisionAsResolved(state, ext, latestRollingOut)
+		return true
+	}
+
+	for i := len(state.revisionStates.RollingOut) - 1; i >= 0; i-- {
+		rollingOut := state.revisionStates.RollingOut[i]
+		if rollingOut.CatalogSpecDigest != "" {
+			if rollingOut.CatalogSpecDigest == currentDigest {
+				setRollingOutRevisionAsResolved(state, ext, rollingOut)
+				return true
+			}
+		}
+	}
+
+	l.Info("no rolling-out revision matches current catalog spec hash, re-resolving bundle",
+		"rollingOutCount", len(state.revisionStates.RollingOut),
+		"currentSpecHash", currentDigest,
+	)
+	return false
+}
+
+func versionMatchesSpec(version string, ext *ocv1.ClusterExtension) bool {
+	if ext.Spec.Source.Catalog == nil {
+		return true
+	}
+	specVersion := ext.Spec.Source.Catalog.Version
+	if specVersion == "" {
+		return true
+	}
+	if version == "" {
+		return false
+	}
+	versionRange, err := compare.NewVersionRange(specVersion)
+	if err != nil {
+		return false
+	}
+	v, err := bsemver.Parse(version)
+	if err != nil {
+		return false
+	}
+	return versionRange(v)
+}
+
+func normalizeLabelSelector(sel *metav1.LabelSelector) *metav1.LabelSelector {
+	if sel == nil {
+		return nil
+	}
+	// A selector with no MatchLabels and no MatchExpressions is semantically
+	// equivalent to nil (both match everything). Canonicalize to nil so they
+	// hash identically.
+	if len(sel.MatchLabels) == 0 && len(sel.MatchExpressions) == 0 {
+		return nil
+	}
+	n := sel.DeepCopy()
+	for i := range n.MatchExpressions {
+		sort.Strings(n.MatchExpressions[i].Values)
+	}
+	sort.Slice(n.MatchExpressions, func(i, j int) bool {
+		a, b := n.MatchExpressions[i], n.MatchExpressions[j]
+		if a.Key != b.Key {
+			return a.Key < b.Key
+		}
+		if a.Operator != b.Operator {
+			return string(a.Operator) < string(b.Operator)
+		}
+		if len(a.Values) != len(b.Values) {
+			return len(a.Values) < len(b.Values)
+		}
+		for k := range a.Values {
+			if a.Values[k] != b.Values[k] {
+				return a.Values[k] < b.Values[k]
+			}
+		}
+		return false
+	})
+	return n
+}
+
+func CatalogSpecDigest(ext *ocv1.ClusterExtension) string {
+	if ext.Spec.Source.Catalog == nil {
+		return ""
+	}
+	cat := ext.Spec.Source.Catalog
+
+	channels := slices.Clone(cat.Channels)
+	sort.Strings(channels)
+
+	data := struct {
+		PackageName             string                       `json:"p"`
+		Version                 string                       `json:"v,omitempty"`
+		Channels                []string                     `json:"ch,omitempty"`
+		Selector                *metav1.LabelSelector        `json:"s,omitempty"`
+		UpgradeConstraintPolicy ocv1.UpgradeConstraintPolicy `json:"u,omitempty"`
+	}{
+		PackageName:             cat.PackageName,
+		Version:                 cat.Version,
+		Channels:                channels,
+		Selector:                normalizeLabelSelector(cat.Selector),
+		UpgradeConstraintPolicy: cat.UpgradeConstraintPolicy,
+	}
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	h := sha256.Sum256(raw)
+	return hex.EncodeToString(h[:])
+}
+
 // handleResolutionError handles the case when bundle resolution fails.
 //
 // Decision logic (evaluated in order):
@@ -229,14 +361,13 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 	}
 
 	// Check if the spec is requesting a specific version that differs from installed
-	specVersion := ""
-	if ext.Spec.Source.Catalog != nil {
-		specVersion = ext.Spec.Source.Catalog.Version
-	}
-	installedVersion := state.revisionStates.Installed.Version
-
 	// If spec requests a different version, we cannot fall back - must fail and retry
-	if specVersion != "" && specVersion != installedVersion {
+	if !versionMatchesSpec(state.revisionStates.Installed.Version, ext) {
+		specVersion := ""
+		if ext.Spec.Source.Catalog != nil {
+			specVersion = ext.Spec.Source.Catalog.Version
+		}
+		installedVersion := state.revisionStates.Installed.Version
 		msg := fmt.Sprintf("unable to upgrade to version %s: %v (currently installed: %s)", specVersion, err, installedVersion)
 		l.Error(err, "resolution failed and spec requests version change - cannot fall back",
 			"requestedVersion", specVersion,

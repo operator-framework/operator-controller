@@ -65,4 +65,11 @@ const (
 	// that were created during migration from Helm releases. This label is used
 	// to distinguish migrated revisions from those created by normal Boxcutter operation.
 	MigratedFromHelmKey = "olm.operatorframework.io/migrated-from-helm"
+
+	// CatalogSpecDigestKey is the label key used to record a SHA256 hash digest
+	// of the catalog spec fields that affect bundle resolution (packageName, version,
+	// channels, selector, upgradeConstraintPolicy). This digest is used to detect when
+	// re-resolution is needed by comparing the current spec digest with the digest
+	// stored on rolling-out ClusterObjectSet revisions.
+	CatalogSpecDigestKey = "olm.operatorframework.io/catalog-spec-digest"
 )

@@ -91,6 +91,17 @@ type deps struct {
 	Validators           []controllers.ClusterExtensionValidator
 }
 
+// Computes catalog spec digest with CRD defaults applied (UpgradeConstraintPolicy defaults to CatalogProvided).
+func catalogSpecDigestFor(cat *ocv1.CatalogFilter) string {
+	cf := *cat
+	if cf.UpgradeConstraintPolicy == "" {
+		cf.UpgradeConstraintPolicy = ocv1.UpgradeConstraintPolicyCatalogProvided
+	}
+	return controllers.CatalogSpecDigest(&ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{Source: ocv1.SourceConfig{Catalog: &cf}},
+	})
+}
+
 func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 

@@ -338,3 +338,37 @@ Feature: Update ClusterExtension
     Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
     And ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason RollingOut
     And ClusterObjectSet "${NAME}-2" reports Available as False with Reason ProbeFailure
+
+  @BoxcutterRuntime
+  Scenario: Changing version during stuck rollout triggers new resolution
+    Given ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+            version: 1.0.0
+            upgradeConstraintPolicy: SelfCertified
+      """
+    And ClusterExtension is rolled out
+    And ClusterExtension is available
+    When ClusterExtension is updated to version "1.0.2"
+    Then ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason RollingOut
+    And ClusterObjectSet "${NAME}-2" reports Available as False with Reason ProbeFailure
+    And ClusterObjectSet "${NAME}-2" has annotation "olm.operatorframework.io/catalog-spec-digest" with a non-empty value
+    When ClusterExtension is updated to version "1.2.0"
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "test-operator.1.2.0" is installed in version "1.2.0"
+    And ClusterObjectSet "${NAME}-3" annotation "olm.operatorframework.io/catalog-spec-digest" differs from ClusterObjectSet "${NAME}-2"
