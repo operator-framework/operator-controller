@@ -92,6 +92,25 @@ func (i *index) getSectionSet(schema, packageName, name string) sets.Set[section
 	return sectionSet
 }
 
+// SchemaSection represents a byte range within the catalog JSONL file
+type SchemaSection struct {
+	Offset int64
+	Length int64
+}
+
+// GetSchemaSections returns the byte-offset sections for a given schema name
+func (i *index) GetSchemaSections(schema string) []SchemaSection {
+	sections, ok := i.BySchema[schema]
+	if !ok {
+		return nil
+	}
+	result := make([]SchemaSection, len(sections))
+	for j, s := range sections {
+		result[j] = SchemaSection{Offset: s.offset, Length: s.length}
+	}
+	return result
+}
+
 func newIndex(metasChan <-chan *declcfg.Meta) *index {
 	idx := &index{
 		BySchema:  make(map[string][]section),

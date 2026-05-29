@@ -19,6 +19,7 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
+	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
 	"github.com/operator-framework/operator-controller/internal/catalogd/server"
 	"github.com/operator-framework/operator-controller/internal/catalogd/service"
 )
@@ -74,38 +75,68 @@ func NewLocalDirV1(rootDir string, rootURL *url.URL, enableMetasHandler MetasHan
 		EnableGraphQLQueries: enableGraphQLQueries,
 	}
 	if enableGraphQLQueries == GraphQLQueriesEnabled {
-		s.graphqlSvc = service.NewCachedGraphQLService()
+		s.graphqlSvc = service.NewCachedGraphQLService(s)
 	}
 	return s
 }
 
 func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) error {
+	catalogDir, err := s.storeAtomicSwap(ctx, catalog, fsys)
+	if err != nil {
+		return err
+	}
+
+	// Pre-warm GraphQL schema cache outside the write lock.
+	// Concurrent queries during this window get a cache miss and trigger
+	// their own build via singleflight, which is safe — the data is on disk.
+	if s.graphqlSvc != nil {
+		s.graphqlSvc.InvalidateCache(catalog)
+
+		if _, err := s.graphqlSvc.GetSchema(context.Background(), catalog); err != nil {
+			// Schema build failed — remove the catalog to maintain consistency.
+			// Re-acquire the write lock for the rollback since it touches shared filesystem state.
+			s.m.Lock()
+			removeErr := os.RemoveAll(catalogDir)
+			s.m.Unlock()
+			if removeErr != nil {
+				return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q: %w (rollback also failed: %v)", catalog, err, removeErr)
+			}
+			return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q: %w", catalog, err)
+		}
+	}
+
+	return nil
+}
+
+// storeAtomicSwap writes catalog data to a temp dir and atomically swaps it
+// into place. Holds the write lock for the duration of the filesystem operations only.
+func (s *LocalDirV1) storeAtomicSwap(ctx context.Context, catalog string, fsys fs.FS) (string, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
 	if err := os.MkdirAll(s.RootDir, 0700); err != nil {
-		return err
+		return "", err
 	}
 
-	// Remove any orphaned temporary directories left by previously interrupted Store
-	// operations (e.g. after a process crash where deferred cleanup did not run).
 	if err := s.removeOrphanedTempDirs(catalog); err != nil {
-		return fmt.Errorf("error removing orphaned temp directories: %w", err)
+		return "", fmt.Errorf("error removing orphaned temp directories: %w", err)
 	}
 
 	tmpCatalogDir, err := os.MkdirTemp(s.RootDir, fmt.Sprintf(".%s-*", catalog))
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer os.RemoveAll(tmpCatalogDir)
 
 	storeMetaFuncs := []storeMetasFunc{storeCatalogData}
-	if s.EnableMetasHandler {
+	if s.EnableMetasHandler || s.EnableGraphQLQueries == GraphQLQueriesEnabled {
 		storeMetaFuncs = append(storeMetaFuncs, storeIndexData)
+	}
+	if s.EnableGraphQLQueries == GraphQLQueriesEnabled {
+		storeMetaFuncs = append(storeMetaFuncs, discoverAndStoreSchema)
 	}
 
 	eg, egCtx := errgroup.WithContext(ctx)
-	// Pre-allocate metaChans with correct capacity to avoid reallocation
 	metaChans := make([]chan *declcfg.Meta, 0, len(storeMetaFuncs))
 
 	for range storeMetaFuncs {
@@ -133,11 +164,11 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 		close(ch)
 	}
 	if err != nil {
-		return fmt.Errorf("error walking FBC root: %w", err)
+		return "", fmt.Errorf("error walking FBC root: %w", err)
 	}
 
 	if err := eg.Wait(); err != nil {
-		return err
+		return "", err
 	}
 
 	catalogDir := s.catalogDir(catalog)
@@ -146,27 +177,10 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 		os.Rename(tmpCatalogDir, catalogDir),
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	// Invalidate and pre-warm GraphQL schema cache if GraphQL service is enabled
-	if s.graphqlSvc != nil {
-		s.graphqlSvc.InvalidateCache(catalog)
-
-		// Pre-warm the GraphQL schema cache using the newly created catalog directory
-		// Use the actual catalog directory filesystem, not the input fsys
-		catalogFS := os.DirFS(catalogDir)
-		if _, err := s.graphqlSvc.GetSchema(catalog, catalogFS); err != nil {
-			// Schema build failed - rollback by removing the catalog directory
-			// to maintain consistency (don't persist catalog without valid schema)
-			if removeErr := os.RemoveAll(catalogDir); removeErr != nil {
-				return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q: %w (rollback also failed: %v)", catalog, err, removeErr)
-			}
-			return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q: %w", catalog, err)
-		}
-	}
-
-	return nil
+	return catalogDir, nil
 }
 
 // removeOrphanedTempDirs removes temporary staging directories that were created by a
@@ -214,7 +228,6 @@ func (s *LocalDirV1) ContentExists(catalog string) bool {
 		return false
 	}
 	if !catalogFileStat.Mode().IsRegular() {
-		// path is not valid content
 		return false
 	}
 
@@ -240,6 +253,10 @@ func catalogFilePath(catalogDir string) string {
 
 func catalogIndexFilePath(catalogDir string) string {
 	return filepath.Join(catalogDir, "index.json")
+}
+
+func catalogSchemaFilePath(catalogDir string) string {
+	return filepath.Join(catalogDir, "graphql-schema.json")
 }
 
 type storeMetasFunc func(catalogDir string, metaChan <-chan *declcfg.Meta) error
@@ -271,6 +288,107 @@ func storeIndexData(catalogDir string, metas <-chan *declcfg.Meta) error {
 	enc := json.NewEncoder(f)
 	enc.SetEscapeHTML(false)
 	return enc.Encode(idx)
+}
+
+func discoverAndStoreSchema(catalogDir string, metas <-chan *declcfg.Meta) error {
+	catalogSchema, err := gql.DiscoverSchemaFromChannel(metas)
+	if err != nil {
+		return fmt.Errorf("error discovering schema: %w", err)
+	}
+
+	data, err := gql.MarshalCatalogSchema(catalogSchema)
+	if err != nil {
+		return fmt.Errorf("error marshaling catalog schema: %w", err)
+	}
+
+	return os.WriteFile(catalogSchemaFilePath(catalogDir), data, 0600)
+}
+
+// LoadCatalogSchema loads the pre-built catalog schema metadata from disk.
+// Implements service.CatalogDataProvider.
+func (s *LocalDirV1) LoadCatalogSchema(catalog string) (*gql.CatalogSchema, error) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	data, err := os.ReadFile(catalogSchemaFilePath(s.catalogDir(catalog)))
+	if err != nil {
+		return nil, err
+	}
+	return gql.UnmarshalCatalogSchema(data)
+}
+
+// NewObjectLoader creates an ObjectLoader that reads objects from the catalog's
+// JSONL file using index-based byte offsets. Each query reads only the requested
+// page from disk instead of holding all parsed objects in memory.
+// Implements service.CatalogDataProvider.
+func (s *LocalDirV1) NewObjectLoader(catalog string) (gql.ObjectLoader, error) {
+	idx, err := s.loadIndex(catalog)
+	if err != nil {
+		return nil, fmt.Errorf("error loading index for catalog %q: %w", catalog, err)
+	}
+
+	catalogPath := catalogFilePath(s.catalogDir(catalog))
+
+	return func(schemaName string, offset, limit int) ([]map[string]interface{}, error) {
+		sections := idx.GetSchemaSections(schemaName)
+		if sections == nil {
+			return nil, nil
+		}
+
+		if offset >= len(sections) {
+			return nil, nil
+		}
+		sections = sections[offset:]
+
+		if limit < len(sections) {
+			sections = sections[:limit]
+		}
+
+		f, err := os.Open(catalogPath)
+		if err != nil {
+			return nil, fmt.Errorf("error opening catalog file: %w", err)
+		}
+		defer f.Close()
+
+		results := make([]map[string]interface{}, 0, len(sections))
+		for _, sec := range sections {
+			buf := make([]byte, sec.Length)
+			if _, err := f.ReadAt(buf, sec.Offset); err != nil {
+				return nil, fmt.Errorf("error reading section at offset %d: %w", sec.Offset, err)
+			}
+
+			var obj map[string]interface{}
+			if err := json.Unmarshal(buf, &obj); err != nil {
+				continue
+			}
+			results = append(results, obj)
+		}
+
+		return results, nil
+	}, nil
+}
+
+// loadIndex loads the index from disk using singleflight for efficiency.
+func (s *LocalDirV1) loadIndex(catalog string) (*index, error) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	result, err, _ := s.sf.Do(catalog, func() (interface{}, error) {
+		indexFile, err := os.Open(catalogIndexFilePath(s.catalogDir(catalog)))
+		if err != nil {
+			return nil, err
+		}
+		defer indexFile.Close()
+		var idx index
+		if err := json.NewDecoder(indexFile).Decode(&idx); err != nil {
+			return nil, err
+		}
+		return &idx, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*index), nil
 }
 
 func (s *LocalDirV1) BaseURL(catalog string) string {
@@ -327,23 +445,5 @@ func (s *LocalDirV1) GetCatalogFS(catalog string) (fs.FS, error) {
 // GetIndex returns the index for a catalog
 // Implements server.CatalogStore interface
 func (s *LocalDirV1) GetIndex(catalog string) (server.Index, error) {
-	s.m.RLock()
-	defer s.m.RUnlock()
-
-	idx, err, _ := s.sf.Do(catalog, func() (interface{}, error) {
-		indexFile, err := os.Open(catalogIndexFilePath(s.catalogDir(catalog)))
-		if err != nil {
-			return nil, err
-		}
-		defer indexFile.Close()
-		var idx index
-		if err := json.NewDecoder(indexFile).Decode(&idx); err != nil {
-			return nil, err
-		}
-		return &idx, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return idx.(*index), nil
+	return s.loadIndex(catalog)
 }

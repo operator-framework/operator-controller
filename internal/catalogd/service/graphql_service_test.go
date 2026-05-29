@@ -1,31 +1,62 @@
 package service
 
 import (
-	"io/fs"
+	"context"
+	"encoding/json"
 	"sync"
 	"testing"
-	"testing/fstest"
 	"time"
+
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
 )
 
-func TestCachedGraphQLService_CacheHit(t *testing.T) {
-	svc := NewCachedGraphQLService()
+// testCatalogDataProvider implements CatalogDataProvider for testing using in-memory metas
+type testCatalogDataProvider struct {
+	metas []*declcfg.Meta
+}
 
-	// Create a test filesystem with valid catalog data
-	testFS := fstest.MapFS{
-		"catalog.json": &fstest.MapFile{
-			Data: []byte(`{
-				"schema": "olm.package",
-				"name": "test-package",
-				"defaultChannel": "stable"
-			}`),
+func newTestProvider(metas []*declcfg.Meta) *testCatalogDataProvider {
+	return &testCatalogDataProvider{metas: metas}
+}
+
+func (p *testCatalogDataProvider) LoadCatalogSchema(_ string) (*gql.CatalogSchema, error) {
+	return gql.DiscoverSchemaFromMetas(p.metas)
+}
+
+func (p *testCatalogDataProvider) NewObjectLoader(_ string) (gql.ObjectLoader, error) {
+	metasBySchema := make(map[string][]*declcfg.Meta)
+	for _, meta := range p.metas {
+		if meta.Schema != "" {
+			metasBySchema[meta.Schema] = append(metasBySchema[meta.Schema], meta)
+		}
+	}
+	return gql.NewInMemoryObjectLoader(metasBySchema), nil
+}
+
+// testMetas returns a slice of Meta objects for use in tests
+func testMetas() []*declcfg.Meta {
+	blob, _ := json.Marshal(map[string]interface{}{
+		"schema":         "olm.package",
+		"name":           "test-package",
+		"defaultChannel": "stable",
+	})
+	return []*declcfg.Meta{
+		{
+			Schema: "olm.package",
+			Name:   "test-package",
+			Blob:   blob,
 		},
 	}
+}
+
+func TestCachedGraphQLService_CacheHit(t *testing.T) {
+	provider := newTestProvider(testMetas())
+	svc := NewCachedGraphQLService(provider)
 
 	// First call - cache miss, should build schema
-	schema1, err := svc.GetSchema("test-catalog", testFS)
+	schema1, err := svc.GetSchema(context.Background(), "test-catalog")
 	if err != nil {
 		t.Fatalf("First GetSchema failed: %v", err)
 	}
@@ -34,7 +65,7 @@ func TestCachedGraphQLService_CacheHit(t *testing.T) {
 	}
 
 	// Second call - cache hit, should return same schema without rebuilding
-	schema2, err := svc.GetSchema("test-catalog", testFS)
+	schema2, err := svc.GetSchema(context.Background(), "test-catalog")
 	if err != nil {
 		t.Fatalf("Second GetSchema failed: %v", err)
 	}
@@ -44,20 +75,11 @@ func TestCachedGraphQLService_CacheHit(t *testing.T) {
 }
 
 func TestCachedGraphQLService_InvalidateCache(t *testing.T) {
-	svc := NewCachedGraphQLService()
-
-	testFS := fstest.MapFS{
-		"catalog.json": &fstest.MapFile{
-			Data: []byte(`{
-				"schema": "olm.package",
-				"name": "test-package",
-				"defaultChannel": "stable"
-			}`),
-		},
-	}
+	provider := newTestProvider(testMetas())
+	svc := NewCachedGraphQLService(provider)
 
 	// Build and cache schema
-	schema1, err := svc.GetSchema("test-catalog", testFS)
+	schema1, err := svc.GetSchema(context.Background(), "test-catalog")
 	if err != nil {
 		t.Fatalf("GetSchema failed: %v", err)
 	}
@@ -75,7 +97,7 @@ func TestCachedGraphQLService_InvalidateCache(t *testing.T) {
 	}
 
 	// Next call should rebuild
-	schema2, err := svc.GetSchema("test-catalog", testFS)
+	schema2, err := svc.GetSchema(context.Background(), "test-catalog")
 	if err != nil {
 		t.Fatalf("GetSchema after invalidation failed: %v", err)
 	}
@@ -85,17 +107,8 @@ func TestCachedGraphQLService_InvalidateCache(t *testing.T) {
 }
 
 func TestCachedGraphQLService_ConcurrentAccess(t *testing.T) {
-	svc := NewCachedGraphQLService()
-
-	testFS := fstest.MapFS{
-		"catalog.json": &fstest.MapFile{
-			Data: []byte(`{
-				"schema": "olm.package",
-				"name": "test-package",
-				"defaultChannel": "stable"
-			}`),
-		},
-	}
+	provider := newTestProvider(testMetas())
+	svc := NewCachedGraphQLService(provider)
 
 	// Run multiple concurrent GetSchema calls
 	const concurrency = 20
@@ -107,7 +120,7 @@ func TestCachedGraphQLService_ConcurrentAccess(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			schema, err := svc.GetSchema("test-catalog", testFS)
+			schema, err := svc.GetSchema(context.Background(), "test-catalog")
 			if err != nil {
 				errors <- err
 				return
@@ -145,38 +158,20 @@ func TestCachedGraphQLService_ConcurrentAccess(t *testing.T) {
 }
 
 func TestCachedGraphQLService_SingleflightDeduplication(t *testing.T) {
-	// Track schema build attempts by intercepting buildSchemaFromFS
+	// Track schema build attempts using a counting provider
 	var buildCount int
 	var buildMux sync.Mutex
 
-	// Create a custom service that counts builds
-	svc := &CachedGraphQLService{
-		schemaCache: make(map[string]*gql.DynamicSchema),
+	metas := testMetas()
+	countingProvider := &countingCatalogDataProvider{
+		metas:    metas,
+		buildMux: &buildMux,
+		count:    &buildCount,
+		delay:    50 * time.Millisecond,
 	}
 
-	testFS := fstest.MapFS{
-		"catalog.json": &fstest.MapFile{
-			Data: []byte(`{
-				"schema": "olm.package",
-				"name": "test-package",
-				"defaultChannel": "stable"
-			}`),
-		},
-	}
-
-	// Wrapper that counts and slows down schema builds
-	slowBuildWrapper := func(catalogFS fs.FS) (*gql.DynamicSchema, error) {
-		// Count this build attempt
-		buildMux.Lock()
-		buildCount++
-		buildMux.Unlock()
-
-		// Simulate slow build
-		time.Sleep(50 * time.Millisecond)
-
-		// Call the actual build function
-		return buildSchemaFromFS(catalogFS)
-	}
+	// Create a service with the counting provider
+	svc := NewCachedGraphQLService(countingProvider)
 
 	// Launch concurrent GetSchema calls that will race to build
 	const concurrency = 10
@@ -188,37 +183,12 @@ func TestCachedGraphQLService_SingleflightDeduplication(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
-			// Use singleflight manually to test deduplication
-			result, err, _ := svc.buildGroup.Do("test-catalog", func() (interface{}, error) {
-				// Check cache first
-				svc.schemaMux.RLock()
-				if cachedSchema, ok := svc.schemaCache["test-catalog"]; ok {
-					svc.schemaMux.RUnlock()
-					return cachedSchema, nil
-				}
-				svc.schemaMux.RUnlock()
-
-				// Build schema (counted)
-				dynamicSchema, err := slowBuildWrapper(testFS)
-				if err != nil {
-					return nil, err
-				}
-
-				// Cache it
-				svc.schemaMux.Lock()
-				svc.schemaCache["test-catalog"] = dynamicSchema
-				svc.schemaMux.Unlock()
-
-				return dynamicSchema, nil
-			})
-
+			_, err := svc.GetSchema(context.Background(), "test-catalog")
 			if err != nil {
 				errorsMux.Lock()
 				errors = append(errors, err)
 				errorsMux.Unlock()
 			}
-			_ = result
 		}()
 	}
 
@@ -239,27 +209,46 @@ func TestCachedGraphQLService_SingleflightDeduplication(t *testing.T) {
 	}
 }
 
-func TestCachedGraphQLService_MultipleCatalogs(t *testing.T) {
-	svc := NewCachedGraphQLService()
+// countingCatalogDataProvider wraps testCatalogDataProvider to count and delay LoadCatalogSchema calls
+type countingCatalogDataProvider struct {
+	metas    []*declcfg.Meta
+	buildMux *sync.Mutex
+	count    *int
+	delay    time.Duration
+}
 
-	fs1 := fstest.MapFS{
-		"catalog.json": &fstest.MapFile{
-			Data: []byte(`{"schema": "olm.package", "name": "catalog1"}`),
-		},
+func (p *countingCatalogDataProvider) LoadCatalogSchema(_ string) (*gql.CatalogSchema, error) {
+	p.buildMux.Lock()
+	*p.count++
+	p.buildMux.Unlock()
+
+	// Simulate slow build
+	time.Sleep(p.delay)
+
+	return gql.DiscoverSchemaFromMetas(p.metas)
+}
+
+func (p *countingCatalogDataProvider) NewObjectLoader(_ string) (gql.ObjectLoader, error) {
+	metasBySchema := make(map[string][]*declcfg.Meta)
+	for _, meta := range p.metas {
+		if meta.Schema != "" {
+			metasBySchema[meta.Schema] = append(metasBySchema[meta.Schema], meta)
+		}
 	}
-	fs2 := fstest.MapFS{
-		"catalog.json": &fstest.MapFile{
-			Data: []byte(`{"schema": "olm.package", "name": "catalog2"}`),
-		},
-	}
+	return gql.NewInMemoryObjectLoader(metasBySchema), nil
+}
+
+func TestCachedGraphQLService_MultipleCatalogs(t *testing.T) {
+	provider := newTestProvider(testMetas())
+	svc := NewCachedGraphQLService(provider)
 
 	// Build schemas for two different catalogs
-	schema1, err := svc.GetSchema("catalog1", fs1)
+	schema1, err := svc.GetSchema(context.Background(), "catalog1")
 	if err != nil {
 		t.Fatalf("GetSchema for catalog1 failed: %v", err)
 	}
 
-	schema2, err := svc.GetSchema("catalog2", fs2)
+	schema2, err := svc.GetSchema(context.Background(), "catalog2")
 	if err != nil {
 		t.Fatalf("GetSchema for catalog2 failed: %v", err)
 	}
@@ -296,21 +285,12 @@ func TestCachedGraphQLService_MultipleCatalogs(t *testing.T) {
 }
 
 func TestCachedGraphQLService_ExecuteQuery(t *testing.T) {
-	svc := NewCachedGraphQLService()
-
-	testFS := fstest.MapFS{
-		"catalog.json": &fstest.MapFile{
-			Data: []byte(`{
-				"schema": "olm.package",
-				"name": "test-package",
-				"defaultChannel": "stable"
-			}`),
-		},
-	}
+	provider := newTestProvider(testMetas())
+	svc := NewCachedGraphQLService(provider)
 
 	// Execute a simple introspection query
 	query := `{ __schema { queryType { name } } }`
-	result, err := svc.ExecuteQuery("test-catalog", testFS, query)
+	result, err := svc.ExecuteQuery(context.Background(), "test-catalog", query)
 	if err != nil {
 		t.Fatalf("ExecuteQuery failed: %v", err)
 	}
