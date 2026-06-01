@@ -155,6 +155,10 @@ func (mag *mockActionGetter) Reconcile(rel *release.Release) error {
 	return mag.reconcileErr
 }
 
+func (mag *mockActionGetter) Config() *action.Configuration {
+	return nil
+}
+
 var (
 	// required for unmockable call to convert.RegistryV1ToHelmChart
 	validFS = fstest.MapFS{
