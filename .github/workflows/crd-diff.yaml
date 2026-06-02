@@ -5,7 +5,7 @@ jobs:
   crd-diff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v6
