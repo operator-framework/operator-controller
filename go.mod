@@ -22,7 +22,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/operator-framework/api v0.42.0
-	github.com/operator-framework/helm-operator-plugins v0.9.0
+	github.com/operator-framework/helm-operator-plugins v0.9.1
 	github.com/operator-framework/operator-registry v1.68.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.67.5
