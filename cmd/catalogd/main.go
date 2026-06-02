@@ -393,9 +393,10 @@ func run(ctx context.Context) error {
 		CertFile:     cfg.certFile,
 		KeyFile:      cfg.keyFile,
 		LocalStorage: localStorage,
+		TLSOpts:      []func(*tls.Config){tlsOpts, tlsProfile},
 	}
 
-	err = serverutil.AddCatalogServerToManager(mgr, catalogServerConfig, cw)
+	err = serverutil.AddCatalogServerToManager(mgr, catalogServerConfig)
 	if err != nil {
 		setupLog.Error(err, "unable to configure catalog server")
 		return err

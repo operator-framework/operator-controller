@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/klauspost/compress/gzhttp"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	catalogdmetrics "github.com/operator-framework/operator-controller/internal/catalogd/metrics"
@@ -27,6 +26,10 @@ type CatalogServerConfig struct {
 	CertFile     string
 	KeyFile      string
 	LocalStorage storage.Instance
+	// TLSOpts are optional functions applied to the TLS configuration when serving over HTTPS.
+	// Use these to configure cipher suites, minimum TLS version, curve preferences, and
+	// certificate retrieval (e.g. via a certwatcher).
+	TLSOpts []func(*tls.Config)
 }
 
 // AddCatalogServerToManager adds the catalog HTTP server to the manager and registers
@@ -34,11 +37,10 @@ type CatalogServerConfig struct {
 // NeedLeaderElection returns false, Start() is called on every pod immediately, so all
 // replicas bind the catalog port and become ready.  Non-leader pods serve requests but
 // return 404 (empty local cache); callers are expected to retry.
-func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig, cw *certwatcher.CertWatcher) error {
+func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig) error {
 	shutdownTimeout := 30 * time.Second
 	r := &catalogServerRunnable{
 		cfg: cfg,
-		cw:  cw,
 		server: &http.Server{
 			Addr:         cfg.CatalogAddr,
 			Handler:      storageServerHandlerWrapped(mgr.GetLogger().WithName("catalogd-http-server"), cfg),
@@ -69,7 +71,6 @@ func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig, cw *ce
 // non-leader pods serve the catalog port but return 404 (empty local cache).
 type catalogServerRunnable struct {
 	cfg             CatalogServerConfig
-	cw              *certwatcher.CertWatcher
 	server          *http.Server
 	shutdownTimeout time.Duration
 	// ready is closed by Start() once the server is about to begin serving.
@@ -94,9 +95,14 @@ func (r *catalogServerRunnable) Start(ctx context.Context) error {
 	}
 
 	if r.cfg.CertFile != "" && r.cfg.KeyFile != "" {
-		config := &tls.Config{
-			GetCertificate: r.cw.GetCertificate,
-			MinVersion:     tls.VersionTLS12,
+		// All TLS settings (GetCertificate, MinVersion, CipherSuites, NextProtos, etc.)
+		// are applied exclusively via TLSOpts, keeping TLS policy out of serverutil.
+		config := &tls.Config{} //nolint:gosec
+		for _, opt := range r.cfg.TLSOpts {
+			opt(config)
+		}
+		if config.GetCertificate == nil && config.GetConfigForClient == nil && len(config.Certificates) == 0 {
+			return fmt.Errorf("catalog server TLS misconfiguration: TLSOpts must configure a certificate source")
 		}
 		listener = tls.NewListener(listener, config)
 	}
