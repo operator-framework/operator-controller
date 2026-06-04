@@ -195,6 +195,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)the "([^"]+)" metrics endpoint rejects a TLS 1\.2 connection offering only cipher "([^"]+)"$`, MetricsEndpointRejectsTLS12ConnectionWithCipher)
 	sc.Step(`^(?i)the "([^"]+)" metrics endpoint accepts a TLS 1\.2 connection with cipher "([^"]+)" and curve "([^"]+)"$`, MetricsEndpointAcceptsTLS12ConnectionWithCurve)
 	sc.Step(`^(?i)the "([^"]+)" metrics endpoint rejects a TLS 1\.2 connection with cipher "([^"]+)" and only curve "([^"]+)"$`, MetricsEndpointRejectsTLS12ConnectionWithCurve)
+	sc.Step(`^(?i)the "([^"]+)" metrics endpoint accepts a connection using only curve "([^"]+)"$`, MetricsEndpointAcceptsConnectionUsingCurve)
+	sc.Step(`^(?i)the "([^"]+)" metrics endpoint rejects a connection using only curve "([^"]+)"$`, MetricsEndpointRejectsConnectionUsingOnlyCurve)
 
 	// Upgrade-specific steps
 	sc.Step(`^(?i)the latest stable OLM release is installed$`, LatestStableOLMReleaseIsInstalled)

@@ -69,19 +69,24 @@ func cipherSuiteId(name string) uint16 {
 
 // This is primarily so that we don't have to rewrite curve values in mozilla_data.go
 const (
-	X25519MLKEM768 tls.CurveID = tls.X25519MLKEM768
-	X25519         tls.CurveID = tls.X25519
-	prime256v1     tls.CurveID = tls.CurveP256
-	secp384r1      tls.CurveID = tls.CurveP384
-	secp521r1      tls.CurveID = tls.CurveP521
+	X25519MLKEM768     tls.CurveID = tls.X25519MLKEM768
+	X25519             tls.CurveID = tls.X25519
+	prime256v1         tls.CurveID = tls.CurveP256
+	secp384r1          tls.CurveID = tls.CurveP384
+	secp521r1          tls.CurveID = tls.CurveP521
+	SecP256r1MLKEM768  tls.CurveID = tls.SecP256r1MLKEM768
+	SecP384r1MLKEM1024 tls.CurveID = tls.SecP384r1MLKEM1024
 )
 
 var curves = map[string]tls.CurveID{
-	"X25519MLKEM768": tls.X25519MLKEM768,
-	"X25519":         tls.X25519,
-	"prime256v1":     tls.CurveP256,
-	"secp384r1":      tls.CurveP384,
-	"secp521r1":      tls.CurveP521,
+	"X25519MLKEM768":     tls.X25519MLKEM768,
+	"X25519":             tls.X25519,
+	"prime256v1":         tls.CurveP256,
+	"secp256r1":          tls.CurveP256, // IANA name for prime256v1
+	"secp384r1":          tls.CurveP384,
+	"secp521r1":          tls.CurveP521,
+	"SecP256r1MLKEM768":  tls.SecP256r1MLKEM768,
+	"SecP384r1MLKEM1024": tls.SecP384r1MLKEM1024,
 }
 
 // Returns 0 for an invalid curve name
