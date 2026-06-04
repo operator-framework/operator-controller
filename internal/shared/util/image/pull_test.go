@@ -47,8 +47,18 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 	insecurePolicy := `{"default":[{"type":"insecureAcceptAnything"}]}`
 	require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0600))
 
+	// Write an empty v2 registries.conf to avoid reading the system's (potentially v1) file
+	registriesConfPath := filepath.Join(configDir, "registries.conf")
+	f, err := os.Create(registriesConfPath)
+	require.NoError(t, err)
+	require.NoError(t, toml.NewEncoder(f).Encode(sysregistriesv2.V2RegistriesConf{}))
+	require.NoError(t, f.Close())
+
 	defaultContextFunc := func(context.Context) (*types.SystemContext, error) {
-		return &types.SystemContext{SignaturePolicyPath: policyPath}, nil
+		return &types.SystemContext{
+			SignaturePolicyPath:      policyPath,
+			SystemRegistriesConfPath: registriesConfPath,
+		}, nil
 	}
 
 	testCases := []struct {
