@@ -275,6 +275,37 @@ func TestIndexGet(t *testing.T) {
 	}
 }
 
+func TestGetSchemaSections(t *testing.T) {
+	metas := []*declcfg.Meta{
+		{Schema: "olm.package", Name: "pkg1", Blob: []byte(`{"schema":"olm.package","name":"pkg1"}` + "\n")},
+		{Schema: "olm.bundle", Name: "b1", Blob: []byte(`{"schema":"olm.bundle","name":"b1"}` + "\n")},
+		{Schema: "olm.bundle", Name: "b2", Blob: []byte(`{"schema":"olm.bundle","name":"b2"}` + "\n")},
+	}
+
+	ch := make(chan *declcfg.Meta, len(metas))
+	for _, m := range metas {
+		ch <- m
+	}
+	close(ch)
+
+	idx := newIndex(ch)
+
+	// Known schema with 2 entries
+	sections := idx.GetSchemaSections("olm.bundle")
+	require.Len(t, sections, 2, "expected 2 sections for olm.bundle")
+	for _, s := range sections {
+		require.Positive(t, s.Length, "section length should be positive")
+	}
+
+	// Known schema with 1 entry
+	sections = idx.GetSchemaSections("olm.package")
+	require.Len(t, sections, 1, "expected 1 section for olm.package")
+
+	// Unknown schema
+	sections = idx.GetSchemaSections("nonexistent")
+	require.Nil(t, sections, "expected nil for unknown schema")
+}
+
 // createBlob is a helper function that creates a JSON blob with a trailing newline
 func createBlob(t *testing.T, data map[string]interface{}) []byte {
 	blob, err := json.Marshal(data)
