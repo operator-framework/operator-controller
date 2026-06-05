@@ -92,7 +92,7 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 	if s.graphqlSvc != nil {
 		s.graphqlSvc.InvalidateCache(catalog)
 
-		if _, err := s.graphqlSvc.GetSchema(context.Background(), catalog); err != nil {
+		if _, err := s.graphqlSvc.GetSchema(ctx, catalog); err != nil {
 			// Schema build failed — remove the catalog to maintain consistency.
 			// Re-acquire the write lock for the rollback since it touches shared filesystem state.
 			s.m.Lock()

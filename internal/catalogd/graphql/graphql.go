@@ -49,11 +49,12 @@ type CatalogSchema struct {
 
 // serializableFieldInfo is a JSON-friendly representation of FieldInfo
 type serializableFieldInfo struct {
-	Name         string                            `json:"name"`
-	OriginalName string                            `json:"originalName"`
-	JSONType     string                            `json:"jsonType"`
-	IsArray      bool                              `json:"isArray"`
-	NestedFields map[string]*serializableFieldInfo `json:"nestedFields,omitempty"`
+	Name            string                            `json:"name"`
+	OriginalName    string                            `json:"originalName"`
+	JSONType        string                            `json:"jsonType"`
+	IsArray         bool                              `json:"isArray"`
+	GraphQLTypeName string                            `json:"graphqlTypeName,omitempty"`
+	NestedFields    map[string]*serializableFieldInfo `json:"nestedFields,omitempty"`
 }
 
 // serializableSchemaInfo is a JSON-friendly representation of SchemaInfo
@@ -101,12 +102,38 @@ func stringToKind(s string) reflect.Kind {
 	}
 }
 
+func graphqlTypeName(t graphql.Type) string {
+	if list, ok := t.(*graphql.List); ok {
+		return graphqlTypeName(list.OfType)
+	}
+	return t.Name()
+}
+
+func graphqlTypeFromName(name string, isArray bool) graphql.Type {
+	var base graphql.Type
+	switch name {
+	case "Int":
+		base = graphql.Int
+	case "Float":
+		base = graphql.Float
+	case "Boolean":
+		base = graphql.Boolean
+	default:
+		base = graphql.String
+	}
+	if isArray {
+		return graphql.NewList(base)
+	}
+	return base
+}
+
 func fieldInfoToSerializable(fi *FieldInfo) *serializableFieldInfo {
 	sfi := &serializableFieldInfo{
-		Name:         fi.Name,
-		OriginalName: fi.OriginalName,
-		JSONType:     kindToString(fi.JSONType),
-		IsArray:      fi.IsArray,
+		Name:            fi.Name,
+		OriginalName:    fi.OriginalName,
+		JSONType:        kindToString(fi.JSONType),
+		IsArray:         fi.IsArray,
+		GraphQLTypeName: graphqlTypeName(fi.GraphQLType),
 	}
 	if len(fi.NestedFields) > 0 {
 		sfi.NestedFields = make(map[string]*serializableFieldInfo)
@@ -119,12 +146,18 @@ func fieldInfoToSerializable(fi *FieldInfo) *serializableFieldInfo {
 
 func serializableToFieldInfo(sfi *serializableFieldInfo) *FieldInfo {
 	k := stringToKind(sfi.JSONType)
+	var gqlType graphql.Type
+	if sfi.GraphQLTypeName != "" {
+		gqlType = graphqlTypeFromName(sfi.GraphQLTypeName, sfi.IsArray)
+	} else {
+		gqlType = jsonTypeToGraphQL(k, sfi.IsArray, nil)
+	}
 	fi := &FieldInfo{
 		Name:         sfi.Name,
 		OriginalName: sfi.OriginalName,
 		JSONType:     k,
 		IsArray:      sfi.IsArray,
-		GraphQLType:  jsonTypeToGraphQL(k, sfi.IsArray, nil),
+		GraphQLType:  gqlType,
 	}
 	if len(sfi.NestedFields) > 0 {
 		fi.NestedFields = make(map[string]*FieldInfo)
