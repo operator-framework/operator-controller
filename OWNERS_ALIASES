@@ -1,6 +1,5 @@
 aliases:
    olmv1-approvers:
-   - camilamacedo86
    - grokspawn
    - joelanford
    - kevinrizza
@@ -11,7 +10,6 @@ aliases:
 
    olmv1-reviewers:
    - ankitathomas
-   - camilamacedo86
    - dtfranz
    - fgiudici
    - grokspawn
@@ -33,15 +31,8 @@ aliases:
    cmd-approvers:
    - grokspawn
 
-   manifest-approvers:
-   - camilamacedo86
-
-   ci-approvers:
-   - camilamacedo86
-
    docs-approvers:
    - michaelryanpeter
 
    docs-draft-approvers:
-   - camilamacedo86
    - grokspawn
