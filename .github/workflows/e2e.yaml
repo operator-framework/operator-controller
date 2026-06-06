@@ -68,6 +68,7 @@ jobs:
         if: failure() && matrix.test.use-artifacts == true
         run: |
           if kubectl cluster-info &>/dev/null; then
+            mkdir -p /tmp/artifacts
             support-bundle --interactive=false -o /tmp/artifacts/support-bundle
           else
             echo "No cluster available, skipping support-bundle collection"
