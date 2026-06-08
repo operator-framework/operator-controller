@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+env:
+  SUPPORT_BUNDLE_VERSION: v0.129.1
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
@@ -47,12 +50,28 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Install support-bundle
+        if: matrix.test.use-artifacts == true
+        run: |
+          curl -sL https://github.com/replicatedhq/troubleshoot/releases/download/${{ env.SUPPORT_BUNDLE_VERSION }}/support-bundle_linux_amd64.tar.gz | tar xz -C /usr/local/bin support-bundle
+          support-bundle version
+
       - name: Run e2e test
         run: |
           if [[ "${{ matrix.test.use-artifacts }}" == "true" ]]; then
             ARTIFACT_PATH=/tmp/artifacts E2E_SUMMARY_OUTPUT=$GITHUB_STEP_SUMMARY make ${{ matrix.test.make-target }}
           else
             make ${{ matrix.test.make-target }}
+          fi
+
+      - name: Collect support-bundle
+        if: failure() && matrix.test.use-artifacts == true
+        run: |
+          if kubectl cluster-info &>/dev/null; then
+            mkdir -p /tmp/artifacts
+            support-bundle --interactive=false -o /tmp/artifacts/support-bundle
+          else
+            echo "No cluster available, skipping support-bundle collection"
           fi
 
       - uses: actions/upload-artifact@v7
