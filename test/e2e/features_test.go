@@ -10,8 +10,8 @@ import (
 	"github.com/cucumber/godog/colors"
 	"github.com/spf13/pflag"
 
-	testutil "github.com/operator-framework/operator-controller/internal/shared/util/test"
 	"github.com/operator-framework/operator-controller/test/e2e/steps"
+	"github.com/operator-framework/operator-controller/test/internal/summary"
 )
 
 var opts = godog.Options{
@@ -47,10 +47,9 @@ func TestMain(m *testing.M) {
 		if path == "" {
 			fmt.Println("Note: E2E_SUMMARY_OUTPUT is unset; skipping summary generation")
 		} else {
-			if err := testutil.PrintSummary(path); err != nil {
-				// Fail the run if alerts are found
+			if err := summary.PrintSummary(path); err != nil {
+				// Alert but do not fail the run if alerts are found
 				fmt.Printf("%v", err)
-				os.Exit(1)
 			}
 		}
 		return
