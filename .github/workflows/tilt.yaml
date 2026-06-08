@@ -33,6 +33,8 @@ jobs:
       run: |
         cd operator-controller
         make kind-cluster
+        # Symlink bingo-managed kind binary so tilt can find it as 'kind'
+        ln -sf "$(make --no-print-directory --eval='print-kind: ; @echo $(KIND)' print-kind)" /usr/local/bin/kind
     - name: Test Tilt
       run: |
         cd operator-controller

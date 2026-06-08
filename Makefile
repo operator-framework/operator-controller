@@ -444,11 +444,14 @@ kind-deploy-experimental: manifests
 	cp $(CATALOGS_MANIFEST) $(DEFAULT_CATALOG)
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
+VALIDATE_KINDEST_NODE_SCRIPT := hack/tools/validate_kindest_node.sh
+
 .PHONY: kind-cluster
-kind-cluster: $(KIND) kind-verify-versions #EXHELP Standup a kind cluster.
-	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
-	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config $(KIND_CONFIG)
-	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
+kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
+	@KIND_NODE_IMAGE=$$(K8S_VERSION=$(K8S_VERSION) $(VALIDATE_KINDEST_NODE_SCRIPT)) || exit 1; \
+	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME) 2>/dev/null || true; \
+	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config $(KIND_CONFIG) --image "$$KIND_NODE_IMAGE"; \
+	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME); \
 	kubectl wait --for=condition=Ready nodes --all --timeout=2m
 
 .PHONY: kind-clean
@@ -456,8 +459,12 @@ kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-verify-versions
-kind-verify-versions: $(KIND)
-	env K8S_VERSION=v$(K8S_VERSION) KIND=$(KIND) GOBIN=$(GOBIN) hack/tools/validate_kindest_node.sh
+kind-verify-versions:
+	@K8S_VERSION=$(K8S_VERSION) $(VALIDATE_KINDEST_NODE_SCRIPT) > /dev/null
+
+.PHONY: kind-update-images
+kind-update-images: $(KIND) #EXHELP Regenerate the kindest/node image map in validate_kindest_node.sh.
+	hack/tools/update-kind-images.sh $(KIND)
 
 
 #SECTION Build
