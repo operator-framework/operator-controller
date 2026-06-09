@@ -69,7 +69,7 @@ jobs:
         run: |
           if kubectl cluster-info &>/dev/null; then
             mkdir -p /tmp/artifacts
-            support-bundle --interactive=false -o /tmp/artifacts/support-bundle
+            support-bundle --interactive=false -o /tmp/artifacts/support-bundle test/e2e/support-bundle.yaml
           else
             echo "No cluster available, skipping support-bundle collection"
           fi
