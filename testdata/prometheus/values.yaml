@@ -1,0 +1,191 @@
+# kube-prometheus-stack values for OLMv1 e2e testing.
+# Only prometheus-operator and a Prometheus instance are deployed;
+# all other components (grafana, alertmanager, exporters, default rules) are disabled.
+grafana:
+  enabled: false
+alertmanager:
+  enabled: false
+nodeExporter:
+  enabled: false
+kubeStateMetrics:
+  enabled: false
+kubeApiServer:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeEtcd:
+  enabled: false
+coreDns:
+  enabled: false
+defaultRules:
+  create: false
+prometheusOperator:
+  admissionWebhooks:
+    enabled: false
+  tls:
+    enabled: false
+  networkPolicy:
+    enabled: true
+prometheus:
+  prometheusSpec:
+    scrapeInterval: "1m"
+    scrapeTimeout: "30s"
+    logLevel: debug
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    serviceDiscoveryRole: EndpointSlice
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      seccompProfile:
+        type: RuntimeDefault
+  serviceAccount:
+    name: prometheus
+  service:
+    type: NodePort
+    nodePort: 30900
+  networkPolicy:
+    enabled: true
+    egress:
+      - {}
+    ingress:
+      - {}
+  additionalServiceMonitors:
+    - name: operator-controller-controller-manager-metrics-monitor
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: operator-controller
+      endpoints:
+        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          interval: 10s
+          path: /metrics
+          port: metrics
+          scheme: https
+          tlsConfig:
+            ca:
+              secret:
+                key: ca.crt
+                name: operator-controller-cert
+            cert:
+              secret:
+                key: tls.crt
+                name: operator-controller-cert
+            insecureSkipVerify: false
+            keySecret:
+              key: tls.key
+              name: operator-controller-cert
+            serverName: operator-controller-service.olmv1-system.svc
+    - name: catalogd-controller-manager-metrics-monitor
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: catalogd
+      endpoints:
+        - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          interval: 10s
+          path: /metrics
+          port: metrics
+          scheme: https
+          tlsConfig:
+            ca:
+              secret:
+                key: ca.crt
+                name: CATALOGD_CERT_PLACEHOLDER
+            cert:
+              secret:
+                key: tls.crt
+                name: CATALOGD_CERT_PLACEHOLDER
+            insecureSkipVerify: false
+            keySecret:
+              key: tls.key
+              name: CATALOGD_CERT_PLACEHOLDER
+            serverName: catalogd-service.olmv1-system.svc
+kubelet:
+  enabled: true
+  namespace: kube-system
+  serviceMonitor:
+    interval: 10s
+    honorLabels: true
+    honorTimestamps: false
+    trackTimestampsStaleness: false
+    kubelet: false
+    cAdvisor: true
+    probes: false
+    resource: false
+    cAdvisorRelabelings: []
+    cAdvisorMetricRelabelings:
+      - sourceLabels: [pod, container]
+        regex: "(operator-controller|catalogd).*;manager"
+        action: keep
+additionalPrometheusRulesMap:
+  controller-panic-alerts:
+    groups:
+      - name: controller-panic
+        rules:
+          - alert: reconciler-panic
+            annotations:
+              description: "controller of pod {{ $labels.pod }} experienced panic(s); count={{ $value }}"
+            expr: controller_runtime_reconcile_panics_total{} > 0
+          - alert: webhook-panic
+            annotations:
+              description: "controller webhook of pod {{ $labels.pod }} experienced panic(s); count={{ $value }}"
+            expr: controller_runtime_webhook_panics_total{} > 0
+  controller-resource-alerts:
+    groups:
+      - name: resource-usage
+        rules:
+          - alert: oom-events
+            annotations:
+              description: "container {{ $labels.container }} of pod {{ $labels.pod }} experienced OOM event(s); count={{ $value }}"
+            expr: container_oom_events_total > 0
+          - alert: operator-controller-memory-growth
+            annotations:
+              description: 'operator-controller pod memory usage growing at a high rate for 5 minutes: {{ $value | humanize }}B/sec'
+            expr: deriv(sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"})[5m:]) > 100000
+            for: 5m
+            keep_firing_for: 1d
+          - alert: catalogd-memory-growth
+            annotations:
+              description: 'catalogd pod memory usage growing at a high rate for 5 minutes: {{ $value | humanize }}B/sec'
+            expr: deriv(sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"})[5m:]) > 100000
+            for: 5m
+            keep_firing_for: 1d
+          - alert: operator-controller-memory-usage
+            annotations:
+              description: 'operator-controller pod using high memory resources for the last 5 minutes: {{ $value | humanize }}B'
+            expr: sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"}) > 100000000
+            for: 5m
+            keep_firing_for: 1d
+          - alert: catalogd-memory-usage
+            annotations:
+              description: 'catalogd pod using high memory resources for the last 5 minutes: {{ $value | humanize }}B'
+            expr: sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"}) > 75000000
+            for: 5m
+            keep_firing_for: 1d
+          - alert: operator-controller-cpu-usage
+            annotations:
+              description: 'operator-controller using high cpu resource for 5 minutes: {{ $value | printf "%.2f" }}%'
+            expr: rate(container_cpu_usage_seconds_total{pod=~"operator-controller.*",container="manager"}[5m]) * 100 > 20
+            for: 5m
+            keep_firing_for: 1d
+          - alert: catalogd-cpu-usage
+            annotations:
+              description: 'catalogd using high cpu resources for 5 minutes: {{ $value | printf "%.2f" }}%'
+            expr: rate(container_cpu_usage_seconds_total{pod=~"catalogd.*",container="manager"}[5m]) * 100 > 20
+            for: 5m
+            keep_firing_for: 1d
+          - alert: operator-controller-api-call-rate
+            annotations:
+              description: 'operator-controller making excessive API calls for 5 minutes: {{ $value | printf "%.2f" }}/sec'
+            expr: sum(rate(rest_client_requests_total{job=~"operator-controller-service"}[5m])) > 10
+            for: 5m
+            keep_firing_for: 1d
+          - alert: catalogd-api-call-rate
+            annotations:
+              description: 'catalogd making excessive API calls for 5 minutes: {{ $value | printf "%.2f" }}/sec'
+            expr: sum(rate(rest_client_requests_total{job=~"catalogd-service"}[5m])) > 5
+            for: 5m
+            keep_firing_for: 1d

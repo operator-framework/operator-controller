@@ -77,12 +77,6 @@ $(KUBE_SCORE): $(BINGO_DIR)/kube-score.mod
 	@echo "(re)installing $(GOBIN)/kube-score-v1.20.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kube-score.mod -o=$(GOBIN)/kube-score-v1.20.0 "github.com/zegl/kube-score/cmd/kube-score"
 
-KUSTOMIZE := $(GOBIN)/kustomize-v5.7.1
-$(KUSTOMIZE): $(BINGO_DIR)/kustomize.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/kustomize-v5.7.1"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kustomize.mod -o=$(GOBIN)/kustomize-v5.7.1 "sigs.k8s.io/kustomize/kustomize/v5"
-
 OPERATOR_SDK := $(GOBIN)/operator-sdk-v1.41.1
 $(OPERATOR_SDK): $(BINGO_DIR)/operator-sdk.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
