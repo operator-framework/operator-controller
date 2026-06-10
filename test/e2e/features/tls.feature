@@ -33,3 +33,15 @@ Feature: TLS profile enforcement on metrics endpoints
     Given the "catalogd" deployment is configured with custom TLS version "TLSv1.2", ciphers "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", and curves "prime256v1"
     Then the "catalogd" metrics endpoint accepts a TLS 1.2 connection with cipher "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256" and curve "prime256v1"
     And the "catalogd" metrics endpoint rejects a TLS 1.2 connection with cipher "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256" and only curve "secp521r1"
+
+  @TLSProfile
+  Scenario: catalogd metrics endpoint accepts secp256r1 as the IANA name for prime256v1
+    Given the "catalogd" deployment is configured with custom TLS version "TLSv1.2", ciphers "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", and curves "secp256r1"
+    Then the "catalogd" metrics endpoint accepts a TLS 1.2 connection with cipher "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256" and curve "secp256r1"
+    And the "catalogd" metrics endpoint rejects a TLS 1.2 connection with cipher "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256" and only curve "secp521r1"
+
+  @TLSProfile
+  Scenario: catalogd metrics endpoint accepts connections using post-quantum hybrid curves
+    Given the "catalogd" deployment is configured with custom TLS version "TLSv1.2", ciphers "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", and curves "SecP256r1MLKEM768,secp256r1"
+    Then the "catalogd" metrics endpoint accepts a connection using only curve "SecP256r1MLKEM768"
+    And the "catalogd" metrics endpoint rejects a connection using only curve "secp521r1"

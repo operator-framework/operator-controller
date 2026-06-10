@@ -94,12 +94,15 @@ func TestSetCustomCurves(t *testing.T) {
 		name   string
 		result bool
 	}{
-		{"X25519MLKEM768", true}, // Post-quantum hybrid curve (Go 1.24+)
+		{"X25519MLKEM768", true},     // Post-quantum hybrid (Go 1.24+)
+		{"SecP256r1MLKEM768", true},  // Post-quantum hybrid (Go 1.26+)
+		{"SecP384r1MLKEM1024", true}, // Post-quantum hybrid (Go 1.26+)
 		{"X25519", true},
 		{"prime256v1", true},
+		{"secp256r1", true}, // IANA alias for prime256v1
 		{"secp384r1", true},
 		{"secp521r1", true},
-		{"unknown-cuve", false},
+		{"unknown-curve", false},
 		{"X448", false},             // Valid OpenSSL curve, not implemented
 		{"X25519,prime256v1", true}, // Multiple
 	}
@@ -113,6 +116,12 @@ func TestSetCustomCurves(t *testing.T) {
 			require.Error(t, err)
 		}
 	}
+}
+
+func TestSecp256r1AliasesPrime256v1(t *testing.T) {
+	require.Equal(t, curveId("prime256v1"), curveId("secp256r1"),
+		"secp256r1 and prime256v1 must resolve to the same tls.CurveID")
+	require.Equal(t, tls.CurveP256, curveId("secp256r1"))
 }
 
 func TestSetCustomVersion(t *testing.T) {

@@ -46,11 +46,14 @@ func tlsCipherSuiteName(id uint16) string {
 
 // curveIDByName maps the curve names used in --tls-custom-curves flags to Go CurveID values.
 var curveIDByName = map[string]tls.CurveID{
-	"X25519MLKEM768": tls.X25519MLKEM768,
-	"X25519":         tls.X25519,
-	"prime256v1":     tls.CurveP256,
-	"secp384r1":      tls.CurveP384,
-	"secp521r1":      tls.CurveP521,
+	"X25519MLKEM768":     tls.X25519MLKEM768,
+	"SecP256r1MLKEM768":  tls.SecP256r1MLKEM768,
+	"SecP384r1MLKEM1024": tls.SecP384r1MLKEM1024,
+	"X25519":             tls.X25519,
+	"prime256v1":         tls.CurveP256,
+	"secp256r1":          tls.CurveP256, // IANA name for prime256v1
+	"secp384r1":          tls.CurveP384,
+	"secp521r1":          tls.CurveP521,
 }
 
 // getMetricsService returns the full Service object for the named component's metrics service.
