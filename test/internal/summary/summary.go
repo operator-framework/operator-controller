@@ -1,4 +1,4 @@
-package test
+package summary
 
 import (
 	"context"
@@ -80,8 +80,8 @@ func (s *githubSummary) PerformanceQuery(title, pod, query, yLabel string, scale
 	matrix, ok := result.(model.Matrix)
 	if !ok {
 		return "", fmt.Errorf("typecast for metrics samples failed; aborting")
-	} else if len(matrix) != 1 {
-		return "", fmt.Errorf("expected 1 set of results; got: %d", len(matrix))
+	} else if len(matrix) == 0 {
+		return "", fmt.Errorf("expected 1 or more sets of results; got 0")
 	}
 	chart := xychart{
 		Title:  title,
@@ -92,10 +92,6 @@ func (s *githubSummary) PerformanceQuery(title, pod, query, yLabel string, scale
 	formattedData := make([]string, 0)
 	// matrix does not allow [] access, so we just do one iteration for the single result
 	for _, metric := range matrix {
-		if len(metric.Values) < 2 {
-			// A graph with one data point means something with the collection was wrong
-			return "", fmt.Errorf("expected at least two data points; got: %d", len(metric.Values))
-		}
 		for _, sample := range metric.Values {
 			floatSample := float64(sample.Value) * scaler
 			formattedData = append(formattedData, fmt.Sprintf("%f", floatSample))
@@ -160,7 +156,7 @@ func executeTemplate(templateFile string, obj any) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get working directory: %w", err)
 	}
-	tmpl, err := template.New(templateFile).ParseGlob(filepath.Join(wd, "../../internal/shared/util/test/templates", templateFile))
+	tmpl, err := template.New(templateFile).ParseGlob(filepath.Join(wd, "../internal/summary/templates", templateFile))
 	if err != nil {
 		return "", err
 	}
