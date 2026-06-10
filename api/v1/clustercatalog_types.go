@@ -18,6 +18,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // SourceType defines the type of source used for catalogs.
@@ -331,5 +332,8 @@ type ImageSource struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&ClusterCatalog{}, &ClusterCatalogList{})
+	SchemeBuilder.Register(func(s *runtime.Scheme) error {
+		s.AddKnownTypes(GroupVersion, &ClusterCatalog{}, &ClusterCatalogList{})
+		return nil
+	})
 }

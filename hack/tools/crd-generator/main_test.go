@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
-const controllerToolsVersion = "v0.20.1"
+const controllerToolsVersion = "v0.21.0"
 
 func TestRunGenerator(t *testing.T) {
 	here, err := os.Getwd()
@@ -323,31 +323,20 @@ func TestOpconTweaksMapRequiredList(t *testing.T) {
 }
 
 func compareFiles(t *testing.T, file1, file2 string) {
-	f1, err := os.Open(file1)
+	t.Helper()
+	b1, err := os.ReadFile(file1)
 	require.NoError(t, err)
-	defer func() {
-		_ = f1.Close()
-	}()
-
-	f2, err := os.Open(file2)
+	b2, err := os.ReadFile(file2)
 	require.NoError(t, err)
-	defer func() {
-		_ = f2.Close()
-	}()
+	require.Equal(t, filterVersionAnnotation(string(b1)), filterVersionAnnotation(string(b2)))
+}
 
-	for {
-		b1 := make([]byte, 64000)
-		b2 := make([]byte, 64000)
-		n1, err1 := f1.Read(b1)
-		n2, err2 := f2.Read(b2)
-
-		// Success if both have EOF at the same time
-		if err1 == io.EOF && err2 == io.EOF {
-			return
+func filterVersionAnnotation(s string) string {
+	var filtered []string
+	for _, line := range strings.Split(s, "\n") {
+		if !strings.Contains(line, "controller-gen.kubebuilder.io/version") {
+			filtered = append(filtered, line)
 		}
-		require.NoError(t, err1)
-		require.NoError(t, err2)
-		require.Equal(t, n1, n2)
-		require.Equal(t, b1, b2)
 	}
+	return strings.Join(filtered, "\n")
 }
