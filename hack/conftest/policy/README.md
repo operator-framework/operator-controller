@@ -20,51 +20,21 @@ Validates core OLM NetworkPolicy requirements:
   - Ingress on port 8443 (Prometheus metrics scraping)
   - General egress enabled (for pulling bundle images, connecting to catalogd, and Kubernetes API)
 
-### prometheus-networkpolicies.rego
-
-Package: `prometheus`
-
-Validates Prometheus NetworkPolicy requirements:
-
-- Ensures a NetworkPolicy exists that allows both ingress and egress traffic for prometheus pods
-
 ## Usage
 
 These policies are automatically run as part of:
 
-- `make lint-helm` - Validates both helm/olmv1 and helm/prometheus charts (runs `main` and `prometheus` packages)
-- `make manifests` - Generates and validates core OLM manifests using only `main` package policies 
-   (Prometheus policies are intentionally skipped here, even if manifests include Prometheus resources; 
-   they are validated via `make lint-helm`)
+- `make lint-helm` - Validates the helm/olmv1 chart (runs `main` package)
+- `make manifests` - Generates and validates core OLM manifests using `main` package policies
 
 ### Running manually
 
 ```bash
-# Run all policies (main + prometheus namespaces)
-(helm template olmv1 helm/olmv1; helm template prometheus helm/prometheus) | conftest test --policy hack/conftest/policy/ --combine -n main -n prometheus -
-
-# Run only OLM policies
 helm template olmv1 helm/olmv1 | conftest test --policy hack/conftest/policy/ --combine -n main -
-
-# Run only prometheus policies
-helm template prometheus helm/prometheus | conftest test --policy hack/conftest/policy/ --combine -n prometheus -
-```
-
-### Excluding policies
-
-Use the `-n` (namespace) flag to selectively run policies:
-
-```bash
-# Skip prometheus policies
-conftest test --policy hack/conftest/policy/ --combine -n main <input>
-
-# Skip OLM policies
-conftest test --policy hack/conftest/policy/ --combine -n prometheus <input>
 ```
 
 ## Adding New Policies
 
 1. Add new rules to an existing `.rego` file or create a new one
 2. Use `package main` for policies that should run by default on all manifests
-3. Use a custom package name (e.g., `package prometheus`) for optional policies
-4. Update the Makefile targets if new namespaces need to be included
+3. Update the Makefile targets if new namespaces need to be included

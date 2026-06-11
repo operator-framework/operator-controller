@@ -1,0 +1,66 @@
+# Experimental values override for OLMv1 e2e prometheus monitoring.
+# Overrides only the resource-usage alert thresholds listed below.
+# The controller-panic-alerts key is NOT present here, so Helm preserves
+# it from the base values.yaml unchanged.
+#
+# Changed thresholds vs defaults:
+#   operator-controller-memory-growth: 200000 (default: 100000)
+#   catalogd-memory-growth:            200000 (default: 100000)
+#   operator-controller-memory-usage:  150000000 (default: 100000000)
+additionalPrometheusRulesMap:
+  controller-resource-alerts:
+    groups:
+      - name: resource-usage
+        rules:
+          - alert: oom-events
+            annotations:
+              description: "container {{ $labels.container }} of pod {{ $labels.pod }} experienced OOM event(s); count={{ $value }}"
+            expr: container_oom_events_total > 0
+          - alert: operator-controller-memory-growth
+            annotations:
+              description: 'operator-controller pod memory usage growing at a high rate for 5 minutes: {{ $value | humanize }}B/sec'
+            expr: deriv(sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"})[5m:]) > 200000
+            for: 5m
+            keep_firing_for: 1d
+          - alert: catalogd-memory-growth
+            annotations:
+              description: 'catalogd pod memory usage growing at a high rate for 5 minutes: {{ $value | humanize }}B/sec'
+            expr: deriv(sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"})[5m:]) > 200000
+            for: 5m
+            keep_firing_for: 1d
+          - alert: operator-controller-memory-usage
+            annotations:
+              description: 'operator-controller pod using high memory resources for the last 5 minutes: {{ $value | humanize }}B'
+            expr: sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"}) > 150000000
+            for: 5m
+            keep_firing_for: 1d
+          - alert: catalogd-memory-usage
+            annotations:
+              description: 'catalogd pod using high memory resources for the last 5 minutes: {{ $value | humanize }}B'
+            expr: sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"}) > 75000000
+            for: 5m
+            keep_firing_for: 1d
+          - alert: operator-controller-cpu-usage
+            annotations:
+              description: 'operator-controller using high cpu resource for 5 minutes: {{ $value | printf "%.2f" }}%'
+            expr: rate(container_cpu_usage_seconds_total{pod=~"operator-controller.*",container="manager"}[5m]) * 100 > 20
+            for: 5m
+            keep_firing_for: 1d
+          - alert: catalogd-cpu-usage
+            annotations:
+              description: 'catalogd using high cpu resources for 5 minutes: {{ $value | printf "%.2f" }}%'
+            expr: rate(container_cpu_usage_seconds_total{pod=~"catalogd.*",container="manager"}[5m]) * 100 > 20
+            for: 5m
+            keep_firing_for: 1d
+          - alert: operator-controller-api-call-rate
+            annotations:
+              description: 'operator-controller making excessive API calls for 5 minutes: {{ $value | printf "%.2f" }}/sec'
+            expr: sum(rate(rest_client_requests_total{job=~"operator-controller-service"}[5m])) > 10
+            for: 5m
+            keep_firing_for: 1d
+          - alert: catalogd-api-call-rate
+            annotations:
+              description: 'catalogd making excessive API calls for 5 minutes: {{ $value | printf "%.2f" }}/sec'
+            expr: sum(rate(rest_client_requests_total{job=~"catalogd-service"}[5m])) > 5
+            for: 5m
+            keep_firing_for: 1d

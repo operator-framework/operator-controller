@@ -165,7 +165,8 @@ make generate
 │   │   ├── base/                    # Base manifests & CRDs
 │   │   ├── templates/               # Helm templates
 │   │   └── values.yaml              # Default values
-│   └── prometheus/                  # Prometheus monitoring
+├── testdata/
+│   └── prometheus/                  # kube-prometheus-stack values for e2e monitoring
 ├── test/                            # Test suites
 │   ├── e2e/                         # End-to-end tests (see test/e2e/README.md)
 │   ├── extension-developer-e2e/     # Extension developer tests

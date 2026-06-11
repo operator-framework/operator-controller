@@ -55,7 +55,7 @@ ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]]
 	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
 endif
 
-# bingo manages consistent tooling versions for things like kind, kustomize, etc.
+# bingo manages consistent tooling versions for things like kind, etc.
 include .bingo/Variables.mk
 
 ifeq ($(origin KIND_CLUSTER_NAME), undefined)
@@ -124,8 +124,7 @@ lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
 .PHONY: lint-helm
 lint-helm: $(HELM) $(CONFTEST) #HELP Run helm linter
 	helm lint helm/olmv1
-	helm lint helm/prometheus
-	(set -euo pipefail; helm template olmv1 helm/olmv1; helm template prometheus helm/prometheus) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -n prometheus -
+	(set -euo pipefail; helm template olmv1 helm/olmv1) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -
 
 .PHONY: lint-deployed-resources
 lint-deployed-resources: $(KUBE_SCORE) #EXHELP Lint deployed resources.
@@ -338,18 +337,28 @@ test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
-test-experimental-e2e: PROMETHEUS_VALUES := helm/prom_experimental.yaml
+test-experimental-e2e: PROMETHEUS_VALUES := testdata/prometheus/values-experimental.yaml
 test-experimental-e2e: E2E_TIMEOUT ?= 25m
 test-experimental-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
+CATALOGD_CERT_SECRET = catalogd-service-cert-$(VERSION)
+
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
-prometheus: PROMETHEUS_VERSION := v0.83.0
-prometheus: $(KUSTOMIZE) #EXHELP Deploy Prometheus into specified namespace
+prometheus: PROMETHEUS_CHART_VERSION := 86.2.2
+prometheus: $(HELM) #EXHELP Deploy Prometheus into specified namespace
 ifeq ($(strip $(E2E_SUMMARY_OUTPUT)),)
 	@echo "E2E_SUMMARY_OUTPUT unset; skipping prometheus deployment"
 else
-	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(VERSION) $(PROMETHEUS_VALUES)
+	$(HELM) upgrade --install prometheus oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack \
+	  --namespace $(PROMETHEUS_NAMESPACE) --create-namespace \
+	  --version $(PROMETHEUS_CHART_VERSION) \
+	  -f testdata/prometheus/values.yaml \
+	  $(if $(PROMETHEUS_VALUES),-f $(PROMETHEUS_VALUES)) \
+	  --set-string 'prometheus.additionalServiceMonitors[1].endpoints[0].tlsConfig.ca.secret.name=$(CATALOGD_CERT_SECRET)' \
+	  --set-string 'prometheus.additionalServiceMonitors[1].endpoints[0].tlsConfig.cert.secret.name=$(CATALOGD_CERT_SECRET)' \
+	  --set-string 'prometheus.additionalServiceMonitors[1].endpoints[0].tlsConfig.keySecret.name=$(CATALOGD_CERT_SECRET)' \
+	  --wait --timeout 5m
 endif
 
 .PHONY: test-extension-developer-e2e
