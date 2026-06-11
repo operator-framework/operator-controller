@@ -607,6 +607,7 @@ func setupChartRegistry(t *testing.T, chart []byte) (reference.NamedTagged, refe
 	clientOpts := []registry.ClientOption{
 		registry.ClientOptDebug(true),
 		registry.ClientOptEnableCache(true),
+		registry.ClientOptPlainHTTP(),
 	}
 	client, err := registry.NewClient(clientOpts...)
 	require.NoError(t, err)
