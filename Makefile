@@ -123,8 +123,8 @@ lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
 
 .PHONY: lint-helm
 lint-helm: $(HELM) $(CONFTEST) #HELP Run helm linter
-	helm lint helm/olmv1
-	(set -euo pipefail; helm template olmv1 helm/olmv1) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -
+	$(HELM) lint helm/olmv1
+	(set -euo pipefail; $(HELM) template olmv1 helm/olmv1) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -
 
 .PHONY: lint-deployed-resources
 lint-deployed-resources: $(KUBE_SCORE) #EXHELP Lint deployed resources.
