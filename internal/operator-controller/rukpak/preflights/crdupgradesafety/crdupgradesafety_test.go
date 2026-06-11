@@ -394,17 +394,14 @@ func TestUpgrade(t *testing.T) {
 				Manifest: getManifestString(t, "crd-complex-breaking-changes-new.json"),
 			},
 			// This test verifies detection of multiple breaking changes in a single CRD upgrade:
-			// 1. Type changed from "object" to "" - Properly detected by type validator
-			// 2. Nullable changed from false to true - Properly detected by nullable validator
-			// 3. OneOf constraint added - Reported as "unhandled" (needs crdify support)
-			//    See: https://github.com/kubernetes-sigs/crdify/issues/25
-			// The upgrade is correctly blocked, but OneOf changes need better categorization.
+			// 1. Type changed from "object" to "" - Detected by type validator
+			// 2. Nullable changed from false to true - Detected by nullable validator
+			// 3. OneOf constraint added - Detected by oneOf validator
 			requireErr: wantErrorMsgs([]string{
 				`validating upgrade for CRD "services.networking.example.com"`,
 				`type: type changed`,
 				`nullable: nullable added`,
-				`unhandled: unhandled changes found`,
-				`OneOf`,
+				`oneOf: oneOf constraint added`,
 			}),
 		},
 	}
@@ -423,6 +420,38 @@ func TestUpgrade(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUpgrade_OneOfRemoved(t *testing.T) {
+	t.Run("removing oneOf subschemas should fail", func(t *testing.T) {
+		preflight := newMockPreflight(getCrdFromManifestFile(t, "crd-oneof-removed-old.json"), nil)
+		rel := &release.Release{
+			Name:     "test-release",
+			Manifest: getManifestString(t, "crd-oneof-removed-new.json"),
+		}
+		objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(rel)
+		require.NoError(t, err)
+		err = preflight.Upgrade(context.Background(), objs)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "oneOf: allowed oneOf schemas removed")
+	})
+}
+
+func TestUpgrade_OneOfAdded(t *testing.T) {
+	t.Run("adding oneOf required constraints to existing property should report oneOf error", func(t *testing.T) {
+		preflight := newMockPreflight(getCrdFromManifestFile(t, "crd-oneof-safe-addition-old.json"), nil)
+		rel := &release.Release{
+			Name:     "test-release",
+			Manifest: getManifestString(t, "crd-oneof-safe-addition-new.json"),
+		}
+		objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(rel)
+		require.NoError(t, err)
+		err = preflight.Upgrade(context.Background(), objs)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "oneOf: oneOf constraint added")
+		require.NotContains(t, err.Error(), "unhandled", "oneOf changes should be handled by the oneOf validator, not reported as unhandled")
+		require.NotContains(t, err.Error(), "type:", "type should not change when only oneOf constraints are added")
+	})
 }
 
 func TestUpgrade_UnhandledChanges_InSpec_DefaultPolicy(t *testing.T) {
