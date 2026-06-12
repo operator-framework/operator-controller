@@ -25,7 +25,7 @@ require (
 	github.com/operator-framework/helm-operator-plugins v0.9.1
 	github.com/operator-framework/operator-registry v1.72.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/prometheus/common v0.67.5
+	github.com/prometheus/common v0.68.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
