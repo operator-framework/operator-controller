@@ -30,8 +30,9 @@ cleanup() {
 
 trap cleanup EXIT
 
-# Ensure we're in the repository root
-if [[ ! -d ".git" ]]; then
+# Ensure we're in the repository root (.git is a directory in a regular
+# checkout but a file in a worktree, so test existence rather than type)
+if [[ ! -e ".git" ]]; then
     echo -e "${RED}Error: Must be run from repository root${NC}"
     exit 1
 fi
