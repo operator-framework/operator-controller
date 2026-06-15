@@ -31,7 +31,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
@@ -130,7 +129,7 @@ func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 func TestClusterExtensionResolutionFails(t *testing.T) {
 	pkgName := fmt.Sprintf("non-existent-%s", rand.String(6))
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 			return nil, nil, nil, fmt.Errorf("no package %q found", pkgName)
 		})
 	})
@@ -195,7 +194,7 @@ func TestClusterExtensionResolutionFailsWithDeprecationData(t *testing.T) {
 	pkgName := fmt.Sprintf("deprecated-%s", rand.String(6))
 	deprecationMessage := "package marked deprecated in catalog"
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 			return nil, nil, &declcfg.Deprecation{
 				Entries: []declcfg.DeprecationEntry{{
 					Reference: declcfg.PackageScopedReference{Schema: declcfg.SchemaPackage},
@@ -261,8 +260,8 @@ func TestClusterExtensionUpgradeShowsInstalledBundleDeprecation(t *testing.T) {
 	deprecationMessage := "v1.0.0 is deprecated, please upgrade to v2.0.0"
 
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("2.0.0"),
 			}
 			// Catalog has deprecation for v1.0.0 (installed), but v2.0.0 (resolved) is NOT deprecated
@@ -362,8 +361,8 @@ func TestClusterExtensionUpgradeFromDeprecatedBundleClearsDeprecation(t *testing
 	deprecationMessage := fmt.Sprintf("%s is deprecated. Uninstall and install v1.0.3 for support.", installedBundleName)
 
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("1.0.3"),
 			}
 			return &declcfg.Bundle{
@@ -459,7 +458,7 @@ func TestClusterExtensionResolutionFailsWithoutCatalogDeprecationData(t *testing
 	catalogName := fmt.Sprintf("test-catalog-%s", rand.String(6))
 	installedBundleName := fmt.Sprintf("%s.v1.0.0", pkgName)
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 			return nil, nil, nil, fmt.Errorf("no bundles found for package %q", pkgName)
 		})
 
@@ -585,8 +584,8 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 					}
 				},
 				func(d *deps) {
-					d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-						v := bundle.VersionRelease{
+					d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+						v := declcfg.VersionRelease{
 							Version: bsemver.MustParse("1.0.0"),
 						}
 						return &declcfg.Bundle{
@@ -662,8 +661,8 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 			d.ImagePuller = &imageutil.FakePuller{
 				ImageFS: fstest.MapFS{},
 			}
-			d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-				v := bundle.VersionRelease{
+			d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+				v := declcfg.VersionRelease{
 					Version: bsemver.MustParse("1.0.0"),
 				}
 				return &declcfg.Bundle{
@@ -775,11 +774,13 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
 		// Boxcutter keeps a rolling revision when apply fails. We mirror that state so the test uses
 		// the same inputs the runtime would see.
-		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
-			RollingOut: []*controllers.RevisionMetadata{{}},
-		}, nil)
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{
+				RollingOut: []*controllers.RevisionMetadata{{}},
+			},
+		}
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("1.0.0"),
 			}
 			return &declcfg.Bundle{
@@ -1044,8 +1045,8 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("1.0.0"),
 			}
 			return &declcfg.Bundle{
@@ -1134,8 +1135,8 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("1.0.0"),
 			}
 			return &declcfg.Bundle{
@@ -1210,8 +1211,8 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("1.0.0"),
 			}
 			return &declcfg.Bundle{
@@ -1288,8 +1289,8 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("1.0.0"),
 			}
 			return &declcfg.Bundle{
@@ -1367,8 +1368,8 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
-			v := bundle.VersionRelease{
+		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("1.0.0"),
 			}
 			return &declcfg.Bundle{
@@ -2613,11 +2614,11 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 		resolveAttempt := 0
 		cl, reconciler := newClientAndReconciler(t, func(d *deps) {
 			// First reconcile: catalog available, second reconcile: catalog unavailable
-			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 				resolveAttempt++
 				if resolveAttempt == 1 {
 					// First reconcile: catalog available, resolve to version 1.0.0
-					v := bundle.VersionRelease{Version: bsemver.MustParse("1.0.0")}
+					v := declcfg.VersionRelease{Version: bsemver.MustParse("1.0.0")}
 					return &declcfg.Bundle{
 						Name:    "test.1.0.0",
 						Package: "test-pkg",
@@ -2711,7 +2712,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 
 	t.Run("fails when version upgrade requested without catalog", func(t *testing.T) {
 		cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 				return nil, nil, nil, fmt.Errorf("catalog unavailable")
 			})
 			d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
@@ -2769,14 +2770,14 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 		resolveAttempt := 0
 		cl, reconciler := newClientAndReconciler(t, func(d *deps) {
 			// First attempt: catalog unavailable, then becomes available
-			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 				resolveAttempt++
 				if resolveAttempt == 1 {
 					// First reconcile: catalog unavailable
 					return nil, nil, nil, fmt.Errorf("catalog temporarily unavailable")
 				}
 				// Second reconcile (triggered by catalog watch): catalog available with new version
-				v := bundle.VersionRelease{Version: bsemver.MustParse("2.0.0")}
+				v := declcfg.VersionRelease{Version: bsemver.MustParse("2.0.0")}
 				return &declcfg.Bundle{
 					Name:    "test.2.0.0",
 					Package: "test-pkg",
@@ -2865,7 +2866,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 	t.Run("retries when catalogs exist but resolution fails", func(t *testing.T) {
 		cl, reconciler := newClientAndReconciler(t, func(d *deps) {
 			// Resolver fails (transient issue)
-			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 				return nil, nil, nil, fmt.Errorf("transient catalog issue: cache stale")
 			})
 			d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
