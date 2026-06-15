@@ -2,6 +2,7 @@ package http_test
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/pem"
 	"io"
 	"net"
@@ -14,10 +15,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
+	"github.com/operator-framework/operator-controller/internal/shared/util/tlsprofiles"
 )
 
 // startRecordingProxy starts a plain-HTTP CONNECT proxy that tunnels HTTPS
@@ -167,6 +170,34 @@ func TestBuildHTTPClientProxyTunnelsConnections(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("HTTPS connection to target server did not go through the proxy")
 	}
+}
+
+// TestBuildHTTPClientAppliesTLSProfile verifies that BuildHTTPClient applies
+// the configured TLS profile to the transport's TLSClientConfig. When the
+// "modern" profile is active the minimum TLS version must be 1.3.
+func TestBuildHTTPClientAppliesTLSProfile(t *testing.T) {
+	// Switch to the "modern" profile for this test and restore afterward.
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	tlsprofiles.AddFlags(fs)
+	require.NoError(t, fs.Parse([]string{"--tls-profile=modern"}))
+	t.Cleanup(func() {
+		resetFS := pflag.NewFlagSet("reset", pflag.ContinueOnError)
+		tlsprofiles.AddFlags(resetFS)
+		require.NoError(t, resetFS.Parse([]string{"--tls-profile=intermediate"}))
+	})
+
+	cpw, err := httputil.NewCertPoolWatcher("", log.FromContext(context.Background()))
+	require.NoError(t, err)
+	t.Cleanup(cpw.Done)
+	require.NoError(t, cpw.Start(context.Background()))
+
+	client, err := httputil.BuildHTTPClient(cpw)
+	require.NoError(t, err)
+
+	transport, ok := client.Transport.(*http.Transport)
+	require.True(t, ok)
+	require.Equal(t, uint16(tls.VersionTLS13), transport.TLSClientConfig.MinVersion,
+		"modern TLS profile must set MinVersion to TLS 1.3")
 }
 
 // TestBuildHTTPClientProxyBlocksWhenRejected verifies that when the proxy

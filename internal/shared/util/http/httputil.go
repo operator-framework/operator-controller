@@ -2,8 +2,11 @@ package http
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/operator-framework/operator-controller/internal/shared/util/tlsprofiles"
 )
 
 func BuildHTTPClient(cpw *CertPoolWatcher) (*http.Client, error) {
@@ -18,6 +21,11 @@ func BuildHTTPClient(cpw *CertPoolWatcher) (*http.Client, error) {
 		RootCAs:    pool,
 		MinVersion: tls.VersionTLS12,
 	}
+	tlsProfile, err := tlsprofiles.GetTLSConfigFunc()
+	if err != nil {
+		return nil, fmt.Errorf("getting TLS config func: %w", err)
+	}
+	tlsProfile(tlsConfig)
 	httpClient.Transport = &http.Transport{
 		TLSClientConfig: tlsConfig,
 		// Proxy must be set explicitly; a nil Proxy field means "no proxy" and
