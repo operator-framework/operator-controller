@@ -207,6 +207,40 @@ Two manifest variants exist:
 - **Standard:** Production-ready features
 - **Experimental:** Features under development/testing (includes `ClusterObjectSet` API)
 
+### API Conventions
+
+API changes in `api/v1/*_types.go` must follow the [OpenShift API conventions](https://github.com/openshift/enhancements/blob/master/dev-guide/api-conventions.md) in addition to upstream [Kubernetes API conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md).
+
+After modifying API types, run `make generate manifests crd-ref-docs` to regenerate DeepCopy/ApplyConfiguration code, CRDs, reference docs, and manifests. Run `make lint-api-diff` to validate changes against kube-api-linter.
+
+**Deprecating fields:** Follow Go and OpenShift conventions (see [openshift/api](https://github.com/openshift/api) for examples):
+
+```go
+type ExampleConfig struct {
+	// value holds some value.
+	Value string `json:"value"`
+}
+
+// Deprecated: structField is no longer used and will be removed in a future release.
+// Explanation of why and what replaces it.
+//
+// +optional
+StructField ExampleConfig `json:"structField,omitzero"`
+
+// Deprecated: scalarField is no longer used and will be removed in a future release.
+// Explanation of why and what replaces it.
+//
+// +optional
+ScalarField string `json:"scalarField,omitempty"`
+```
+
+- Use `Deprecated:` with capital D and colon (Go convention, recognized by godoc and staticcheck)
+- Use the lowercase JSON field name (camelCase) in doc comments, not the Go PascalCase identifier — doc comments are surfaced to end users via `oc explain` and generated API docs
+- Deprecated fields must be `+optional`, never `+required`
+- Do not use pointers for optional struct fields (OpenShift convention); use value types with `omitzero`
+- Use `omitzero` in the JSON tag for struct types, `omitempty` for scalar types (string, int, bool)
+- For intentional reads of deprecated fields (e.g. deprecation warnings), add `//nolint:staticcheck` with a reason
+
 ---
 
 ## Git Workflows
