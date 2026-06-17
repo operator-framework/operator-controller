@@ -23,11 +23,25 @@ jobs:
     env:
       TERM: linux
     steps:
-      - run: sudo apt update && sudo apt install -y asciinema curl
+      - name: Install asciinema
+        env:
+          ASCIINEMA_VERSION: "3.2.1"
+        run: |
+          curl -fsSL "https://github.com/asciinema/asciinema/releases/download/v${ASCIINEMA_VERSION}/asciinema-x86_64-unknown-linux-gnu" -o /usr/local/bin/asciinema
+          chmod +x /usr/local/bin/asciinema
+          asciinema --version
       - uses: actions/checkout@v6.0.2
       - uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
+      - name: Debug network connectivity to asciinema.org
+        run: |
+          echo "=== DNS resolution ==="
+          host asciinema.org || true
+          echo "=== IPv4 connectivity ==="
+          curl -4 -sS --connect-timeout 5 -o /dev/null -w "HTTP %{http_code} via %{remote_ip}\n" https://asciinema.org || true
+          echo "=== IPv6 connectivity ==="
+          curl -6 -sS --connect-timeout 5 -o /dev/null -w "HTTP %{http_code} via %{remote_ip}\n" https://asciinema.org || true
       - name: Run Demo Update
         run: |
           env -i \
@@ -35,5 +49,7 @@ jobs:
             PATH="$PATH" \
             TERM="xterm-256color" \
             SHELL="/bin/bash" \
+            ASCIINEMA_SERVER_URL="https://asciinema.org" \
+            RUST_LOG="debug" \
             make update-demos
 
