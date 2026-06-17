@@ -44,7 +44,7 @@ jobs:
             use-codecov: false
     name: ${{ matrix.test.name }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - uses: actions/setup-go@v6
         with:
