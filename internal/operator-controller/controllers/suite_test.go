@@ -91,6 +91,14 @@ type deps struct {
 	Validators           []controllers.ClusterExtensionValidator
 }
 
+// catalogSpecDigestFor computes the catalog spec digest for a CatalogFilter.
+func catalogSpecDigestFor(cat *ocv1.CatalogFilter) string {
+	cf := *cat
+	return controllers.CatalogSpecDigest(&ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{Source: ocv1.SourceConfig{Catalog: &cf}},
+	})
+}
+
 func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 

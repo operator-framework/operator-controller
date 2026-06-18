@@ -62,10 +62,11 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 		//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
 		//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
 		rm := &RevisionMetadata{
-			RevisionName: rev.Name,
-			Package:      rev.Annotations[labels.PackageNameKey],
-			Image:        rev.Annotations[labels.BundleReferenceKey],
-			Conditions:   rev.Status.Conditions,
+			RevisionName:      rev.Name,
+			Package:           rev.Annotations[labels.PackageNameKey],
+			Image:             rev.Annotations[labels.BundleReferenceKey],
+			CatalogSpecDigest: rev.Annotations[labels.CatalogSpecDigestKey],
+			Conditions:        rev.Status.Conditions,
 			BundleMetadata: ocv1.BundleMetadata{
 				Name:    rev.Annotations[labels.BundleNameKey],
 				Version: rev.Annotations[labels.BundleVersionKey],
@@ -104,10 +105,11 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		revisionAnnotations := map[string]string{
-			labels.BundleNameKey:      state.resolvedRevisionMetadata.Name,
-			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
-			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
-			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
+			labels.BundleNameKey:        state.resolvedRevisionMetadata.Name,
+			labels.PackageNameKey:       state.resolvedRevisionMetadata.Package,
+			labels.BundleVersionKey:     state.resolvedRevisionMetadata.Version,
+			labels.BundleReferenceKey:   state.resolvedRevisionMetadata.Image,
+			labels.CatalogSpecDigestKey: CatalogSpecDigest(ext),
 		}
 		if state.resolvedRevisionMetadata.Release != nil {
 			revisionAnnotations[labels.BundleReleaseKey] = *state.resolvedRevisionMetadata.Release
@@ -154,11 +156,17 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 					apimeta.SetStatusCondition(&rs.Conditions, *cnd)
 				}
 			}
-			// Mirror Progressing condition from the latest active revision
+			// Mirror Progressing from the latest rolling revision only while the installed
+			// revision does not already satisfy the current spec. Stale rolling revisions
+			// (e.g. a failed upgrade left behind after recovery) must not overwrite Succeeded.
 			if idx == len(state.revisionStates.RollingOut)-1 {
-				if pcnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeProgressing); pcnd != nil {
-					pcnd.ObservedGeneration = ext.GetGeneration()
-					apimeta.SetStatusCondition(&ext.Status.Conditions, *pcnd)
+				installedSatisfiesSpec := state.revisionStates.Installed != nil &&
+					versionMatchesSpec(state.revisionStates.Installed.Version, ext)
+				if !installedSatisfiesSpec {
+					if pcnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeProgressing); pcnd != nil {
+						pcnd.ObservedGeneration = ext.GetGeneration()
+						apimeta.SetStatusCondition(&ext.Status.Conditions, *pcnd)
+					}
 				}
 			}
 			ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, rs)
