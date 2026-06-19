@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
+	mockrender "github.com/operator-framework/operator-controller/internal/testutil/mock/render"
 )
 
 func Test_ResourceGenerators(t *testing.T) {
@@ -165,15 +167,13 @@ func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 }
 
 func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *testing.T) {
-	fakeProvider := FakeCertProvider{
-		GetCertSecretInfoFn: func(cfg render.CertificateProvisionerConfig) render.CertSecretInfo {
-			return render.CertSecretInfo{
-				SecretName:     "some-secret",
-				CertificateKey: "some-cert-key",
-				PrivateKeyKey:  "some-private-key-key",
-			}
-		},
-	}
+	ctrl := gomock.NewController(t)
+	fakeProvider := mockrender.NewMockCertificateProvider(ctrl)
+	fakeProvider.EXPECT().GetCertSecretInfo(gomock.Any()).Return(render.CertSecretInfo{
+		SecretName:     "some-secret",
+		CertificateKey: "some-cert-key",
+		PrivateKeyKey:  "some-private-key-key",
+	}).AnyTimes()
 
 	b := &bundle.RegistryV1{
 		CSV: csv.Builder().
@@ -1393,14 +1393,14 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Fails(t *testing.T) {
 }
 
 func Test_BundleCRDGenerator_WithCertProvider_Succeeds(t *testing.T) {
-	fakeProvider := FakeCertProvider{
-		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
-			obj.SetAnnotations(map[string]string{
-				"cert-provider": "annotation",
-			})
-			return nil
-		},
-	}
+	ctrl := gomock.NewController(t)
+	fakeProvider := mockrender.NewMockCertificateProvider(ctrl)
+	fakeProvider.EXPECT().InjectCABundle(gomock.Any(), gomock.Any()).DoAndReturn(func(obj client.Object, _ render.CertificateProvisionerConfig) error {
+		obj.SetAnnotations(map[string]string{
+			"cert-provider": "annotation",
+		})
+		return nil
+	}).AnyTimes()
 
 	opts := render.Options{
 		InstallNamespace:    "install-namespace",
@@ -1485,14 +1485,14 @@ func Test_BundleAdditionalResourcesGenerator_FailsOnNil(t *testing.T) {
 }
 
 func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
-	fakeProvider := FakeCertProvider{
-		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
-			obj.SetAnnotations(map[string]string{
-				"cert-provider": "annotation",
-			})
-			return nil
-		},
-	}
+	ctrl := gomock.NewController(t)
+	fakeProvider := mockrender.NewMockCertificateProvider(ctrl)
+	fakeProvider.EXPECT().InjectCABundle(gomock.Any(), gomock.Any()).DoAndReturn(func(obj client.Object, _ render.CertificateProvisionerConfig) error {
+		obj.SetAnnotations(map[string]string{
+			"cert-provider": "annotation",
+		})
+		return nil
+	}).AnyTimes()
 	for _, tc := range []struct {
 		name              string
 		bundle            *bundle.RegistryV1
@@ -1765,14 +1765,14 @@ func Test_BundleValidatingWebhookResourceGenerator_FailsOnNil(t *testing.T) {
 }
 
 func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
-	fakeProvider := FakeCertProvider{
-		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
-			obj.SetAnnotations(map[string]string{
-				"cert-provider": "annotation",
-			})
-			return nil
-		},
-	}
+	ctrl := gomock.NewController(t)
+	fakeProvider := mockrender.NewMockCertificateProvider(ctrl)
+	fakeProvider.EXPECT().InjectCABundle(gomock.Any(), gomock.Any()).DoAndReturn(func(obj client.Object, _ render.CertificateProvisionerConfig) error {
+		obj.SetAnnotations(map[string]string{
+			"cert-provider": "annotation",
+		})
+		return nil
+	}).AnyTimes()
 	for _, tc := range []struct {
 		name              string
 		bundle            *bundle.RegistryV1
@@ -2049,14 +2049,14 @@ func Test_BundleMutatingWebhookResourceGenerator_FailsOnNil(t *testing.T) {
 }
 
 func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
-	fakeProvider := FakeCertProvider{
-		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
-			obj.SetAnnotations(map[string]string{
-				"cert-provider": "annotation",
-			})
-			return nil
-		},
-	}
+	ctrl := gomock.NewController(t)
+	fakeProvider := mockrender.NewMockCertificateProvider(ctrl)
+	fakeProvider.EXPECT().InjectCABundle(gomock.Any(), gomock.Any()).DoAndReturn(func(obj client.Object, _ render.CertificateProvisionerConfig) error {
+		obj.SetAnnotations(map[string]string{
+			"cert-provider": "annotation",
+		})
+		return nil
+	}).AnyTimes()
 	for _, tc := range []struct {
 		name              string
 		bundle            *bundle.RegistryV1
@@ -2470,16 +2470,16 @@ func Test_BundleDeploymentServiceResourceGenerator_FailsOnNil(t *testing.T) {
 }
 
 func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
-	fakeProvider := FakeCertProvider{
-		AdditionalObjectsFn: func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
-			return []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{
-				TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: cfg.CertName,
-				},
-			})}, nil
-		},
-	}
+	ctrl := gomock.NewController(t)
+	fakeProvider := mockrender.NewMockCertificateProvider(ctrl)
+	fakeProvider.EXPECT().AdditionalObjects(gomock.Any()).DoAndReturn(func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
+		return []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cfg.CertName,
+			},
+		})}, nil
+	}).AnyTimes()
 
 	objs, err := generators.CertProviderResourceGenerator(&bundle.RegistryV1{
 		CSV: csv.Builder().

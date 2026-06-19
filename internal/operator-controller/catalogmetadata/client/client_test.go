@@ -12,12 +12,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	catalogClient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
+	mockcatalogclient "github.com/operator-framework/operator-controller/internal/testutil/mock/catalogclient"
+	mockhttputil "github.com/operator-framework/operator-controller/internal/testutil/mock/httputil"
 )
 
 func defaultCatalog() *ocv1.ClusterCatalog {
@@ -41,11 +44,11 @@ func TestClientGetPackage(t *testing.T) {
 	}
 
 	type testCase struct {
-		name    string
-		catalog func() *ocv1.ClusterCatalog
-		pkgName string
-		cache   catalogClient.Cache
-		assert  func(*testing.T, *declcfg.DeclarativeConfig, error)
+		name       string
+		catalog    func() *ocv1.ClusterCatalog
+		pkgName    string
+		setupCache func(ctrl *gomock.Controller) catalogClient.Cache
+		assert     func(*testing.T, *declcfg.DeclarativeConfig, error)
 	}
 	for _, tc := range []testCase{
 		{
@@ -60,7 +63,11 @@ func TestClientGetPackage(t *testing.T) {
 		{
 			name:    "served, cache returns error",
 			catalog: defaultCatalog,
-			cache:   &fakeCache{getErr: errors.New("fetch error")},
+			setupCache: func(ctrl *gomock.Controller) catalogClient.Cache {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, errors.New("fetch error"))
+				return cache
+			},
 			assert: func(t *testing.T, dc *declcfg.DeclarativeConfig, err error) {
 				assert.ErrorContains(t, err, `error retrieving cache for catalog "catalog-1"`)
 			},
@@ -68,7 +75,11 @@ func TestClientGetPackage(t *testing.T) {
 		{
 			name:    "served, invalid package path",
 			catalog: defaultCatalog,
-			cache:   &fakeCache{getFS: testFS},
+			setupCache: func(ctrl *gomock.Controller) catalogClient.Cache {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Get(gomock.Any(), gomock.Any()).Return(testFS, nil)
+				return cache
+			},
 			pkgName: "/",
 			assert: func(t *testing.T, dc *declcfg.DeclarativeConfig, err error) {
 				assert.ErrorContains(t, err, `error getting package "/"`)
@@ -78,7 +89,11 @@ func TestClientGetPackage(t *testing.T) {
 			name:    "served, package missing",
 			catalog: defaultCatalog,
 			pkgName: "pkg-missing",
-			cache:   &fakeCache{getFS: testFS},
+			setupCache: func(ctrl *gomock.Controller) catalogClient.Cache {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Get(gomock.Any(), gomock.Any()).Return(testFS, nil)
+				return cache
+			},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
 				require.NoError(t, err)
 				assert.Equal(t, &declcfg.DeclarativeConfig{}, fbc)
@@ -88,9 +103,13 @@ func TestClientGetPackage(t *testing.T) {
 			name:    "served, invalid package present",
 			catalog: defaultCatalog,
 			pkgName: "invalid-pkg-present",
-			cache: &fakeCache{getFS: fstest.MapFS{
-				"invalid-pkg-present/olm.package/invalid-pkg-present.json": &fstest.MapFile{Data: []byte(`{"schema": "olm.package","name": 12345}`)},
-			}},
+			setupCache: func(ctrl *gomock.Controller) catalogClient.Cache {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Get(gomock.Any(), gomock.Any()).Return(fstest.MapFS{
+					"invalid-pkg-present/olm.package/invalid-pkg-present.json": &fstest.MapFile{Data: []byte(`{"schema": "olm.package","name": 12345}`)},
+				}, nil)
+				return cache
+			},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
 				require.ErrorContains(t, err, `error loading package "invalid-pkg-present"`)
 				assert.Nil(t, fbc)
@@ -100,7 +119,11 @@ func TestClientGetPackage(t *testing.T) {
 			name:    "served, package present",
 			catalog: defaultCatalog,
 			pkgName: "pkg-present",
-			cache:   &fakeCache{getFS: testFS},
+			setupCache: func(ctrl *gomock.Controller) catalogClient.Cache {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Get(gomock.Any(), gomock.Any()).Return(testFS, nil)
+				return cache
+			},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
 				require.NoError(t, err)
 				assert.Equal(t, &declcfg.DeclarativeConfig{Packages: []declcfg.Package{{Schema: declcfg.SchemaPackage, Name: "pkg-present"}}}, fbc)
@@ -110,9 +133,11 @@ func TestClientGetPackage(t *testing.T) {
 			name:    "cache unpopulated",
 			catalog: defaultCatalog,
 			pkgName: "pkg-present",
-			cache: &fakeCache{putFunc: func(source string, errToCache error) (fs.FS, error) {
-				return testFS, nil
-			}},
+			setupCache: func(ctrl *gomock.Controller) catalogClient.Cache {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, nil)
+				return cache
+			},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
 				assert.ErrorContains(t, err, `cache for catalog "catalog-1" not found`)
 			},
@@ -120,14 +145,18 @@ func TestClientGetPackage(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
+			ctrl := gomock.NewController(t)
 
-			c := catalogClient.New(tc.cache, func() (*http.Client, error) {
+			var cache catalogClient.Cache
+			if tc.setupCache != nil {
+				cache = tc.setupCache(ctrl)
+			}
+
+			mockTripper := mockhttputil.NewMockRoundTripper(ctrl)
+			c := catalogClient.New(cache, func() (*http.Client, error) {
 				return &http.Client{
 					// This is to prevent actual network calls
-					Transport: &fakeTripper{resp: &http.Response{
-						StatusCode: http.StatusOK,
-						Body:       http.NoBody,
-					}},
+					Transport: mockTripper,
 				}, nil
 			})
 			fbc, err := c.GetPackage(ctx, tc.catalog(), tc.pkgName)
@@ -142,41 +171,53 @@ func TestClientPopulateCache(t *testing.T) {
 	}
 
 	type testCase struct {
-		name               string
-		catalog            func() *ocv1.ClusterCatalog
-		httpClient         func() (*http.Client, error)
-		putFuncConstructor func(t *testing.T) func(source string, errToCache error) (fs.FS, error)
-		assert             func(t *testing.T, fs fs.FS, err error)
+		name       string
+		catalog    func() *ocv1.ClusterCatalog
+		setupMocks func(t *testing.T, ctrl *gomock.Controller) (catalogClient.Cache, func() (*http.Client, error))
+		assert     func(t *testing.T, fs fs.FS, err error)
 	}
 	for _, tt := range []testCase{
 		{
 			name:    "cache unpopulated, successful http request",
 			catalog: defaultCatalog,
-			httpClient: func() (*http.Client, error) {
-				return &http.Client{
-					// This is to prevent actual network calls
-					Transport: &fakeTripper{resp: &http.Response{
-						StatusCode: http.StatusOK,
-						Body:       io.NopCloser(strings.NewReader("fake-success-response-body")),
-					}},
-				}, nil
+			setupMocks: func(t *testing.T, ctrl *gomock.Controller) (catalogClient.Cache, func() (*http.Client, error)) {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Put(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(catalogName, resolvedRef string, source io.Reader, errToCache error) (fs.FS, error) {
+						buf := new(strings.Builder)
+						if source != nil {
+							_, _ = io.Copy(buf, source)
+						}
+						assert.Equal(t, "fake-success-response-body", buf.String())
+						assert.NoError(t, errToCache)
+						return testFS, errToCache
+					},
+				)
+
+				mockTripper := mockhttputil.NewMockRoundTripper(ctrl)
+				mockTripper.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader("fake-success-response-body")),
+				}, nil)
+
+				httpClient := func() (*http.Client, error) {
+					return &http.Client{Transport: mockTripper}, nil
+				}
+				return cache, httpClient
 			},
 			assert: func(t *testing.T, fs fs.FS, err error) {
 				require.NoError(t, err)
 				assert.Equal(t, testFS, fs)
-			},
-			putFuncConstructor: func(t *testing.T) func(source string, errToCache error) (fs.FS, error) {
-				return func(source string, errToCache error) (fs.FS, error) {
-					assert.Equal(t, "fake-success-response-body", source)
-					assert.NoError(t, errToCache)
-					return testFS, errToCache
-				}
 			},
 		},
 		{
 			name: "not served",
 			catalog: func() *ocv1.ClusterCatalog {
 				return &ocv1.ClusterCatalog{ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"}}
+			},
+			setupMocks: func(t *testing.T, ctrl *gomock.Controller) (catalogClient.Cache, func() (*http.Client, error)) {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				return cache, nil
 			},
 			assert: func(t *testing.T, fs fs.FS, err error) {
 				assert.Nil(t, fs)
@@ -186,15 +227,20 @@ func TestClientPopulateCache(t *testing.T) {
 		{
 			name:    "cache unpopulated, error on getting a http client",
 			catalog: defaultCatalog,
-			httpClient: func() (*http.Client, error) {
-				return nil, errors.New("fake error getting a http client")
-			},
-			putFuncConstructor: func(t *testing.T) func(source string, errToCache error) (fs.FS, error) {
-				return func(source string, errToCache error) (fs.FS, error) {
-					assert.Empty(t, source)
-					assert.Error(t, errToCache)
-					return nil, errToCache
+			setupMocks: func(t *testing.T, ctrl *gomock.Controller) (catalogClient.Cache, func() (*http.Client, error)) {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Put(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(catalogName, resolvedRef string, source io.Reader, errToCache error) (fs.FS, error) {
+						assert.Nil(t, source)
+						assert.Error(t, errToCache)
+						return nil, errToCache
+					},
+				)
+
+				httpClient := func() (*http.Client, error) {
+					return nil, errors.New("fake error getting a http client")
 				}
+				return cache, httpClient
 			},
 			assert: func(t *testing.T, fs fs.FS, err error) {
 				assert.Nil(t, fs)
@@ -204,18 +250,23 @@ func TestClientPopulateCache(t *testing.T) {
 		{
 			name:    "cache unpopulated, error on http request",
 			catalog: defaultCatalog,
-			httpClient: func() (*http.Client, error) {
-				return &http.Client{
-					// This is to prevent actual network calls
-					Transport: &fakeTripper{err: errors.New("fake error on a http request")},
-				}, nil
-			},
-			putFuncConstructor: func(t *testing.T) func(source string, errToCache error) (fs.FS, error) {
-				return func(source string, errToCache error) (fs.FS, error) {
-					assert.Empty(t, source)
-					assert.Error(t, errToCache)
-					return nil, errToCache
+			setupMocks: func(t *testing.T, ctrl *gomock.Controller) (catalogClient.Cache, func() (*http.Client, error)) {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+				cache.EXPECT().Put(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(catalogName, resolvedRef string, source io.Reader, errToCache error) (fs.FS, error) {
+						assert.Nil(t, source)
+						assert.Error(t, errToCache)
+						return nil, errToCache
+					},
+				)
+
+				mockTripper := mockhttputil.NewMockRoundTripper(ctrl)
+				mockTripper.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("fake error on a http request"))
+
+				httpClient := func() (*http.Client, error) {
+					return &http.Client{Transport: mockTripper}, nil
 				}
+				return cache, httpClient
 			},
 			assert: func(t *testing.T, fs fs.FS, err error) {
 				assert.Nil(t, fs)
@@ -225,14 +276,19 @@ func TestClientPopulateCache(t *testing.T) {
 		{
 			name:    "cache unpopulated, unexpected http status",
 			catalog: defaultCatalog,
-			httpClient: func() (*http.Client, error) {
-				return &http.Client{
-					// This is to prevent actual network calls
-					Transport: &fakeTripper{resp: &http.Response{
-						StatusCode: http.StatusInternalServerError,
-						Body:       io.NopCloser(strings.NewReader("fake-unexpected-code-response-body")),
-					}},
-				}, nil
+			setupMocks: func(t *testing.T, ctrl *gomock.Controller) (catalogClient.Cache, func() (*http.Client, error)) {
+				cache := mockcatalogclient.NewMockCache(ctrl)
+
+				mockTripper := mockhttputil.NewMockRoundTripper(ctrl)
+				mockTripper.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{
+					StatusCode: http.StatusInternalServerError,
+					Body:       io.NopCloser(strings.NewReader("fake-unexpected-code-response-body")),
+				}, nil)
+
+				httpClient := func() (*http.Client, error) {
+					return &http.Client{Transport: mockTripper}, nil
+				}
+				return cache, httpClient
 			},
 			assert: func(t *testing.T, fs fs.FS, err error) {
 				assert.Nil(t, fs)
@@ -242,47 +298,12 @@ func TestClientPopulateCache(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
+			ctrl := gomock.NewController(t)
 
-			cache := &fakeCache{}
-			if tt.putFuncConstructor != nil {
-				cache.putFunc = tt.putFuncConstructor(t)
-			}
-
-			c := catalogClient.New(cache, tt.httpClient)
+			cache, httpClient := tt.setupMocks(t, ctrl)
+			c := catalogClient.New(cache, httpClient)
 			fs, err := c.PopulateCache(ctx, tt.catalog())
 			tt.assert(t, fs, err)
 		})
 	}
-}
-
-type fakeCache struct {
-	getFS  fs.FS
-	getErr error
-
-	putFunc func(source string, errToCache error) (fs.FS, error)
-}
-
-func (c *fakeCache) Get(catalogName, resolvedRef string) (fs.FS, error) {
-	return c.getFS, c.getErr
-}
-
-func (c *fakeCache) Put(catalogName, resolvedRef string, source io.Reader, errToCache error) (fs.FS, error) {
-	if c.putFunc != nil {
-		buf := new(strings.Builder)
-		if source != nil {
-			io.Copy(buf, source) // nolint:errcheck
-		}
-		return c.putFunc(buf.String(), errToCache)
-	}
-
-	return nil, errors.New("unexpected error")
-}
-
-type fakeTripper struct {
-	resp *http.Response
-	err  error
-}
-
-func (ft *fakeTripper) RoundTrip(*http.Request) (*http.Response, error) {
-	return ft.resp, ft.err
 }

@@ -8,11 +8,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"helm.sh/helm/v3/pkg/release"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	crdifyconfig "sigs.k8s.io/crdify/pkg/config"
@@ -20,24 +19,14 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
+	mockcrdclient "github.com/operator-framework/operator-controller/internal/testutil/mock/crdclient"
 )
 
-type MockCRDGetter struct {
-	oldCrd *apiextensionsv1.CustomResourceDefinition
-	getErr error
-	apiextensionsv1client.CustomResourceDefinitionInterface
-}
-
-func (c *MockCRDGetter) Get(ctx context.Context, name string, options metav1.GetOptions) (*apiextensionsv1.CustomResourceDefinition, error) {
-	return c.oldCrd, c.getErr
-}
-
-func newMockPreflight(crd *apiextensionsv1.CustomResourceDefinition, err error) *crdupgradesafety.Preflight {
+func newMockPreflight(ctrl *gomock.Controller, crd *apiextensionsv1.CustomResourceDefinition, err error) *crdupgradesafety.Preflight {
+	m := mockcrdclient.NewMockCustomResourceDefinitionInterface(ctrl)
+	m.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(crd, err).AnyTimes()
 	var preflightOpts []crdupgradesafety.Option
-	return crdupgradesafety.NewPreflight(&MockCRDGetter{
-		oldCrd: crd,
-		getErr: err,
-	}, preflightOpts...)
+	return crdupgradesafety.NewPreflight(m, preflightOpts...)
 }
 
 const crdFolder string = "testdata/manifests"
@@ -203,7 +192,8 @@ func TestInstall(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			preflight := newMockPreflight(getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr)
+			mockCtrl := gomock.NewController(t)
+			preflight := newMockPreflight(mockCtrl, getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr)
 			objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(tc.release)
 			if err == nil {
 				err = preflight.Install(context.Background(), objs)
@@ -408,7 +398,8 @@ func TestUpgrade(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			preflight := newMockPreflight(getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr)
+			mockCtrl := gomock.NewController(t)
+			preflight := newMockPreflight(mockCtrl, getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr)
 			objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(tc.release)
 			if err == nil {
 				err = preflight.Upgrade(context.Background(), objs)
@@ -424,7 +415,8 @@ func TestUpgrade(t *testing.T) {
 
 func TestUpgrade_OneOfRemoved(t *testing.T) {
 	t.Run("removing oneOf subschemas should fail", func(t *testing.T) {
-		preflight := newMockPreflight(getCrdFromManifestFile(t, "crd-oneof-removed-old.json"), nil)
+		mockCtrl := gomock.NewController(t)
+		preflight := newMockPreflight(mockCtrl, getCrdFromManifestFile(t, "crd-oneof-removed-old.json"), nil)
 		rel := &release.Release{
 			Name:     "test-release",
 			Manifest: getManifestString(t, "crd-oneof-removed-new.json"),
@@ -439,7 +431,8 @@ func TestUpgrade_OneOfRemoved(t *testing.T) {
 
 func TestUpgrade_OneOfAdded(t *testing.T) {
 	t.Run("adding oneOf required constraints to existing property should report oneOf error", func(t *testing.T) {
-		preflight := newMockPreflight(getCrdFromManifestFile(t, "crd-oneof-safe-addition-old.json"), nil)
+		mockCtrl := gomock.NewController(t)
+		preflight := newMockPreflight(mockCtrl, getCrdFromManifestFile(t, "crd-oneof-safe-addition-old.json"), nil)
 		rel := &release.Release{
 			Name:     "test-release",
 			Manifest: getManifestString(t, "crd-oneof-safe-addition-new.json"),
@@ -456,7 +449,8 @@ func TestUpgrade_OneOfAdded(t *testing.T) {
 
 func TestUpgrade_UnhandledChanges_InSpec_DefaultPolicy(t *testing.T) {
 	t.Run("unhandled spec changes cause error by default", func(t *testing.T) {
-		preflight := newMockPreflight(getCrdFromManifestFile(t, "crd-unhandled-old.json"), nil)
+		mockCtrl := gomock.NewController(t)
+		preflight := newMockPreflight(mockCtrl, getCrdFromManifestFile(t, "crd-unhandled-old.json"), nil)
 		rel := &release.Release{
 			Name:     "test-release",
 			Manifest: getManifestString(t, "crd-unhandled-new.json"),
@@ -474,7 +468,10 @@ func TestUpgrade_UnhandledChanges_InSpec_DefaultPolicy(t *testing.T) {
 func TestUpgrade_UnhandledChanges_PolicyError(t *testing.T) {
 	t.Run("unhandled changes error when policy is Error", func(t *testing.T) {
 		oldCrd := getCrdFromManifestFile(t, "crd-unhandled-old.json")
-		preflight := crdupgradesafety.NewPreflight(&MockCRDGetter{oldCrd: oldCrd}, crdupgradesafety.WithConfig(&crdifyconfig.Config{
+		ctrl := gomock.NewController(t)
+		mockCRD := mockcrdclient.NewMockCustomResourceDefinitionInterface(ctrl)
+		mockCRD.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(oldCrd, nil).AnyTimes()
+		preflight := crdupgradesafety.NewPreflight(mockCRD, crdupgradesafety.WithConfig(&crdifyconfig.Config{
 			Conversion:           crdifyconfig.ConversionPolicyIgnore,
 			UnhandledEnforcement: crdifyconfig.EnforcementPolicyError,
 		}))

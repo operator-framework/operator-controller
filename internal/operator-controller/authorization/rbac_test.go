@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/meta/testrestmapper"
@@ -19,6 +20,8 @@ import (
 	"k8s.io/kubernetes/pkg/registry/rbac/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	mockrbac "github.com/operator-framework/operator-controller/internal/testutil/mock/rbac"
 )
 
 var (
@@ -767,17 +770,16 @@ func TestParseEscalationErrorForMissingRules_ParsingLogic(t *testing.T) {
 func TestParseEscalationErrorForMissingRules_KubernetesCompatibility(t *testing.T) {
 	testCases := []struct {
 		name                string
-		ruleResolver        validation.AuthorizationRuleResolver
+		rules               []rbacv1.PolicyRule
+		rulesErr            error
 		wantRules           []rbacv1.PolicyRule
 		expectedErrorString string
 		expectedResult      *parseResult
 	}{
 		{
-			name: "missing rules",
-			ruleResolver: mockRulesResolver{
-				rules: []rbacv1.PolicyRule{},
-				err:   nil,
-			},
+			name:     "missing rules",
+			rules:    []rbacv1.PolicyRule{},
+			rulesErr: nil,
 			wantRules: []rbacv1.PolicyRule{
 				{APIGroups: []string{""}, Resources: []string{"secrets"}, Verbs: []string{"get"}, ResourceNames: []string{"test-secret"}},
 				{APIGroups: []string{""}, Resources: []string{"configmaps"}, Verbs: []string{"get", "list", "watch"}},
@@ -807,11 +809,9 @@ func TestParseEscalationErrorForMissingRules_KubernetesCompatibility(t *testing.
 			},
 		},
 		{
-			name: "resolution failure",
-			ruleResolver: mockRulesResolver{
-				rules: []rbacv1.PolicyRule{},
-				err:   errors.New("resolution error"),
-			},
+			name:     "resolution failure",
+			rules:    []rbacv1.PolicyRule{},
+			rulesErr: errors.New("resolution error"),
 			wantRules: []rbacv1.PolicyRule{
 				{APIGroups: []string{""}, Resources: []string{"secrets"}, Verbs: []string{"get"}, ResourceNames: []string{"test-secret"}},
 				{APIGroups: []string{""}, Resources: []string{"configmaps"}, Verbs: []string{"get", "list", "watch"}},
@@ -844,6 +844,10 @@ func TestParseEscalationErrorForMissingRules_KubernetesCompatibility(t *testing.
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			ruleResolver := mockrbac.NewMockAuthorizationRuleResolver(ctrl)
+			ruleResolver.EXPECT().RulesFor(gomock.Any(), gomock.Any(), gomock.Any()).Return(tc.rules, tc.rulesErr)
+
 			ctx := request.WithUser(request.WithNamespace(context.Background(), "namespace"), &user.DefaultInfo{
 				Name:   "user",
 				Groups: []string{"a", "b"},
@@ -853,7 +857,7 @@ func TestParseEscalationErrorForMissingRules_KubernetesCompatibility(t *testing.
 			// error message that we are attempting to parse correctly. The hope is that
 			// these tests will start failing if we bump to a new version of kubernetes
 			// that causes our parsing logic to be incorrect.
-			err := validation.ConfirmNoEscalation(ctx, tc.ruleResolver, tc.wantRules)
+			err := validation.ConfirmNoEscalation(ctx, ruleResolver, tc.wantRules)
 			require.Error(t, err)
 			require.Equal(t, tc.expectedErrorString, err.Error())
 
@@ -862,21 +866,4 @@ func TestParseEscalationErrorForMissingRules_KubernetesCompatibility(t *testing.
 			require.Equal(t, tc.expectedResult, res)
 		})
 	}
-}
-
-type mockRulesResolver struct {
-	rules []rbacv1.PolicyRule
-	err   error
-}
-
-func (m mockRulesResolver) GetRoleReferenceRules(ctx context.Context, roleRef rbacv1.RoleRef, namespace string) ([]rbacv1.PolicyRule, error) {
-	panic("unimplemented")
-}
-
-func (m mockRulesResolver) RulesFor(ctx context.Context, user user.Info, namespace string) ([]rbacv1.PolicyRule, error) {
-	return m.rules, m.err
-}
-
-func (m mockRulesResolver) VisitRulesFor(ctx context.Context, user user.Info, namespace string, visitor func(source fmt.Stringer, rule *rbacv1.PolicyRule, err error) bool) {
-	panic("unimplemented")
 }

@@ -11,7 +11,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"io"
-	"io/fs"
 	"math/big"
 	"net"
 	"net/http"
@@ -23,6 +22,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+
+	mockstorage "github.com/operator-framework/operator-controller/internal/testutil/mock/storage"
 )
 
 func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
@@ -61,10 +63,9 @@ func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
 			// Create a mock storage instance that returns our test content
-			mockStorage := &mockStorageInstance{
-				content: tt.responseContent,
-			}
+			mockStorage := newMockStorageInstance(mockCtrl, tt.responseContent)
 
 			cfg := CatalogServerConfig{
 				LocalStorage: mockStorage,
@@ -109,33 +110,19 @@ func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
 	}
 }
 
-// mockStorageInstance implements storage.Instance interface for testing
-type mockStorageInstance struct {
-	content string
-}
-
-func (m *mockStorageInstance) StorageServerHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte(m.content))
+func newMockStorageInstance(ctrl *gomock.Controller, content string) *mockstorage.MockInstance {
+	m := mockstorage.NewMockInstance(ctrl)
+	m.EXPECT().StorageServerHandler().Return(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(content))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-	})
-}
-
-func (m *mockStorageInstance) Store(ctx context.Context, catalogName string, fs fs.FS) error {
-	return nil
-}
-
-func (m *mockStorageInstance) Delete(catalogName string) error {
-	return nil
-}
-
-func (m *mockStorageInstance) ContentExists(catalog string) bool {
-	return true
-}
-func (m *mockStorageInstance) BaseURL(catalog string) string {
-	return ""
+	})).AnyTimes()
+	m.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	m.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
+	m.EXPECT().ContentExists(gomock.Any()).Return(true).AnyTimes()
+	m.EXPECT().BaseURL(gomock.Any()).Return("").AnyTimes()
+	return m
 }
 
 // writeTempCert generates a self-signed TLS certificate and writes the PEM-encoded
@@ -196,7 +183,8 @@ func TestCatalogServerTLSOptsApplied(t *testing.T) {
 		observedMinVersion = c.MinVersion
 	}
 
-	mockStorage := &mockStorageInstance{}
+	mockCtrl := gomock.NewController(t)
+	mockStorage := newMockStorageInstance(mockCtrl, "")
 	cfg := CatalogServerConfig{
 		CatalogAddr:  "127.0.0.1:0",
 		CertFile:     certFile,
@@ -246,7 +234,8 @@ func TestCatalogServerTLSOptsApplied(t *testing.T) {
 func TestCatalogServerTLSOptsCertSourceRequired(t *testing.T) {
 	certFile, keyFile := writeTempCert(t)
 
-	mockStorage := &mockStorageInstance{}
+	mockCtrl := gomock.NewController(t)
+	mockStorage := newMockStorageInstance(mockCtrl, "")
 	cfg := CatalogServerConfig{
 		CatalogAddr:  "127.0.0.1:0",
 		CertFile:     certFile,

@@ -40,6 +40,7 @@ type CloserSyncingSource interface {
 	io.Closer
 }
 
+//go:generate mockgen -destination mock_sourcerer_gen_test.go -package cache -mock_names sourcerer=MockSourcerer github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache sourcerer,Watcher,CloserSyncingSource
 type sourcerer interface {
 	// Source returns a CloserSyncingSource for the provided
 	// GroupVersionKind. If the CloserSyncingSource encounters an

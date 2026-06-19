@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -16,8 +17,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
+	mockrender "github.com/operator-framework/operator-controller/internal/testutil/mock/render"
 )
 
 func Test_BundleRenderer_NoConfig(t *testing.T) {
@@ -323,8 +324,9 @@ func Test_WithUniqueNameGenerator(t *testing.T) {
 }
 
 func Test_WithCertificateProvide(t *testing.T) {
+	ctrl := gomock.NewController(t)
 	opts := &render.Options{}
-	expectedCertProvider := FakeCertProvider{}
+	expectedCertProvider := mockrender.NewMockCertificateProvider(ctrl)
 	render.WithCertificateProvider(expectedCertProvider)(opts)
 	require.Equal(t, expectedCertProvider, opts.CertificateProvider)
 }

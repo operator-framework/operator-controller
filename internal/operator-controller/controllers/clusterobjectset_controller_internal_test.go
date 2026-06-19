@@ -10,21 +10,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
@@ -143,6 +139,7 @@ func Test_ClusterObjectSetReconciler_listPreviousRevisions(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
 				WithObjects(tc.existingObjs()...).
@@ -150,7 +147,7 @@ func Test_ClusterObjectSetReconciler_listPreviousRevisions(t *testing.T) {
 
 			reconciler := &ClusterObjectSetReconciler{
 				Client:        testClient,
-				TrackingCache: &mockTrackingCacheInternal{client: testClient},
+				TrackingCache: newMockTrackingCacheInternal(mockCtrl, testClient),
 			}
 
 			currentRev := &ocv1.ClusterObjectSet{}
@@ -220,28 +217,14 @@ func newTestClusterObjectSetInternal(t *testing.T, name string) *ocv1.ClusterObj
 	return rev
 }
 
-type mockTrackingCacheInternal struct {
-	client client.Client
-}
-
-func (m *mockTrackingCacheInternal) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	return m.client.Get(ctx, key, obj, opts...)
-}
-
-func (m *mockTrackingCacheInternal) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	return m.client.List(ctx, list, opts...)
-}
-
-func (m *mockTrackingCacheInternal) Free(ctx context.Context, user client.Object) error {
-	return nil
-}
-
-func (m *mockTrackingCacheInternal) Watch(ctx context.Context, user client.Object, gvks sets.Set[schema.GroupVersionKind]) error {
-	return nil
-}
-
-func (m *mockTrackingCacheInternal) Source(h handler.EventHandler, predicates ...predicate.Predicate) source.Source {
-	return nil
+func newMockTrackingCacheInternal(ctrl *gomock.Controller, cl client.Client) *MockTrackingCache {
+	m := NewMockTrackingCache(ctrl)
+	m.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(cl.Get).AnyTimes()
+	m.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(cl.List).AnyTimes()
+	m.EXPECT().Source(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	m.EXPECT().Watch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	m.EXPECT().Free(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	return m
 }
 
 func TestComputePhaseDigest(t *testing.T) {

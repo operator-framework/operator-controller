@@ -5,39 +5,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"k8s.io/component-base/featuregate"
 
 	"github.com/operator-framework/operator-controller/internal/shared/util/featuregates"
+	mocklogrsink "github.com/operator-framework/operator-controller/internal/testutil/mock/logrsink"
 )
-
-// fakeSink implements logr.LogSink, capturing Info calls for testing
-type fakeSink struct {
-	level         int
-	msg           string
-	keysAndValues []interface{}
-}
-
-// Init is part of logr.LogSink
-func (f *fakeSink) Init(info logr.RuntimeInfo) {}
-
-// Enabled is part of logr.LogSink
-func (f *fakeSink) Enabled(level int) bool { return true }
-
-// Info captures the log level, message, and key/value pairs
-func (f *fakeSink) Info(level int, msg string, keysAndValues ...interface{}) {
-	f.level = level
-	f.msg = msg
-	f.keysAndValues = append([]interface{}{}, keysAndValues...)
-}
-
-// Error is part of logr.LogSink; not used in this test
-func (f *fakeSink) Error(err error, msg string, keysAndValues ...interface{}) {}
-
-// WithValues returns a sink with additional values; for testing, return self
-func (f *fakeSink) WithValues(keysAndValues ...interface{}) logr.LogSink { return f }
-
-// WithName returns a sink with a new name; for testing, return self
-func (f *fakeSink) WithName(name string) logr.LogSink { return f }
 
 // TestLogFeatureGateStates verifies that LogFeatureGateStates logs features
 // sorted alphabetically with their enabled state
@@ -58,15 +31,31 @@ func TestLogFeatureGateStates(t *testing.T) {
 		"CFeature": true,
 	}))
 
-	// prepare a fake sink and logger
-	sink := &fakeSink{}
+	// prepare a mock sink and logger, capturing Info calls
+	ctrl := gomock.NewController(t)
+	sink := mocklogrsink.NewMockLogSink(ctrl)
+
+	var capturedMsg string
+	var capturedKV []interface{}
+
+	sink.EXPECT().Init(gomock.Any()).AnyTimes()
+	sink.EXPECT().Enabled(gomock.Any()).Return(true).AnyTimes()
+	sink.EXPECT().Info(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(level int, msg string, kv ...interface{}) {
+			capturedMsg = msg
+			capturedKV = append([]interface{}{}, kv...)
+		}).AnyTimes()
+	sink.EXPECT().Error(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	sink.EXPECT().WithValues(gomock.Any()).Return(sink).AnyTimes()
+	sink.EXPECT().WithName(gomock.Any()).Return(sink).AnyTimes()
+
 	logger := logr.New(sink)
 
 	// log the feature states
 	featuregates.LogFeatureGateStates(logger, "feature states", gate, defs)
 
 	// verify the message
-	require.Equal(t, "feature states", sink.msg)
+	require.Equal(t, "feature states", capturedMsg)
 
 	// Expect keys sorted: AFeature, BFeature, CFeature
 	want := []interface{}{
@@ -74,5 +63,5 @@ func TestLogFeatureGateStates(t *testing.T) {
 		featuregate.Feature("BFeature"), true,
 		featuregate.Feature("CFeature"), true,
 	}
-	require.Equal(t, want, sink.keysAndValues)
+	require.Equal(t, want, capturedKV)
 }

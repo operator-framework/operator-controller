@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -17,6 +18,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
+	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
 )
 
 func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
@@ -24,14 +26,10 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 	catalogKey := types.NamespacedName{Name: "test-catalog"}
 
 	for _, tt := range []struct {
-		name                    string
-		catalog                 *ocv1.ClusterCatalog
-		catalogCache            mockCatalogCache
-		catalogCachePopulator   mockCatalogCachePopulator
-		wantGetCacheCalled      bool
-		wantRemoveCacheCalled   bool
-		wantPopulateCacheCalled bool
-		wantErr                 string
+		name       string
+		catalog    *ocv1.ClusterCatalog
+		setupMocks func(*gomock.Controller) (controllers.CatalogCache, controllers.CatalogCachePopulator)
+		wantErr    string
 	}{
 		{
 			name: "catalog exists - cache unpopulated",
@@ -47,14 +45,18 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 					},
 				},
 			},
-			catalogCachePopulator: mockCatalogCachePopulator{
-				populateCacheFunc: func(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
-					assert.Equal(t, catalogKey.Name, catalog.Name)
-					return nil, nil
-				},
+			setupMocks: func(ctrl *gomock.Controller) (controllers.CatalogCache, controllers.CatalogCachePopulator) {
+				cache := mockcontrollers.NewMockCatalogCache(ctrl)
+				cache.EXPECT().Get(catalogKey.Name, fakeResolvedRef).Return(nil, nil)
+				populator := mockcontrollers.NewMockCatalogCachePopulator(ctrl)
+				populator.EXPECT().PopulateCache(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
+						assert.Equal(t, catalogKey.Name, catalog.Name)
+						return nil, nil
+					},
+				)
+				return cache, populator
 			},
-			wantGetCacheCalled:      true,
-			wantPopulateCacheCalled: true,
 		},
 		{
 			name: "catalog exists - cache already populated",
@@ -70,15 +72,19 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 					},
 				},
 			},
-			catalogCache: mockCatalogCache{
-				getFunc: func(catalogName, resolvedRef string) (fs.FS, error) {
-					assert.Equal(t, catalogKey.Name, catalogName)
-					assert.Equal(t, fakeResolvedRef, resolvedRef)
-					// Just any non-nil fs.FS to simulate existence of cache
-					return fstest.MapFS{}, nil
-				},
+			setupMocks: func(ctrl *gomock.Controller) (controllers.CatalogCache, controllers.CatalogCachePopulator) {
+				cache := mockcontrollers.NewMockCatalogCache(ctrl)
+				cache.EXPECT().Get(catalogKey.Name, fakeResolvedRef).DoAndReturn(
+					func(catalogName, resolvedRef string) (fs.FS, error) {
+						assert.Equal(t, catalogKey.Name, catalogName)
+						assert.Equal(t, fakeResolvedRef, resolvedRef)
+						// Just any non-nil fs.FS to simulate existence of cache
+						return fstest.MapFS{}, nil
+					},
+				)
+				populator := mockcontrollers.NewMockCatalogCachePopulator(ctrl)
+				return cache, populator
 			},
-			wantGetCacheCalled: true,
 		},
 		{
 			name: "catalog exists - catalog not yet resolved",
@@ -86,6 +92,11 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogKey.Name,
 				},
+			},
+			setupMocks: func(ctrl *gomock.Controller) (controllers.CatalogCache, controllers.CatalogCachePopulator) {
+				cache := mockcontrollers.NewMockCatalogCache(ctrl)
+				populator := mockcontrollers.NewMockCatalogCachePopulator(ctrl)
+				return cache, populator
 			},
 		},
 		{
@@ -102,15 +113,19 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 					},
 				},
 			},
-			catalogCachePopulator: mockCatalogCachePopulator{
-				populateCacheFunc: func(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
-					assert.Equal(t, catalogKey.Name, catalog.Name)
-					return nil, errors.New("fake error from populate cache function")
-				},
+			setupMocks: func(ctrl *gomock.Controller) (controllers.CatalogCache, controllers.CatalogCachePopulator) {
+				cache := mockcontrollers.NewMockCatalogCache(ctrl)
+				cache.EXPECT().Get(catalogKey.Name, fakeResolvedRef).Return(nil, nil)
+				populator := mockcontrollers.NewMockCatalogCachePopulator(ctrl)
+				populator.EXPECT().PopulateCache(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
+						assert.Equal(t, catalogKey.Name, catalog.Name)
+						return nil, errors.New("fake error from populate cache function")
+					},
+				)
+				return cache, populator
 			},
-			wantGetCacheCalled:      true,
-			wantPopulateCacheCalled: true,
-			wantErr:                 "error populating cache for catalog",
+			wantErr: "error populating cache for catalog",
 		},
 		{
 			name: "catalog exists - error on cache get",
@@ -126,40 +141,55 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 					},
 				},
 			},
-			catalogCache: mockCatalogCache{
-				getFunc: func(catalogName, resolvedRef string) (fs.FS, error) {
-					assert.Equal(t, catalogKey.Name, catalogName)
-					assert.Equal(t, fakeResolvedRef, resolvedRef)
-					return nil, errors.New("fake error from cache get function")
-				},
+			setupMocks: func(ctrl *gomock.Controller) (controllers.CatalogCache, controllers.CatalogCachePopulator) {
+				cache := mockcontrollers.NewMockCatalogCache(ctrl)
+				cache.EXPECT().Get(catalogKey.Name, fakeResolvedRef).DoAndReturn(
+					func(catalogName, resolvedRef string) (fs.FS, error) {
+						assert.Equal(t, catalogKey.Name, catalogName)
+						assert.Equal(t, fakeResolvedRef, resolvedRef)
+						return nil, errors.New("fake error from cache get function")
+					},
+				)
+				populator := mockcontrollers.NewMockCatalogCachePopulator(ctrl)
+				populator.EXPECT().PopulateCache(gomock.Any(), gomock.Any()).Return(nil, nil)
+				return cache, populator
 			},
-			wantGetCacheCalled:      true,
-			wantPopulateCacheCalled: true,
 		},
 		{
 			name: "catalog does not exist",
-			catalogCache: mockCatalogCache{
-				removeFunc: func(catalogName string) error {
-					assert.Equal(t, catalogKey.Name, catalogName)
-					return nil
-				},
+			setupMocks: func(ctrl *gomock.Controller) (controllers.CatalogCache, controllers.CatalogCachePopulator) {
+				cache := mockcontrollers.NewMockCatalogCache(ctrl)
+				cache.EXPECT().Remove(catalogKey.Name).DoAndReturn(
+					func(catalogName string) error {
+						assert.Equal(t, catalogKey.Name, catalogName)
+						return nil
+					},
+				)
+				populator := mockcontrollers.NewMockCatalogCachePopulator(ctrl)
+				return cache, populator
 			},
-			wantRemoveCacheCalled: true,
 		},
 		{
 			name: "catalog does not exist - error on removal",
-			catalogCache: mockCatalogCache{
-				removeFunc: func(catalogName string) error {
-					assert.Equal(t, catalogKey.Name, catalogName)
-					return errors.New("fake error from remove")
-				},
+			setupMocks: func(ctrl *gomock.Controller) (controllers.CatalogCache, controllers.CatalogCachePopulator) {
+				cache := mockcontrollers.NewMockCatalogCache(ctrl)
+				cache.EXPECT().Remove(catalogKey.Name).DoAndReturn(
+					func(catalogName string) error {
+						assert.Equal(t, catalogKey.Name, catalogName)
+						return errors.New("fake error from remove")
+					},
+				)
+				populator := mockcontrollers.NewMockCatalogCachePopulator(ctrl)
+				return cache, populator
 			},
-			wantRemoveCacheCalled: true,
-			wantErr:               "error removing cache for catalog",
+			wantErr: "error removing cache for catalog",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
+
+			mockCtrl := gomock.NewController(t)
+			cache, populator := tt.setupMocks(mockCtrl)
 
 			clientBuilder := fake.NewClientBuilder().WithScheme(scheme.Scheme)
 			if tt.catalog != nil {
@@ -169,8 +199,8 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 
 			reconciler := &controllers.ClusterCatalogReconciler{
 				Client:                cl,
-				CatalogCache:          controllers.CatalogCache(&tt.catalogCache),
-				CatalogCachePopulator: controllers.CatalogCachePopulator(&tt.catalogCachePopulator),
+				CatalogCache:          cache,
+				CatalogCachePopulator: populator,
 			}
 
 			result, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
@@ -180,49 +210,6 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 				require.ErrorContains(t, err, tt.wantErr)
 			}
 			require.Equal(t, ctrl.Result{}, result)
-
-			assert.Equal(t, tt.wantRemoveCacheCalled, tt.catalogCache.removeFuncCalled)
-			assert.Equal(t, tt.wantGetCacheCalled, tt.catalogCache.getFuncCalled)
-			assert.Equal(t, tt.wantPopulateCacheCalled, tt.catalogCachePopulator.populateCacheCalled)
 		})
 	}
-}
-
-type mockCatalogCache struct {
-	removeFuncCalled bool
-	removeFunc       func(catalogName string) error
-	getFuncCalled    bool
-	getFunc          func(catalogName, resolvedRef string) (fs.FS, error)
-}
-
-func (m *mockCatalogCache) Remove(catalogName string) error {
-	m.removeFuncCalled = true
-	if m.removeFunc != nil {
-		return m.removeFunc(catalogName)
-	}
-
-	return nil
-}
-
-func (m *mockCatalogCache) Get(catalogName, resolvedRef string) (fs.FS, error) {
-	m.getFuncCalled = true
-	if m.getFunc != nil {
-		return m.getFunc(catalogName, resolvedRef)
-	}
-
-	return nil, nil
-}
-
-type mockCatalogCachePopulator struct {
-	populateCacheCalled bool
-	populateCacheFunc   func(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error)
-}
-
-func (m *mockCatalogCachePopulator) PopulateCache(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
-	m.populateCacheCalled = true
-	if m.populateCacheFunc != nil {
-		return m.populateCacheFunc(ctx, catalog)
-	}
-
-	return nil, nil
 }

@@ -58,6 +58,7 @@ type ClusterObjectSetReconciler struct {
 	Clock                 clock.Clock
 }
 
+//go:generate mockgen -source clusterobjectset_controller.go -destination mock_trackingcache_gen_test.go -package controllers -mock_names trackingCache=MockTrackingCache -exclude_interfaces Sourcoser
 type trackingCache interface {
 	client.Reader
 	Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source

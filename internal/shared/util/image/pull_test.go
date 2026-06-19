@@ -122,7 +122,7 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 			name:        "return error if cache fetch fails",
 			ownerID:     myOwner,
 			srcRef:      myCanonicalRef.String(),
-			cache:       MockCache{FetchError: errors.New("fetch error")},
+			cache:       FakeCache{FetchError: errors.New("fetch error")},
 			contextFunc: defaultContextFunc,
 			expect: func(t *testing.T, fsys fs.FS, canonical reference.Canonical, modTime time.Time, err error) {
 				require.ErrorContains(t, err, "fetch error")
@@ -132,7 +132,7 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 			name:    "return canonical ref's data from cache, if present",
 			ownerID: myOwner,
 			srcRef:  myCanonicalRef.String(),
-			cache: MockCache{
+			cache: FakeCache{
 				FetchFS: fstest.MapFS{
 					testFileName: &fstest.MapFile{Data: []byte(testFileContents)},
 				},
@@ -153,7 +153,7 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 			name:    "return tag ref's data from cache, if present",
 			ownerID: myOwner,
 			srcRef:  myTagRef.String(),
-			cache: MockCache{
+			cache: FakeCache{
 				FetchFS: fstest.MapFS{
 					testFileName: &fstest.MapFile{Data: []byte(testFileContents)},
 				},
@@ -174,7 +174,7 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 			name:    "returns error if failure storing content in cache",
 			ownerID: myOwner,
 			srcRef:  myCanonicalRef.String(),
-			cache: MockCache{
+			cache: FakeCache{
 				StoreError: errors.New("store error"),
 			},
 			contextFunc: buildSourceContextFunc(t, myCanonicalRef),
@@ -186,7 +186,7 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 			name:    "returns stored data upon pull success",
 			ownerID: myOwner,
 			srcRef:  myTagRef.String(),
-			cache: MockCache{
+			cache: FakeCache{
 				StoreFS: fstest.MapFS{
 					testFileName: &fstest.MapFile{Data: []byte(testFileContents)},
 				},
@@ -208,7 +208,7 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 			name:    "returns error if cache garbage collection fails",
 			ownerID: myOwner,
 			srcRef:  myTagRef.String(),
-			cache: MockCache{
+			cache: FakeCache{
 				StoreFS: fstest.MapFS{
 					testFileName: &fstest.MapFile{Data: []byte(testFileContents)},
 				},

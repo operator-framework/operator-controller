@@ -77,6 +77,12 @@ $(KUBE_SCORE): $(BINGO_DIR)/kube-score.mod
 	@echo "(re)installing $(GOBIN)/kube-score-v1.20.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kube-score.mod -o=$(GOBIN)/kube-score-v1.20.0 "github.com/zegl/kube-score/cmd/kube-score"
 
+MOCKGEN := $(GOBIN)/mockgen-v0.6.0
+$(MOCKGEN): $(BINGO_DIR)/mockgen.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/mockgen-v0.6.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=mockgen.mod -o=$(GOBIN)/mockgen-v0.6.0 "go.uber.org/mock/mockgen"
+
 OPERATOR_SDK := $(GOBIN)/operator-sdk-v1.41.1
 $(OPERATOR_SDK): $(BINGO_DIR)/operator-sdk.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.

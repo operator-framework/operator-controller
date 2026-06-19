@@ -54,7 +54,15 @@ install and manage cluster extensions. The project follows a microservices archi
 - `containers_image_openpgp` - required for image handling
 
 **Tools (managed via .bingo/):**
-- controller-gen, golangci-lint, goreleaser, helm, kind, kustomize, setup-envtest, operator-sdk
+- controller-gen, golangci-lint, goreleaser, helm, kind, kustomize, mockgen, setup-envtest, operator-sdk
+
+**Test Mocking:**
+- **gomock** (`go.uber.org/mock`): Used for generated mock implementations. `//go:generate mockgen` directives
+  live in `internal/testutil/mock/generate.go` (external and internal exported interfaces) and at interface
+  definitions for internal unexported interfaces (source mode). Run `make generate-mocks` to regenerate.
+  All interface mocks should be gomock-generated. Test fakes that return preconfigured values without
+  interaction verification (e.g., `FakePuller`, `FakeCache` in `image/fakes.go`) are not mocks and stay
+  hand-written.
 
 ---
 
@@ -140,8 +148,11 @@ make manifests
 # Update CRDs and reference docs (when Go-based API definitions change)
 make update-crds crd-ref-docs
 
-# Generate code (DeepCopy methods)
+# Generate code (DeepCopy methods and mock implementations)
 make generate
+
+# Regenerate mock implementations only
+make generate-mocks
 ```
 
 ---

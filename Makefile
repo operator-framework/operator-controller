@@ -58,6 +58,14 @@ endif
 # bingo manages consistent tooling versions for things like kind, etc.
 include .bingo/Variables.mk
 
+# mockgen is installed by bingo with a versioned name (mockgen-v0.6.0).
+# Redefine MOCKGEN to an unversioned symlink so that go generate can find it on PATH.
+_MOCKGEN_BINGO := $(MOCKGEN)
+MOCKGEN := $(ROOT_DIR)/bin/mockgen
+$(MOCKGEN): $(_MOCKGEN_BINGO)
+	@mkdir -p $(dir $@)
+	@ln -sf $< $@
+
 ifeq ($(origin KIND_CLUSTER_NAME), undefined)
 KIND_CLUSTER_NAME := operator-controller
 endif
@@ -201,8 +209,12 @@ manifests: update-crds $(MANIFESTS) $(HELM) #EXHELP Generate OLMv1 manifests
 	$(HELM) template olmv1 helm/olmv1 --values helm/tilt.yaml $(addprefix --set ,$(HELM_SETTINGS)) > /dev/null
 	$(HELM) template olmv1 helm/olmv1 --set "options.openshift.enabled=true" > /dev/null
 
+.PHONY: generate-mocks
+generate-mocks: $(MOCKGEN) #EXHELP Generate mock implementations for testing.
+	PATH="$(ROOT_DIR)/bin:$$PATH" go generate ./...
+
 .PHONY: generate
-generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, DeepCopyObject, and ApplyConfiguration type implementations.
+generate: $(CONTROLLER_GEN) generate-mocks #EXHELP Generate code containing DeepCopy, DeepCopyInto, DeepCopyObject, and ApplyConfiguration type implementations.
 	# Need to delete the files for them to be generated properly
 	@find api cmd hack internal -name "zz_generated.deepcopy.go" -not -path "*/vendor/*" -delete && rm -rf applyconfigurations
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) applyconfiguration:headerFile="hack/boilerplate.go.txt" paths="./api/..."
@@ -289,7 +301,8 @@ extension-developer-e2e: export CONTAINER_RUNTIME := $(CONTAINER_RUNTIME)
 extension-developer-e2e: $(OPERATOR_SDK) #EXHELP Run extension create, upgrade and delete tests.
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
-UNIT_TEST_DIRS := $(shell go list ./... | grep -vE "/test/|/testutils") $(shell go list ./test/internal/...)
+UNIT_TEST_DIRS := $(shell go list ./... | grep -vE "/test/|/testutils|/testutil/mock") $(shell go list ./test/internal/...)
+COVERAGE_PKGS := $(shell go list ./... | grep -vE "/test/|/testutils|/testutil/mock" | paste -sd,)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 
 .PHONY: envtest-k8s-bins #HELP Uses setup-envtest to download and install the binaries required to run ENVTEST-test based locally at the project/bin directory.
@@ -303,7 +316,7 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use -p path $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE))" \
             CGO_ENABLED=1 go test \
                 -tags '$(GO_BUILD_TAGS)' \
-                -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
+                -cover -coverpkg=$(COVERAGE_PKGS) -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
                 $(UNIT_TEST_DIRS) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)

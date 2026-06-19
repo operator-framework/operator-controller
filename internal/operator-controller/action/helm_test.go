@@ -7,87 +7,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/release"
+	"go.uber.org/mock/gomock"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	actionclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	mockhelmclient "github.com/operator-framework/operator-controller/internal/testutil/mock/helmclient"
 )
-
-var _ actionclient.ActionInterface = &mockActionClient{}
-
-type mockActionClient struct {
-	mock.Mock
-}
-
-func (m *mockActionClient) Get(name string, opts ...actionclient.GetOption) (*release.Release, error) {
-	args := m.Called(name, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*release.Release), args.Error(1)
-}
-
-func (m *mockActionClient) History(name string, opts ...actionclient.HistoryOption) ([]*release.Release, error) {
-	args := m.Called(name, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	rel := []*release.Release{
-		args.Get(0).(*release.Release),
-	}
-	return rel, args.Error(1)
-}
-
-func (m *mockActionClient) Install(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...actionclient.InstallOption) (*release.Release, error) {
-	args := m.Called(name, namespace, chrt, vals, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*release.Release), args.Error(1)
-}
-
-func (m *mockActionClient) Upgrade(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...actionclient.UpgradeOption) (*release.Release, error) {
-	args := m.Called(name, namespace, chrt, vals, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*release.Release), args.Error(1)
-}
-
-func (m *mockActionClient) Uninstall(name string, opts ...actionclient.UninstallOption) (*release.UninstallReleaseResponse, error) {
-	args := m.Called(name, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*release.UninstallReleaseResponse), args.Error(1)
-}
-
-func (m *mockActionClient) Reconcile(rel *release.Release) error {
-	args := m.Called(rel)
-	return args.Error(0)
-}
-
-func (m *mockActionClient) Config() *action.Configuration {
-	return nil
-}
-
-var _ actionclient.ActionClientGetter = &mockActionClientGetter{}
-
-type mockActionClientGetter struct {
-	mock.Mock
-}
-
-func (m *mockActionClientGetter) ActionClientFor(ctx context.Context, obj client.Object) (actionclient.ActionInterface, error) {
-	args := m.Called(ctx, obj)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(actionclient.ActionInterface), args.Error(1)
-}
 
 func TestActionClientErrorTranslation(t *testing.T) {
 	originalError := fmt.Errorf("some error")
@@ -96,13 +21,15 @@ func TestActionClientErrorTranslation(t *testing.T) {
 		return expectedErr
 	}
 
-	ac := new(mockActionClient)
-	ac.On("Get", mock.Anything, mock.Anything).Return(nil, originalError)
-	ac.On("History", mock.Anything, mock.Anything).Return(nil, originalError)
-	ac.On("Install", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, originalError)
-	ac.On("Uninstall", mock.Anything, mock.Anything).Return(nil, originalError)
-	ac.On("Upgrade", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, originalError)
-	ac.On("Reconcile", mock.Anything, mock.Anything).Return(originalError)
+	ctrl := gomock.NewController(t)
+	ac := mockhelmclient.NewMockActionInterface(ctrl)
+
+	ac.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, originalError).AnyTimes()
+	ac.EXPECT().History(gomock.Any(), gomock.Any()).Return(nil, originalError).AnyTimes()
+	ac.EXPECT().Install(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, originalError).AnyTimes()
+	ac.EXPECT().Uninstall(gomock.Any(), gomock.Any()).Return(nil, originalError).AnyTimes()
+	ac.EXPECT().Upgrade(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, originalError).AnyTimes()
+	ac.EXPECT().Reconcile(gomock.Any()).Return(originalError).AnyTimes()
 
 	wrappedAc := NewWrappedActionClient(ac, errTranslator)
 
@@ -132,23 +59,20 @@ func TestActionClientErrorTranslation(t *testing.T) {
 }
 
 func TestActionClientFor(t *testing.T) {
-	// Create a mock for the ActionClientGetter
-	mockActionClientGetter := new(mockActionClientGetter)
-	mockActionInterface := new(mockActionClient)
+	ctrl := gomock.NewController(t)
+	mockACG := mockhelmclient.NewMockActionClientGetter(ctrl)
+	mockAI := mockhelmclient.NewMockActionInterface(ctrl)
 	testError := errors.New("test error")
 
-	// Set up expectations for the mock
-	mockActionClientGetter.On("ActionClientFor", mock.Anything, mock.Anything).Return(mockActionInterface, nil).Once()
-	mockActionClientGetter.On("ActionClientFor", mock.Anything, mock.Anything).Return(nil, testError).Once()
+	first := mockACG.EXPECT().ActionClientFor(gomock.Any(), gomock.Any()).Return(mockAI, nil)
+	mockACG.EXPECT().ActionClientFor(gomock.Any(), gomock.Any()).Return(nil, testError).After(first)
 
-	// Create an instance of ActionClientGetter with the mock
 	acg := ActionClientGetter{
-		ActionClientGetter: mockActionClientGetter,
+		ActionClientGetter: mockACG,
 	}
 
-	// Define a test context and object
 	ctx := context.Background()
-	var obj client.Object // Replace with an actual client.Object implementation
+	var obj client.Object
 
 	// Test the successful case
 	actionClient, err := acg.ActionClientFor(ctx, obj)

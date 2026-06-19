@@ -11,8 +11,8 @@ import (
 	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	appsv1 "k8s.io/api/apps/v1"
@@ -39,6 +39,9 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	bundlecsv "github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
+	mockapplier "github.com/operator-framework/operator-controller/internal/testutil/mock/applier"
+	mockauthorization "github.com/operator-framework/operator-controller/internal/testutil/mock/authorization"
+	mockctrlclient "github.com/operator-framework/operator-controller/internal/testutil/mock/ctrlclient"
 )
 
 var (
@@ -163,37 +166,35 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 }
 
 func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
-	r := &FakeManifestProvider{
-		GetFn: func(_ fs.FS, _ *ocv1.ClusterExtension) ([]client.Object, error) {
-			return []client.Object{
-				&corev1.Service{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-service",
-					},
-				},
-				&appsv1.Deployment{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        "test-deployment",
-						Namespace:   "test-ns",
-						Labels:      map[string]string{"my-label": "my-label-value"},
-						Annotations: map[string]string{"my-annotation": "my-annotation-value"},
-						// Fields to be sanitized
-						Finalizers:                 []string{"test"},
-						OwnerReferences:            []metav1.OwnerReference{{Kind: "TestOwner"}},
-						CreationTimestamp:          metav1.Time{Time: metav1.Now().Time},
-						UID:                        "1a2b3c4d",
-						ResourceVersion:            "12345",
-						Generation:                 123,
-						ManagedFields:              []metav1.ManagedFieldsEntry{{Manager: "test-manager"}},
-						DeletionTimestamp:          &metav1.Time{Time: metav1.Now().Time},
-						DeletionGracePeriodSeconds: func(i int64) *int64 { return &i }(30),
-					}, Status: appsv1.DeploymentStatus{
-						Replicas: 3,
-					},
-				},
-			}, nil
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+		&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-service",
+			},
 		},
-	}
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        "test-deployment",
+				Namespace:   "test-ns",
+				Labels:      map[string]string{"my-label": "my-label-value"},
+				Annotations: map[string]string{"my-annotation": "my-annotation-value"},
+				// Fields to be sanitized
+				Finalizers:                 []string{"test"},
+				OwnerReferences:            []metav1.OwnerReference{{Kind: "TestOwner"}},
+				CreationTimestamp:          metav1.Time{Time: metav1.Now().Time},
+				UID:                        "1a2b3c4d",
+				ResourceVersion:            "12345",
+				Generation:                 123,
+				ManagedFields:              []metav1.ManagedFieldsEntry{{Manager: "test-manager"}},
+				DeletionTimestamp:          &metav1.Time{Time: metav1.Now().Time},
+				DeletionGracePeriodSeconds: func(i int64) *int64 { return &i }(30),
+			}, Status: appsv1.DeploymentStatus{
+				Replicas: 3,
+			},
+		},
+	}, nil).AnyTimes()
 
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
@@ -285,11 +286,9 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 }
 
 func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.T) {
-	r := &FakeManifestProvider{
-		GetFn: func(_ fs.FS, _ *ocv1.ClusterExtension) ([]client.Object, error) {
-			return []client.Object{}, nil
-		},
-	}
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
 
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
@@ -371,14 +370,15 @@ func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
 			Name: "test-extension",
 		},
 	}
-	r := &FakeManifestProvider{
-		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	r.EXPECT().Get(dummyBundle, ext).DoAndReturn(
+		func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
 			t.Log("by checking renderer was called with the correct parameters")
 			require.Equal(t, dummyBundle, b)
 			require.Equal(t, ext, e)
 			return nil, nil
-		},
-	}
+		}).AnyTimes()
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
 		ManifestProvider: r,
@@ -407,11 +407,9 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 			},
 		},
 	}
-	r := &FakeManifestProvider{
-		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
-			return renderedObjs, nil
-		},
-	}
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return(renderedObjs, nil).AnyTimes()
 
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
@@ -445,11 +443,9 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 }
 
 func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T) {
-	r := &FakeManifestProvider{
-		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
-			return []client.Object{}, nil
-		},
-	}
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
 
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
@@ -504,11 +500,10 @@ func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T
 }
 
 func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
-	r := &FakeManifestProvider{
-		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
-			return nil, fmt.Errorf("some-error")
-		},
-	}
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("some-error")).AnyTimes()
+
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
 		ManifestProvider: r,
@@ -591,7 +586,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 	}
 	testCases := []struct {
 		name             string
-		mockBuilder      applier.ClusterObjectSetGenerator
+		mockBuilder      func(t *testing.T) applier.ClusterObjectSetGenerator
 		existingObjs     []client.Object
 		expectedErr      string
 		validate         func(t *testing.T, c client.Client)
@@ -599,32 +594,37 @@ func TestBoxcutter_Apply(t *testing.T) {
 	}{
 		{
 			name: "first revision",
-			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-					return ocv1ac.ClusterObjectSet("").
-						WithAnnotations(revisionAnnotations).
-						WithLabels(map[string]string{
-							labels.OwnerNameKey: ext.Name,
-						}).
-						WithSpec(ocv1ac.ClusterObjectSetSpec().
-							WithPhases(
-								ocv1ac.ClusterObjectSetPhase().
-									WithName(string(applier.PhaseDeploy)).
-									WithObjects(
-										ocv1ac.ClusterObjectSetObject().
-											WithObject(unstructured.Unstructured{
-												Object: map[string]interface{}{
-													"apiVersion": "v1",
-													"kind":       "ConfigMap",
-													"metadata": map[string]interface{}{
-														"name": "test-cm",
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec().
+								WithPhases(
+									ocv1ac.ClusterObjectSetPhase().
+										WithName(string(applier.PhaseDeploy)).
+										WithObjects(
+											ocv1ac.ClusterObjectSetObject().
+												WithObject(unstructured.Unstructured{
+													Object: map[string]interface{}{
+														"apiVersion": "v1",
+														"kind":       "ConfigMap",
+														"metadata": map[string]interface{}{
+															"name": "test-cm",
+														},
 													},
-												},
-											}),
-									),
-							),
-						), nil
-				},
+												}),
+										),
+								),
+							), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterObjectSetList{}
@@ -642,32 +642,37 @@ func TestBoxcutter_Apply(t *testing.T) {
 		},
 		{
 			name: "no change, revision exists",
-			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-					return ocv1ac.ClusterObjectSet("").
-						WithAnnotations(revisionAnnotations).
-						WithLabels(map[string]string{
-							labels.OwnerNameKey: ext.Name,
-						}).
-						WithSpec(ocv1ac.ClusterObjectSetSpec().
-							WithPhases(
-								ocv1ac.ClusterObjectSetPhase().
-									WithName(string(applier.PhaseDeploy)).
-									WithObjects(
-										ocv1ac.ClusterObjectSetObject().
-											WithObject(unstructured.Unstructured{
-												Object: map[string]interface{}{
-													"apiVersion": "v1",
-													"kind":       "ConfigMap",
-													"metadata": map[string]interface{}{
-														"name": "test-cm",
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec().
+								WithPhases(
+									ocv1ac.ClusterObjectSetPhase().
+										WithName(string(applier.PhaseDeploy)).
+										WithObjects(
+											ocv1ac.ClusterObjectSetObject().
+												WithObject(unstructured.Unstructured{
+													Object: map[string]interface{}{
+														"apiVersion": "v1",
+														"kind":       "ConfigMap",
+														"metadata": map[string]interface{}{
+															"name": "test-cm",
+														},
 													},
-												},
-											}),
-									),
-							),
-						), nil
-				},
+												}),
+										),
+								),
+							), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
 			},
 			existingObjs: []client.Object{
 				defaultDesiredRevision,
@@ -683,32 +688,37 @@ func TestBoxcutter_Apply(t *testing.T) {
 		},
 		{
 			name: "new revision created when objects in new revision are different",
-			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-					return ocv1ac.ClusterObjectSet("").
-						WithAnnotations(revisionAnnotations).
-						WithLabels(map[string]string{
-							labels.OwnerNameKey: ext.Name,
-						}).
-						WithSpec(ocv1ac.ClusterObjectSetSpec().
-							WithPhases(
-								ocv1ac.ClusterObjectSetPhase().
-									WithName(string(applier.PhaseDeploy)).
-									WithObjects(
-										ocv1ac.ClusterObjectSetObject().
-											WithObject(unstructured.Unstructured{
-												Object: map[string]interface{}{
-													"apiVersion": "v1",
-													"kind":       "Secret",
-													"metadata": map[string]interface{}{
-														"name": "new-secret",
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec().
+								WithPhases(
+									ocv1ac.ClusterObjectSetPhase().
+										WithName(string(applier.PhaseDeploy)).
+										WithObjects(
+											ocv1ac.ClusterObjectSetObject().
+												WithObject(unstructured.Unstructured{
+													Object: map[string]interface{}{
+														"apiVersion": "v1",
+														"kind":       "Secret",
+														"metadata": map[string]interface{}{
+															"name": "new-secret",
+														},
 													},
-												},
-											}),
-									),
-							),
-						), nil
-				},
+												}),
+										),
+								),
+							), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
 			},
 			clientIterceptor: allowedRevisionValue(2),
 			existingObjs: []client.Object{
@@ -736,10 +746,12 @@ func TestBoxcutter_Apply(t *testing.T) {
 		},
 		{
 			name: "error from GenerateRevision",
-			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-					return nil, errors.New("render boom")
-				},
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("render boom")).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
 			},
 			expectedErr: "render boom",
 			validate: func(t *testing.T, c client.Client) {
@@ -752,15 +764,20 @@ func TestBoxcutter_Apply(t *testing.T) {
 		},
 		{
 			name: "keep at most 5 past revisions",
-			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-					return ocv1ac.ClusterObjectSet("").
-						WithAnnotations(revisionAnnotations).
-						WithLabels(map[string]string{
-							labels.OwnerNameKey: ext.Name,
-						}).
-						WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
-				},
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
 			},
 			existingObjs: []client.Object{
 				&ocv1.ClusterObjectSet{
@@ -853,15 +870,20 @@ func TestBoxcutter_Apply(t *testing.T) {
 		},
 		{
 			name: "keep active revisions when they are out of limit",
-			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-					return ocv1ac.ClusterObjectSet("").
-						WithAnnotations(revisionAnnotations).
-						WithLabels(map[string]string{
-							labels.OwnerNameKey: ext.Name,
-						}).
-						WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
-				},
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
 			},
 			existingObjs: []client.Object{
 				&ocv1.ClusterObjectSet{
@@ -970,32 +992,37 @@ func TestBoxcutter_Apply(t *testing.T) {
 		},
 		{
 			name: "annotation-only update (same phases, different annotations)",
-			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-					return ocv1ac.ClusterObjectSet("").
-						WithAnnotations(revisionAnnotations).
-						WithLabels(map[string]string{
-							labels.OwnerNameKey: ext.Name,
-						}).
-						WithSpec(ocv1ac.ClusterObjectSetSpec().
-							WithPhases(
-								ocv1ac.ClusterObjectSetPhase().
-									WithName(string(applier.PhaseDeploy)).
-									WithObjects(
-										ocv1ac.ClusterObjectSetObject().
-											WithObject(unstructured.Unstructured{
-												Object: map[string]interface{}{
-													"apiVersion": "v1",
-													"kind":       "ConfigMap",
-													"metadata": map[string]interface{}{
-														"name": "test-cm",
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec().
+								WithPhases(
+									ocv1ac.ClusterObjectSetPhase().
+										WithName(string(applier.PhaseDeploy)).
+										WithObjects(
+											ocv1ac.ClusterObjectSetObject().
+												WithObject(unstructured.Unstructured{
+													Object: map[string]interface{}{
+														"apiVersion": "v1",
+														"kind":       "ConfigMap",
+														"metadata": map[string]interface{}{
+															"name": "test-cm",
+														},
 													},
-												},
-											}),
-									),
-							),
-						), nil
-				},
+												}),
+										),
+								),
+							), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
 			},
 			existingObjs: []client.Object{
 				ext,
@@ -1064,7 +1091,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			boxcutter := &applier.Boxcutter{
 				Client:            fakeClient,
 				Scheme:            testScheme,
-				RevisionGenerator: tc.mockBuilder,
+				RevisionGenerator: tc.mockBuilder(t),
 				FieldOwner:        "test-owner",
 				SystemNamespace:   "olmv1-system",
 			}
@@ -1127,31 +1154,37 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 		},
 	}
 	fakeClient := fake.NewClientBuilder().WithScheme(testScheme).Build()
-	dummyGenerator := &mockBundleRevisionBuilder{
-		makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-			return ocv1ac.ClusterObjectSet("").
-				WithSpec(ocv1ac.ClusterObjectSetSpec().
-					WithPhases(
-						ocv1ac.ClusterObjectSetPhase().
-							WithName("some-phase").
-							WithObjects(
-								ocv1ac.ClusterObjectSetObject().
-									WithObject(unstructured.Unstructured{
-										Object: map[string]interface{}{
-											"apiVersion": "v1",
-											"kind":       "ConfigMap",
-											"data": map[string]string{
-												"test-data": "test-data",
-											},
-										},
-									}),
-							),
-					),
-				), nil
-		},
-	}
 	dummyBundleFs := fstest.MapFS{}
 	revisionAnnotations := map[string]string{}
+
+	newDummyGenerator := func(t *testing.T) applier.ClusterObjectSetGenerator {
+		ctrl := gomock.NewController(t)
+		m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+			func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+				return ocv1ac.ClusterObjectSet("").
+					WithSpec(ocv1ac.ClusterObjectSetSpec().
+						WithPhases(
+							ocv1ac.ClusterObjectSetPhase().
+								WithName("some-phase").
+								WithObjects(
+									ocv1ac.ClusterObjectSetObject().
+										WithObject(unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"apiVersion": "v1",
+												"kind":       "ConfigMap",
+												"data": map[string]string{
+													"test-data": "test-data",
+												},
+											},
+										}),
+								),
+						),
+					), nil
+			}).AnyTimes()
+		m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+		return m
+	}
 
 	for _, tc := range []struct {
 		name          string
@@ -1161,20 +1194,22 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 		{
 			name: "preauthorizer called with correct parameters",
 			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
-				return &mockPreAuthorizer{
-					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-						require.Equal(t, "system:serviceaccount:test-namespace:test-sa", user.GetName())
-						require.Empty(t, user.GetUID())
-						require.Nil(t, user.GetExtra())
-						require.Empty(t, user.GetGroups())
+				ctrl := gomock.NewController(t)
+				mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+				mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, userInfo user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+						require.Equal(t, "system:serviceaccount:test-namespace:test-sa", userInfo.GetName())
+						require.Empty(t, userInfo.GetUID())
+						require.Nil(t, userInfo.GetExtra())
+						require.Empty(t, userInfo.GetGroups())
 
 						t.Log("has correct additional permissions")
 						require.Len(t, additionalRequiredPerms, 1)
-						perms := additionalRequiredPerms[0](user)
+						perms := additionalRequiredPerms[0](userInfo)
 
 						require.Len(t, perms, 1)
 						require.Equal(t, authorizer.AttributesRecord{
-							User:            user,
+							User:            userInfo,
 							Name:            "test-ext-1",
 							APIGroup:        "olm.operatorframework.io",
 							APIVersion:      "v1",
@@ -1188,17 +1223,16 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 						require.NoError(t, err)
 						require.Equal(t, "---\napiVersion: v1\ndata:\n  test-data: test-data\nkind: ConfigMap\n", string(manifests))
 						return nil, nil
-					},
-				}
+					}).AnyTimes()
+				return mockPA
 			},
 		}, {
 			name: "preauthorizer errors are returned",
 			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
-				return &mockPreAuthorizer{
-					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-						return nil, errors.New("test error")
-					},
-				}
+				ctrl := gomock.NewController(t)
+				mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+				mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("test error")).AnyTimes()
+				return mockPA
 			},
 			validate: func(t *testing.T, err error) {
 				require.Error(t, err)
@@ -1208,22 +1242,21 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 		}, {
 			name: "preauthorizer missing permissions are returned as an error",
 			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
-				return &mockPreAuthorizer{
-					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-						return []authorization.ScopedPolicyRules{
+				ctrl := gomock.NewController(t)
+				mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+				mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]authorization.ScopedPolicyRules{
+					{
+						Namespace: "",
+						MissingRules: []rbacv1.PolicyRule{
 							{
-								Namespace: "",
-								MissingRules: []rbacv1.PolicyRule{
-									{
-										APIGroups: []string{""},
-										Resources: []string{"pods"},
-										Verbs:     []string{"get", "list", "watch"},
-									},
-								},
+								APIGroups: []string{""},
+								Resources: []string{"pods"},
+								Verbs:     []string{"get", "list", "watch"},
 							},
-						}, nil
+						},
 					},
-				}
+				}, nil).AnyTimes()
+				return mockPA
 			},
 			validate: func(t *testing.T, err error) {
 				require.Error(t, err)
@@ -1235,22 +1268,21 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 		}, {
 			name: "preauthorizer missing permissions and errors are combined and returned as an error",
 			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
-				return &mockPreAuthorizer{
-					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-						return []authorization.ScopedPolicyRules{
+				ctrl := gomock.NewController(t)
+				mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+				mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]authorization.ScopedPolicyRules{
+					{
+						Namespace: "",
+						MissingRules: []rbacv1.PolicyRule{
 							{
-								Namespace: "",
-								MissingRules: []rbacv1.PolicyRule{
-									{
-										APIGroups: []string{""},
-										Resources: []string{"pods"},
-										Verbs:     []string{"get", "list", "watch"},
-									},
-								},
+								APIGroups: []string{""},
+								Resources: []string{"pods"},
+								Verbs:     []string{"get", "list", "watch"},
 							},
-						}, errors.New("test error")
+						},
 					},
-				}
+				}, errors.New("test error")).AnyTimes()
+				return mockPA
 			},
 			validate: func(t *testing.T, err error) {
 				require.Error(t, err)
@@ -1263,11 +1295,10 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 		}, {
 			name: "successful call to preauthorizer does not block applier",
 			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
-				return &mockPreAuthorizer{
-					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-						return nil, nil
-					},
-				}
+				ctrl := gomock.NewController(t)
+				mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+				mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return mockPA
 			},
 			validate: func(t *testing.T, err error) {
 				require.NoError(t, err)
@@ -1279,7 +1310,7 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 				Client:            fakeClient,
 				Scheme:            testScheme,
 				FieldOwner:        "test-owner",
-				RevisionGenerator: dummyGenerator,
+				RevisionGenerator: newDummyGenerator(t),
 				PreAuthorizer:     tc.preAuthorizer(t),
 				SystemNamespace:   "olmv1-system",
 			}
@@ -1294,68 +1325,90 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 }
 
 func TestBoxcutterStorageMigrator(t *testing.T) {
+	// defaultHelmRevisionResult returns the default result for GenerateRevisionFromHelmRelease in storage migrator tests.
+	defaultHelmRevisionResult := func(ext *ocv1.ClusterExtension) *ocv1ac.ClusterObjectSetApplyConfiguration {
+		return ocv1ac.ClusterObjectSet("test-revision").
+			WithLabels(map[string]string{
+				labels.OwnerNameKey: ext.Name,
+			}).
+			WithSpec(ocv1ac.ClusterObjectSetSpec())
+	}
+
+	// newStorageMigratorGenerator creates a gomock ClusterObjectSetGenerator for storage migrator tests.
+	// GenerateRevision is not expected to be called. GenerateRevisionFromHelmRelease returns the default result.
+	newStorageMigratorGenerator := func(t *testing.T) *mockapplier.MockClusterObjectSetGenerator {
+		ctrl := gomock.NewController(t)
+		m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+			func(ctx context.Context, helmRelease *release.Release, e *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+				return defaultHelmRevisionResult(e), nil
+			}).AnyTimes()
+		return m
+	}
+
 	t.Run("creates revision", func(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
-		brb := &mockBundleRevisionBuilder{}
-		mag := &mockActionGetter{
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+		ctrl := gomock.NewController(t)
+		brb := newStorageMigratorGenerator(t)
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{
 			currentRel: &release.Release{
 				Name: "test123",
 				Info: &release.Info{Status: release.StatusDeployed},
 			},
-		}
-		client := &clientMock{}
+		})
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+		mockStatusWriter := mockctrlclient.NewMockSubResourceWriter(ctrl)
+		mockClient.EXPECT().Status().Return(mockStatusWriter).AnyTimes()
+
 		sm := &applier.BoxcutterStorageMigrator{
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
-			Client:             client,
+			Client:             mockClient,
 			Scheme:             testScheme,
 			FieldOwner:         "test-owner",
 		}
 
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
-		}
-
-		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
+		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil)
-		client.
-			On("Apply", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetApplyConfiguration"), mock.Anything).
-			Once().
-			Run(func(args mock.Arguments) {
+		mockClient.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
 				// Verify the migration marker label is set before apply
-				rev := args.Get(1).(*ocv1ac.ClusterObjectSetApplyConfiguration)
+				rev := obj.(*ocv1ac.ClusterObjectSetApplyConfiguration)
 				require.Equal(t, "true", rev.Labels[labels.MigratedFromHelmKey], "Migration marker label should be set")
-			}).
-			Return(nil)
-		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
-			Once().
-			Run(func(args mock.Arguments) {
+				return nil
+			})
+		mockClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 				// Simulate Get() returning the created revision with server-managed fields
-				rev := args.Get(2).(*ocv1.ClusterObjectSet)
+				rev := obj.(*ocv1.ClusterObjectSet)
 				rev.Name = "test-revision"
 				rev.Generation = 1
 				rev.ResourceVersion = "1"
 				rev.Labels = map[string]string{
 					labels.MigratedFromHelmKey: "true",
 				}
-			}).
-			Return(nil)
+				return nil
+			})
+
+		var updatedObj client.Object
+		mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+				updatedObj = obj
+				return nil
+			})
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
 
-		client.AssertExpectations(t)
-
 		// Verify the migrated revision has Succeeded=True status with Succeeded reason and a migration message
-		statusWriter := client.Status().(*statusWriterMock)
-		require.True(t, statusWriter.updateCalled, "Status().Update() should be called during migration")
-		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
+		require.NotNil(t, updatedObj, "Updated object should not be nil")
 
-		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterObjectSet)
+		rev, ok := updatedObj.(*ocv1.ClusterObjectSet)
 		require.True(t, ok, "Updated object should be a ClusterObjectSet")
 
 		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
@@ -1370,19 +1423,22 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
-		brb := &mockBundleRevisionBuilder{}
-		mag := &mockActionGetter{}
-		client := &clientMock{}
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+		// GenerateRevisionFromHelmRelease should not be called when revisions already exist
+		ctrl := gomock.NewController(t)
+		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{})
+
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+
 		sm := &applier.BoxcutterStorageMigrator{
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
-			Client:             client,
+			Client:             mockClient,
 			Scheme:             testScheme,
 			FieldOwner:         "test-owner",
-		}
-
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
 
 		existingRev := ocv1.ClusterObjectSet{
@@ -1407,37 +1463,38 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			},
 		}
 
-		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
-			Run(func(args mock.Arguments) {
-				list := args.Get(1).(*ocv1.ClusterObjectSetList)
-				list.Items = []ocv1.ClusterObjectSet{existingRev}
-			}).
-			Return(nil)
+		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+				cosList := list.(*ocv1.ClusterObjectSetList)
+				cosList.Items = []ocv1.ClusterObjectSet{existingRev}
+				return nil
+			})
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
-
-		client.AssertExpectations(t)
 	})
 
 	t.Run("sets status when revision exists but status is missing", func(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
-		brb := &mockBundleRevisionBuilder{}
-		mag := &mockActionGetter{}
-		client := &clientMock{}
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+		ctrl := gomock.NewController(t)
+		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{})
+
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+		mockStatusWriter := mockctrlclient.NewMockSubResourceWriter(ctrl)
+		mockClient.EXPECT().Status().Return(mockStatusWriter).AnyTimes()
+
 		sm := &applier.BoxcutterStorageMigrator{
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
-			Client:             client,
+			Client:             mockClient,
 			Scheme:             testScheme,
 			FieldOwner:         "test-owner",
-		}
-
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
 
 		existingRev := ocv1.ClusterObjectSet{
@@ -1454,33 +1511,34 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			// Status is empty - simulating the case where creation succeeded but status update failed
 		}
 
-		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
-			Run(func(args mock.Arguments) {
-				list := args.Get(1).(*ocv1.ClusterObjectSetList)
-				list.Items = []ocv1.ClusterObjectSet{existingRev}
-			}).
-			Return(nil)
+		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+				cosList := list.(*ocv1.ClusterObjectSetList)
+				cosList.Items = []ocv1.ClusterObjectSet{existingRev}
+				return nil
+			})
 
-		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
-			Run(func(args mock.Arguments) {
-				rev := args.Get(2).(*ocv1.ClusterObjectSet)
+		mockClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				rev := obj.(*ocv1.ClusterObjectSet)
 				*rev = existingRev
-			}).
-			Return(nil)
+				return nil
+			})
+
+		var updatedObj client.Object
+		mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+				updatedObj = obj
+				return nil
+			})
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
 
-		client.AssertExpectations(t)
-
 		// Verify the status was set
-		statusWriter := client.Status().(*statusWriterMock)
-		require.True(t, statusWriter.updateCalled, "Status().Update() should be called to set missing status")
-		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
+		require.NotNil(t, updatedObj, "Updated object should not be nil")
 
-		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterObjectSet)
+		rev, ok := updatedObj.(*ocv1.ClusterObjectSet)
 		require.True(t, ok, "Updated object should be a ClusterObjectSet")
 
 		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
@@ -1493,19 +1551,23 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
-		brb := &mockBundleRevisionBuilder{}
-		mag := &mockActionGetter{}
-		client := &clientMock{}
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+		ctrl := gomock.NewController(t)
+		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{})
+
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+		mockStatusWriter := mockctrlclient.NewMockSubResourceWriter(ctrl)
+		mockClient.EXPECT().Status().Return(mockStatusWriter).AnyTimes()
+
 		sm := &applier.BoxcutterStorageMigrator{
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
-			Client:             client,
+			Client:             mockClient,
 			Scheme:             testScheme,
 			FieldOwner:         "test-owner",
-		}
-
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
 
 		// Migrated revision with Succeeded=False (e.g., from a previous failed status update attempt)
@@ -1532,33 +1594,34 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			},
 		}
 
-		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
-			Run(func(args mock.Arguments) {
-				list := args.Get(1).(*ocv1.ClusterObjectSetList)
-				list.Items = []ocv1.ClusterObjectSet{existingRev}
-			}).
-			Return(nil)
+		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+				cosList := list.(*ocv1.ClusterObjectSetList)
+				cosList.Items = []ocv1.ClusterObjectSet{existingRev}
+				return nil
+			})
 
-		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
-			Run(func(args mock.Arguments) {
-				rev := args.Get(2).(*ocv1.ClusterObjectSet)
+		mockClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				rev := obj.(*ocv1.ClusterObjectSet)
 				*rev = existingRev
-			}).
-			Return(nil)
+				return nil
+			})
+
+		var updatedObj client.Object
+		mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+				updatedObj = obj
+				return nil
+			})
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
 
-		client.AssertExpectations(t)
-
 		// Verify the status was updated from False to True
-		statusWriter := client.Status().(*statusWriterMock)
-		require.True(t, statusWriter.updateCalled, "Status().Update() should be called to update False to True")
-		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
+		require.NotNil(t, updatedObj, "Updated object should not be nil")
 
-		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterObjectSet)
+		rev, ok := updatedObj.(*ocv1.ClusterObjectSet)
 		require.True(t, ok, "Updated object should be a ClusterObjectSet")
 
 		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
@@ -1571,19 +1634,21 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
-		brb := &mockBundleRevisionBuilder{}
-		mag := &mockActionGetter{}
-		client := &clientMock{}
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+		ctrl := gomock.NewController(t)
+		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{})
+
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+
 		sm := &applier.BoxcutterStorageMigrator{
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
-			Client:             client,
+			Client:             mockClient,
 			Scheme:             testScheme,
 			FieldOwner:         "test-owner",
-		}
-
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
 
 		// Revision 1 created by normal Boxcutter operation (no migration label)
@@ -1599,40 +1664,50 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			},
 		}
 
-		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
-			Run(func(args mock.Arguments) {
-				list := args.Get(1).(*ocv1.ClusterObjectSetList)
-				list.Items = []ocv1.ClusterObjectSet{existingRev}
-			}).
-			Return(nil)
+		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+				cosList := list.(*ocv1.ClusterObjectSetList)
+				cosList.Items = []ocv1.ClusterObjectSet{existingRev}
+				return nil
+			})
 
 		// The migration flow calls Get() to re-fetch the revision before checking its status.
 		// Even for non-migrated revisions, Get() is called to determine if status needs to be set.
-		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
-			Run(func(args mock.Arguments) {
-				rev := args.Get(2).(*ocv1.ClusterObjectSet)
+		mockClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				rev := obj.(*ocv1.ClusterObjectSet)
 				*rev = existingRev
-			}).
-			Return(nil)
+				return nil
+			})
+
+		// Status() and Update() should NOT be called for non-migrated revisions.
+		// gomock will fail if any unexpected calls are made.
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
-
-		client.AssertExpectations(t)
-
-		// Verify the status was NOT set for non-migrated revision
-		statusWriter := client.Status().(*statusWriterMock)
-		require.False(t, statusWriter.updateCalled, "Status().Update() should NOT be called for non-migrated revisions")
 	})
 
 	t.Run("migrates from most recent deployed release when latest is failed", func(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
-		brb := &mockBundleRevisionBuilder{}
-		mag := &mockActionGetter{
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+		expectedRelease := &release.Release{
+			Name:    "test123",
+			Version: 2,
+			Info:    &release.Info{Status: release.StatusDeployed},
+		}
+
+		ctrl := gomock.NewController(t)
+		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		brb.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), expectedRelease, gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, helmRelease *release.Release, e *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+				return defaultHelmRevisionResult(e), nil
+			}).Times(1)
+
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{
 			currentRel: &release.Release{
 				Name:    "test123",
 				Version: 3,
@@ -1644,74 +1719,64 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 					Version: 3,
 					Info:    &release.Info{Status: release.StatusFailed},
 				},
-				{
-					Name:    "test123",
-					Version: 2,
-					Info:    &release.Info{Status: release.StatusDeployed},
-				},
+				expectedRelease,
 				{
 					Name:    "test123",
 					Version: 1,
 					Info:    &release.Info{Status: release.StatusSuperseded},
 				},
 			},
-		}
-		client := &clientMock{}
+		})
+
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+		mockStatusWriter := mockctrlclient.NewMockSubResourceWriter(ctrl)
+		mockClient.EXPECT().Status().Return(mockStatusWriter).AnyTimes()
+
 		sm := &applier.BoxcutterStorageMigrator{
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
-			Client:             client,
+			Client:             mockClient,
 			Scheme:             testScheme,
 			FieldOwner:         "test-owner",
 		}
 
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
-		}
-
-		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
+		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil)
 
-		client.
-			On("Apply", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetApplyConfiguration"), mock.Anything).
-			Once().
-			Run(func(args mock.Arguments) {
+		mockClient.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
 				// Verify the migration marker label is set before apply
-				rev := args.Get(1).(*ocv1ac.ClusterObjectSetApplyConfiguration)
+				rev := obj.(*ocv1ac.ClusterObjectSetApplyConfiguration)
 				require.Equal(t, "true", rev.Labels[labels.MigratedFromHelmKey], "Migration marker label should be set")
-			}).
-			Return(nil)
+				return nil
+			})
 
-		client.
-			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSet"), mock.Anything).
-			Run(func(args mock.Arguments) {
-				rev := args.Get(2).(*ocv1.ClusterObjectSet)
-				rev.ObjectMeta.Name = "test-revision"
-				rev.ObjectMeta.Generation = 1
-				rev.ObjectMeta.ResourceVersion = "1"
+		mockClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				rev := obj.(*ocv1.ClusterObjectSet)
+				rev.Name = "test-revision"
+				rev.Generation = 1
+				rev.ResourceVersion = "1"
 				rev.Labels = map[string]string{
 					labels.MigratedFromHelmKey: "true",
 				}
-			}).
-			Return(nil)
+				return nil
+			})
+
+		var updatedObj client.Object
+		mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+				updatedObj = obj
+				return nil
+			})
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
 
-		client.AssertExpectations(t)
-
-		// Verify the correct release (version 2, deployed) was used instead of version 3 (failed)
-		require.NotNil(t, brb.helmReleaseUsed, "GenerateRevisionFromHelmRelease should have been called")
-		assert.Equal(t, 2, brb.helmReleaseUsed.Version, "Should use version 2 (deployed), not version 3 (failed)")
-		assert.Equal(t, release.StatusDeployed, brb.helmReleaseUsed.Info.Status, "Should use deployed release")
-
 		// Verify the migrated revision has Succeeded=True status
-		statusWriter := client.Status().(*statusWriterMock)
-		require.True(t, statusWriter.updateCalled, "Status().Update() should be called during migration")
-		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
+		require.NotNil(t, updatedObj, "Updated object should not be nil")
 
-		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterObjectSet)
+		rev, ok := updatedObj.(*ocv1.ClusterObjectSet)
 		require.True(t, ok, "Updated object should be a ClusterObjectSet")
 
 		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
@@ -1723,8 +1788,13 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
-		brb := &mockBundleRevisionBuilder{}
-		mag := &mockActionGetter{
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+		ctrl := gomock.NewController(t)
+		// GenerateRevisionFromHelmRelease should NOT be called when no deployed release exists
+		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{
 			currentRel: &release.Release{
 				Name: "test123",
 				Info: &release.Info{Status: release.StatusFailed},
@@ -1741,143 +1811,53 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 					Info:    &release.Info{Status: release.StatusFailed},
 				},
 			},
-		}
-		client := &clientMock{}
+		})
+
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+
 		sm := &applier.BoxcutterStorageMigrator{
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
-			Client:             client,
+			Client:             mockClient,
 			Scheme:             testScheme,
 			FieldOwner:         "test-owner",
 		}
 
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
-		}
-
-		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
+		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil)
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
-
-		client.AssertExpectations(t)
-		// brb.GenerateRevisionFromHelmRelease should NOT have been called
-		require.False(t, brb.generateRevisionFromHelmReleaseCalled, "GenerateRevisionFromHelmRelease should NOT be called when no deployed release exists")
+		// gomock will verify GenerateRevisionFromHelmRelease was NOT called (no expectation set)
 	})
 
 	t.Run("does not create revision when no helm release", func(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
-		brb := &mockBundleRevisionBuilder{}
-		mag := &mockActionGetter{
-			getClientErr: driver.ErrReleaseNotFound,
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
-		client := &clientMock{}
+		ctrl := gomock.NewController(t)
+		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{
+			getClientErr: driver.ErrReleaseNotFound,
+		})
+
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+
 		sm := &applier.BoxcutterStorageMigrator{
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
-			Client:             client,
+			Client:             mockClient,
 			Scheme:             testScheme,
 			FieldOwner:         "test-owner",
 		}
 
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
-		}
-
-		client.
-			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterObjectSetList"), mock.Anything).
+		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil)
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
-
-		client.AssertExpectations(t)
 	})
-}
-
-// mockBundleRevisionBuilder is a mock implementation of the ClusterObjectSetGenerator for testing.
-type mockBundleRevisionBuilder struct {
-	makeRevisionFunc                      func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error)
-	generateRevisionFromHelmReleaseCalled bool
-	helmReleaseUsed                       *release.Release
-}
-
-func (m *mockBundleRevisionBuilder) GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-	return m.makeRevisionFunc(ctx, bundleFS, ext, objectLabels, revisionAnnotations)
-}
-
-func (m *mockBundleRevisionBuilder) GenerateRevisionFromHelmRelease(
-	ctx context.Context,
-	helmRelease *release.Release, ext *ocv1.ClusterExtension,
-	objectLabels map[string]string,
-) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-	m.generateRevisionFromHelmReleaseCalled = true
-	m.helmReleaseUsed = helmRelease
-	return ocv1ac.ClusterObjectSet("test-revision").
-		WithLabels(map[string]string{
-			labels.OwnerNameKey: ext.Name,
-		}).
-		WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
-}
-
-type clientMock struct {
-	mock.Mock
-	statusWriter *statusWriterMock
-}
-
-func (m *clientMock) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	args := m.Called(ctx, list, opts)
-	return args.Error(0)
-}
-
-func (m *clientMock) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	args := m.Called(ctx, key, obj, opts)
-	return args.Error(0)
-}
-
-func (m *clientMock) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
-	args := m.Called(ctx, obj, opts)
-	return args.Error(0)
-}
-
-func (m *clientMock) Status() client.StatusWriter {
-	if m.statusWriter == nil {
-		m.statusWriter = &statusWriterMock{mock: &m.Mock}
-	}
-	return m.statusWriter
-}
-
-type statusWriterMock struct {
-	mock         *mock.Mock
-	updatedObj   client.Object
-	updateCalled bool
-	applyCalled  bool
-}
-
-func (s *statusWriterMock) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
-	// Capture the status update for test verification
-	s.updatedObj = obj
-	s.updateCalled = true
-	return nil
-}
-
-func (s *statusWriterMock) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
-	return nil
-}
-
-func (s *statusWriterMock) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
-	return nil
-}
-
-// Apply is required by controller-runtime v0.23.0+ StatusWriter interface
-func (s *statusWriterMock) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.SubResourceApplyOption) error {
-	// Track Apply calls to detect unexpected usage in tests
-	s.applyCalled = true
-	// Apply is not currently used by the code under test, but tracking the call
-	// helps ensure tests fail if this assumption changes
-	return fmt.Errorf("unexpected call to StatusWriter.Apply() - this method is not expected to be used in these tests")
 }

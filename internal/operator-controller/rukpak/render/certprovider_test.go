@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	mockrender "github.com/operator-framework/operator-controller/internal/testutil/mock/render"
 )
 
 func Test_CertificateProvisioner_WithoutCertProvider(t *testing.T) {
@@ -31,29 +33,35 @@ func Test_CertificateProvisioner_WithoutCertProvider(t *testing.T) {
 }
 
 func Test_CertificateProvisioner_WithCertProvider(t *testing.T) {
-	fakeProvider := &FakeCertProvider{
-		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
+	ctrl := gomock.NewController(t)
+	mockCert := mockrender.NewMockCertificateProvider(ctrl)
+	mockCert.EXPECT().InjectCABundle(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
 			obj.SetName("some-name")
 			return nil
 		},
-		AdditionalObjectsFn: func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
+	)
+	mockCert.EXPECT().AdditionalObjects(gomock.Any()).DoAndReturn(
+		func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
 			return []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{
 				TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
 			})}, nil
 		},
-		GetCertSecretInfoFn: func(cfg render.CertificateProvisionerConfig) render.CertSecretInfo {
+	)
+	mockCert.EXPECT().GetCertSecretInfo(gomock.Any()).DoAndReturn(
+		func(cfg render.CertificateProvisionerConfig) render.CertSecretInfo {
 			return render.CertSecretInfo{
 				SecretName:     "some-secret",
 				PrivateKeyKey:  "some-key",
 				CertificateKey: "another-key",
 			}
 		},
-	}
+	)
 	provisioner := &render.CertificateProvisioner{
 		ServiceName:  "webhook",
 		CertName:     "cert",
 		Namespace:    "namespace",
-		CertProvider: fakeProvider,
+		CertProvider: mockCert,
 	}
 
 	svc := &corev1.Service{}
@@ -74,19 +82,23 @@ func Test_CertificateProvisioner_WithCertProvider(t *testing.T) {
 }
 
 func Test_CertificateProvisioner_Errors(t *testing.T) {
-	fakeProvider := &FakeCertProvider{
-		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
+	ctrl := gomock.NewController(t)
+	mockCert := mockrender.NewMockCertificateProvider(ctrl)
+	mockCert.EXPECT().InjectCABundle(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
 			return fmt.Errorf("some error")
 		},
-		AdditionalObjectsFn: func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
+	)
+	mockCert.EXPECT().AdditionalObjects(gomock.Any()).DoAndReturn(
+		func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
 			return nil, fmt.Errorf("some other error")
 		},
-	}
+	)
 	provisioner := &render.CertificateProvisioner{
 		ServiceName:  "webhook",
 		CertName:     "cert",
 		Namespace:    "namespace",
-		CertProvider: fakeProvider,
+		CertProvider: mockCert,
 	}
 
 	err := provisioner.InjectCABundle(&corev1.Service{})
@@ -100,13 +112,14 @@ func Test_CertificateProvisioner_Errors(t *testing.T) {
 }
 
 func Test_CertProvisionerFor(t *testing.T) {
-	fakeProvider := &FakeCertProvider{}
+	ctrl := gomock.NewController(t)
+	mockCert := mockrender.NewMockCertificateProvider(ctrl)
 	prov := render.CertProvisionerFor("my.deployment.thing", render.Options{
 		InstallNamespace:    "my-namespace",
-		CertificateProvider: fakeProvider,
+		CertificateProvider: mockCert,
 	})
 
-	require.Equal(t, prov.CertProvider, fakeProvider)
+	require.Equal(t, prov.CertProvider, mockCert)
 	require.Equal(t, "my-deployment-thing-service", prov.ServiceName)
 	require.Equal(t, "my-deployment-thing-service-cert", prov.CertName)
 	require.Equal(t, "my-namespace", prov.Namespace)

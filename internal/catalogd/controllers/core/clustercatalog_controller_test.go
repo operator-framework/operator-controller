@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
-	"net/http"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -15,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/docker/reference"
+	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -24,41 +23,25 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
+	mockstorage "github.com/operator-framework/operator-controller/internal/testutil/mock/storage"
 )
 
-var _ storage.Instance = &MockStore{}
-
-type MockStore struct {
-	shouldError bool
-}
-
-func (m MockStore) Store(_ context.Context, _ string, _ fs.FS) error {
-	if m.shouldError {
-		return errors.New("mockstore store error")
+func newMockStore(ctrl *gomock.Controller, shouldError bool) *mockstorage.MockInstance {
+	m := mockstorage.NewMockInstance(ctrl)
+	if shouldError {
+		m.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("mockstore store error")).AnyTimes()
+		m.EXPECT().Delete(gomock.Any()).Return(errors.New("mockstore delete error")).AnyTimes()
+	} else {
+		m.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		m.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
 	}
-	return nil
-}
-
-func (m MockStore) Delete(_ string) error {
-	if m.shouldError {
-		return errors.New("mockstore delete error")
-	}
-	return nil
-}
-
-func (m MockStore) BaseURL(_ string) string {
-	return "URL"
-}
-
-func (m MockStore) StorageServerHandler() http.Handler {
-	panic("not needed")
-}
-
-func (m MockStore) ContentExists(_ string) bool {
-	return true
+	m.EXPECT().BaseURL(gomock.Any()).Return("URL").AnyTimes()
+	m.EXPECT().ContentExists(gomock.Any()).Return(true).AnyTimes()
+	return m
 }
 
 func TestCatalogdControllerReconcile(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
 	for _, tt := range []struct {
 		name            string
 		catalog         *ocv1.ClusterCatalog
@@ -70,8 +53,8 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 	}{
 		{
 			name:   "invalid source type, returns error",
-			puller: &imageutil.MockPuller{},
-			store:  &MockStore{},
+			puller: &imageutil.FakePuller{},
+			store:  newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
@@ -108,10 +91,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		{
 			name:          "valid source type, unpack returns error, status updated to reflect error state and error is returned",
 			expectedError: fmt.Errorf("source catalog content: %w", fmt.Errorf("mockpuller error")),
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				Error: errors.New("mockpuller error"),
 			},
-			store: &MockStore{},
+			store: newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
@@ -153,10 +136,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		{
 			name:          "valid source type, unpack returns terminal error, status updated to reflect terminal error state(Blocked) and error is returned",
 			expectedError: fmt.Errorf("source catalog content: %w", reconcile.TerminalError(fmt.Errorf("mockpuller terminal error"))),
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				Error: reconcile.TerminalError(errors.New("mockpuller terminal error")),
 			},
-			store: &MockStore{},
+			store: newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
@@ -197,11 +180,11 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 		{
 			name: "valid source type, unpack state == Unpacked, should reflect in status that it's progressing, and is serving",
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				ImageFS: &fstest.MapFS{},
 				Ref:     mustRef(t, "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
 			},
-			store: &MockStore{},
+			store: newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
@@ -256,12 +239,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		{
 			name:          "valid source type, unpack state == Unpacked, storage fails, failure reflected in status and error returned",
 			expectedError: fmt.Errorf("error storing fbc: mockstore store error"),
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				ImageFS: &fstest.MapFS{},
 			},
-			store: &MockStore{
-				shouldError: true,
-			},
+			store: newMockStore(mockCtrl, true),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
@@ -302,10 +283,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 		{
 			name: "storage finalizer not set, storage finalizer gets set",
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				ImageFS: &fstest.MapFS{},
 			},
-			store: &MockStore{},
+			store: newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "catalog",
@@ -336,10 +317,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 		{
 			name: "storage finalizer set, catalog deletion timestamp is not zero (or nil), finalizer removed",
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				ImageFS: &fstest.MapFS{},
 			},
-			store: &MockStore{},
+			store: newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
@@ -409,12 +390,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		{
 			name:          "storage finalizer set, catalog deletion timestamp is not zero (or nil), storage delete failed, error returned, finalizer not removed and catalog continues serving",
 			expectedError: fmt.Errorf("finalizer %q failed: %w", fbcDeletionFinalizer, fmt.Errorf("mockstore delete error")),
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				ImageFS: &fstest.MapFS{},
 			},
-			store: &MockStore{
-				shouldError: true,
-			},
+			store: newMockStore(mockCtrl, true),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
@@ -479,11 +458,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		{
 			name:          "storage finalizer set, catalog deletion timestamp is not zero (or nil), unpack cleanup failed, error returned, finalizer not removed but catalog stops serving",
 			expectedError: fmt.Errorf("finalizer %q failed: %w", fbcDeletionFinalizer, fmt.Errorf("mockcache delete error")),
-			puller:        &imageutil.MockPuller{},
-			cache:         &imageutil.MockCache{DeleteErr: fmt.Errorf("mockcache delete error")},
-			store: &MockStore{
-				shouldError: false,
-			},
+			puller:        &imageutil.FakePuller{},
+			cache:         &imageutil.FakeCache{DeleteErr: fmt.Errorf("mockcache delete error")},
+			store:         newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
@@ -545,10 +522,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 		{
 			name: "catalog availability set to disabled, status.urls should get unset",
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				ImageFS: &fstest.MapFS{},
 			},
-			store: &MockStore{},
+			store: newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "catalog",
@@ -616,10 +593,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 		{
 			name: "catalog availability set to disabled, finalizer should get removed",
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				ImageFS: &fstest.MapFS{},
 			},
-			store: &MockStore{},
+			store: newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
@@ -689,10 +666,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 		{
 			name: "after catalog availability set to enable, finalizer should be added",
-			puller: &imageutil.MockPuller{
+			puller: &imageutil.FakePuller{
 				ImageFS: &fstest.MapFS{},
 			},
-			store: &MockStore{},
+			store: newMockStore(mockCtrl, false),
 			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
@@ -810,7 +787,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				storedCatalogs: map[string]storedCatalogData{},
 			}
 			if reconciler.ImageCache == nil {
-				reconciler.ImageCache = &imageutil.MockCache{}
+				reconciler.ImageCache = &imageutil.FakeCache{}
 			}
 			require.NoError(t, reconciler.setupFinalizers())
 			ctx := context.Background()
@@ -896,6 +873,7 @@ func TestPollingRequeue(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
 			ref := mustRef(t, "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 			tc.catalog.Status = ocv1.ClusterCatalogStatus{
 				Conditions: []metav1.Condition{
@@ -911,11 +889,11 @@ func TestPollingRequeue(t *testing.T) {
 			}
 			reconciler := &ClusterCatalogReconciler{
 				Client: nil,
-				ImagePuller: &imageutil.MockPuller{
+				ImagePuller: &imageutil.FakePuller{
 					ImageFS: &fstest.MapFS{},
 					Ref:     ref,
 				},
-				Storage: &MockStore{},
+				Storage: newMockStore(mockCtrl, false),
 				storedCatalogs: map[string]storedCatalogData{
 					tc.catalog.Name: {
 						ref:                ref,
@@ -1132,14 +1110,15 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
 			scd := tc.storedCatalogData
 			if scd == nil {
 				scd = map[string]storedCatalogData{}
 			}
 			reconciler := &ClusterCatalogReconciler{
 				Client:         nil,
-				ImagePuller:    &imageutil.MockPuller{Error: errors.New("mockpuller error")},
-				Storage:        &MockStore{},
+				ImagePuller:    &imageutil.FakePuller{Error: errors.New("mockpuller error")},
+				Storage:        newMockStore(mockCtrl, false),
 				storedCatalogs: scd,
 			}
 			require.NoError(t, reconciler.setupFinalizers())
