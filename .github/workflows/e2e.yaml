@@ -80,7 +80,7 @@ jobs:
           name: ${{ matrix.test.name }}-artifacts
           path: /tmp/artifacts/
 
-      - uses: codecov/codecov-action@v6.0.1
+      - uses: codecov/codecov-action@v7.0.0
         if: matrix.test.use-codecov == true
         with:
           disable_search: true
