@@ -9,6 +9,7 @@ import (
 	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
@@ -22,7 +23,68 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
+	mockhelmclient "github.com/operator-framework/operator-controller/internal/testutil/mock/helmclient"
 )
+
+type mockActionGetterConfig struct {
+	actionClientForErr error
+	getClientErr       error
+	historyErr         error
+	installErr         error
+	dryRunInstallErr   error
+	upgradeErr         error
+	dryRunUpgradeErr   error
+	reconcileErr       error
+	desiredRel         *release.Release
+	currentRel         *release.Release
+	history            []*release.Release
+}
+
+func newMockActionGetter(ctrl *gomock.Controller, cfg mockActionGetterConfig) *mockhelmclient.MockActionClientGetterAndInterface {
+	m := mockhelmclient.NewMockActionClientGetterAndInterface(ctrl)
+
+	if cfg.actionClientForErr != nil {
+		m.EXPECT().ActionClientFor(gomock.Any(), gomock.Any()).Return(nil, cfg.actionClientForErr).AnyTimes()
+	} else {
+		m.EXPECT().ActionClientFor(gomock.Any(), gomock.Any()).Return(m, nil).AnyTimes()
+	}
+
+	m.EXPECT().Get(gomock.Any(), gomock.Any()).Return(cfg.currentRel, cfg.getClientErr).AnyTimes()
+	m.EXPECT().History(gomock.Any(), gomock.Any()).Return(cfg.history, cfg.historyErr).AnyTimes()
+	m.EXPECT().Config().Return(nil).AnyTimes()
+	m.EXPECT().Reconcile(gomock.Any()).Return(cfg.reconcileErr).AnyTimes()
+	m.EXPECT().Uninstall(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+
+	m.EXPECT().Install(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(name, ns string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.InstallOption) (*release.Release, error) {
+			i := action.Install{}
+			for _, opt := range opts {
+				if err := opt(&i); err != nil {
+					return nil, err
+				}
+			}
+			if i.DryRun {
+				return cfg.desiredRel, cfg.dryRunInstallErr
+			}
+			return cfg.desiredRel, cfg.installErr
+		}).AnyTimes()
+
+	m.EXPECT().Upgrade(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(name, ns string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.UpgradeOption) (*release.Release, error) {
+			u := action.Upgrade{}
+			for _, opt := range opts {
+				if err := opt(&u); err != nil {
+					return nil, err
+				}
+			}
+			if u.DryRun {
+				return cfg.desiredRel, cfg.dryRunUpgradeErr
+			}
+			return cfg.desiredRel, cfg.upgradeErr
+		}).AnyTimes()
+
+	return m
+}
 
 type mockTrackingCache struct {
 	watchErr error

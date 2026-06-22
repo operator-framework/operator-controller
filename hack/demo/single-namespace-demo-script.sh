@@ -21,12 +21,6 @@ kubectl rollout status -n olmv1-system deployment/operator-controller-controller
 # create install namespace
 kubectl create ns argocd-system
 
-# create installer service account
-kubectl create serviceaccount -n argocd-system argocd-installer
-
-# give installer service account admin privileges (not for production environments)
-kubectl create clusterrolebinding argocd-installer-crb --clusterrole=cluster-admin --serviceaccount=argocd-system:argocd-installer
-
 # create watch namespace
 kubectl create namespace argocd
 
@@ -58,7 +52,6 @@ echo "Demo completed successfully!"
 echo "Cleaning up demo resources..."
 kubectl delete clusterextension argocd-operator --ignore-not-found=true
 kubectl delete namespace argocd-system argocd --ignore-not-found=true
-kubectl delete clusterrolebinding argocd-installer-crb --ignore-not-found=true
 
 # restore standard manifests and reset deployment (removes experimental feature gates)
 echo "Restoring standard manifests..."

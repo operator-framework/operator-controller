@@ -15,13 +15,11 @@ import (
 	"go.uber.org/mock/gomock"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
-	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -109,9 +107,6 @@ func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 						},
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
-						Name: "default",
-					},
 				},
 			}
 			require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -150,9 +145,6 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 				},
 			},
 			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "default",
-			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -213,8 +205,7 @@ func TestClusterExtensionResolutionFailsWithDeprecationData(t *testing.T) {
 				SourceType: "Catalog",
 				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
 			},
-			Namespace:      "default",
-			ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+			Namespace: "default",
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -302,8 +293,7 @@ func TestClusterExtensionUpgradeShowsInstalledBundleDeprecation(t *testing.T) {
 				SourceType: "Catalog",
 				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
 			},
-			Namespace:      "default",
-			ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+			Namespace: "default",
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -402,8 +392,7 @@ func TestClusterExtensionUpgradeFromDeprecatedBundleClearsDeprecation(t *testing
 				SourceType: "Catalog",
 				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
 			},
-			Namespace:      "default",
-			ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+			Namespace: "default",
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -497,8 +486,7 @@ func TestClusterExtensionResolutionFailsWithoutCatalogDeprecationData(t *testing
 				SourceType: "Catalog",
 				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
 			},
-			Namespace:      "default",
-			ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+			Namespace: "default",
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -559,7 +547,6 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 			pkgVer := "1.0.0"
 			pkgChan := "beta"
 			namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-			serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 			clusterExtension := &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -573,9 +560,6 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 						},
 					},
 					Namespace: namespace,
-					ServiceAccount: ocv1.ServiceAccountReference{
-						Name: serviceAccount,
-					},
 				},
 			}
 			cl, reconciler := newClientAndReconciler(t,
@@ -684,7 +668,6 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -698,9 +681,6 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -808,9 +788,6 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 				},
 			},
 			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "default",
-			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -944,32 +921,6 @@ func TestValidateClusterExtension(t *testing.T) {
 			expectError:          true,
 			errorMessageIncludes: "validation error 1\nvalidation error 2",
 		},
-		{
-			name: "service account not found",
-			validators: []controllers.ClusterExtensionValidator{
-				// Create a different ServiceAccount to ensure "test-sa" is not found.
-				serviceAccountValidatorWithFakeClient(&corev1.ServiceAccount{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "not-test-sa",
-						Namespace: "test-ns",
-					},
-				}),
-			},
-			expectError:          true,
-			errorMessageIncludes: `service account "test-sa" not found in namespace "test-ns"`,
-		},
-		{
-			name: "service account found",
-			validators: []controllers.ClusterExtensionValidator{
-				serviceAccountValidatorWithFakeClient(&corev1.ServiceAccount{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-sa",
-						Namespace: "test-ns",
-					},
-				}),
-			},
-			expectError: false,
-		},
 	}
 
 	for _, tt := range tests {
@@ -993,9 +944,6 @@ func TestValidateClusterExtension(t *testing.T) {
 						},
 					},
 					Namespace: "test-ns",
-					ServiceAccount: ocv1.ServiceAccountReference{
-						Name: "test-sa",
-					},
 				},
 			}
 
@@ -1073,7 +1021,6 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -1087,9 +1034,6 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -1156,7 +1100,6 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -1170,9 +1113,6 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -1232,7 +1172,6 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -1247,9 +1186,6 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 				},
 			},
 			Namespace: installNamespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -1310,7 +1246,6 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -1324,9 +1259,6 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -1396,7 +1328,6 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -1410,9 +1341,6 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -2653,8 +2581,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 						// No version - should fall back
 					},
 				},
-				Namespace:      "default",
-				ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+				Namespace: "default",
 			},
 		}
 		require.NoError(t, cl.Create(ctx, ext))
@@ -2735,8 +2662,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 						Version:     "1.0.1", // Requesting upgrade
 					},
 				},
-				Namespace:      "default",
-				ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+				Namespace: "default",
 			},
 		}
 		require.NoError(t, cl.Create(ctx, ext))
@@ -2807,8 +2733,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 						// No version - auto-update to latest
 					},
 				},
-				Namespace:      "default",
-				ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+				Namespace: "default",
 			},
 		}
 		require.NoError(t, cl.Create(ctx, ext))
@@ -2907,8 +2832,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 						// No version specified
 					},
 				},
-				Namespace:      "default",
-				ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+				Namespace: "default",
 			},
 		}
 		require.NoError(t, cl.Create(ctx, ext))
@@ -3033,11 +2957,4 @@ func TestCheckCatalogsExist(t *testing.T) {
 		require.Contains(t, err.Error(), "invalid catalog selector")
 		require.False(t, exists)
 	})
-}
-
-func serviceAccountValidatorWithFakeClient(serviceAccount *corev1.ServiceAccount) controllers.ClusterExtensionValidator {
-	if serviceAccount == nil {
-		return controllers.ServiceAccountValidator(fake.NewClientset().CoreV1())
-	}
-	return controllers.ServiceAccountValidator(fake.NewClientset(serviceAccount).CoreV1())
 }

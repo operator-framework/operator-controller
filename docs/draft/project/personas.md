@@ -25,12 +25,11 @@ Here `extension` represents any individual OLMv1 installable, including (but not
 
 *What does it do?*
 
-- Creates enabling infrastructure for extension lifecycle (service accounts, etc.)
+- Creates enabling infrastructure for extension lifecycle (namespaces, etc.)
 - Installs extensions
 - Upgrades extensions
 - Removes extensions
 - Browses extensions offered in installed `ClusterCatalogs`
-- Derives minimum privilege for installation
 - filters visibility on installable extensions
 - Verifies that extension health is detectable to desired sensors
 

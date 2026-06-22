@@ -21,12 +21,6 @@ kubectl wait --for=condition=Serving clustercatalog/webhook-operator-catalog --t
 # create install namespace
 kubectl create ns webhook-operator
 
-# create installer service account
-kubectl create serviceaccount -n webhook-operator webhook-operator-installer
-
-# give installer service account admin privileges
-kubectl create clusterrolebinding webhook-operator-installer-crb --clusterrole=cluster-admin --serviceaccount=webhook-operator:webhook-operator-installer
-
 # install webhook operator clusterextension
 cat ${DEMO_RESOURCE_DIR}/webhook-provider-certmanager/webhook-operator-extension.yaml
 
