@@ -13,7 +13,7 @@ Feature: OLM v1 Demos
 
   @SingleOwnNamespaceInstallSupport
   Scenario: SingleNamespace Install Mode
-    Given ServiceAccount "mariadb-installer" in test namespace is cluster admin
+    Given namespace "${TEST_NAMESPACE}" is available
     And namespace is applied
       """
       apiVersion: v1
@@ -29,8 +29,6 @@ Feature: OLM v1 Demos
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: mariadb-installer
         config:
           configType: Inline
           inline:
@@ -47,7 +45,7 @@ Feature: OLM v1 Demos
 
   @SingleOwnNamespaceInstallSupport
   Scenario: OwnNamespace Install Mode
-    Given ServiceAccount "mariadb-installer" in test namespace is cluster admin
+    Given namespace "${TEST_NAMESPACE}" is available
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -56,8 +54,6 @@ Feature: OLM v1 Demos
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: mariadb-installer
         config:
           configType: Inline
           inline:
@@ -73,7 +69,7 @@ Feature: OLM v1 Demos
 
   @WebhookProviderCertManager
   Scenario: Webhook Support
-    Given ServiceAccount "sa-installer" in test namespace is cluster admin
+    Given namespace "${TEST_NAMESPACE}" is available
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -82,8 +78,6 @@ Feature: OLM v1 Demos
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: sa-installer
         source:
           sourceType: Catalog
           catalog:
