@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/fs"
 	"os"
 	"testing"
 	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
@@ -18,84 +18,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
-	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
+	mockapplier "github.com/operator-framework/operator-controller/internal/testutil/mock/applier"
+	mockauthorization "github.com/operator-framework/operator-controller/internal/testutil/mock/authorization"
+	mockcmcache "github.com/operator-framework/operator-controller/internal/testutil/mock/cmcache"
+	mockcontentmanager "github.com/operator-framework/operator-controller/internal/testutil/mock/contentmanager"
+	mockhelmclient "github.com/operator-framework/operator-controller/internal/testutil/mock/helmclient"
 )
 
-var _ contentmanager.Manager = (*mockManagedContentCacheManager)(nil)
-
-type mockManagedContentCacheManager struct {
-	err   error
-	cache cmcache.Cache
-}
-
-func (m *mockManagedContentCacheManager) Get(_ context.Context, _ *ocv1.ClusterExtension) (cmcache.Cache, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	return m.cache, nil
-}
-
-func (m *mockManagedContentCacheManager) Delete(_ *ocv1.ClusterExtension) error {
-	return m.err
-}
-
-type mockManagedContentCache struct {
-	err error
-}
-
-var _ cmcache.Cache = (*mockManagedContentCache)(nil)
-
-func (m *mockManagedContentCache) Close() error {
-	if m.err != nil {
-		return m.err
-	}
-	return nil
-}
-
-func (m *mockManagedContentCache) Watch(_ context.Context, _ cmcache.Watcher, _ ...client.Object) error {
-	if m.err != nil {
-		return m.err
-	}
-	return nil
-}
-
-type mockPreflight struct {
-	installErr error
-	upgradeErr error
-}
-
-type mockPreAuthorizer struct {
-	fn func(context.Context, user.Info, io.Reader, ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error)
-}
-
-func (p *mockPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-	return p.fn(ctx, manifestManager, manifestReader, additionalRequiredPerms...)
-}
-
-func (mp *mockPreflight) Install(context.Context, []client.Object) error {
-	return mp.installErr
-}
-
-func (mp *mockPreflight) Upgrade(context.Context, []client.Object) error {
-	return mp.upgradeErr
-}
-
-type mockHelmReleaseToObjectsConverter struct {
-}
-
-func (mockHelmReleaseToObjectsConverter) GetObjectsFromRelease(*release.Release) ([]client.Object, error) {
-	return nil, nil
-}
-
-type mockActionGetter struct {
+type mockActionGetterConfig struct {
 	actionClientForErr error
 	getClientErr       error
 	historyErr         error
@@ -109,54 +45,52 @@ type mockActionGetter struct {
 	history            []*release.Release
 }
 
-func (mag *mockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
-	return mag, mag.actionClientForErr
-}
+func newMockActionGetter(ctrl *gomock.Controller, cfg mockActionGetterConfig) *mockhelmclient.MockActionClientGetterAndInterface {
+	m := mockhelmclient.NewMockActionClientGetterAndInterface(ctrl)
 
-func (mag *mockActionGetter) Get(name string, opts ...helmclient.GetOption) (*release.Release, error) {
-	return mag.currentRel, mag.getClientErr
-}
-
-func (mag *mockActionGetter) History(name string, opts ...helmclient.HistoryOption) ([]*release.Release, error) {
-	return mag.history, mag.historyErr
-}
-
-func (mag *mockActionGetter) Install(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.InstallOption) (*release.Release, error) {
-	i := action.Install{}
-	for _, opt := range opts {
-		if err := opt(&i); err != nil {
-			return nil, err
-		}
+	if cfg.actionClientForErr != nil {
+		m.EXPECT().ActionClientFor(gomock.Any(), gomock.Any()).Return(nil, cfg.actionClientForErr).AnyTimes()
+	} else {
+		m.EXPECT().ActionClientFor(gomock.Any(), gomock.Any()).Return(m, nil).AnyTimes()
 	}
-	if i.DryRun {
-		return mag.desiredRel, mag.dryRunInstallErr
-	}
-	return mag.desiredRel, mag.installErr
-}
 
-func (mag *mockActionGetter) Upgrade(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.UpgradeOption) (*release.Release, error) {
-	i := action.Upgrade{}
-	for _, opt := range opts {
-		if err := opt(&i); err != nil {
-			return nil, err
-		}
-	}
-	if i.DryRun {
-		return mag.desiredRel, mag.dryRunUpgradeErr
-	}
-	return mag.desiredRel, mag.upgradeErr
-}
+	m.EXPECT().Get(gomock.Any(), gomock.Any()).Return(cfg.currentRel, cfg.getClientErr).AnyTimes()
+	m.EXPECT().History(gomock.Any(), gomock.Any()).Return(cfg.history, cfg.historyErr).AnyTimes()
+	m.EXPECT().Config().Return(nil).AnyTimes()
+	m.EXPECT().Reconcile(gomock.Any()).Return(cfg.reconcileErr).AnyTimes()
+	m.EXPECT().Uninstall(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 
-func (mag *mockActionGetter) Uninstall(name string, opts ...helmclient.UninstallOption) (*release.UninstallReleaseResponse, error) {
-	return nil, nil
-}
+	// Install with dry-run support
+	m.EXPECT().Install(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(name, ns string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.InstallOption) (*release.Release, error) {
+			i := action.Install{}
+			for _, opt := range opts {
+				if err := opt(&i); err != nil {
+					return nil, err
+				}
+			}
+			if i.DryRun {
+				return cfg.desiredRel, cfg.dryRunInstallErr
+			}
+			return cfg.desiredRel, cfg.installErr
+		}).AnyTimes()
 
-func (mag *mockActionGetter) Reconcile(rel *release.Release) error {
-	return mag.reconcileErr
-}
+	// Upgrade with dry-run support
+	m.EXPECT().Upgrade(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(name, ns string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.UpgradeOption) (*release.Release, error) {
+			u := action.Upgrade{}
+			for _, opt := range opts {
+				if err := opt(&u); err != nil {
+					return nil, err
+				}
+			}
+			if u.DryRun {
+				return cfg.desiredRel, cfg.dryRunUpgradeErr
+			}
+			return cfg.desiredRel, cfg.upgradeErr
+		}).AnyTimes()
 
-func (mag *mockActionGetter) Config() *action.Configuration {
-	return nil
+	return m
 }
 
 var (
@@ -250,10 +184,11 @@ func TestApply_Base(t *testing.T) {
 	})
 
 	t.Run("fails trying to obtain an action client", func(t *testing.T) {
-		mockAcg := &mockActionGetter{actionClientForErr: errors.New("failed getting action client")}
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{actionClientForErr: errors.New("failed getting action client")})
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			HelmChartProvider:  DummyHelmChartProvider,
+			HelmChartProvider:  newDummyHelmChartProvider(ctrl),
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -264,10 +199,11 @@ func TestApply_Base(t *testing.T) {
 	})
 
 	t.Run("fails getting current release and !driver.ErrReleaseNotFound", func(t *testing.T) {
-		mockAcg := &mockActionGetter{getClientErr: errors.New("failed getting current release")}
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{getClientErr: errors.New("failed getting current release")})
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			HelmChartProvider:  DummyHelmChartProvider,
+			HelmChartProvider:  newDummyHelmChartProvider(ctrl),
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -280,13 +216,14 @@ func TestApply_Base(t *testing.T) {
 
 func TestApply_Installation(t *testing.T) {
 	t.Run("fails during dry-run installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr:     driver.ErrReleaseNotFound,
 			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
-		}
+		})
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			HelmChartProvider:  DummyHelmChartProvider,
+			HelmChartProvider:  newDummyHelmChartProvider(ctrl),
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -297,16 +234,23 @@ func TestApply_Installation(t *testing.T) {
 	})
 
 	t.Run("fails during pre-flight installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
-		}
-		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
+		})
+		mockPf := mockapplier.NewMockPreflight(ctrl)
+		mockPf.EXPECT().Install(gomock.Any(), gomock.Any()).Return(errors.New("failed during install pre-flight check")).AnyTimes()
+		mockPf.EXPECT().Upgrade(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
 		helmApplier := applier.Helm{
 			ActionClientGetter:            mockAcg,
 			Preflights:                    []applier.Preflight{mockPf},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -317,14 +261,18 @@ func TestApply_Installation(t *testing.T) {
 	})
 
 	t.Run("fails during installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
-		}
+		})
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
 		helmApplier := applier.Helm{
 			ActionClientGetter:            mockAcg,
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -335,20 +283,30 @@ func TestApply_Installation(t *testing.T) {
 	})
 
 	t.Run("successful installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr: driver.ErrReleaseNotFound,
 			desiredRel: &release.Release{
 				Info:     &release.Info{Status: release.StatusDeployed},
 				Manifest: validManifest,
 			},
-		}
+		})
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
+		mockCache := mockcmcache.NewMockCache(ctrl)
+		mockCache.EXPECT().Close().Return(nil).AnyTimes()
+		mockCache.EXPECT().Watch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockMgr := mockcontentmanager.NewMockManager(ctrl)
+		mockMgr.EXPECT().Get(gomock.Any(), gomock.Any()).Return(mockCache, nil).AnyTimes()
+		mockMgr.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
+
 		helmApplier := applier.Helm{
 			ActionClientGetter:            mockAcg,
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
+			Manager:                       mockMgr,
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -360,45 +318,54 @@ func TestApply_Installation(t *testing.T) {
 
 func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 	t.Run("preauthorizer called with correct parameters", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
 			desiredRel: &release.Release{
 				Info:     &release.Info{Status: release.StatusDeployed},
 				Manifest: validManifest,
 			},
-		}
-		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
+		})
+		mockPf := mockapplier.NewMockPreflight(ctrl)
+		mockPf.EXPECT().Install(gomock.Any(), gomock.Any()).Return(errors.New("failed during install pre-flight check")).AnyTimes()
+		mockPf.EXPECT().Upgrade(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+		mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+			func(ctx context.Context, userInfo user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+				t.Log("has correct user")
+				require.Equal(t, "system:serviceaccount:test-namespace:test-sa", userInfo.GetName())
+				require.Empty(t, userInfo.GetUID())
+				require.Nil(t, userInfo.GetExtra())
+				require.Empty(t, userInfo.GetGroups())
+
+				t.Log("has correct additional permissions")
+				require.Len(t, additionalRequiredPerms, 1)
+				perms := additionalRequiredPerms[0](userInfo)
+
+				require.Len(t, perms, 1)
+				require.Equal(t, authorizer.AttributesRecord{
+					User:            userInfo,
+					Name:            "test-ext",
+					APIGroup:        "olm.operatorframework.io",
+					APIVersion:      "v1",
+					Resource:        "clusterextensions/finalizers",
+					ResourceRequest: true,
+					Verb:            "update",
+				}, perms[0])
+				return nil, nil
+			}).AnyTimes()
+
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
 		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			Preflights:         []applier.Preflight{mockPf},
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					t.Log("has correct user")
-					require.Equal(t, "system:serviceaccount:test-namespace:test-sa", user.GetName())
-					require.Empty(t, user.GetUID())
-					require.Nil(t, user.GetExtra())
-					require.Empty(t, user.GetGroups())
-
-					t.Log("has correct additional permissions")
-					require.Len(t, additionalRequiredPerms, 1)
-					perms := additionalRequiredPerms[0](user)
-
-					require.Len(t, perms, 1)
-					require.Equal(t, authorizer.AttributesRecord{
-						User:            user,
-						Name:            "test-ext",
-						APIGroup:        "olm.operatorframework.io",
-						APIVersion:      "v1",
-						Resource:        "clusterextensions/finalizers",
-						ResourceRequest: true,
-						Verb:            "update",
-					}, perms[0])
-					return nil, nil
-				},
-			},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			ActionClientGetter:            mockAcg,
+			Preflights:                    []applier.Preflight{mockPf},
+			PreAuthorizer:                 mockPA,
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
 		}
 
 		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -406,13 +373,14 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 	})
 
 	t.Run("fails during dry-run installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr:     driver.ErrReleaseNotFound,
 			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
-		}
+		})
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			HelmChartProvider:  DummyHelmChartProvider,
+			HelmChartProvider:  newDummyHelmChartProvider(ctrl),
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -423,25 +391,31 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 	})
 
 	t.Run("fails during pre-flight installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
 			desiredRel: &release.Release{
 				Info:     &release.Info{Status: release.StatusDeployed},
 				Manifest: validManifest,
 			},
-		}
-		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
+		})
+		mockPf := mockapplier.NewMockPreflight(ctrl)
+		mockPf.EXPECT().Install(gomock.Any(), gomock.Any()).Return(errors.New("failed during install pre-flight check")).AnyTimes()
+		mockPf.EXPECT().Upgrade(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+		mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
 		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			Preflights:         []applier.Preflight{mockPf},
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					return nil, nil
-				},
-			},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			ActionClientGetter:            mockAcg,
+			Preflights:                    []applier.Preflight{mockPf},
+			PreAuthorizer:                 mockPA,
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -452,21 +426,21 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 	})
 
 	t.Run("fails during installation because of pre-authorization failure", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr: driver.ErrReleaseNotFound,
 			desiredRel: &release.Release{
 				Info:     &release.Info{Status: release.StatusDeployed},
 				Manifest: validManifest,
 			},
-		}
+		})
+		mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+		mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errPreAuth).AnyTimes()
+
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					return nil, errPreAuth
-				},
-			},
-			HelmChartProvider: DummyHelmChartProvider,
+			PreAuthorizer:      mockPA,
+			HelmChartProvider:  newDummyHelmChartProvider(ctrl),
 		}
 		// Use a ClusterExtension with valid Spec fields.
 		validCE := &ocv1.ClusterExtension{
@@ -485,21 +459,21 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 	})
 
 	t.Run("fails during installation due to missing RBAC rules", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr: driver.ErrReleaseNotFound,
 			desiredRel: &release.Release{
 				Info:     &release.Info{Status: release.StatusDeployed},
 				Manifest: validManifest,
 			},
-		}
+		})
+		mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+		mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(missingRBAC, nil).AnyTimes()
+
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					return missingRBAC, nil
-				},
-			},
-			HelmChartProvider: DummyHelmChartProvider,
+			PreAuthorizer:      mockPA,
+			HelmChartProvider:  newDummyHelmChartProvider(ctrl),
 		}
 		// Use a ClusterExtension with valid Spec fields.
 		validCE := &ocv1.ClusterExtension{
@@ -518,25 +492,34 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 	})
 
 	t.Run("successful installation", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			getClientErr: driver.ErrReleaseNotFound,
 			desiredRel: &release.Release{
 				Info:     &release.Info{Status: release.StatusDeployed},
 				Manifest: validManifest,
 			},
-		}
+		})
+		mockPA := mockauthorization.NewMockPreAuthorizer(ctrl)
+		mockPA.EXPECT().PreAuthorize(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
+		mockCache := mockcmcache.NewMockCache(ctrl)
+		mockCache.EXPECT().Close().Return(nil).AnyTimes()
+		mockCache.EXPECT().Watch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockMgr := mockcontentmanager.NewMockManager(ctrl)
+		mockMgr.EXPECT().Get(gomock.Any(), gomock.Any()).Return(mockCache, nil).AnyTimes()
+		mockMgr.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
+
 		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg,
-			PreAuthorizer: &mockPreAuthorizer{
-				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
-					return nil, nil
-				},
-			},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			ActionClientGetter:            mockAcg,
+			PreAuthorizer:                 mockPA,
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
+			Manager:                       mockMgr,
 		}
 
 		// Use a ClusterExtension with valid Spec fields.
@@ -562,12 +545,13 @@ func TestApply_Upgrade(t *testing.T) {
 	}
 
 	t.Run("fails during dry-run upgrade", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
+		ctrl := gomock.NewController(t)
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			dryRunUpgradeErr: errors.New("failed attempting to dry-run upgrade chart"),
-		}
+		})
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			HelmChartProvider:  DummyHelmChartProvider,
+			HelmChartProvider:  newDummyHelmChartProvider(ctrl),
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -578,20 +562,27 @@ func TestApply_Upgrade(t *testing.T) {
 	})
 
 	t.Run("fails during pre-flight upgrade", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
 		testDesiredRelease := *testCurrentRelease
 		testDesiredRelease.Manifest = "do-not-match-current"
 
-		mockAcg := &mockActionGetter{
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			upgradeErr: errors.New("failed upgrading chart"),
 			currentRel: testCurrentRelease,
 			desiredRel: &testDesiredRelease,
-		}
-		mockPf := &mockPreflight{upgradeErr: errors.New("failed during upgrade pre-flight check")}
+		})
+		mockPf := mockapplier.NewMockPreflight(ctrl)
+		mockPf.EXPECT().Install(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		mockPf.EXPECT().Upgrade(gomock.Any(), gomock.Any()).Return(errors.New("failed during upgrade pre-flight check")).AnyTimes()
+
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
 		helmApplier := applier.Helm{
 			ActionClientGetter:            mockAcg,
 			Preflights:                    []applier.Preflight{mockPf},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -602,19 +593,27 @@ func TestApply_Upgrade(t *testing.T) {
 	})
 
 	t.Run("fails during upgrade", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
 		testDesiredRelease := *testCurrentRelease
 		testDesiredRelease.Manifest = "do-not-match-current"
 
-		mockAcg := &mockActionGetter{
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			upgradeErr: errors.New("failed upgrading chart"),
 			currentRel: testCurrentRelease,
 			desiredRel: &testDesiredRelease,
-		}
-		mockPf := &mockPreflight{}
+		})
+		mockPf := mockapplier.NewMockPreflight(ctrl)
+		mockPf.EXPECT().Install(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		mockPf.EXPECT().Upgrade(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
 		helmApplier := applier.Helm{
-			ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			ActionClientGetter:            mockAcg,
+			Preflights:                    []applier.Preflight{mockPf},
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -625,20 +624,27 @@ func TestApply_Upgrade(t *testing.T) {
 	})
 
 	t.Run("fails during upgrade reconcile (StateUnchanged)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
 		// make sure desired and current are the same this time
 		testDesiredRelease := *testCurrentRelease
 
-		mockAcg := &mockActionGetter{
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			reconcileErr: errors.New("failed reconciling charts"),
 			currentRel:   testCurrentRelease,
 			desiredRel:   &testDesiredRelease,
-		}
-		mockPf := &mockPreflight{}
+		})
+		mockPf := mockapplier.NewMockPreflight(ctrl)
+		mockPf.EXPECT().Install(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		mockPf.EXPECT().Upgrade(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
 		helmApplier := applier.Helm{
 			ActionClientGetter:            mockAcg,
 			Preflights:                    []applier.Preflight{mockPf},
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -649,20 +655,30 @@ func TestApply_Upgrade(t *testing.T) {
 	})
 
 	t.Run("successful upgrade", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
 		testDesiredRelease := *testCurrentRelease
 		testDesiredRelease.Manifest = validManifest
 
-		mockAcg := &mockActionGetter{
+		mockAcg := newMockActionGetter(ctrl, mockActionGetterConfig{
 			currentRel: testCurrentRelease,
 			desiredRel: &testDesiredRelease,
-		}
+		})
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
+		mockCache := mockcmcache.NewMockCache(ctrl)
+		mockCache.EXPECT().Close().Return(nil).AnyTimes()
+		mockCache.EXPECT().Watch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockMgr := mockcontentmanager.NewMockManager(ctrl)
+		mockMgr.EXPECT().Get(gomock.Any(), gomock.Any()).Return(mockCache, nil).AnyTimes()
+		mockMgr.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
+
 		helmApplier := applier.Helm{
 			ActionClientGetter:            mockAcg,
-			HelmChartProvider:             DummyHelmChartProvider,
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			HelmChartProvider:             newDummyHelmChartProvider(ctrl),
+			HelmReleaseToObjectsConverter: mockConverter,
+			Manager:                       mockMgr,
 		}
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -674,46 +690,62 @@ func TestApply_Upgrade(t *testing.T) {
 
 func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 	t.Run("generates bundle resources in AllNamespaces install mode", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+
+		mockChartProvider := mockapplier.NewMockHelmChartProvider(ctrl)
+		mockChartProvider.EXPECT().Get(gomock.Any(), testCE).Return(nil, nil).Times(1)
+
+		mockConverter := mockapplier.NewMockHelmReleaseToObjectsConverterInterface(ctrl)
+		mockConverter.EXPECT().GetObjectsFromRelease(gomock.Any()).Return(nil, nil).AnyTimes()
+
+		mockCache := mockcmcache.NewMockCache(ctrl)
+		mockCache.EXPECT().Close().Return(nil).AnyTimes()
+		mockCache.EXPECT().Watch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockMgr := mockcontentmanager.NewMockManager(ctrl)
+		mockMgr.EXPECT().Get(gomock.Any(), gomock.Any()).Return(mockCache, nil).AnyTimes()
+		mockMgr.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
+
 		helmApplier := applier.Helm{
-			ActionClientGetter: &mockActionGetter{
+			ActionClientGetter: newMockActionGetter(ctrl, mockActionGetterConfig{
 				getClientErr: driver.ErrReleaseNotFound,
 				desiredRel: &release.Release{
 					Info:     &release.Info{Status: release.StatusDeployed},
 					Manifest: validManifest,
 				},
-			},
-			HelmChartProvider: &FakeHelmChartProvider{
-				fn: func(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
-					require.Equal(t, testCE, ext)
-					return nil, nil
-				},
-			},
-			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			}),
+			HelmChartProvider:             mockChartProvider,
+			HelmReleaseToObjectsConverter: mockConverter,
+			Manager:                       mockMgr,
 		}
 
 		_, _, _ = helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 	})
 
 	t.Run("surfaces chart generation errors", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+
+		mockChartProvider := mockapplier.NewMockHelmChartProvider(ctrl)
+		mockChartProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, errors.New("some error")).AnyTimes()
+
+		mockCache := mockcmcache.NewMockCache(ctrl)
+		mockCache.EXPECT().Close().Return(nil).AnyTimes()
+		mockCache.EXPECT().Watch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		mockMgr := mockcontentmanager.NewMockManager(ctrl)
+		mockMgr.EXPECT().Get(gomock.Any(), gomock.Any()).Return(mockCache, nil).AnyTimes()
+		mockMgr.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
+
 		helmApplier := applier.Helm{
-			ActionClientGetter: &mockActionGetter{
+			ActionClientGetter: newMockActionGetter(ctrl, mockActionGetterConfig{
 				getClientErr: driver.ErrReleaseNotFound,
 				desiredRel: &release.Release{
 					Info:     &release.Info{Status: release.StatusDeployed},
 					Manifest: validManifest,
 				},
-			},
-			HelmChartProvider: &FakeHelmChartProvider{
-				fn: func(bundleFs fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
-					return nil, errors.New("some error")
-				},
-			},
-			Manager: &mockManagedContentCacheManager{
-				cache: &mockManagedContentCache{},
-			},
+			}),
+			HelmChartProvider: mockChartProvider,
+			Manager:           mockMgr,
 		}
 
 		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -721,16 +753,8 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 	})
 }
 
-type FakeHelmChartProvider struct {
-	fn func(fs.FS, *ocv1.ClusterExtension) (*chart.Chart, error)
-}
-
-func (f FakeHelmChartProvider) Get(bundle fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
-	return f.fn(bundle, ext)
-}
-
-var DummyHelmChartProvider = &FakeHelmChartProvider{
-	fn: func(fs fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
-		return &chart.Chart{}, nil
-	},
+func newDummyHelmChartProvider(ctrl *gomock.Controller) *mockapplier.MockHelmChartProvider {
+	m := mockapplier.NewMockHelmChartProvider(ctrl)
+	m.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&chart.Chart{}, nil).AnyTimes()
+	return m
 }

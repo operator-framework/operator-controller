@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
@@ -34,6 +35,7 @@ func newSchemeWithCoreV1(t *testing.T) *apimachineryruntime.Scheme {
 }
 
 func TestResolveObjectRef_PlainJSON(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
 	cmObj := map[string]interface{}{
@@ -70,15 +72,15 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
 
-	mockEngine := &mockRevisionEngine{
-		reconcile: func(_ context.Context, _ machinerytypes.Revision, _ ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
-			return mockRevisionResult{}, nil
-		},
-	}
+	mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+		func(_ context.Context, _ machinerytypes.Revision, _ ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			return newMockRevisionResult(mockCtrl, revisionResultConfig{}), nil
+		}, nil,
+	)
 	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
-		RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-		TrackingCache:         &mockTrackingCache{client: fakeClient},
+		RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+		TrackingCache:         newMockTrackingCache(mockCtrl, fakeClient, nil),
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 
@@ -89,6 +91,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 }
 
 func TestResolveObjectRef_GzipCompressed(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
 	cmObj := map[string]interface{}{
@@ -132,15 +135,15 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
 
-	mockEngine := &mockRevisionEngine{
-		reconcile: func(_ context.Context, _ machinerytypes.Revision, _ ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
-			return mockRevisionResult{}, nil
-		},
-	}
+	mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+		func(_ context.Context, _ machinerytypes.Revision, _ ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			return newMockRevisionResult(mockCtrl, revisionResultConfig{}), nil
+		}, nil,
+	)
 	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
-		RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-		TrackingCache:         &mockTrackingCache{client: fakeClient},
+		RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+		TrackingCache:         newMockTrackingCache(mockCtrl, fakeClient, nil),
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 
@@ -151,6 +154,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 }
 
 func TestResolveObjectRef_SecretNotFound(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
 	cos := newRefTestCOS("ref-notfound-1", ocv1.ObjectSourceRef{
@@ -167,8 +171,8 @@ func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 
 	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
-		RevisionEngineFactory: &mockRevisionEngineFactory{engine: &mockRevisionEngine{}},
-		TrackingCache:         &mockTrackingCache{client: fakeClient},
+		RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, newNoopMockRevisionEngine(mockCtrl), nil),
+		TrackingCache:         newMockTrackingCache(mockCtrl, fakeClient, nil),
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 
@@ -180,6 +184,7 @@ func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 }
 
 func TestResolveObjectRef_KeyNotFound(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
 	secret := &corev1.Secret{
@@ -207,8 +212,8 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 
 	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
-		RevisionEngineFactory: &mockRevisionEngineFactory{engine: &mockRevisionEngine{}},
-		TrackingCache:         &mockTrackingCache{client: fakeClient},
+		RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, newNoopMockRevisionEngine(mockCtrl), nil),
+		TrackingCache:         newMockTrackingCache(mockCtrl, fakeClient, nil),
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 
@@ -220,6 +225,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 }
 
 func TestResolveObjectRef_InvalidJSON(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
 	secret := &corev1.Secret{
@@ -247,8 +253,8 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 
 	reconciler := &controllers.ClusterObjectSetReconciler{
 		Client:                fakeClient,
-		RevisionEngineFactory: &mockRevisionEngineFactory{engine: &mockRevisionEngine{}},
-		TrackingCache:         &mockTrackingCache{client: fakeClient},
+		RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, newNoopMockRevisionEngine(mockCtrl), nil),
+		TrackingCache:         newMockTrackingCache(mockCtrl, fakeClient, nil),
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 

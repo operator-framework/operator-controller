@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
@@ -14,6 +15,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
+	mockconfig "github.com/operator-framework/operator-controller/internal/testutil/mock/config"
 )
 
 func Test_UnmarshalConfig(t *testing.T) {
@@ -353,8 +355,10 @@ func Test_UnmarshalConfig_EmptySchema(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			noSchemaBundle := &mockNoSchemaBundle{}
-			schema, err := noSchemaBundle.GetConfigSchema()
+			ctrl := gomock.NewController(t)
+			mockProvider := mockconfig.NewMockSchemaProvider(ctrl)
+			mockProvider.EXPECT().GetConfigSchema().Return(nil, nil)
+			schema, err := mockProvider.GetConfigSchema()
 			require.NoError(t, err)
 
 			config, err := config.UnmarshalConfig(tc.rawConfig, schema, "my-namespace")
@@ -535,9 +539,17 @@ func Test_UnmarshalConfig_HelmLike(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			// Create a mock Helm package (real Helm would read values.schema.json)
-			helmBundle := &mockHelmBundle{schema: tc.helmSchema}
-			schema, err := helmBundle.GetConfigSchema()
+			ctrl := gomock.NewController(t)
+			mockProvider := mockconfig.NewMockSchemaProvider(ctrl)
+
+			// Pre-unmarshal the schema string, mimicking what a real Helm bundle would do
+			var schemaMap map[string]any
+			if tc.helmSchema != "" {
+				require.NoError(t, json.Unmarshal([]byte(tc.helmSchema), &schemaMap))
+			}
+			mockProvider.EXPECT().GetConfigSchema().Return(schemaMap, nil)
+
+			schema, err := mockProvider.GetConfigSchema()
 			require.NoError(t, err)
 
 			// Same validation function works for Helm, registry+v1, registry+v2, etc.
@@ -559,42 +571,8 @@ func Test_UnmarshalConfig_HelmLike(t *testing.T) {
 	}
 }
 
-// mockHelmBundle shows how Helm would plug into the validation system.
-//
-// Real implementation would:
-//  1. Read values.schema.json from the Helm chart package
-//  2. Parse it into a map[string]any
-//  3. Return it (just like registry+v1 returns its generated schema)
-//  4. Let the shared validation logic handle the rest
-type mockHelmBundle struct {
-	schema string
-}
-
-// GetConfigSchema returns the schema (in real Helm, read from values.schema.json).
-func (h *mockHelmBundle) GetConfigSchema() (map[string]any, error) {
-	if h.schema == "" {
-		return nil, nil
-	}
-	var schemaMap map[string]any
-	if err := json.Unmarshal([]byte(h.schema), &schemaMap); err != nil {
-		return nil, err
-	}
-	return schemaMap, nil
-}
-
-// mockNoSchemaBundle represents a bundle that doesn't provide a configuration schema.
-type mockNoSchemaBundle struct{}
-
-func (e *mockNoSchemaBundle) GetConfigSchema() (map[string]any, error) {
-	// Return nil to indicate "no schema" (skip validation)
-	return nil, nil
-}
-
 // Test_GetDeploymentConfig tests the GetDeploymentConfig accessor method.
 func Test_GetDeploymentConfig(t *testing.T) {
-	// Create a bundle that returns nil schema (no validation)
-	bundle := &mockNoSchemaBundle{}
-
 	tests := []struct {
 		name                        string
 		rawConfig                   []byte
@@ -646,7 +624,10 @@ func Test_GetDeploymentConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			schema, err := bundle.GetConfigSchema()
+			ctrl := gomock.NewController(t)
+			mockProvider := mockconfig.NewMockSchemaProvider(ctrl)
+			mockProvider.EXPECT().GetConfigSchema().Return(nil, nil)
+			schema, err := mockProvider.GetConfigSchema()
 			require.NoError(t, err)
 
 			cfg, err := config.UnmarshalConfig(tt.rawConfig, schema, "")
@@ -681,7 +662,10 @@ func Test_GetDeploymentConfig(t *testing.T) {
 			}
 		}`)
 
-		schema, err := bundle.GetConfigSchema()
+		ctrl := gomock.NewController(t)
+		mockProvider := mockconfig.NewMockSchemaProvider(ctrl)
+		mockProvider.EXPECT().GetConfigSchema().Return(nil, nil)
+		schema, err := mockProvider.GetConfigSchema()
 		require.NoError(t, err)
 
 		cfg, err := config.UnmarshalConfig(rawConfig, schema, "")

@@ -12,8 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
+	"go.uber.org/mock/gomock"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
@@ -29,7 +28,6 @@ import (
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -41,6 +39,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
+	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
+	mockhelmclient "github.com/operator-framework/operator-controller/internal/testutil/mock/helmclient"
 )
 
 // Describe: ClusterExtension Controller Test
@@ -58,9 +58,7 @@ func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 	installedBundleGetterCalledErr := errors.New("revision states getter called")
 
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			Err: installedBundleGetterCalledErr,
-		}
+		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), nil, installedBundleGetterCalledErr)
 	})
 
 	checkInstalledBundleGetterCalled := func(t require.TestingT, err error, args ...interface{}) {
@@ -282,20 +280,18 @@ func TestClusterExtensionUpgradeShowsInstalledBundleDeprecation(t *testing.T) {
 					}},
 				}, nil
 		})
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
-					Package: pkgName,
-					BundleMetadata: ocv1.BundleMetadata{
-						Name:    installedBundleName, // v1.0.0 installed
-						Version: "1.0.0",
-					},
-					Image: fmt.Sprintf("quay.io/example/%s@sha256:installed100", pkgName),
+		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+			Installed: &controllers.RevisionMetadata{
+				Package: pkgName,
+				BundleMetadata: ocv1.BundleMetadata{
+					Name:    installedBundleName, // v1.0.0 installed
+					Version: "1.0.0",
 				},
+				Image: fmt.Sprintf("quay.io/example/%s@sha256:installed100", pkgName),
 			},
-		}
-		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
-		d.Applier = &MockApplier{}
+		}, nil)
+		d.ImagePuller = &imageutil.FakePuller{ImageFS: fstest.MapFS{}}
+		d.Applier = newMockApplier(gomock.NewController(t), false, nil)
 	})
 
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
@@ -384,20 +380,18 @@ func TestClusterExtensionUpgradeFromDeprecatedBundleClearsDeprecation(t *testing
 					}},
 				}, nil
 		})
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
-					Package: pkgName,
-					BundleMetadata: ocv1.BundleMetadata{
-						Name:    installedBundleName,
-						Version: "1.0.1",
-					},
-					Image: fmt.Sprintf("quay.io/example/%s@sha256:installed101", pkgName),
+		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+			Installed: &controllers.RevisionMetadata{
+				Package: pkgName,
+				BundleMetadata: ocv1.BundleMetadata{
+					Name:    installedBundleName,
+					Version: "1.0.1",
 				},
+				Image: fmt.Sprintf("quay.io/example/%s@sha256:installed101", pkgName),
 			},
-		}
-		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
-		d.Applier = &MockApplier{installCompleted: true}
+		}, nil)
+		d.ImagePuller = &imageutil.FakePuller{ImageFS: fstest.MapFS{}}
+		d.Applier = newMockApplier(gomock.NewController(t), true, nil)
 	})
 
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
@@ -469,18 +463,16 @@ func TestClusterExtensionResolutionFailsWithoutCatalogDeprecationData(t *testing
 			return nil, nil, nil, fmt.Errorf("no bundles found for package %q", pkgName)
 		})
 
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
-					Package: pkgName,
-					BundleMetadata: ocv1.BundleMetadata{
-						Name:    installedBundleName,
-						Version: "1.0.0",
-					},
-					Image: "example.com/installed@sha256:deadbeef",
+		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+			Installed: &controllers.RevisionMetadata{
+				Package: pkgName,
+				BundleMetadata: ocv1.BundleMetadata{
+					Name:    installedBundleName,
+					Version: "1.0.0",
 				},
+				Image: "example.com/installed@sha256:deadbeef",
 			},
-		}
+		}, nil)
 	})
 
 	// Create a ClusterCatalog so CheckCatalogsExist returns true, causing retry instead of fallback
@@ -588,7 +580,7 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 			}
 			cl, reconciler := newClientAndReconciler(t,
 				func(d *deps) {
-					d.ImagePuller = &imageutil.MockPuller{
+					d.ImagePuller = &imageutil.FakePuller{
 						Error: tc.pullErr,
 					}
 				},
@@ -667,7 +659,7 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t,
 		func(d *deps) {
-			d.ImagePuller = &imageutil.MockPuller{
+			d.ImagePuller = &imageutil.FakePuller{
 				ImageFS: fstest.MapFS{},
 			}
 			d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
@@ -680,9 +672,7 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 					Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 				}, &v, nil, nil
 			})
-			d.Applier = &MockApplier{
-				err: errors.New("apply failure"),
-			}
+			d.Applier = newMockApplier(gomock.NewController(t), false, errors.New("apply failure"))
 		})
 
 	ctx := context.Background()
@@ -785,11 +775,9 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
 		// Boxcutter keeps a rolling revision when apply fails. We mirror that state so the test uses
 		// the same inputs the runtime would see.
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				RollingOut: []*controllers.RevisionMetadata{{}},
-			},
-		}
+		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+			RollingOut: []*controllers.RevisionMetadata{{}},
+		}, nil)
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
 			v := bundle.VersionRelease{
 				Version: bsemver.MustParse("1.0.0"),
@@ -800,8 +788,8 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
-		d.Applier = &MockApplier{err: errors.New("boxcutter apply failure")}
+		d.ImagePuller = &imageutil.FakePuller{ImageFS: fstest.MapFS{}}
+		d.Applier = newMockApplier(gomock.NewController(t), false, errors.New("boxcutter apply failure"))
 	})
 
 	ctx := context.Background()
@@ -989,9 +977,7 @@ func TestValidateClusterExtension(t *testing.T) {
 			ctx := context.Background()
 
 			cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-				d.RevisionStatesGetter = &MockRevisionStatesGetter{
-					RevisionStates: &controllers.RevisionStates{},
-				}
+				d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{}, nil)
 				d.Validators = tt.validators
 			})
 
@@ -1047,11 +1033,15 @@ func TestValidateClusterExtension(t *testing.T) {
 }
 
 func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
-	mockApplier := &MockApplier{
-		installCompleted: true,
-	}
+	// This test calls Reconcile twice: first with a successful applier,
+	// then with a failing applier. We use gomock.InOrder to sequence the calls.
+	mockCtrl := gomock.NewController(t)
+	applier := mockcontrollers.NewMockApplier(mockCtrl)
+	firstCall := applier.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, "", nil)
+	applier.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(false, "", errors.New("apply failure")).After(firstCall)
+
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.ImagePuller = &imageutil.MockPuller{
+		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
@@ -1065,15 +1055,13 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 			}, &v, nil, nil
 		})
 
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
-					BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
-					Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
-				},
+		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+			Installed: &controllers.RevisionMetadata{
+				BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
+				Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
 			},
-		}
-		d.Applier = mockApplier
+		}, nil)
+		d.Applier = applier
 	})
 
 	ctx := context.Background()
@@ -1114,9 +1102,6 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 	require.Equal(t, ctrl.Result{}, res)
 	require.NoError(t, err)
 
-	mockApplier.installCompleted = false
-	mockApplier.err = errors.New("apply failure")
-
 	res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
 	require.Error(t, err)
@@ -1146,7 +1131,7 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 
 func TestClusterExtensionManagerFailed(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.ImagePuller = &imageutil.MockPuller{
+		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
@@ -1159,10 +1144,7 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		d.Applier = &MockApplier{
-			installCompleted: true,
-			err:              errors.New("manager fail"),
-		}
+		d.Applier = newMockApplier(gomock.NewController(t), true, errors.New("manager fail"))
 	})
 
 	ctx := context.Background()
@@ -1225,7 +1207,7 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 
 func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.ImagePuller = &imageutil.MockPuller{
+		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
@@ -1238,10 +1220,7 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		d.Applier = &MockApplier{
-			installCompleted: true,
-			err:              errors.New("watch error"),
-		}
+		d.Applier = newMockApplier(gomock.NewController(t), true, errors.New("watch error"))
 	})
 
 	ctx := context.Background()
@@ -1306,7 +1285,7 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 
 func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.ImagePuller = &imageutil.MockPuller{
+		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
@@ -1319,9 +1298,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		d.Applier = &MockApplier{
-			installCompleted: true,
-		}
+		d.Applier = newMockApplier(gomock.NewController(t), true, nil)
 	})
 
 	ctx := context.Background()
@@ -1387,7 +1364,7 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 	finalizersMessage := "still have finalizers"
 	var rfinalizers crfinalizer.Finalizers
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.ImagePuller = &imageutil.MockPuller{
+		d.ImagePuller = &imageutil.FakePuller{
 			ImageFS: fstest.MapFS{},
 		}
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
@@ -1400,17 +1377,13 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		d.Applier = &MockApplier{
-			installCompleted: true,
-		}
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
-					BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
-					Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
-				},
+		d.Applier = newMockApplier(gomock.NewController(t), true, nil)
+		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+			Installed: &controllers.RevisionMetadata{
+				BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
+				Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
 			},
-		}
+		}, nil)
 		rfinalizers = d.Finalizers
 	})
 
@@ -2524,75 +2497,35 @@ func filterDeprecationConditions(conditions []metav1.Condition) []metav1.Conditi
 	return result
 }
 
-type MockActionGetter struct {
-	description       string
-	rels              []*release.Release
-	err               error
-	expectedInstalled *controllers.RevisionMetadata
-	expectedError     error
-}
-
-func (mag *MockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
-	return mag, nil
-}
-
-func (mag *MockActionGetter) Get(name string, opts ...helmclient.GetOption) (*release.Release, error) {
-	return nil, nil
-}
-
-// This is the function we are really testing
-func (mag *MockActionGetter) History(name string, opts ...helmclient.HistoryOption) ([]*release.Release, error) {
-	return mag.rels, mag.err
-}
-
-func (mag *MockActionGetter) Install(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.InstallOption) (*release.Release, error) {
-	return nil, nil
-}
-
-func (mag *MockActionGetter) Upgrade(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.UpgradeOption) (*release.Release, error) {
-	return nil, nil
-}
-
-func (mag *MockActionGetter) Uninstall(name string, opts ...helmclient.UninstallOption) (*release.UninstallReleaseResponse, error) {
-	return nil, nil
-}
-
-func (mag *MockActionGetter) Reconcile(rel *release.Release) error {
-	return nil
-}
-
-func (mag *MockActionGetter) Config() *action.Configuration {
-	return nil
-}
-
 func TestGetInstalledBundleHistory(t *testing.T) {
-	getter := controllers.HelmRevisionStatesGetter{}
-
 	ext := ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-ext",
 		},
 	}
 
-	mag := []MockActionGetter{
+	tests := []struct {
+		description       string
+		rels              []*release.Release
+		err               error
+		expectedInstalled *controllers.RevisionMetadata
+		expectedError     error
+	}{
 		{
-			"No return",
-			nil, nil,
-			nil, nil,
+			description: "No return",
 		},
 		{
-			"ErrReleaseNotFound (special case)",
-			nil, driver.ErrReleaseNotFound,
-			nil, nil,
+			description: "ErrReleaseNotFound (special case)",
+			err:         driver.ErrReleaseNotFound,
 		},
 		{
-			"Error from History",
-			nil, fmt.Errorf("generic error"),
-			nil, fmt.Errorf("generic error"),
+			description:   "Error from History",
+			err:           fmt.Errorf("generic error"),
+			expectedError: fmt.Errorf("generic error"),
 		},
 		{
-			"One item in history",
-			[]*release.Release{
+			description: "One item in history",
+			rels: []*release.Release{
 				{
 					Name: "test-ext",
 					Info: &release.Info{
@@ -2606,19 +2539,18 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 					},
 				},
 			},
-			nil,
-			&controllers.RevisionMetadata{
+			expectedInstalled: &controllers.RevisionMetadata{
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    "test-ext",
 					Version: "1.0",
 					Release: ptr.To("2"),
 				},
 				Image: "bundle-ref",
-			}, nil,
+			},
 		},
 		{
-			"Two items in history",
-			[]*release.Release{
+			description: "Two items in history",
+			rels: []*release.Release{
 				{
 					Name: "test-ext",
 					Info: &release.Info{
@@ -2642,29 +2574,36 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 					},
 				},
 			},
-			nil,
-			&controllers.RevisionMetadata{
+			expectedInstalled: &controllers.RevisionMetadata{
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    "test-ext",
 					Version: "1.0",
 				},
 				Image: "bundle-ref-1",
-			}, nil,
+			},
 		},
 	}
 
-	for _, tst := range mag {
-		t.Log(tst.description)
-		getter.ActionClientGetter = &tst
-		md, err := getter.GetRevisionStates(context.Background(), &ext)
-		if tst.expectedError != nil {
-			require.Equal(t, tst.expectedError, err)
-			require.Nil(t, md)
-		} else {
-			require.NoError(t, err)
-			require.Equal(t, tst.expectedInstalled, md.Installed)
-			require.Nil(t, md.RollingOut)
-		}
+	for _, tst := range tests {
+		t.Run(tst.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			m := mockhelmclient.NewMockActionClientGetterAndInterface(ctrl)
+			m.EXPECT().ActionClientFor(gomock.Any(), gomock.Any()).Return(m, nil).AnyTimes()
+			m.EXPECT().History(gomock.Any(), gomock.Any()).Return(tst.rels, tst.err).AnyTimes()
+
+			getter := controllers.HelmRevisionStatesGetter{
+				ActionClientGetter: m,
+			}
+			md, err := getter.GetRevisionStates(context.Background(), &ext)
+			if tst.expectedError != nil {
+				require.Equal(t, tst.expectedError, err)
+				require.Nil(t, md)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tst.expectedInstalled, md.Installed)
+				require.Nil(t, md.RollingOut)
+			}
+		})
 	}
 }
 
@@ -2689,21 +2628,15 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 				return nil, nil, nil, fmt.Errorf("catalog unavailable")
 			})
 			// Applier succeeds (resources maintained)
-			d.Applier = &MockApplier{
-				installCompleted: true,
-				installStatus:    "",
-				err:              nil,
-			}
-			d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
-			d.RevisionStatesGetter = &MockRevisionStatesGetter{
-				RevisionStates: &controllers.RevisionStates{
-					Installed: &controllers.RevisionMetadata{
-						Package:        "test-pkg",
-						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
-						Image:          "test-image:1.0.0",
-					},
+			d.Applier = newMockApplier(gomock.NewController(t), true, nil)
+			d.ImagePuller = &imageutil.FakePuller{ImageFS: fstest.MapFS{}}
+			d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					Package:        "test-pkg",
+					BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
+					Image:          "test-image:1.0.0",
 				},
-			}
+			}, nil)
 		})
 
 		ctx := context.Background()
@@ -2781,13 +2714,11 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
 				return nil, nil, nil, fmt.Errorf("catalog unavailable")
 			})
-			d.RevisionStatesGetter = &MockRevisionStatesGetter{
-				RevisionStates: &controllers.RevisionStates{
-					Installed: &controllers.RevisionMetadata{
-						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
-					},
+			d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
 				},
-			}
+			}, nil)
 		})
 
 		ctx := context.Background()
@@ -2852,17 +2783,15 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 					Image:   "test-image:2.0.0",
 				}, &v, &declcfg.Deprecation{}, nil
 			})
-			d.RevisionStatesGetter = &MockRevisionStatesGetter{
-				RevisionStates: &controllers.RevisionStates{
-					Installed: &controllers.RevisionMetadata{
-						Package:        "test-pkg",
-						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
-						Image:          "test-image:1.0.0",
-					},
+			d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					Package:        "test-pkg",
+					BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
+					Image:          "test-image:1.0.0",
 				},
-			}
-			d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
-			d.Applier = &MockApplier{installCompleted: true}
+			}, nil)
+			d.ImagePuller = &imageutil.FakePuller{ImageFS: fstest.MapFS{}}
+			d.Applier = newMockApplier(gomock.NewController(t), true, nil)
 		})
 
 		ctx := context.Background()
@@ -2939,15 +2868,13 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
 				return nil, nil, nil, fmt.Errorf("transient catalog issue: cache stale")
 			})
-			d.RevisionStatesGetter = &MockRevisionStatesGetter{
-				RevisionStates: &controllers.RevisionStates{
-					Installed: &controllers.RevisionMetadata{
-						Package:        "test-pkg",
-						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
-						Image:          "test-image:1.0.0",
-					},
+			d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+				Installed: &controllers.RevisionMetadata{
+					Package:        "test-pkg",
+					BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
+					Image:          "test-image:1.0.0",
 				},
-			}
+			}, nil)
 		})
 
 		ctx := context.Background()

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/clock"
 	clocktesting "k8s.io/utils/clock/testing"
 	"pkg.package-operator.run/boxcutter"
@@ -26,19 +26,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
+	mockmachinery "github.com/operator-framework/operator-controller/internal/testutil/mock/machinery"
 )
 
 const clusterObjectSetName = "test-ext-1"
 
 func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing.T) {
 	testScheme := newScheme(t)
+	mockCtrl := gomock.NewController(t)
 
 	for _, tc := range []struct {
 		name                    string
@@ -51,7 +51,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		{
 			name:                    "sets teardown finalizer",
 			reconcilingRevisionName: clusterObjectSetName,
-			revisionResult:          mockRevisionResult{},
+			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -69,7 +69,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		{
 			name:                    "Available condition is not updated on error if its not already set",
 			reconcilingRevisionName: clusterObjectSetName,
-			revisionResult:          mockRevisionResult{},
+			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -89,7 +89,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		{
 			name:                    "Available condition is updated to Unknown on error if its been already set",
 			reconcilingRevisionName: clusterObjectSetName,
-			revisionResult:          mockRevisionResult{},
+			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -120,7 +120,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		{
 			name:                    "set Available:False:RollingOut status condition during rollout when no probe failures are detected",
 			reconcilingRevisionName: clusterObjectSetName,
-			revisionResult:          mockRevisionResult{},
+			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -143,24 +143,22 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		{
 			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is in transition",
 			reconcilingRevisionName: clusterObjectSetName,
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: true,
 				isComplete:   false,
 				phases: []machinery.PhaseResult{
-					mockPhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
 						name:       "somephase",
 						isComplete: false,
 						objects: []machinery.ObjectResult{
-							mockObjectResult{
-								success: true,
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								probes: machinerytypes.ProbeResultContainer{
 									boxcutter.ProgressProbeType: {
 										Status: machinerytypes.ProbeStatusTrue,
 									},
 								},
-							},
-							mockObjectResult{
-								success: false,
+							}),
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								object: func() client.Object {
 									obj := &corev1.Service{
 										ObjectMeta: metav1.ObjectMeta{
@@ -180,15 +178,14 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 										},
 									},
 								},
-							},
+							}),
 						},
-					},
-					mockPhaseResult{
+					}),
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
 						name:       "someotherphase",
 						isComplete: false,
 						objects: []machinery.ObjectResult{
-							mockObjectResult{
-								success: false,
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								object: func() client.Object {
 									obj := &corev1.ConfigMap{
 										ObjectMeta: metav1.ObjectMeta{
@@ -207,11 +204,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 										},
 									},
 								},
-							},
+							}),
 						},
-					},
+					}),
 				},
-			},
+			}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -234,24 +231,22 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		{
 			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is not in transition",
 			reconcilingRevisionName: clusterObjectSetName,
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: false,
 				isComplete:   false,
 				phases: []machinery.PhaseResult{
-					mockPhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
 						name:       "somephase",
 						isComplete: false,
 						objects: []machinery.ObjectResult{
-							mockObjectResult{
-								success: true,
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								probes: machinerytypes.ProbeResultContainer{
 									boxcutter.ProgressProbeType: machinerytypes.ProbeResult{
 										Status: machinerytypes.ProbeStatusTrue,
 									},
 								},
-							},
-							mockObjectResult{
-								success: false,
+							}),
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								object: func() client.Object {
 									obj := &corev1.Service{
 										ObjectMeta: metav1.ObjectMeta{
@@ -271,15 +266,14 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 										},
 									},
 								},
-							},
+							}),
 						},
-					},
-					mockPhaseResult{
+					}),
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
 						name:       "someotherphase",
 						isComplete: false,
 						objects: []machinery.ObjectResult{
-							mockObjectResult{
-								success: false,
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								object: func() client.Object {
 									obj := &corev1.ConfigMap{
 										ObjectMeta: metav1.ObjectMeta{
@@ -298,11 +292,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 										},
 									},
 								},
-							},
+							}),
 						},
-					},
+					}),
 				},
-			},
+			}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -347,9 +341,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		},
 		{
 			name: "set Progressing:True:RollingOut condition while revision is transitioning",
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: true,
-			},
+			}),
 			reconcilingRevisionName: clusterObjectSetName,
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -372,10 +366,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		},
 		{
 			name: "set Progressing:True:Succeeded once transition rollout is finished",
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: false,
 				isComplete:   true,
-			},
+			}),
 			reconcilingRevisionName: clusterObjectSetName,
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -405,9 +399,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		},
 		{
 			name: "set Available:True:ProbesSucceeded and Succeeded:True:Succeeded conditions on successful revision rollout",
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
-			},
+			}),
 			reconcilingRevisionName: clusterObjectSetName,
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -444,9 +438,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		},
 		{
 			name: "archive previous revisions on successful rollout",
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
-			},
+			}),
 			reconcilingRevisionName: "test-ext-3",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -478,6 +472,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
@@ -486,15 +482,15 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				Build()
 
 			// reconcile cluster extension revision
-			mockEngine := &mockRevisionEngine{
-				reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+				func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
 					return tc.revisionResult, tc.revisionReconcileErr
-				},
-			}
+				}, nil,
+			)
 			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
-				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-				TrackingCache:         &mockTrackingCache{client: testClient},
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: tc.reconcilingRevisionName,
@@ -522,6 +518,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 	)
 
 	testScheme := newScheme(t)
+	mockCtrl := gomock.NewController(t)
 
 	for _, tc := range []struct {
 		name           string
@@ -529,7 +526,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 	}{
 		{
 			name: "retries on revision result validation error",
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				validationError: &validation.RevisionValidationError{
 					RevisionName:   "test-ext-1",
 					RevisionNumber: 1,
@@ -559,13 +556,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 						},
 					},
 				},
-			},
+			}),
 		},
 		{
 			name: "retries on revision result phase validation error",
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				phases: []machinery.PhaseResult{
-					mockPhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
 						validationError: &validation.PhaseValidationError{
 							PhaseName:  "everything",
 							PhaseError: fmt.Errorf("some error"),
@@ -589,12 +586,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 								},
 							},
 						},
-					},
+					}),
 				},
-			},
+			}),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
 			ext := newTestClusterExtension()
 			rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 
@@ -606,15 +604,15 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 				Build()
 
 			// reconcile cluster extension revision
-			mockEngine := &mockRevisionEngine{
-				reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+				func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
 					return tc.revisionResult, nil
-				},
-			}
+				}, nil,
+			)
 			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
-				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-				TrackingCache:         &mockTrackingCache{client: testClient},
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterObjectSetName,
@@ -637,12 +635,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 
 	testScheme := newScheme(t)
 	require.NoError(t, corev1.AddToScheme(testScheme))
+	mockCtrl := gomock.NewController(t)
 
 	for _, tc := range []struct {
 		name                     string
 		existingObjs             func() []client.Object
 		revisionResult           machinery.RevisionResult
-		revisionEngineTeardownFn func(*testing.T) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error)
+		revisionEngineTeardownFn func(*gomock.Controller) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error)
 		revisionEngineFactoryErr error
 		validate                 func(*testing.T, client.Client)
 		trackingCacheFreeFn      func(context.Context, client.Object) error
@@ -651,7 +650,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 	}{
 		{
 			name:           "teardown finalizer is removed",
-			revisionResult: mockRevisionResult{},
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -668,13 +667,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				require.NoError(t, err)
 				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
 			},
-			revisionEngineTeardownFn: func(t *testing.T) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+			revisionEngineTeardownFn: func(ctrl *gomock.Controller) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 				return nil
 			},
 		},
 		{
 			name:           "set Available:Unknown:Reconciling when tracking cache free fails during deletion",
-			revisionResult: mockRevisionResult{},
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -700,13 +699,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Contains(t, cond.Message, "tracking cache free failed")
 			},
-			revisionEngineTeardownFn: func(t *testing.T) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+			revisionEngineTeardownFn: func(ctrl *gomock.Controller) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 				return nil
 			},
 		},
 		{
 			name:           "set Available:Archived:Unknown and Progressing:False:Archived conditions when a revision is archived",
-			revisionResult: mockRevisionResult{},
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -716,11 +715,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				return []client.Object{rev1, ext}
 			},
-			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+			revisionEngineTeardownFn: func(ctrl *gomock.Controller) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 				return func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-					return &mockRevisionTeardownResult{
+					return newMockRevisionTeardownResult(mockCtrl, revisionTeardownResultConfig{
 						isComplete: true,
-					}, nil
+					}), nil
 				}
 			},
 			validate: func(t *testing.T, c client.Client) {
@@ -746,7 +745,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 		},
 		{
 			name:           "set Progressing:True:Retrying and requeue when archived revision archival is incomplete",
-			revisionResult: mockRevisionResult{},
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -756,11 +755,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				return []client.Object{rev1, ext}
 			},
-			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+			revisionEngineTeardownFn: func(ctrl *gomock.Controller) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 				return func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-					return &mockRevisionTeardownResult{
+					return newMockRevisionTeardownResult(mockCtrl, revisionTeardownResultConfig{
 						isComplete: false,
-					}, nil
+					}), nil
 				}
 			},
 			expectedResult: ctrl.Result{RequeueAfter: 5 * time.Second},
@@ -782,7 +781,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 		},
 		{
 			name:           "return error and set retrying conditions when archived revision teardown fails",
-			revisionResult: mockRevisionResult{},
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -792,7 +791,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				return []client.Object{rev1, ext}
 			},
-			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+			revisionEngineTeardownFn: func(ctrl *gomock.Controller) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 				return func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 					return nil, fmt.Errorf("teardown failed: connection refused")
 				}
@@ -816,7 +815,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 		},
 		{
 			name:           "return error and set retrying conditions when factory fails to create engine during archived teardown",
-			revisionResult: mockRevisionResult{},
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -826,7 +825,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				return []client.Object{rev1, ext}
 			},
-			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+			revisionEngineTeardownFn: func(ctrl *gomock.Controller) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 				return nil
 			},
 			revisionEngineFactoryErr: fmt.Errorf("token getter failed"),
@@ -849,7 +848,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 		},
 		{
 			name:           "revision is torn down when in archived state and finalizer is removed",
-			revisionResult: mockRevisionResult{},
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -873,11 +872,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				})
 				return []client.Object{rev1, ext}
 			},
-			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+			revisionEngineTeardownFn: func(ctrl *gomock.Controller) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 				return func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-					return &mockRevisionTeardownResult{
+					return newMockRevisionTeardownResult(mockCtrl, revisionTeardownResultConfig{
 						isComplete: true,
-					}, nil
+					}), nil
 				}
 			},
 			validate: func(t *testing.T, c client.Client) {
@@ -891,6 +890,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
@@ -899,20 +900,17 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				Build()
 
 			// reconcile cluster extension revision
-			mockEngine := &mockRevisionEngine{
-				reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+				func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
 					return tc.revisionResult, nil
 				},
-				teardown: tc.revisionEngineTeardownFn(t),
-			}
-			factory := &mockRevisionEngineFactory{engine: mockEngine, createErr: tc.revisionEngineFactoryErr}
+				tc.revisionEngineTeardownFn(mockCtrl),
+			)
+			factory := newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, tc.revisionEngineFactoryErr)
 			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
 				RevisionEngineFactory: factory,
-				TrackingCache: &mockTrackingCache{
-					client: testClient,
-					freeFn: tc.trackingCacheFreeFn,
-				},
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, tc.trackingCacheFreeFn),
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterObjectSetName,
@@ -940,6 +938,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 
 	testScheme := newScheme(t)
 	require.NoError(t, corev1.AddToScheme(testScheme))
+	mockCtrl := gomock.NewController(t)
 
 	for _, tc := range []struct {
 		name            string
@@ -961,9 +960,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 			},
 			// 61sec elapsed since the creation of the revision
 			clock: clocktesting.NewFakeClock(time.Date(2022, 1, 1, 0, 1, 1, 0, time.UTC)),
-			revisionResult: &mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: true,
-			},
+			}),
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
@@ -985,9 +984,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				return []client.Object{rev1, ext}
 			},
 			clock: clocktesting.NewFakeClock(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)),
-			revisionResult: &mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: true,
-			},
+			}),
 			reconcileResult: ctrl.Result{RequeueAfter: 60 * time.Second},
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterObjectSet{}
@@ -1017,9 +1016,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				return []client.Object{rev1, ext}
 			},
 			clock: clocktesting.NewFakeClock(time.Date(2022, 1, 1, 0, 5, 0, 0, time.UTC)),
-			revisionResult: &mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
-			},
+			}),
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
@@ -1054,9 +1053,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				})
 				return []client.Object{rev1, ext}
 			},
-			revisionResult: &mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: true,
-			},
+			}),
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterObjectSet{}
 				err := c.Get(t.Context(), client.ObjectKey{
@@ -1070,6 +1069,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
@@ -1078,18 +1079,16 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				Build()
 
 			// reconcile cluster extension revision
-			mockEngine := &mockRevisionEngine{
-				reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+				func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
 					return tc.revisionResult, nil
-				},
-			}
+				}, nil,
+			)
 			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
-				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-				TrackingCache: &mockTrackingCache{
-					client: testClient,
-				},
-				Clock: tc.clock,
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
+				Clock:                 tc.clock,
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterObjectSetName,
@@ -1174,211 +1173,148 @@ func newTestClusterObjectSet(t *testing.T, revisionName string, ext *ocv1.Cluste
 	return rev
 }
 
-type mockRevisionEngine struct {
-	teardown  func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error)
-	reconcile func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error)
-}
+// Helper constructors for gomock-generated result mocks.
 
-func (m mockRevisionEngine) Teardown(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-	return m.teardown(ctx, rev)
-}
-
-func (m mockRevisionEngine) Reconcile(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
-	return m.reconcile(ctx, rev)
-}
-
-// mockRevisionEngineFactory creates mock RevisionEngines for testing
-type mockRevisionEngineFactory struct {
-	engine    controllers.RevisionEngine
-	createErr error
-}
-
-func (f *mockRevisionEngineFactory) CreateRevisionEngine(ctx context.Context, rev *ocv1.ClusterObjectSet) (controllers.RevisionEngine, error) {
-	if f.createErr != nil {
-		return nil, f.createErr
-	}
-	return f.engine, nil
-}
-
-type mockRevisionResult struct {
+type revisionResultConfig struct {
 	validationError *validation.RevisionValidationError
 	phases          []machinery.PhaseResult
 	inTransition    bool
 	isComplete      bool
 	hasProgressed   bool
-	string          string
+	str             string
 }
 
-func (m mockRevisionResult) GetValidationError() *validation.RevisionValidationError {
-	return m.validationError
+func newMockRevisionResult(ctrl *gomock.Controller, cfg revisionResultConfig) *mockmachinery.MockRevisionResult {
+	m := mockmachinery.NewMockRevisionResult(ctrl)
+	m.EXPECT().GetValidationError().Return(cfg.validationError).AnyTimes()
+	m.EXPECT().GetPhases().Return(cfg.phases).AnyTimes()
+	m.EXPECT().InTransition().Return(cfg.inTransition).AnyTimes()
+	m.EXPECT().IsComplete().Return(cfg.isComplete).AnyTimes()
+	m.EXPECT().HasProgressed().Return(cfg.hasProgressed).AnyTimes()
+	m.EXPECT().String().Return(cfg.str).AnyTimes()
+	return m
 }
 
-func (m mockRevisionResult) GetPhases() []machinery.PhaseResult {
-	return m.phases
-}
-
-func (m mockRevisionResult) InTransition() bool {
-	return m.inTransition
-}
-
-func (m mockRevisionResult) IsComplete() bool {
-	return m.isComplete
-}
-
-func (m mockRevisionResult) HasProgressed() bool {
-	return m.hasProgressed
-}
-
-func (m mockRevisionResult) String() string {
-	return m.string
-}
-
-var _ machinery.PhaseResult = &mockPhaseResult{}
-
-type mockPhaseResult struct {
+type phaseResultConfig struct {
 	name            string
 	validationError *validation.PhaseValidationError
 	objects         []machinery.ObjectResult
 	inTransition    bool
 	isComplete      bool
 	hasProgressed   bool
-	string          string
+	str             string
 }
 
-func (m mockPhaseResult) GetName() string {
-	return m.name
+func newMockPhaseResult(ctrl *gomock.Controller, cfg phaseResultConfig) *mockmachinery.MockPhaseResult {
+	m := mockmachinery.NewMockPhaseResult(ctrl)
+	m.EXPECT().GetName().Return(cfg.name).AnyTimes()
+	m.EXPECT().GetValidationError().Return(cfg.validationError).AnyTimes()
+	m.EXPECT().GetObjects().Return(cfg.objects).AnyTimes()
+	m.EXPECT().InTransition().Return(cfg.inTransition).AnyTimes()
+	m.EXPECT().IsComplete().Return(cfg.isComplete).AnyTimes()
+	m.EXPECT().HasProgressed().Return(cfg.hasProgressed).AnyTimes()
+	m.EXPECT().String().Return(cfg.str).AnyTimes()
+	return m
 }
 
-func (m mockPhaseResult) GetValidationError() *validation.PhaseValidationError {
-	return m.validationError
-}
-
-func (m mockPhaseResult) GetObjects() []machinery.ObjectResult {
-	return m.objects
-}
-
-func (m mockPhaseResult) InTransition() bool {
-	return m.inTransition
-}
-
-func (m mockPhaseResult) IsComplete() bool {
-	return m.isComplete
-}
-
-func (m mockPhaseResult) HasProgressed() bool {
-	return m.hasProgressed
-}
-
-func (m mockPhaseResult) String() string {
-	return m.string
-}
-
-var _ machinery.ObjectResult = &mockObjectResult{}
-
-type mockObjectResult struct {
+type objectResultConfig struct {
 	action   machinery.Action
 	object   machinery.Object
-	success  bool
 	complete bool
 	paused   bool
 	probes   machinerytypes.ProbeResultContainer
-	string   string
+	str      string
 }
 
-func (m mockObjectResult) ProbeResults() machinerytypes.ProbeResultContainer {
-	return m.probes
+func newMockObjectResult(ctrl *gomock.Controller, cfg objectResultConfig) *mockmachinery.MockObjectResult {
+	m := mockmachinery.NewMockObjectResult(ctrl)
+	m.EXPECT().ProbeResults().Return(cfg.probes).AnyTimes()
+	m.EXPECT().IsComplete().Return(cfg.complete).AnyTimes()
+	m.EXPECT().IsPaused().Return(cfg.paused).AnyTimes()
+	m.EXPECT().Action().Return(cfg.action).AnyTimes()
+	m.EXPECT().Object().Return(cfg.object).AnyTimes()
+	m.EXPECT().String().Return(cfg.str).AnyTimes()
+	return m
 }
 
-func (m mockObjectResult) IsComplete() bool {
-	return m.complete
-}
-
-func (m mockObjectResult) IsPaused() bool {
-	return m.paused
-}
-
-func (m mockObjectResult) Action() machinery.Action {
-	return m.action
-}
-
-func (m mockObjectResult) Object() machinery.Object {
-	return m.object
-}
-
-func (m mockObjectResult) Success() bool {
-	return m.success
-}
-
-func (m mockObjectResult) String() string {
-	return m.string
-}
-
-var _ machinery.RevisionTeardownResult = mockRevisionTeardownResult{}
-
-type mockRevisionTeardownResult struct {
+type revisionTeardownResultConfig struct {
 	phases            []machinery.PhaseTeardownResult
 	isComplete        bool
 	waitingPhaseNames []string
 	activePhaseName   string
 	phaseIsActive     bool
 	gonePhaseNames    []string
-	string            string
+	str               string
 }
 
-func (m mockRevisionTeardownResult) GetPhases() []machinery.PhaseTeardownResult {
-	return m.phases
+func newMockRevisionTeardownResult(ctrl *gomock.Controller, cfg revisionTeardownResultConfig) *mockmachinery.MockRevisionTeardownResult {
+	m := mockmachinery.NewMockRevisionTeardownResult(ctrl)
+	m.EXPECT().GetPhases().Return(cfg.phases).AnyTimes()
+	m.EXPECT().IsComplete().Return(cfg.isComplete).AnyTimes()
+	m.EXPECT().GetWaitingPhaseNames().Return(cfg.waitingPhaseNames).AnyTimes()
+	m.EXPECT().GetActivePhaseName().Return(cfg.activePhaseName, cfg.phaseIsActive).AnyTimes()
+	m.EXPECT().GetGonePhaseNames().Return(cfg.gonePhaseNames).AnyTimes()
+	m.EXPECT().String().Return(cfg.str).AnyTimes()
+	return m
 }
 
-func (m mockRevisionTeardownResult) IsComplete() bool {
-	return m.isComplete
-}
-
-func (m mockRevisionTeardownResult) GetWaitingPhaseNames() []string {
-	return m.waitingPhaseNames
-}
-
-func (m mockRevisionTeardownResult) GetActivePhaseName() (string, bool) {
-	return m.activePhaseName, m.phaseIsActive
-}
-
-func (m mockRevisionTeardownResult) GetGonePhaseNames() []string {
-	return m.gonePhaseNames
-}
-
-func (m mockRevisionTeardownResult) String() string {
-	return m.string
-}
-
-type mockTrackingCache struct {
-	client client.Client
-	freeFn func(context.Context, client.Object) error
-}
-
-func (m *mockTrackingCache) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	return m.client.Get(ctx, key, obj, opts...)
-}
-
-func (m *mockTrackingCache) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	return m.client.List(ctx, list, opts...)
-}
-
-func (m *mockTrackingCache) Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source {
-	panic("not implemented")
-}
-
-func (m *mockTrackingCache) Watch(ctx context.Context, user client.Object, gvks sets.Set[schema.GroupVersionKind]) error {
-	return nil
-}
-
-func (m *mockTrackingCache) Free(ctx context.Context, user client.Object) error {
-	if m.freeFn != nil {
-		return m.freeFn(ctx, user)
+func newMockTrackingCache(ctrl *gomock.Controller, cl client.Client, freeFn func(ctx context.Context, user client.Object) error) *controllers.MockTrackingCache {
+	m := controllers.NewMockTrackingCache(ctrl)
+	m.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(cl.Get).AnyTimes()
+	m.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(cl.List).AnyTimes()
+	m.EXPECT().Source(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	m.EXPECT().Watch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	if freeFn != nil {
+		m.EXPECT().Free(gomock.Any(), gomock.Any()).DoAndReturn(freeFn).AnyTimes()
+	} else {
+		m.EXPECT().Free(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	}
-	return nil
+	return m
+}
+
+// newNoopMockRevisionEngine creates a MockRevisionEngine with no expectations set.
+// Useful for tests where the engine is never called (e.g., error paths that fail before reaching the engine).
+func newNoopMockRevisionEngine(ctrl *gomock.Controller) *mockcontrollers.MockRevisionEngine {
+	return mockcontrollers.NewMockRevisionEngine(ctrl)
+}
+
+// newMockRevisionEngineWithReconcile creates a MockRevisionEngine with a Reconcile expectation.
+// If teardownFn is non-nil, a Teardown expectation is also configured.
+func newMockRevisionEngineWithReconcile(
+	ctrl *gomock.Controller,
+	reconcileFn func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error),
+	teardownFn func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error),
+) *mockcontrollers.MockRevisionEngine {
+	m := mockcontrollers.NewMockRevisionEngine(ctrl)
+	m.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(reconcileFn).AnyTimes()
+	if teardownFn != nil {
+		m.EXPECT().Teardown(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(teardownFn).AnyTimes()
+	}
+	return m
+}
+
+// newMockRevisionEngineFactoryWithEngine creates a MockRevisionEngineFactory
+// that returns the given engine and error.
+func newMockRevisionEngineFactoryWithEngine(
+	ctrl *gomock.Controller,
+	engine controllers.RevisionEngine,
+	createErr error,
+) *mockcontrollers.MockRevisionEngineFactory {
+	m := mockcontrollers.NewMockRevisionEngineFactory(ctrl)
+	m.EXPECT().CreateRevisionEngine(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, rev *ocv1.ClusterObjectSet) (controllers.RevisionEngine, error) {
+			if createErr != nil {
+				return nil, createErr
+			}
+			return engine, nil
+		},
+	).AnyTimes()
+	return m
 }
 
 func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testing.T) {
 	testScheme := newScheme(t)
+	mockCtrl := gomock.NewController(t)
 
 	for _, tc := range []struct {
 		name                    string
@@ -1417,12 +1353,12 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				cerB1 := newTestClusterObjectSet(t, "ext-B-1", extB, testScheme)
 				return []client.Object{extA, extB, cerA2, cerB1}
 			},
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				phases: []machinery.PhaseResult{
-					mockPhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
 						name: "everything",
 						objects: []machinery.ObjectResult{
-							mockObjectResult{
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								action: machinery.ActionCollision,
 								object: &unstructured.Unstructured{
 									Object: map[string]interface{}{
@@ -1448,11 +1384,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 										Status: machinerytypes.ProbeStatusTrue,
 									},
 								},
-							},
+							}),
 						},
-					},
+					}),
 				},
-			},
+			}),
 			expectCollision: true,
 		},
 		{
@@ -1474,12 +1410,12 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				cerA2 := newTestClusterObjectSet(t, "ext-A-2", extA, testScheme)
 				return []client.Object{extA, cerA1, cerA2}
 			},
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				phases: []machinery.PhaseResult{
-					mockPhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
 						name: "everything",
 						objects: []machinery.ObjectResult{
-							mockObjectResult{
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								action: machinery.ActionProgressed,
 								object: &unstructured.Unstructured{
 									Object: map[string]interface{}{
@@ -1505,11 +1441,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 										Status: machinerytypes.ProbeStatusTrue,
 									},
 								},
-							},
+							}),
 						},
-					},
+					}),
 				},
-			},
+			}),
 			expectCollision: false,
 		},
 		{
@@ -1530,12 +1466,12 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				cerB1 := newTestClusterObjectSet(t, "ext-B-1", extB, testScheme)
 				return []client.Object{extB, cerB1}
 			},
-			revisionResult: mockRevisionResult{
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				phases: []machinery.PhaseResult{
-					mockPhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
 						name: "everything",
 						objects: []machinery.ObjectResult{
-							mockObjectResult{
+							newMockObjectResult(mockCtrl, objectResultConfig{
 								action: machinery.ActionProgressed,
 								object: &unstructured.Unstructured{
 									Object: map[string]interface{}{
@@ -1562,30 +1498,31 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 										Status: machinerytypes.ProbeStatusTrue,
 									},
 								},
-							},
+							}),
 						},
-					},
+					}),
 				},
-			},
+			}),
 			expectCollision: false,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
 
-			mockEngine := &mockRevisionEngine{
-				reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+				func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
 					return tc.revisionResult, nil
-				},
-			}
+				}, nil,
+			)
 			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
-				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-				TrackingCache:         &mockTrackingCache{client: testClient},
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: tc.reconcilingRevisionName,
@@ -1669,6 +1606,7 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 	testScheme := newScheme(t)
 
 	t.Run("works with serviceAccount annotation and without owner label", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
 		rev := &ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   "test-rev-1",
@@ -1693,16 +1631,16 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 			WithObjects(rev).
 			Build()
 
-		mockEngine := &mockRevisionEngine{
-			reconcile: func(ctx context.Context, r machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
-				return &mockRevisionResult{}, nil
-			},
-		}
+		mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+			func(ctx context.Context, r machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+				return newMockRevisionResult(mockCtrl, revisionResultConfig{}), nil
+			}, nil,
+		)
 
 		reconciler := &controllers.ClusterObjectSetReconciler{
 			Client:                testClient,
-			RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
-			TrackingCache:         &mockTrackingCache{client: testClient},
+			RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+			TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
 		}
 
 		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{
@@ -1713,6 +1651,7 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 	})
 
 	t.Run("missing serviceAccount annotation", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
 		rev := &ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-rev-1",
@@ -1732,14 +1671,12 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 			WithObjects(rev).
 			Build()
 
-		failingFactory := &mockRevisionEngineFactory{
-			createErr: errors.New("missing serviceAccount name annotation"),
-		}
+		failingFactory := newMockRevisionEngineFactoryWithEngine(mockCtrl, nil, errors.New("missing serviceAccount name annotation"))
 
 		reconciler := &controllers.ClusterObjectSetReconciler{
 			Client:                testClient,
 			RevisionEngineFactory: failingFactory,
-			TrackingCache:         &mockTrackingCache{client: testClient},
+			TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
 		}
 
 		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{
@@ -1751,6 +1688,7 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 	})
 
 	t.Run("factory fails to create engine", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
 		ext := newTestClusterExtension()
 		rev := newTestClusterObjectSet(t, "test-rev", ext, testScheme)
 
@@ -1759,14 +1697,12 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 			WithObjects(ext, rev).
 			Build()
 
-		failingFactory := &mockRevisionEngineFactory{
-			createErr: errors.New("token getter failed"),
-		}
+		failingFactory := newMockRevisionEngineFactoryWithEngine(mockCtrl, nil, errors.New("token getter failed"))
 
 		reconciler := &controllers.ClusterObjectSetReconciler{
 			Client:                testClient,
 			RevisionEngineFactory: failingFactory,
-			TrackingCache:         &mockTrackingCache{client: testClient},
+			TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
 		}
 
 		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{

@@ -31,6 +31,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	go.podman.io/image/v5 v5.40.0
+	go.uber.org/mock v0.6.0
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 	golang.org/x/mod v0.37.0
 	golang.org/x/sync v0.21.0
@@ -205,7 +206,6 @@ require (
 	github.com/smallstep/pkcs7 v0.2.1 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20230803200340-78284954bff6 // indirect
-	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/vbatts/tar-split v0.12.3 // indirect
 	github.com/vbauerster/mpb/v8 v8.12.0 // indirect

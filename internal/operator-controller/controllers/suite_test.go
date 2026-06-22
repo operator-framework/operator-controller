@@ -17,14 +17,13 @@ limitations under the License.
 package controllers_test
 
 import (
-	"context"
-	"io/fs"
 	"log"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
@@ -35,6 +34,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/shared/util/image"
+	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
 	"github.com/operator-framework/operator-controller/test"
 )
 
@@ -53,30 +53,20 @@ func newClient(t *testing.T) client.Client {
 	return cl
 }
 
-var _ controllers.RevisionStatesGetter = (*MockRevisionStatesGetter)(nil)
-
-type MockRevisionStatesGetter struct {
-	*controllers.RevisionStates
-	Err error
+// newMockRevisionStatesGetter creates a gomock-based RevisionStatesGetter
+// that returns fixed values, replacing the hand-written MockRevisionStatesGetter.
+func newMockRevisionStatesGetter(ctrl *gomock.Controller, revisionStates *controllers.RevisionStates, err error) *mockcontrollers.MockRevisionStatesGetter {
+	m := mockcontrollers.NewMockRevisionStatesGetter(ctrl)
+	m.EXPECT().GetRevisionStates(gomock.Any(), gomock.Any()).Return(revisionStates, err).AnyTimes()
+	return m
 }
 
-func (m *MockRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*controllers.RevisionStates, error) {
-	if m.Err != nil {
-		return nil, m.Err
-	}
-	return m.RevisionStates, nil
-}
-
-var _ controllers.Applier = (*MockApplier)(nil)
-
-type MockApplier struct {
-	installCompleted bool
-	installStatus    string
-	err              error
-}
-
-func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string) (bool, string, error) {
-	return m.installCompleted, m.installStatus, m.err
+// newMockApplier creates a gomock-based Applier that returns fixed values,
+// replacing the hand-written MockApplier.
+func newMockApplier(ctrl *gomock.Controller, installCompleted bool, err error) *mockcontrollers.MockApplier {
+	m := mockcontrollers.NewMockApplier(ctrl)
+	m.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(installCompleted, "", err).AnyTimes()
+	return m
 }
 
 type reconcilerOption func(*deps)
@@ -94,11 +84,13 @@ type deps struct {
 func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 
+	mockCtrl := gomock.NewController(t)
+	defaultRevisionStatesGetter := mockcontrollers.NewMockRevisionStatesGetter(mockCtrl)
+	defaultRevisionStatesGetter.EXPECT().GetRevisionStates(gomock.Any(), gomock.Any()).Return(&controllers.RevisionStates{}, nil).AnyTimes()
+
 	d := &deps{
-		RevisionStatesGetter: &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{},
-		},
-		Finalizers: crfinalizer.NewFinalizers(),
+		RevisionStatesGetter: defaultRevisionStatesGetter,
+		Finalizers:           crfinalizer.NewFinalizers(),
 	}
 	reconciler := &controllers.ClusterExtensionReconciler{
 		Client: cl,

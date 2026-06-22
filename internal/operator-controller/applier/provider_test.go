@@ -2,11 +2,11 @@ package applier_test
 
 import (
 	"errors"
-	"io/fs"
 	"testing"
 	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +24,8 @@ import (
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 	bundlecsv "github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
+	mockapplier "github.com/operator-framework/operator-controller/internal/testutil/mock/applier"
+	mockrender "github.com/operator-framework/operator-controller/internal/testutil/mock/render"
 )
 
 func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
@@ -234,8 +236,9 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 	})
 
 	t.Run("accepts bundles with webhook definitions if support is enabled and a certificate provider is defined", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
 		provider := applier.RegistryV1ManifestProvider{
-			CertificateProvider:     FakeCertProvider{},
+			CertificateProvider:     mockrender.NewMockCertificateProvider(ctrl),
 			IsWebhookSupportEnabled: true,
 		}
 
@@ -729,8 +732,9 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 
 func Test_RegistryV1HelmChartProvider_Integration(t *testing.T) {
 	t.Run("surfaces bundle source errors", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
 		provider := applier.RegistryV1HelmChartProvider{
-			ManifestProvider: DummyManifestProvider,
+			ManifestProvider: newDummyManifestProvider(ctrl),
 		}
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -743,12 +747,12 @@ func Test_RegistryV1HelmChartProvider_Integration(t *testing.T) {
 	})
 
 	t.Run("surfaces manifest provider failures", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		mockMP := mockapplier.NewMockManifestProvider(ctrl)
+		mockMP.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, errors.New("some error")).AnyTimes()
+
 		provider := applier.RegistryV1HelmChartProvider{
-			ManifestProvider: &FakeManifestProvider{
-				GetFn: func(bundle fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
-					return nil, errors.New("some error")
-				},
-			},
+			ManifestProvider: mockMP,
 		}
 
 		ext := &ocv1.ClusterExtension{
@@ -803,16 +807,8 @@ func Test_RegistryV1HelmChartProvider_Chart(t *testing.T) {
 	require.Len(t, chart.Templates, 1)
 }
 
-var DummyManifestProvider = &FakeManifestProvider{
-	GetFn: func(bundle fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
-		return []client.Object{}, nil
-	},
-}
-
-type FakeManifestProvider struct {
-	GetFn func(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
-}
-
-func (f *FakeManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
-	return f.GetFn(bundleFS, ext)
+func newDummyManifestProvider(ctrl *gomock.Controller) *mockapplier.MockManifestProvider {
+	m := mockapplier.NewMockManifestProvider(ctrl)
+	m.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
+	return m
 }
