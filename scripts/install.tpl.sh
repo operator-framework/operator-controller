@@ -116,6 +116,11 @@ if [ -f "${olmv1_manifest}" ]; then
     olmv1_manifest=file://localhost$(realpath ${olmv1_manifest})
 fi
 
+# Clean up old RBAC resources from previous releases. The ClusterRoleBinding was
+# renamed and the custom ClusterRole replaced with cluster-admin.
+kubectl delete clusterrolebinding operator-controller-manager-rolebinding operator-controller-manager-admin-rolebinding --ignore-not-found
+kubectl delete clusterrole operator-controller-manager-role --ignore-not-found
+
 curl -L -s "${olmv1_manifest}" | sed "s/olmv1-system/${olmv1_namespace}/g" | kubectl apply -f -
 # Wait for the rollout, and then wait for the deployment to be Available
 kubectl_wait_rollout "${olmv1_namespace}" "deployment/catalogd-controller-manager" "60s"
