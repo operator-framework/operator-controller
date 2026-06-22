@@ -283,7 +283,7 @@ func TestExtensionDeveloper(t *testing.T) {
 	}
 	require.NoError(t, c.Create(ctx, crb))
 
-	t.Logf("When creating an ClusterExtension that references a package with a %q bundle type", clusterExtension.Name)
+	t.Logf("When creating a ClusterExtension that references a package with a %q bundle type", clusterExtension.Name)
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("It should have a status condition type of Installed with a status of True and a reason of Success")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {

@@ -1,6 +1,10 @@
 package test
 
 import (
+	"bufio"
+	"errors"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -8,6 +12,8 @@ import (
 	"runtime"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
 
@@ -54,6 +60,35 @@ func getFirstFoundEnvTestBinaryDir() string {
 		}
 	}
 	return ""
+}
+
+// LoadManifests reads a multi-document YAML file (e.g. a rendered Helm manifest) and returns
+// all resources matching the given kind. This allows tests to load ValidatingAdmissionPolicy
+// and ValidatingAdmissionPolicyBinding resources from the same manifests used in production
+// rather than hardcoding them.
+func LoadManifests(kind string) ([]*unstructured.Unstructured, error) {
+	manifestPath := pathFromProjectRoot("manifests/standard.yaml")
+	f, err := os.Open(manifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("opening %s: %w", manifestPath, err)
+	}
+	defer f.Close()
+
+	var result []*unstructured.Unstructured
+	decoder := yaml.NewYAMLOrJSONDecoder(bufio.NewReader(f), 4096)
+	for {
+		obj := &unstructured.Unstructured{}
+		if err := decoder.Decode(obj); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, fmt.Errorf("decoding manifest: %w", err)
+		}
+		if obj.GetKind() == kind {
+			result = append(result, obj)
+		}
+	}
+	return result, nil
 }
 
 // StopWithRetry wraps testEnv.Stop() with retry logic for graceful shutdown.

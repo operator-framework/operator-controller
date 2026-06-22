@@ -2052,6 +2052,7 @@ metadata:
   annotations:
     olm.operatorframework.io/feature-set: standard
 spec:
+  failurePolicy: Ignore
   matchConstraints:
     resourceRules:
       - apiGroups:

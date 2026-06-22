@@ -2990,6 +2990,7 @@ metadata:
   annotations:
     olm.operatorframework.io/feature-set: experimental-e2e
 spec:
+  failurePolicy: Ignore
   matchConstraints:
     resourceRules:
       - apiGroups:

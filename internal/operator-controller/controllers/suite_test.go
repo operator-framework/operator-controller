@@ -17,8 +17,11 @@ limitations under the License.
 package controllers_test
 
 import (
+	"context"
 	"log"
 	"os"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -51,6 +54,37 @@ func newClient(t *testing.T) client.Client {
 	require.NoError(t, err)
 	require.NotNil(t, cl)
 	return cl
+}
+
+type warningCollector struct {
+	mu    sync.Mutex
+	items []string
+}
+
+func (w *warningCollector) HandleWarningHeader(code int, agent string, text string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.items = append(w.items, text)
+}
+
+func (w *warningCollector) hasWarning(substr string) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, item := range w.items {
+		if strings.Contains(item, substr) {
+			return true
+		}
+	}
+	return false
+}
+
+func newWarningCapturingClient(t *testing.T) (client.Client, *warningCollector) {
+	collector := &warningCollector{}
+	cfg := rest.CopyConfig(config)
+	cfg.WarningHandler = collector
+	cl, err := client.New(cfg, client.Options{Scheme: newScheme(t)})
+	require.NoError(t, err)
+	return cl, collector
 }
 
 // newMockRevisionStatesGetter creates a gomock-based RevisionStatesGetter
@@ -126,6 +160,18 @@ func TestMain(m *testing.M) {
 	utilruntime.Must(err)
 	if config == nil {
 		log.Panic("expected cfg to not be nil")
+	}
+
+	cl, err := client.New(config, client.Options{})
+	utilruntime.Must(err)
+	ctx := context.Background()
+
+	for _, kind := range []string{"ValidatingAdmissionPolicy", "ValidatingAdmissionPolicyBinding"} {
+		objs, err := test.LoadManifests(kind)
+		utilruntime.Must(err)
+		for _, obj := range objs {
+			utilruntime.Must(cl.Create(ctx, obj))
+		}
 	}
 
 	code := m.Run()

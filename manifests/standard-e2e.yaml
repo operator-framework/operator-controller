@@ -2160,6 +2160,7 @@ metadata:
   annotations:
     olm.operatorframework.io/feature-set: standard-e2e
 spec:
+  failurePolicy: Ignore
   matchConstraints:
     resourceRules:
       - apiGroups:
