@@ -39,10 +39,6 @@ package mock
 // Internal interfaces — operator-controller config
 //go:generate mockgen -destination=config/mock_schemaprovider.go -package=config github.com/operator-framework/operator-controller/internal/operator-controller/config SchemaProvider
 
-// Internal interfaces — operator-controller contentmanager
-//go:generate mockgen -destination=contentmanager/mock_contentmanager.go -package=contentmanager github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager Manager
-//go:generate mockgen -destination=cmcache/mock_cache.go -package=cmcache github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache Cache,Watcher,CloserSyncingSource
-
 // Internal interfaces — operator-controller controllers
 //go:generate mockgen -destination=controllers/mock_controllers.go -package=controllers github.com/operator-framework/operator-controller/internal/operator-controller/controllers CatalogCache,CatalogCachePopulator,RevisionStatesGetter,Applier,RevisionEngine,RevisionEngineFactory
 
