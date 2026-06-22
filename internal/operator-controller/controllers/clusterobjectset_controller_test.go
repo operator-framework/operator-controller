@@ -1110,9 +1110,6 @@ func newTestClusterExtension() *ocv1.ClusterExtension {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: "some-namespace",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "service-account",
-			},
 			Source: ocv1.SourceConfig{
 				SourceType: ocv1.SourceTypeCatalog,
 				Catalog: &ocv1.CatalogFilter{
@@ -1135,12 +1132,10 @@ func newTestClusterObjectSet(t *testing.T, revisionName string, ext *ocv1.Cluste
 			UID:        types.UID(revisionName),
 			Generation: int64(1),
 			Annotations: map[string]string{
-				labels.PackageNameKey:             "some-package",
-				labels.BundleNameKey:              "some-package.v1.0.0",
-				labels.BundleReferenceKey:         "registry.io/some-repo/some-package:v1.0.0",
-				labels.BundleVersionKey:           "1.0.0",
-				labels.ServiceAccountNameKey:      ext.Spec.ServiceAccount.Name,
-				labels.ServiceAccountNamespaceKey: ext.Spec.Namespace,
+				labels.PackageNameKey:     "some-package",
+				labels.BundleNameKey:      "some-package.v1.0.0",
+				labels.BundleReferenceKey: "registry.io/some-repo/some-package:v1.0.0",
+				labels.BundleVersionKey:   "1.0.0",
 			},
 			Labels: map[string]string{
 				labels.OwnerNameKey: ext.Name,
@@ -1330,8 +1325,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				extA := &ocv1.ClusterExtension{
 					ObjectMeta: metav1.ObjectMeta{Name: "ext-A", UID: "ext-A-uid"},
 					Spec: ocv1.ClusterExtensionSpec{
-						Namespace:      "ns-a",
-						ServiceAccount: ocv1.ServiceAccountReference{Name: "sa-a"},
+						Namespace: "ns-a",
 						Source: ocv1.SourceConfig{
 							SourceType: ocv1.SourceTypeCatalog,
 							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
@@ -1341,8 +1335,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				extB := &ocv1.ClusterExtension{
 					ObjectMeta: metav1.ObjectMeta{Name: "ext-B", UID: "ext-B-uid"},
 					Spec: ocv1.ClusterExtensionSpec{
-						Namespace:      "ns-b",
-						ServiceAccount: ocv1.ServiceAccountReference{Name: "sa-b"},
+						Namespace: "ns-b",
 						Source: ocv1.SourceConfig{
 							SourceType: ocv1.SourceTypeCatalog,
 							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
@@ -1398,8 +1391,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				extA := &ocv1.ClusterExtension{
 					ObjectMeta: metav1.ObjectMeta{Name: "ext-A", UID: "ext-A-uid"},
 					Spec: ocv1.ClusterExtensionSpec{
-						Namespace:      "ns-a",
-						ServiceAccount: ocv1.ServiceAccountReference{Name: "sa-a"},
+						Namespace: "ns-a",
 						Source: ocv1.SourceConfig{
 							SourceType: ocv1.SourceTypeCatalog,
 							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
@@ -1455,8 +1447,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				extB := &ocv1.ClusterExtension{
 					ObjectMeta: metav1.ObjectMeta{Name: "ext-B", UID: "ext-B-uid"},
 					Spec: ocv1.ClusterExtensionSpec{
-						Namespace:      "ns-b",
-						ServiceAccount: ocv1.ServiceAccountReference{Name: "sa-b"},
+						Namespace: "ns-b",
 						Source: ocv1.SourceConfig{
 							SourceType: ocv1.SourceTypeCatalog,
 							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
@@ -1604,88 +1595,6 @@ func Test_effectiveCollisionProtection(t *testing.T) {
 
 func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 	testScheme := newScheme(t)
-
-	t.Run("works with serviceAccount annotation and without owner label", func(t *testing.T) {
-		mockCtrl := gomock.NewController(t)
-		rev := &ocv1.ClusterObjectSet{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   "test-rev-1",
-				UID:    types.UID("test-rev-1"),
-				Labels: map[string]string{},
-				Annotations: map[string]string{
-					labels.ServiceAccountNameKey:      "test-sa",
-					labels.ServiceAccountNamespaceKey: "test-ns",
-					labels.BundleVersionKey:           "1.0.0",
-				},
-			},
-			Spec: ocv1.ClusterObjectSetSpec{
-				LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
-				Revision:       1,
-				Phases:         []ocv1.ClusterObjectSetPhase{},
-			},
-		}
-
-		testClient := fake.NewClientBuilder().
-			WithScheme(testScheme).
-			WithStatusSubresource(&ocv1.ClusterObjectSet{}).
-			WithObjects(rev).
-			Build()
-
-		mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
-			func(ctx context.Context, r machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
-				return newMockRevisionResult(mockCtrl, revisionResultConfig{}), nil
-			}, nil,
-		)
-
-		reconciler := &controllers.ClusterObjectSetReconciler{
-			Client:                testClient,
-			RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
-			TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
-		}
-
-		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{
-			NamespacedName: types.NamespacedName{Name: "test-rev-1"},
-		})
-
-		require.NoError(t, err)
-	})
-
-	t.Run("missing serviceAccount annotation", func(t *testing.T) {
-		mockCtrl := gomock.NewController(t)
-		rev := &ocv1.ClusterObjectSet{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-rev-1",
-				Annotations: map[string]string{
-					labels.BundleVersionKey: "1.0.0",
-				},
-			},
-			Spec: ocv1.ClusterObjectSetSpec{
-				LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
-				Revision:       1,
-				Phases:         []ocv1.ClusterObjectSetPhase{},
-			},
-		}
-
-		testClient := fake.NewClientBuilder().
-			WithScheme(testScheme).
-			WithObjects(rev).
-			Build()
-
-		failingFactory := newMockRevisionEngineFactoryWithEngine(mockCtrl, nil, errors.New("missing serviceAccount name annotation"))
-
-		reconciler := &controllers.ClusterObjectSetReconciler{
-			Client:                testClient,
-			RevisionEngineFactory: failingFactory,
-			TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
-		}
-
-		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{
-			NamespacedName: types.NamespacedName{Name: "test-rev-1"},
-		})
-
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "serviceAccount")
-	})
 
 	t.Run("factory fails to create engine", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)

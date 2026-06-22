@@ -14,21 +14,6 @@ After you add a catalog to your cluster, you can install an extension by creatin
 * The name, and optionally version, or channel, of the [supported extension](../project/olmv1_limitations.md) to be installed
 * An existing namespace in which to install the extension
 
-### ServiceAccount for ClusterExtension Installation and Management
-
-Adhering to OLM v1's "Secure by Default" tenet, OLM v1 does not have the permissions
-necessary to install content. This follows the least privilege principle and reduces
-the chance of a [confused deputy attack](https://en.wikipedia.org/wiki/Confused_deputy_problem).
-Instead, users must explicitly specify a ServiceAccount that will be used to perform the
-installation and management of a specific ClusterExtension.
-
-The ServiceAccount must be configured with the RBAC permissions required by the ClusterExtension.
-If the permissions do not meet the minimum requirements, installation will fail. If no ServiceAccount
-is provided in the ClusterExtension manifest, then the manifest will be rejected.
-
-For information on determining the ServiceAccount's permission, please see [Derive minimal ServiceAccount required for ClusterExtension Installation and Management](../howto/derive-service-account.md).
-
-
 ## Procedure
 
 1. Create a CR for the Kubernetes extension you want to install:
@@ -40,8 +25,6 @@ For information on determining the ServiceAccount's permission, please see [Deri
       name: <extension_name>
     spec:
       namespace: <namespace_name>
-      serviceAccount:
-        name: <serviceAccount_name>
       source:
         sourceType: Catalog
         catalog:
@@ -66,11 +49,6 @@ For information on determining the ServiceAccount's permission, please see [Deri
     `namespace_name`
     : Specifies a name for the namespace in which the bundle of content for the package referenced
     in the packageName field will be applied.
-
-    `serviceAccount_name`
-    : serviceAccount name is a required reference to a ServiceAccount that exists
-    in the `namespace_name`. The provided ServiceAccount is used to install and
-    manage the content for the package specified in the packageName field.
 
     !!! warning
         Currently, the following limitations affect the installation of extensions:
@@ -118,8 +96,6 @@ For information on determining the ServiceAccount's permission, please see [Deri
           UID:               bde55f03-abe2-48af-8c09-28d32df878ad
         Spec:
           Namespace:  argocd
-          Service Account:
-            Name:  argocd-installer
           Source:
             Catalog:
               Package Name:               argocd-operator
