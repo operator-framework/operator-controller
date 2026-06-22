@@ -14,7 +14,7 @@ Feature: Update ClusterExtension
       | test    | 1.0.2   | alpha   | 1.0.0    | BadImage                   |
       | test    | 1.0.4   | beta    |          | CRD, Deployment, ConfigMap |
       | test    | 1.2.0   | beta    | 1.0.1    | CRD, Deployment, ConfigMap |
-    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    And namespace "${TEST_NAMESPACE}" is available
 
   Scenario: Update to a successor version
     Given ClusterExtension is applied
@@ -25,8 +25,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -52,8 +50,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -73,8 +69,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -98,8 +92,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -119,8 +111,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -145,8 +135,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -175,8 +163,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -204,8 +190,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -234,8 +218,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -260,8 +242,6 @@ Feature: Update ClusterExtension
         name: ${NAME}-dup
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -286,8 +266,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -320,8 +298,6 @@ Feature: Update ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -338,3 +314,44 @@ Feature: Update ClusterExtension
     Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
     And ClusterObjectSet "${NAME}-2" reports Progressing as True with Reason RollingOut
     And ClusterObjectSet "${NAME}-2" reports Available as False with Reason ProbeFailure
+
+  Scenario: Clearing deprecated serviceAccount field is reconciled without warnings
+    Given ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: some-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+      """
+    And ClusterExtension is rolled out
+    And ClusterExtension is available
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+      """
+    Then ClusterExtension apply does not emit warning
+    And ClusterExtension has been reconciled the latest generation
+    And ClusterExtension is available

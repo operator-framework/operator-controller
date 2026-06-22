@@ -57,6 +57,7 @@ type scenarioContext struct {
 	deploymentRestores   []deploymentRestore
 	extensionObjects     []client.Object
 	proxy                *recordingProxy
+	lastApplyStderr      string
 }
 
 // GatherClusterExtensionObjects collects all resources related to the ClusterExtension container in
@@ -87,9 +88,7 @@ var (
 	devMode      = false
 	featureGates = map[featuregate.Feature]bool{
 		features.WebhookProviderCertManager:        true,
-		features.PreflightPermissions:              false,
 		features.SingleOwnNamespaceInstallSupport:  false,
-		features.SyntheticPermissions:              false,
 		features.WebhookProviderOpenshiftServiceCA: false,
 		features.HelmChartSupport:                  false,
 		features.BoxcutterRuntime:                  false,
