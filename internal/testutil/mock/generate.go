@@ -23,7 +23,6 @@ package mock
 //go:generate mockgen -destination=crdclient/mock_crdinterface.go -package=crdclient k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1 CustomResourceDefinitionInterface
 //go:generate mockgen -destination=logrsink/mock_logsink.go -package=logrsink github.com/go-logr/logr LogSink
 //go:generate mockgen -destination=machinery/mock_results.go -package=machinery pkg.package-operator.run/boxcutter/machinery RevisionResult,PhaseResult,ObjectResult,RevisionTeardownResult
-//go:generate mockgen -destination=rbac/mock_rulesresolver.go -package=rbac k8s.io/kubernetes/pkg/registry/rbac/validation AuthorizationRuleResolver
 //go:generate mockgen -destination=httputil/mock_roundtripper.go -package=httputil net/http RoundTripper
 
 // Internal interfaces — catalogd
@@ -33,9 +32,6 @@ package mock
 
 // Internal interfaces — operator-controller applier
 //go:generate mockgen -destination=applier/mock_applier.go -package=applier github.com/operator-framework/operator-controller/internal/operator-controller/applier Preflight,HelmReleaseToObjectsConverterInterface,HelmChartProvider,ClusterObjectSetGenerator,ManifestProvider
-
-// Internal interfaces — operator-controller authorization
-//go:generate mockgen -destination=authorization/mock_authorization.go -package=authorization github.com/operator-framework/operator-controller/internal/operator-controller/authorization PreAuthorizer
 
 // Internal interfaces — operator-controller catalogmetadata
 //go:generate mockgen -destination=catalogclient/mock_cache.go -package=catalogclient github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client Cache
