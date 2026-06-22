@@ -41,16 +41,6 @@ const (
 	// ClusterObjectSet.
 	BundleReferenceKey = "olm.operatorframework.io/bundle-reference"
 
-	// ServiceAccountNameKey is the annotation key used to record the name of
-	// the ServiceAccount configured on the owning ClusterExtension.
-	// Deprecated: will be removed when SA-scoped infrastructure is deleted.
-	ServiceAccountNameKey = "olm.operatorframework.io/service-account-name"
-
-	// ServiceAccountNamespaceKey is the annotation key used to record the
-	// namespace of the ServiceAccount configured on the owning ClusterExtension.
-	// Deprecated: will be removed when SA-scoped infrastructure is deleted.
-	ServiceAccountNamespaceKey = "olm.operatorframework.io/service-account-namespace"
-
 	// RevisionNameKey is the label key used to record the name of the
 	// ClusterObjectSet that owns or references a resource (e.g. a
 	// ref Secret). It enables efficient listing of all resources associated

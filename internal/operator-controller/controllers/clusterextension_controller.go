@@ -42,6 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
@@ -422,6 +423,12 @@ type ControllerBuilderOption func(builder *ctrl.Builder)
 func WithOwns(obj client.Object) ControllerBuilderOption {
 	return func(builder *ctrl.Builder) {
 		builder.Owns(obj)
+	}
+}
+
+func WithWatchesRawSource(src source.Source) ControllerBuilderOption {
+	return func(b *ctrl.Builder) {
+		b.WatchesRawSource(src)
 	}
 }
 
