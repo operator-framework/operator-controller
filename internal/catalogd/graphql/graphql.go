@@ -335,6 +335,7 @@ func determineFieldType(value interface{}) (reflect.Kind, bool) {
 }
 
 const maxSampleElements = 10
+const maxSampleValues = 10
 
 // analyzeFieldValue analyzes a field value and returns type info, sample value, and nested fields.
 // For slices, it examines up to maxSampleElements to detect heterogeneous element types
@@ -439,6 +440,9 @@ func mergeNestedFields(existing, new map[string]*FieldInfo) {
 		if existingInfo, ok := existing[fieldName]; ok {
 			// Merge sample values
 			for _, sample := range newInfo.SampleValues {
+				if len(existingInfo.SampleValues) >= maxSampleValues {
+					break
+				}
 				existingInfo.SampleValues = appendUnique(existingInfo.SampleValues, sample)
 			}
 		} else {
@@ -481,7 +485,9 @@ func analyzeJSONObject(obj map[string]interface{}, info *SchemaInfo) {
 		}
 
 		// Update existing field
-		existing.SampleValues = appendUnique(existing.SampleValues, sampleValue)
+		if len(existing.SampleValues) < maxSampleValues {
+			existing.SampleValues = appendUnique(existing.SampleValues, sampleValue)
+		}
 
 		// Merge nested fields if discovered
 		if nestedFields == nil {
