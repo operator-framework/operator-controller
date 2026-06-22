@@ -298,7 +298,6 @@ _Appears in:_
 
 
 ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
-ClusterExtensionInstallConfig requires the namespace and serviceAccount which should be used for the installation of packages.
 
 
 
@@ -359,8 +358,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `namespace` _string_ | namespace specifies a Kubernetes namespace.<br />This is the namespace where the provided ServiceAccount must exist.<br />It also designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.<br />Some extensions may contain namespace-scoped resources to be applied in other namespaces.<br />This namespace must exist.<br />The namespace field is required, immutable, and follows the DNS label standard as defined in [RFC 1123].<br />It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,<br />and be no longer than 63 characters.<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />Required: \{\} <br /> |
-| `serviceAccount` _[ServiceAccountReference](#serviceaccountreference)_ | serviceAccount specifies a ServiceAccount used to perform all interactions with the cluster<br />that are required to manage the extension.<br />The ServiceAccount must be configured with the necessary permissions to perform these interactions.<br />The ServiceAccount must exist in the namespace referenced in the spec.<br />The serviceAccount field is required. |  | Required: \{\} <br /> |
+| `namespace` _string_ | namespace specifies a Kubernetes namespace.<br />It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.<br />Some extensions may contain namespace-scoped resources to be applied in other namespaces.<br />This namespace must exist.<br />The namespace field is required, immutable, and follows the DNS label standard as defined in [RFC 1123].<br />It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,<br />and be no longer than 63 characters.<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />Required: \{\} <br /> |
+| `serviceAccount` _[ServiceAccountReference](#serviceaccountreference)_ | serviceAccount is a deprecated field and is completely ignored.<br />OLMv1 is a single-tenant system where users with ClusterExtension write access are<br />effectively delegated cluster-admin trust. The operator-controller runs with<br />cluster-admin privileges and uses its own service account for all cluster interactions.<br />Deprecated: serviceAccount is no longer used and will be removed in a future release. |  | MinProperties: 1 <br />Optional: \{\} <br /> |
 | `source` _[SourceConfig](#sourceconfig)_ | source is required and selects the installation source of content for this ClusterExtension.<br />Set the sourceType field to perform the selection.<br />Catalog is currently the only implemented sourceType.<br />Setting sourceType to "Catalog" requires the catalog field to also be defined.<br />Below is a minimal example of a source definition (in yaml):<br />source:<br />  sourceType: Catalog<br />  catalog:<br />    packageName: example-package |  | Required: \{\} <br /> |
 | `install` _[ClusterExtensionInstallConfig](#clusterextensioninstallconfig)_ | install is optional and configures installation options for the ClusterExtension,<br />such as the pre-flight check configuration. |  | Optional: \{\} <br /> |
 | `config` _[ClusterExtensionConfig](#clusterextensionconfig)_ | config is optional and specifies bundle-specific configuration.<br />Configuration is bundle-specific and a bundle may provide a configuration schema.<br />When not specified, the default configuration of the resolved bundle is used.<br />config is validated against a configuration schema provided by the resolved bundle. If the bundle does not provide<br />a configuration schema the bundle is deemed to not be configurable. More information on how<br />to configure bundles can be found in the OLM documentation associated with your current OLM version.<br /><opcon:experimental> |  | Optional: \{\} <br /> |
@@ -586,16 +585,19 @@ _Appears in:_
 
 
 
-ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
+ServiceAccountReference is a deprecated type and is completely ignored.
 
+Deprecated: ServiceAccountReference is no longer used and will be removed in a future release.
 
+_Validation:_
+- MinProperties: 1
 
 _Appears in:_
 - [ClusterExtensionSpec](#clusterextensionspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `name` _string_ | name is a required, immutable reference to the name of the ServiceAccount used for installation<br />and management of the content for the package specified in the packageName field.<br />This ServiceAccount must exist in the installNamespace.<br />The name field follows the DNS subdomain standard as defined in [RFC 1123].<br />It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.),<br />start and end with an alphanumeric character, and be no longer than 253 characters.<br />Some examples of valid values are:<br />  - some-serviceaccount<br />  - 123-serviceaccount<br />  - 1-serviceaccount-2<br />  - someserviceaccount<br />  - some.serviceaccount<br />Some examples of invalid values are:<br />  - -some-serviceaccount<br />  - some-serviceaccount-<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 253 <br />Required: \{\} <br /> |
+| `name` _string_ | name is a deprecated field and is completely ignored.<br />Deprecated: name is no longer used and will be removed in a future release.<br />The name field follows the DNS subdomain standard as defined in [RFC 1123].<br />It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.),<br />start and end with an alphanumeric character, and be no longer than 253 characters.<br />Some examples of valid values are:<br />  - some-serviceaccount<br />  - 123-serviceaccount<br />  - 1-serviceaccount-2<br />  - someserviceaccount<br />  - some.serviceaccount<br />Some examples of invalid values are:<br />  - -some-serviceaccount<br />  - some-serviceaccount-<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 253 <br />MinLength: 1 <br />Optional: \{\} <br /> |
 
 
 #### SourceConfig

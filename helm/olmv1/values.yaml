@@ -17,7 +17,6 @@ options:
         - BoxcutterRuntime
         - BundleReleaseSupport
         - DeploymentConfig
-        - PreflightPermissions
         - SingleOwnNamespaceInstallSupport
         - SyntheticPermissions
         - WebhookProviderOpenshiftServiceCA

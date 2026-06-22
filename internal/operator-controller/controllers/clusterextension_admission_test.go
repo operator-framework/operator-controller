@@ -353,11 +353,11 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		errMsg         string
 	}{
 		{"just alphanumeric", "justalphanumeric1", ""},
-		{"hypen-separated", "hyphenated-name", ""},
+		{"hyphen-separated", "hyphenated-name", ""},
 		{"dot-separated", "dotted.name", ""},
 		{"longest valid service account name", strings.Repeat("x", 253), ""},
 		{"too long service account name", strings.Repeat("x", 254), tooLongError},
-		{"no service account name", "", regexMismatchError},
+		{"empty service account name (omitzero drops the field)", "", ""},
 		{"spaces", "spaces spaces", regexMismatchError},
 		{"capitalized", "Capitalized", regexMismatchError},
 		{"camel case", "camelCase", regexMismatchError},
@@ -395,6 +395,69 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestClusterExtensionAdmissionServiceAccountLifecycle(t *testing.T) {
+	t.Parallel()
+	baseSpec := func() ocv1.ClusterExtensionSpec {
+		return ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog:    &ocv1.CatalogFilter{PackageName: "package"},
+			},
+			Namespace: "default",
+		}
+	}
+
+	t.Run("create without serviceAccount succeeds", func(t *testing.T) {
+		t.Parallel()
+		cl := newClient(t)
+		ce := buildClusterExtension(baseSpec())
+		require.NoError(t, cl.Create(context.Background(), ce))
+		t.Cleanup(func() { _ = cl.Delete(context.Background(), ce) })
+	})
+
+	t.Run("create with valid serviceAccount.name succeeds", func(t *testing.T) {
+		t.Parallel()
+		cl := newClient(t)
+		spec := baseSpec()
+		spec.ServiceAccount = ocv1.ServiceAccountReference{Name: "my-sa"} //nolint:staticcheck // testing deprecated field
+		ce := buildClusterExtension(spec)
+		require.NoError(t, cl.Create(context.Background(), ce))
+		t.Cleanup(func() { _ = cl.Delete(context.Background(), ce) })
+	})
+
+	// Note: "serviceAccount: {}" (empty name) is rejected by CRD MinProperties=1 validation,
+	// but can't be tested via the typed Go client because omitzero on the parent field
+	// drops the entire serviceAccount when Name is empty.
+
+	t.Run("update to clear serviceAccount succeeds", func(t *testing.T) {
+		t.Parallel()
+		cl := newClient(t)
+		spec := baseSpec()
+		spec.ServiceAccount = ocv1.ServiceAccountReference{Name: "my-sa"} //nolint:staticcheck // testing deprecated field
+		ce := buildClusterExtension(spec)
+		require.NoError(t, cl.Create(context.Background(), ce))
+		t.Cleanup(func() { _ = cl.Delete(context.Background(), ce) })
+
+		ce.Spec.ServiceAccount = ocv1.ServiceAccountReference{} //nolint:staticcheck // testing deprecated field
+		require.NoError(t, cl.Update(context.Background(), ce))
+	})
+
+	t.Run("update to change serviceAccount.name is rejected by immutability rule", func(t *testing.T) {
+		t.Parallel()
+		cl := newClient(t)
+		spec := baseSpec()
+		spec.ServiceAccount = ocv1.ServiceAccountReference{Name: "original-sa"} //nolint:staticcheck // testing deprecated field
+		ce := buildClusterExtension(spec)
+		require.NoError(t, cl.Create(context.Background(), ce))
+		t.Cleanup(func() { _ = cl.Delete(context.Background(), ce) })
+
+		ce.Spec.ServiceAccount = ocv1.ServiceAccountReference{Name: "different-sa"} //nolint:staticcheck // testing deprecated field
+		err := cl.Update(context.Background(), ce)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "name is immutable once set")
+	})
 }
 
 func TestClusterExtensionAdmissionInstall(t *testing.T) {

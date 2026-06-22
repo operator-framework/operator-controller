@@ -50,8 +50,7 @@ const (
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
 	// namespace specifies a Kubernetes namespace.
-	// This is the namespace where the provided ServiceAccount must exist.
-	// It also designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
+	// It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
 	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
 	// This namespace must exist.
 	//
@@ -67,14 +66,15 @@ type ClusterExtensionSpec struct {
 	// +required
 	Namespace string `json:"namespace"`
 
-	// serviceAccount specifies a ServiceAccount used to perform all interactions with the cluster
-	// that are required to manage the extension.
-	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// The serviceAccount field is required.
+	// serviceAccount is a deprecated field and is completely ignored.
+	// OLMv1 is a single-tenant system where users with ClusterExtension write access are
+	// effectively delegated cluster-admin trust. The operator-controller runs with
+	// cluster-admin privileges and uses its own service account for all cluster interactions.
 	//
-	// +required
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+	// Deprecated: serviceAccount is no longer used and will be removed in a future release.
+	//
+	// +optional
+	ServiceAccount ServiceAccountReference `json:"serviceAccount,omitzero"`
 
 	// source is required and selects the installation source of content for this ClusterExtension.
 	// Set the sourceType field to perform the selection.
@@ -150,7 +150,6 @@ type SourceConfig struct {
 }
 
 // ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
-// ClusterExtensionInstallConfig requires the namespace and serviceAccount which should be used for the installation of packages.
 //
 // +kubebuilder:validation:XValidation:rule="has(self.preflight)",message="at least one of [preflight] are required when install is specified"
 // +union
@@ -378,12 +377,15 @@ type CatalogFilter struct {
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
-// ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
+// ServiceAccountReference is a deprecated type and is completely ignored.
+//
+// Deprecated: ServiceAccountReference is no longer used and will be removed in a future release.
+//
+// +kubebuilder:validation:MinProperties=1
 type ServiceAccountReference struct {
-	// name is a required, immutable reference to the name of the ServiceAccount used for installation
-	// and management of the content for the package specified in the packageName field.
+	// name is a deprecated field and is completely ignored.
 	//
-	// This ServiceAccount must exist in the installNamespace.
+	// Deprecated: name is no longer used and will be removed in a future release.
 	//
 	// The name field follows the DNS subdomain standard as defined in [RFC 1123].
 	// It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.),
@@ -402,11 +404,12 @@ type ServiceAccountReference struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
+	// +kubebuilder:validation:MinLength:=1
 	// +kubebuilder:validation:MaxLength:=253
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable once set but may be cleared"
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="name must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
-	// +required
-	Name string `json:"name"`
+	// +optional
+	Name string `json:"name,omitempty"`
 }
 
 // PreflightConfig holds the configuration for the preflight checks.  If used, at least one preflight check must be non-nil.

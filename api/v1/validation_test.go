@@ -23,9 +23,6 @@ func TestValidate(t *testing.T) {
 	}
 	defaultExtensionSpec := func(s *ClusterExtensionSpec) *ClusterExtensionSpec {
 		s.Namespace = "ns"
-		s.ServiceAccount = ServiceAccountReference{
-			Name: "sa",
-		}
 		s.Source = SourceConfig{
 			SourceType: SourceTypeCatalog,
 			Catalog: &CatalogFilter{
