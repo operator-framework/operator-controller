@@ -17,13 +17,18 @@ limitations under the License.
 package controllers_test
 
 import (
+	"context"
 	"log"
 	"os"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
@@ -51,6 +56,37 @@ func newClient(t *testing.T) client.Client {
 	require.NoError(t, err)
 	require.NotNil(t, cl)
 	return cl
+}
+
+type warningCollector struct {
+	mu    sync.Mutex
+	items []string
+}
+
+func (w *warningCollector) HandleWarningHeader(code int, agent string, text string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.items = append(w.items, text)
+}
+
+func (w *warningCollector) hasWarning(substr string) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, item := range w.items {
+		if strings.Contains(item, substr) {
+			return true
+		}
+	}
+	return false
+}
+
+func newWarningCapturingClient(t *testing.T) (client.Client, *warningCollector) {
+	collector := &warningCollector{}
+	cfg := rest.CopyConfig(config)
+	cfg.WarningHandler = collector
+	cl, err := client.New(cfg, client.Options{Scheme: newScheme(t)})
+	require.NoError(t, err)
+	return cl, collector
 }
 
 // newMockRevisionStatesGetter creates a gomock-based RevisionStatesGetter
@@ -127,6 +163,38 @@ func TestMain(m *testing.M) {
 	if config == nil {
 		log.Panic("expected cfg to not be nil")
 	}
+
+	cl, err := client.New(config, client.Options{})
+	utilruntime.Must(err)
+	ctx := context.Background()
+	utilruntime.Must(cl.Create(ctx, &admissionregistrationv1.ValidatingAdmissionPolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "clusterextension-serviceaccount-deprecated"},
+		Spec: admissionregistrationv1.ValidatingAdmissionPolicySpec{
+			MatchConstraints: &admissionregistrationv1.MatchResources{
+				ResourceRules: []admissionregistrationv1.NamedRuleWithOperations{{
+					RuleWithOperations: admissionregistrationv1.RuleWithOperations{
+						Operations: []admissionregistrationv1.OperationType{admissionregistrationv1.Create, admissionregistrationv1.Update},
+						Rule: admissionregistrationv1.Rule{
+							APIGroups:   []string{"olm.operatorframework.io"},
+							APIVersions: []string{"v1"},
+							Resources:   []string{"clusterextensions"},
+						},
+					},
+				}},
+			},
+			Validations: []admissionregistrationv1.Validation{{
+				Expression: `!has(object.spec.serviceAccount) || !has(object.spec.serviceAccount.name) || object.spec.serviceAccount.name == ''`,
+				Message:    "spec.serviceAccount is deprecated, ignored, and will be removed in a future release. The operator-controller's cluster-admin service account is used for all cluster interactions.",
+			}},
+		},
+	}))
+	utilruntime.Must(cl.Create(ctx, &admissionregistrationv1.ValidatingAdmissionPolicyBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "clusterextension-serviceaccount-deprecated"},
+		Spec: admissionregistrationv1.ValidatingAdmissionPolicyBindingSpec{
+			PolicyName:        "clusterextension-serviceaccount-deprecated",
+			ValidationActions: []admissionregistrationv1.ValidationAction{admissionregistrationv1.Warn},
+		},
+	}))
 
 	code := m.Run()
 	// Use Eventually wrapper for graceful test environment teardown
