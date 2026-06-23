@@ -1,5 +1,5 @@
 Babel==2.18.0
-beautifulsoup4==4.14.3
+beautifulsoup4==4.15.0
 certifi==2026.5.20
 charset-normalizer==3.4.7
 click==8.4.1
