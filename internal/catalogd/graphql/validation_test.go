@@ -24,14 +24,14 @@ func TestValidateQueryComplexity_ParseError(t *testing.T) {
 }
 
 func TestValidateQueryComplexity_ExceedsDepth(t *testing.T) {
-	// Build a query that exceeds MaxQueryDepth (10)
+	// Build a query that exceeds maxQueryDepth (10)
 	var b strings.Builder
 	b.WriteString("{ ")
-	for i := 0; i <= MaxQueryDepth+1; i++ {
+	for i := 0; i <= maxQueryDepth+1; i++ {
 		b.WriteString(fmt.Sprintf("f%d { ", i))
 	}
 	b.WriteString("leaf")
-	for i := 0; i <= MaxQueryDepth+1; i++ {
+	for i := 0; i <= maxQueryDepth+1; i++ {
 		b.WriteString(" }")
 	}
 	b.WriteString(" }")
@@ -46,14 +46,14 @@ func TestValidateQueryComplexity_ExceedsDepth(t *testing.T) {
 }
 
 func TestValidateQueryComplexity_WithinDepthLimit(t *testing.T) {
-	// Build a query at exactly MaxQueryDepth (should pass)
+	// Build a query at exactly maxQueryDepth (should pass)
 	var b strings.Builder
 	b.WriteString("{ ")
-	for i := 1; i < MaxQueryDepth; i++ {
+	for i := 1; i < maxQueryDepth; i++ {
 		b.WriteString(fmt.Sprintf("f%d { ", i))
 	}
 	b.WriteString("leaf")
-	for i := 1; i < MaxQueryDepth; i++ {
+	for i := 1; i < maxQueryDepth; i++ {
 		b.WriteString(" }")
 	}
 	b.WriteString(" }")
@@ -67,7 +67,7 @@ func TestValidateQueryComplexity_WithinDepthLimit(t *testing.T) {
 func TestValidateQueryComplexity_ExceedsAliases(t *testing.T) {
 	var b strings.Builder
 	b.WriteString("{ ")
-	for i := 0; i <= MaxQueryAliases; i++ {
+	for i := 0; i <= maxQueryAliases; i++ {
 		b.WriteString(fmt.Sprintf("a%d: name ", i))
 	}
 	b.WriteString("}")
@@ -84,7 +84,7 @@ func TestValidateQueryComplexity_ExceedsAliases(t *testing.T) {
 func TestValidateQueryComplexity_ExceedsFieldCount(t *testing.T) {
 	var b strings.Builder
 	b.WriteString("{ ")
-	for i := 0; i <= MaxQueryFields; i++ {
+	for i := 0; i <= maxQueryFields; i++ {
 		b.WriteString(fmt.Sprintf("f%d ", i))
 	}
 	b.WriteString("}")

@@ -81,20 +81,19 @@ func NewLocalDirV1(rootDir string, rootURL *url.URL, enableMetasHandler MetasHan
 }
 
 func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) error {
+	s.m.Lock()
 	catalogDir, err := s.storeAtomicSwap(ctx, catalog, fsys)
 	if err != nil {
+		s.m.Unlock()
 		return err
 	}
+	s.m.Unlock()
 
-	// Pre-warm GraphQL schema cache outside the write lock.
-	// Concurrent queries during this window get a cache miss and trigger
-	// their own build via singleflight, which is safe — the data is on disk.
 	if s.graphqlSvc != nil {
 		s.graphqlSvc.InvalidateCache(catalog)
 
 		if _, err := s.graphqlSvc.GetSchema(ctx, catalog); err != nil {
-			// Schema build failed — remove the catalog to maintain consistency.
-			// Re-acquire the write lock for the rollback since it touches shared filesystem state.
+			s.graphqlSvc.InvalidateCache(catalog)
 			s.m.Lock()
 			removeErr := os.RemoveAll(catalogDir)
 			s.m.Unlock()
@@ -109,11 +108,8 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 }
 
 // storeAtomicSwap writes catalog data to a temp dir and atomically swaps it
-// into place. Holds the write lock for the duration of the filesystem operations only.
+// into place. Caller must hold s.m write lock.
 func (s *LocalDirV1) storeAtomicSwap(ctx context.Context, catalog string, fsys fs.FS) (string, error) {
-	s.m.Lock()
-	defer s.m.Unlock()
-
 	if err := os.MkdirAll(s.RootDir, 0700); err != nil {
 		return "", err
 	}
@@ -330,6 +326,9 @@ func (s *LocalDirV1) NewObjectLoader(catalog string) (gql.ObjectLoader, error) {
 	catalogPath := catalogFilePath(s.catalogDir(catalog))
 
 	return func(schemaName string, offset, limit int) ([]map[string]interface{}, error) {
+		s.m.RLock()
+		defer s.m.RUnlock()
+
 		sections := idx.GetSchemaSections(schemaName)
 		if sections == nil {
 			return nil, nil
@@ -350,8 +349,12 @@ func (s *LocalDirV1) NewObjectLoader(catalog string) (gql.ObjectLoader, error) {
 		}
 		defer f.Close()
 
+		const maxEntrySize = 16 * 1024 * 1024 // 16 MiB
 		results := make([]map[string]interface{}, 0, len(sections))
 		for _, sec := range sections {
+			if sec.Length <= 0 || sec.Length > maxEntrySize {
+				return nil, fmt.Errorf("invalid section length %d at offset %d", sec.Length, sec.Offset)
+			}
 			buf := make([]byte, sec.Length)
 			if _, err := f.ReadAt(buf, sec.Offset); err != nil {
 				return nil, fmt.Errorf("error reading section at offset %d: %w", sec.Offset, err)

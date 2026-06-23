@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	MaxQueryDepth   = 10
-	MaxQueryAliases = 50
-	MaxQueryFields  = 500
+	maxQueryDepth   = 10
+	maxQueryAliases = 50
+	maxQueryFields  = 500
 )
 
 type queryComplexity struct {
@@ -51,21 +51,21 @@ func (c *queryComplexity) walkSelectionSet(ss *ast.SelectionSet, depth int) erro
 	if ss == nil {
 		return nil
 	}
-	if depth > MaxQueryDepth {
-		return fmt.Errorf("query exceeds maximum depth of %d", MaxQueryDepth)
+	if depth > maxQueryDepth {
+		return fmt.Errorf("query exceeds maximum depth of %d", maxQueryDepth)
 	}
 
 	for _, sel := range ss.Selections {
 		switch s := sel.(type) {
 		case *ast.Field:
 			c.fields++
-			if c.fields > MaxQueryFields {
-				return fmt.Errorf("query exceeds maximum field count of %d", MaxQueryFields)
+			if c.fields > maxQueryFields {
+				return fmt.Errorf("query exceeds maximum field count of %d", maxQueryFields)
 			}
 			if s.Alias != nil && s.Alias.Value != "" {
 				c.aliases++
-				if c.aliases > MaxQueryAliases {
-					return fmt.Errorf("query exceeds maximum alias count of %d", MaxQueryAliases)
+				if c.aliases > maxQueryAliases {
+					return fmt.Errorf("query exceeds maximum alias count of %d", maxQueryAliases)
 				}
 			}
 			if err := c.walkSelectionSet(s.SelectionSet, depth+1); err != nil {

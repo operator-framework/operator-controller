@@ -334,6 +334,8 @@ func determineFieldType(value interface{}) (reflect.Kind, bool) {
 	return reflect.TypeOf(firstElem).Kind(), true
 }
 
+// Sampling limits for schema inference — controls how many slice elements and
+// distinct values are examined when inferring GraphQL types from catalog data.
 const maxSampleElements = 10
 const maxSampleValues = 10
 
