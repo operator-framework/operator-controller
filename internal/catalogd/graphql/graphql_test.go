@@ -236,15 +236,10 @@ func TestAnalyzeJSONObject(t *testing.T) {
 
 	for origField, expectedType := range expectedFields {
 		graphqlField := remapFieldName(origField)
-		fieldInfo, exists := info.Fields[graphqlField]
+		_, exists := info.Fields[graphqlField]
 		if !exists {
 			t.Errorf("Field %s (mapped to %s) not discovered", origField, graphqlField)
 			continue
-		}
-
-		// Type checking would require GraphQL types, so we just check that it was analyzed
-		if len(fieldInfo.SampleValues) == 0 {
-			t.Errorf("No sample values recorded for field %s", graphqlField)
 		}
 
 		_ = expectedType // We can't easily test GraphQL types without the library
@@ -711,11 +706,8 @@ func TestDiscoverSchemaFromChannel_SkipsMalformedBlob(t *testing.T) {
 	if info == nil {
 		t.Fatal("expected schema entry for 'test'")
 	}
-	if info.TotalObjects != 1 {
-		t.Errorf("expected TotalObjects=1 (counted before parse), got %d", info.TotalObjects)
-	}
-	if info.SampleObject != nil {
-		t.Error("expected nil SampleObject for malformed blob")
+	if info.TotalObjects != 0 {
+		t.Errorf("expected TotalObjects=0 for malformed blob (not counted until after parse), got %d", info.TotalObjects)
 	}
 }
 

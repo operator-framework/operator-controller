@@ -31,7 +31,6 @@ type FieldInfo struct {
 	GraphQLType  graphql.Type
 	JSONType     reflect.Kind
 	IsArray      bool
-	SampleValues []interface{}
 	NestedFields map[string]*FieldInfo // For array-of-objects, stores object structure
 }
 
@@ -39,7 +38,6 @@ type FieldInfo struct {
 type SchemaInfo struct {
 	Fields       map[string]*FieldInfo
 	TotalObjects int
-	SampleObject map[string]interface{}
 }
 
 // CatalogSchema holds the complete discovered schema
@@ -334,8 +332,9 @@ func determineFieldType(value interface{}) (reflect.Kind, bool) {
 	return reflect.TypeOf(firstElem).Kind(), true
 }
 
+// maxSampleElements limits how many slice elements are examined when inferring
+// GraphQL types from catalog data, bounding work on large arrays.
 const maxSampleElements = 10
-const maxSampleValues = 10
 
 // analyzeFieldValue analyzes a field value and returns type info, sample value, and nested fields.
 // For slices, it examines up to maxSampleElements to detect heterogeneous element types
@@ -427,7 +426,6 @@ func analyzeNestedObject(obj map[string]interface{}) map[string]*FieldInfo {
 			GraphQLType:  jsonTypeToGraphQL(jsonType, isArray, sampleValue),
 			JSONType:     jsonType,
 			IsArray:      isArray,
-			SampleValues: []interface{}{value},
 		}
 	}
 
@@ -437,15 +435,7 @@ func analyzeNestedObject(obj map[string]interface{}) map[string]*FieldInfo {
 // mergeNestedFields merges discovered nested fields into existing ones
 func mergeNestedFields(existing, new map[string]*FieldInfo) {
 	for fieldName, newInfo := range new {
-		if existingInfo, ok := existing[fieldName]; ok {
-			// Merge sample values
-			for _, sample := range newInfo.SampleValues {
-				if len(existingInfo.SampleValues) >= maxSampleValues {
-					break
-				}
-				existingInfo.SampleValues = appendUnique(existingInfo.SampleValues, sample)
-			}
-		} else {
+		if _, ok := existing[fieldName]; !ok {
 			existing[fieldName] = newInfo
 		}
 	}
@@ -472,7 +462,6 @@ func analyzeJSONObject(obj map[string]interface{}, info *SchemaInfo) {
 				GraphQLType:  jsonTypeToGraphQL(jsonType, isArray, sampleValue),
 				JSONType:     jsonType,
 				IsArray:      isArray,
-				SampleValues: []interface{}{sampleValue},
 				NestedFields: nestedFields,
 			}
 			continue
@@ -482,11 +471,6 @@ func analyzeJSONObject(obj map[string]interface{}, info *SchemaInfo) {
 		if existing.OriginalName != key {
 			klog.V(2).InfoS("field name collision: different JSON keys map to same GraphQL field",
 				"graphqlField", fieldName, "existingKey", existing.OriginalName, "newKey", key)
-		}
-
-		// Update existing field
-		if len(existing.SampleValues) < maxSampleValues {
-			existing.SampleValues = appendUnique(existing.SampleValues, sampleValue)
 		}
 
 		// Merge nested fields if discovered
@@ -501,70 +485,37 @@ func analyzeJSONObject(obj map[string]interface{}, info *SchemaInfo) {
 	}
 }
 
-// appendUnique adds a value to slice if not already present, using JSON string as key for uniqueness
-func appendUnique(slice []interface{}, value interface{}) []interface{} {
-	seen := make(map[string]struct{}, len(slice))
-
-	for _, existing := range slice {
-		key, err := json.Marshal(existing)
-		if err != nil {
-			continue // skip values that can't be marshaled
+// processMetaIntoSchema parses one meta blob and updates the catalog schema.
+// TotalObjects is incremented only on successful parse so pagination counts
+// reflect objects that can actually be returned by the ObjectLoader.
+func processMetaIntoSchema(catalogSchema *CatalogSchema, meta *declcfg.Meta) {
+	if meta.Schema == "" {
+		return
+	}
+	if catalogSchema.Schemas[meta.Schema] == nil {
+		catalogSchema.Schemas[meta.Schema] = &SchemaInfo{
+			Fields: make(map[string]*FieldInfo),
 		}
-		seen[string(key)] = struct{}{}
+	}
+	info := catalogSchema.Schemas[meta.Schema]
+
+	var obj map[string]interface{}
+	if err := json.Unmarshal(meta.Blob, &obj); err != nil {
+		klog.V(4).InfoS("skipping malformed meta blob during schema discovery",
+			"schema", meta.Schema, "name", meta.Name, "error", err)
+		return
 	}
 
-	valueKey, err := json.Marshal(value)
-	if err != nil {
-		return slice // skip value if it can't be marshaled
-	}
-
-	if _, exists := seen[string(valueKey)]; exists {
-		return slice
-	}
-
-	return append(slice, value)
+	info.TotalObjects++
+	analyzeJSONObject(obj, info)
 }
 
-// DiscoverSchemaFromMetas analyzes Meta objects to discover schema structure
+// DiscoverSchemaFromMetas analyzes Meta objects to discover schema structure.
 func DiscoverSchemaFromMetas(metas []*declcfg.Meta) (*CatalogSchema, error) {
-	catalogSchema := &CatalogSchema{
-		Schemas: make(map[string]*SchemaInfo),
-	}
-
-	// Process each meta object
+	catalogSchema := &CatalogSchema{Schemas: make(map[string]*SchemaInfo)}
 	for _, meta := range metas {
-		if meta.Schema == "" {
-			continue
-		}
-
-		// Ensure schema info exists
-		if catalogSchema.Schemas[meta.Schema] == nil {
-			catalogSchema.Schemas[meta.Schema] = &SchemaInfo{
-				Fields:       make(map[string]*FieldInfo),
-				TotalObjects: 0,
-			}
-		}
-
-		info := catalogSchema.Schemas[meta.Schema]
-		info.TotalObjects++
-
-		// Parse the JSON blob
-		var obj map[string]interface{}
-		if err := json.Unmarshal(meta.Blob, &obj); err != nil {
-			klog.V(4).InfoS("skipping malformed meta blob during schema discovery",
-				"schema", meta.Schema, "name", meta.Name, "error", err)
-			continue
-		}
-
-		// Store a sample object for reference
-		if info.SampleObject == nil {
-			info.SampleObject = obj
-		}
-
-		// Analyze general fields (including nested structures)
-		analyzeJSONObject(obj, info)
+		processMetaIntoSchema(catalogSchema, meta)
 	}
-
 	return catalogSchema, nil
 }
 
@@ -572,39 +523,10 @@ func DiscoverSchemaFromMetas(metas []*declcfg.Meta) (*CatalogSchema, error) {
 // one meta at a time through a channel. Each meta's blob is parsed, analyzed,
 // and then goes out of scope — avoiding accumulation of all blobs in memory.
 func DiscoverSchemaFromChannel(metasChan <-chan *declcfg.Meta) (*CatalogSchema, error) {
-	catalogSchema := &CatalogSchema{
-		Schemas: make(map[string]*SchemaInfo),
-	}
-
+	catalogSchema := &CatalogSchema{Schemas: make(map[string]*SchemaInfo)}
 	for meta := range metasChan {
-		if meta.Schema == "" {
-			continue
-		}
-
-		if catalogSchema.Schemas[meta.Schema] == nil {
-			catalogSchema.Schemas[meta.Schema] = &SchemaInfo{
-				Fields:       make(map[string]*FieldInfo),
-				TotalObjects: 0,
-			}
-		}
-
-		info := catalogSchema.Schemas[meta.Schema]
-		info.TotalObjects++
-
-		var obj map[string]interface{}
-		if err := json.Unmarshal(meta.Blob, &obj); err != nil {
-			klog.V(4).InfoS("skipping malformed meta blob during schema discovery",
-				"schema", meta.Schema, "name", meta.Name, "error", err)
-			continue
-		}
-
-		if info.SampleObject == nil {
-			info.SampleObject = obj
-		}
-
-		analyzeJSONObject(obj, info)
+		processMetaIntoSchema(catalogSchema, meta)
 	}
-
 	return catalogSchema, nil
 }
 

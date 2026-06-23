@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	MaxQueryDepth   = 10
-	MaxQueryAliases = 50
-	MaxQueryFields  = 500
+	maxQueryDepth   = 10
+	maxQueryAliases = 50
+	maxQueryFields  = 500
 )
 
 type queryComplexity struct {
@@ -30,7 +30,6 @@ func ValidateQueryComplexity(query string) error {
 
 	c := &queryComplexity{
 		fragments: make(map[string]*ast.FragmentDefinition),
-		visited:   make(map[string]bool),
 	}
 	for _, def := range doc.Definitions {
 		if frag, ok := def.(*ast.FragmentDefinition); ok {
@@ -39,6 +38,8 @@ func ValidateQueryComplexity(query string) error {
 	}
 	for _, def := range doc.Definitions {
 		if op, ok := def.(*ast.OperationDefinition); ok {
+			// Reset per operation so shared fragments are counted for each operation.
+			c.visited = make(map[string]bool)
 			if err := c.walkSelectionSet(op.SelectionSet, 1); err != nil {
 				return err
 			}
@@ -51,21 +52,21 @@ func (c *queryComplexity) walkSelectionSet(ss *ast.SelectionSet, depth int) erro
 	if ss == nil {
 		return nil
 	}
-	if depth > MaxQueryDepth {
-		return fmt.Errorf("query exceeds maximum depth of %d", MaxQueryDepth)
+	if depth > maxQueryDepth {
+		return fmt.Errorf("query exceeds maximum depth of %d", maxQueryDepth)
 	}
 
 	for _, sel := range ss.Selections {
 		switch s := sel.(type) {
 		case *ast.Field:
 			c.fields++
-			if c.fields > MaxQueryFields {
-				return fmt.Errorf("query exceeds maximum field count of %d", MaxQueryFields)
+			if c.fields > maxQueryFields {
+				return fmt.Errorf("query exceeds maximum field count of %d", maxQueryFields)
 			}
 			if s.Alias != nil && s.Alias.Value != "" {
 				c.aliases++
-				if c.aliases > MaxQueryAliases {
-					return fmt.Errorf("query exceeds maximum alias count of %d", MaxQueryAliases)
+				if c.aliases > maxQueryAliases {
+					return fmt.Errorf("query exceeds maximum alias count of %d", maxQueryAliases)
 				}
 			}
 			if err := c.walkSelectionSet(s.SelectionSet, depth+1); err != nil {
