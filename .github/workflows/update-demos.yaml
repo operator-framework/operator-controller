@@ -25,7 +25,7 @@ jobs:
     steps:
       - run: sudo apt update && sudo apt install -y asciinema curl
       - uses: actions/checkout@v6.0.3
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version-file: "go.mod"
       - name: Run Demo Update
