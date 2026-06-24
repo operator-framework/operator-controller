@@ -1,4 +1,4 @@
-package http
+package client
 
 import (
 	"crypto/tls"
@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	"github.com/operator-framework/operator-controller/internal/shared/util/tlsprofiles"
 )
 
-func BuildHTTPClient(cpw *CertPoolWatcher) (*http.Client, error) {
+func BuildHTTPClient(cpw *httputil.CertPoolWatcher) (*http.Client, error) {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 
 	pool, _, err := cpw.Get()

@@ -1,4 +1,4 @@
-package http_test
+package client_test
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	"github.com/operator-framework/operator-controller/internal/shared/util/tlsprofiles"
 )
@@ -114,7 +115,7 @@ func TestBuildHTTPClientTransportUsesProxyFromEnvironment(t *testing.T) {
 	t.Cleanup(cpw.Done)
 	require.NoError(t, cpw.Start(context.Background()))
 
-	client, err := httputil.BuildHTTPClient(cpw)
+	client, err := catalogclient.BuildHTTPClient(cpw)
 	require.NoError(t, err)
 
 	transport, ok := client.Transport.(*http.Transport)
@@ -150,7 +151,7 @@ func TestBuildHTTPClientProxyTunnelsConnections(t *testing.T) {
 	require.NoError(t, err)
 
 	cpw := certPoolWatcherForTLSServer(t, targetServer)
-	client, err := httputil.BuildHTTPClient(cpw)
+	client, err := catalogclient.BuildHTTPClient(cpw)
 	require.NoError(t, err)
 
 	// Point the transport directly at our test proxy, bypassing the loopback
@@ -191,7 +192,7 @@ func TestBuildHTTPClientAppliesTLSProfile(t *testing.T) {
 	t.Cleanup(cpw.Done)
 	require.NoError(t, cpw.Start(context.Background()))
 
-	client, err := httputil.BuildHTTPClient(cpw)
+	client, err := catalogclient.BuildHTTPClient(cpw)
 	require.NoError(t, err)
 
 	transport, ok := client.Transport.(*http.Transport)
@@ -223,7 +224,7 @@ func TestBuildHTTPClientProxyBlocksWhenRejected(t *testing.T) {
 	require.NoError(t, err)
 
 	cpw := certPoolWatcherForTLSServer(t, targetServer)
-	client, err := httputil.BuildHTTPClient(cpw)
+	client, err := catalogclient.BuildHTTPClient(cpw)
 	require.NoError(t, err)
 
 	transport, ok := client.Transport.(*http.Transport)
