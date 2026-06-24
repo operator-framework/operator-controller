@@ -3,6 +3,7 @@ package bundleutil
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	bsemver "github.com/blang/semver/v4"
 
@@ -22,7 +23,7 @@ func GetVersionAndRelease(b declcfg.Bundle) (*declcfg.VersionRelease, error) {
 	return nil, fmt.Errorf("no package property found in bundle %q", b.Name)
 }
 
-// newLegacyRegistryV1VersionRelease parses a registry+v1 bundle version string and returns a
+// ParseLegacyVersionRelease parses a registry+v1 bundle version string and returns a
 // VersionRelease. Some registry+v1 bundles utilize the build metadata field of the semver version
 // as release information (a semver spec violation maintained for backward compatibility). When the
 // bundle version includes build metadata that is parsable as a release, the returned
@@ -30,7 +31,7 @@ func GetVersionAndRelease(b declcfg.Bundle) (*declcfg.VersionRelease, error) {
 // has its Build metadata cleared. When the bundle version includes build metadata that is NOT
 // parseable as a release, the returned VersionRelease has its Version set to the full semver
 // version (with build metadata) and its Release left empty.
-func newLegacyRegistryV1VersionRelease(vStr string) (*declcfg.VersionRelease, error) {
+func ParseLegacyVersionRelease(vStr string) (*declcfg.VersionRelease, error) {
 	vers, err := bsemver.Parse(vStr)
 	if err != nil {
 		return nil, err
@@ -40,13 +41,7 @@ func newLegacyRegistryV1VersionRelease(vStr string) (*declcfg.VersionRelease, er
 		Version: vers,
 	}
 
-	buildMetadata := ""
-	if len(vr.Version.Build) > 0 {
-		buildMetadata = vr.Version.Build[0]
-		for i := 1; i < len(vr.Version.Build); i++ {
-			buildMetadata += "." + vr.Version.Build[i]
-		}
-	}
+	buildMetadata := strings.Join(vr.Version.Build, ".")
 
 	rel, err := declcfg.NewRelease(buildMetadata)
 	if err == nil && len(rel) > 0 {
@@ -93,13 +88,13 @@ func parseVersionRelease(pkgData json.RawMessage) (*declcfg.VersionRelease, erro
 	//   In the future, for supporting other bundle formats, we should not
 	//   use the legacy registry+v1 mechanism (i.e. using build metadata in
 	//   the version) to determine the bundle's release.
-	return newLegacyRegistryV1VersionRelease(pkg.Version)
+	return ParseLegacyVersionRelease(pkg.Version)
 }
 
 // parseExplicitRelease parses version and release from separate fields.
 // Build metadata is preserved in the version because with an explicit release field,
 // build metadata serves its proper semver purpose (e.g., git commit, build number).
-// In contrast, newLegacyRegistryV1VersionRelease clears build metadata because it
+// In contrast, ParseLegacyVersionRelease clears build metadata because it
 // interprets build metadata AS the release value for registry+v1 bundles.
 func parseExplicitRelease(version, releaseStr string) (*declcfg.VersionRelease, error) {
 	vers, err := bsemver.Parse(version)

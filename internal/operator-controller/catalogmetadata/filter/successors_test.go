@@ -21,7 +21,7 @@ import (
 // mustVersionRelease is a test helper that parses a version string into a VersionRelease.
 // For registry+v1 bundles, build metadata is interpreted as release (e.g., "1.0.0+2" -> Version: 1.0.0, Release: 2).
 func mustVersionRelease(versionStr string) declcfg.VersionRelease {
-	vr, err := newLegacyRegistryV1VersionRelease(versionStr)
+	vr, err := bundleutil.ParseLegacyVersionRelease(versionStr)
 	if err != nil {
 		panic(err)
 	}

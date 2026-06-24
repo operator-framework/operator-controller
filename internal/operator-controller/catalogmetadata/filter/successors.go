@@ -8,6 +8,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
@@ -17,11 +18,15 @@ import (
 func parseInstalledBundleVersionRelease(installedBundle ocv1.BundleMetadata) (*declcfg.VersionRelease, error) {
 	// Handle legacy registry+v1 format: release embedded in version's build metadata
 	if installedBundle.Release == nil {
-		return newLegacyRegistryV1VersionRelease(installedBundle.Version)
+		vr, err := bundleutil.ParseLegacyVersionRelease(installedBundle.Version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get version and release of installed bundle: %w", err)
+		}
+		return vr, nil
 	}
 
 	// Bundle has explicit release field (or explicitly empty) - parse version and release from separate fields.
-	// Note: We can't use newLegacyRegistryV1VersionRelease here because the version might
+	// Note: We can't use ParseLegacyVersionRelease here because the version might
 	// already contain build metadata (e.g., "1.0.0+git.abc"), which serves its proper
 	// semver purpose when using explicit pkg.Release. Concatenating would create invalid
 	// semver like "1.0.0+git.abc+2".
@@ -46,35 +51,6 @@ func parseInstalledBundleVersionRelease(installedBundle ocv1.BundleMetadata) (*d
 		Version: version,
 		Release: release,
 	}, nil
-}
-
-// newLegacyRegistryV1VersionRelease parses a registry+v1 bundle version string and returns a
-// VersionRelease. Some registry+v1 bundles utilize the build metadata field of the semver version
-// as release information (a semver spec violation maintained for backward compatibility).
-func newLegacyRegistryV1VersionRelease(vStr string) (*declcfg.VersionRelease, error) {
-	vers, err := bsemver.Parse(vStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get version and release of installed bundle: %w", err)
-	}
-
-	vr := &declcfg.VersionRelease{
-		Version: vers,
-	}
-
-	buildMetadata := ""
-	if len(vr.Version.Build) > 0 {
-		buildMetadata = vr.Version.Build[0]
-		for i := 1; i < len(vr.Version.Build); i++ {
-			buildMetadata += "." + vr.Version.Build[i]
-		}
-	}
-
-	rel, err := declcfg.NewRelease(buildMetadata)
-	if err == nil && len(rel) > 0 {
-		vr.Release = rel
-		vr.Version.Build = nil
-	}
-	return vr, nil
 }
 
 func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {

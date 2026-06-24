@@ -774,11 +774,9 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
 		// Boxcutter keeps a rolling revision when apply fails. We mirror that state so the test uses
 		// the same inputs the runtime would see.
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				RollingOut: []*controllers.RevisionMetadata{{}},
-			},
-		}
+		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
+			RollingOut: []*controllers.RevisionMetadata{{}},
+		}, nil)
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 			v := declcfg.VersionRelease{
 				Version: bsemver.MustParse("1.0.0"),
