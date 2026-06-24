@@ -302,7 +302,7 @@ extension-developer-e2e: $(OPERATOR_SDK) #EXHELP Run extension create, upgrade a
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
 UNIT_TEST_DIRS := $(shell go list ./... | grep -vE "/test/|/testutils|/testutil/mock") $(shell go list ./test/internal/...)
-COVERAGE_PKGS := $(shell go list ./... | grep -vE "/test/|/testutils|/testutil/mock" | paste -sd,)
+COVERAGE_PKGS := $(shell go list ./... | grep -vE "/test/|/testutils|/testutil/mock" | paste -sd, -)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 
 .PHONY: envtest-k8s-bins #HELP Uses setup-envtest to download and install the binaries required to run ENVTEST-test based locally at the project/bin directory.
@@ -544,7 +544,6 @@ go-build-local: $(BINARIES)
 build-linux: build-deps go-build-linux #EXHELP Build manager binary for GOOS=linux and local GOARCH.
 go-build-linux: BUILDBIN := bin/linux
 go-build-linux: export GOOS=linux
-go-build-linux: export GOARCH=amd64
 go-build-linux: $(BINARIES)
 
 .PHONY: run-internal
