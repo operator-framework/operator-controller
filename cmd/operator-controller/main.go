@@ -431,7 +431,7 @@ func run() error {
 	}
 	catalogClientBackend := cache.NewFilesystemCache(catalogsCachePath)
 	catalogClient := catalogclient.New(catalogClientBackend, func() (*http.Client, error) {
-		return httputil.BuildHTTPClient(cpwCatalogd)
+		return catalogclient.BuildHTTPClient(cpwCatalogd)
 	})
 
 	resolver := &resolve.CatalogResolver{
