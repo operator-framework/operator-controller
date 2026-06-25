@@ -182,7 +182,9 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 	sc.Step(`^(?i)min value for (ClusterExtension|ClusterObjectSet) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)
 
-	sc.Step(`^(?i)the current ClusterExtension is tracked for cleanup$`, TrackCurrentClusterExtensionForCleanup)
+	sc.Step(`^(?i)ClusterExtension "([^"]+)" owns (\d+) ClusterObjectSets?$`, ClusterExtensionOwnsClusterObjectSets)
+	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, NamedClusterExtensionReportsCondition)
+	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, NamedClusterExtensionReportsConditionWithMessageFragment)
 
 	// TLS profile enforcement steps — deployment configuration
 	sc.Step(`^(?i)the "([^"]+)" deployment is configured with custom TLS minimum version "([^"]+)"$`, ConfigureDeploymentWithCustomTLSVersion)
@@ -382,15 +384,37 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 	return nil
 }
 
-// TrackCurrentClusterExtensionForCleanup saves the current ClusterExtension name in the cleanup list
-// so it gets deleted at the end of the scenario. Call this before applying a second ClusterExtension
-// in the same scenario, because ResourceIsApplied overwrites the tracked name.
-func TrackCurrentClusterExtensionForCleanup(ctx context.Context) error {
+// ClusterExtensionOwnsClusterObjectSets waits for the named ClusterExtension to own exactly the
+// expected number of ClusterObjectSets. Polls with timeout.
+func ClusterExtensionOwnsClusterObjectSets(ctx context.Context, extName string, expectedCount int) error {
 	sc := scenarioCtx(ctx)
-	if sc.clusterExtensionName != "" {
-		sc.addedResources = append(sc.addedResources, resource{name: sc.clusterExtensionName, kind: "clusterextension"})
-	}
+	extName = substituteScenarioVars(extName, sc)
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("get", "clusterobjectsets",
+			"-l", fmt.Sprintf("olm.operatorframework.io/owner-name=%s", extName),
+			"-o", "jsonpath={.items[*].metadata.name}")
+		if err != nil {
+			return false
+		}
+		names := strings.Fields(strings.TrimSpace(out))
+		return len(names) == expectedCount
+	})
 	return nil
+}
+
+// NamedClusterExtensionReportsCondition waits for a specific ClusterExtension (by name) to have a condition
+// matching type and status. Polls with timeout.
+func NamedClusterExtensionReportsCondition(ctx context.Context, extName, conditionType, conditionStatus string) error {
+	sc := scenarioCtx(ctx)
+	extName = substituteScenarioVars(extName, sc)
+	return waitForCondition(ctx, "clusterextension", extName, conditionType, conditionStatus, nil, nil)
+}
+
+// NamedClusterExtensionReportsConditionWithMessageFragment waits for a specific ClusterExtension (by name)
+// to have a condition matching type, status, reason, with a message containing the specified fragment.
+func NamedClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, extName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
+	extName = substituteScenarioVars(extName, scenarioCtx(ctx))
+	return waitForCondition(ctx, "clusterextension", extName, conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterExtensionVersionUpdate patches the ClusterExtension's catalog version to the specified value.
@@ -449,7 +473,7 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 		return fmt.Errorf("failed to apply resource %v; err: %w; stderr: %s", out, err, stderrOutput(err))
 	}
 	if res.GetKind() == "ClusterExtension" {
-		sc.clusterExtensionName = res.GetName()
+		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterextension"})
 	} else if res.GetKind() == "ClusterObjectSet" {
 		sc.clusterObjectSetName = res.GetName()
 	} else {
@@ -606,6 +630,16 @@ func messageComparison(ctx context.Context, msg *godog.DocString) msgMatchFn {
 	return msgCmp
 }
 
+func messageFragmentComparison(ctx context.Context, msgFragment *godog.DocString) msgMatchFn {
+	if msgFragment == nil {
+		return alwaysMatch
+	}
+	expectedFragment := substituteScenarioVars(strings.Join(strings.Fields(msgFragment.Content), " "), scenarioCtx(ctx))
+	return func(actualMsg string) bool {
+		return strings.Contains(strings.Join(strings.Fields(actualMsg), " "), expectedFragment)
+	}
+}
+
 func waitForCondition(ctx context.Context, resourceType, resourceName, conditionType, conditionStatus string, conditionReason *string, msgCmp msgMatchFn) error {
 	require.Eventually(godog.T(ctx), func() bool {
 		v, err := k8sClient("get", resourceType, resourceName, "-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
@@ -646,15 +680,7 @@ func ClusterExtensionReportsCondition(ctx context.Context, conditionType, condit
 // ClusterExtensionReportsConditionWithMessageFragment waits for the ClusterExtension to have a condition matching
 // type, status, and reason, with a message containing the specified fragment. Polls with timeout.
 func ClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	msgCmp := alwaysMatch
-	if msgFragment != nil {
-		expectedMsgFragment := substituteScenarioVars(strings.Join(strings.Fields(msgFragment.Content), " "), scenarioCtx(ctx))
-		msgCmp = func(actualMsg string) bool {
-			normalizedActual := strings.Join(strings.Fields(actualMsg), " ")
-			return strings.Contains(normalizedActual, expectedMsgFragment)
-		}
-	}
-	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, msgCmp)
+	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterExtensionReportsConditionWithoutMsg waits for the ClusterExtension to have a condition matching type,
@@ -743,15 +769,7 @@ func ClusterObjectSetReportsConditionWithMsg(ctx context.Context, revisionName, 
 // ClusterObjectSetReportsConditionWithMessageFragment waits for the named ClusterObjectSet to have a condition
 // matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
 func ClusterObjectSetReportsConditionWithMessageFragment(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	msgCmp := alwaysMatch
-	if msgFragment != nil {
-		expectedMsgFragment := substituteScenarioVars(strings.Join(strings.Fields(msgFragment.Content), " "), scenarioCtx(ctx))
-		msgCmp = func(actualMsg string) bool {
-			normalizedActual := strings.Join(strings.Fields(actualMsg), " ")
-			return strings.Contains(normalizedActual, expectedMsgFragment)
-		}
-	}
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, msgCmp)
+	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
 }
 
 // TriggerClusterObjectSetReconciliation annotates the named ClusterObjectSet
@@ -1870,10 +1888,9 @@ func templateContent(content string, values map[string]string) string {
 		if v, found := values[k]; found {
 			return v
 		}
-		return ""
+		return "${" + k + "}"
 	}
 
-	// Replace template variables
 	return os.Expand(content, m)
 }
 
