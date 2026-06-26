@@ -95,6 +95,11 @@ make test-e2e                      # Standard features
 make test-experimental-e2e         # Experimental features
 make test-extension-developer-e2e  # Extension developer workflow
 
+# E2E tests in parallel (runs standard and experimental on separate KIND clusters)
+# Recommended when machine has enough resources (4+ CPU cores, 8+ GB RAM) for faster feedback
+make -j2 test-e2e test-experimental-e2e
+# Linux prerequisite: sudo sysctl fs.inotify.max_user_instances=512
+
 # Regression tests
 make test-regression
 

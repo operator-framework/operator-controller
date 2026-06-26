@@ -247,13 +247,17 @@ The `Makefile` automatically separates scenarios when run without additional `GO
 ### Run All Tests
 
 ```bash
-make test-e2e
+make test-e2e                      # Standard features
+make test-experimental-e2e         # Experimental features
 ```
 
-or
+### Run Standard and Experimental in Parallel
+
+Both suites can run simultaneously on separate KIND clusters (see the Makefile
+comment for Linux prerequisites):
 
 ```bash
-make test-experimental-e2e
+make -j2 test-e2e test-experimental-e2e
 ```
 
 Custom godog arguments can be modified by setting the following:
@@ -312,6 +316,7 @@ go test test/e2e/features_test.go --log.debug --k8s.cli=oc
 
 - `KUBECONFIG`: Path to kubeconfig file (defaults to `~/.kube/config`)
 - `E2E_SUMMARY_OUTPUT`: Path to write test summary (optional)
+- `PROMETHEUS_URL`: Prometheus endpoint for summary generation (set automatically by `make`; skips summary if unset)
 - `CLUSTER_REGISTRY_HOST`: In-cluster registry host for pulling catalog images
 
 ## Design Patterns

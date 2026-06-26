@@ -63,3 +63,6 @@ site
 
 # Test profiling artifacts
 test-profiles/
+
+# Per-cluster kubeconfig files for e2e tests
+.kubeconfig/

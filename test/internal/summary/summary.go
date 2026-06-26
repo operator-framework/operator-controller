@@ -19,7 +19,6 @@ var (
 	summaryTemplate = "summary.md.tmpl"
 	alertsTemplate  = "alert.md.tmpl"
 	chartTemplate   = "mermaid_chart.md.tmpl"
-	defaultPromUrl  = "http://localhost:30900"
 )
 
 type summaryAlerts struct {
@@ -177,9 +176,14 @@ func PrintSummary(path string) error {
 		fmt.Printf("No summary output path specified; skipping")
 		return nil
 	}
+	promURL := os.Getenv("PROMETHEUS_URL")
+	if promURL == "" {
+		fmt.Println("PROMETHEUS_URL not set; skipping summary generation")
+		return nil
+	}
 
 	client, err := api.NewClient(api.Config{
-		Address: defaultPromUrl,
+		Address: promURL,
 	})
 	if err != nil {
 		fmt.Printf("warning: failed to initialize promQL client: %v", err)
