@@ -69,7 +69,9 @@ func (f *defaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, r
 			machinery.NewObjectEngine(
 				f.Scheme, f.TrackingCache, scopedClient,
 				machinery.NewComparator(f.DiscoveryClient, f.Scheme, f.FieldOwnerPrefix),
-				f.FieldOwnerPrefix, f.FieldOwnerPrefix, scopedClient,
+				f.FieldOwnerPrefix, f.FieldOwnerPrefix,
+				f.FieldOwnerPrefix, // managedBy
+				scopedClient,
 			),
 			validation.NewClusterPhaseValidator(f.RESTMapper, scopedClient),
 		),
