@@ -306,7 +306,7 @@ func TestParseInstalledBundleVersionRelease_Errors(t *testing.T) {
 		}
 		_, err := parseInstalledBundleVersionRelease(installedBundle)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to parse installed bundle release")
+		require.Contains(t, err.Error(), "failed to parse installed bundle version and release")
 	})
 }
 

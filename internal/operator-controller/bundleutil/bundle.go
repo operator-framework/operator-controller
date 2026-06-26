@@ -12,6 +12,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
+	slicesutil "github.com/operator-framework/operator-controller/internal/shared/util/slices"
 )
 
 func GetVersionAndRelease(b declcfg.Bundle) (*declcfg.VersionRelease, error) {
@@ -79,7 +80,7 @@ func parseVersionRelease(pkgData json.RawMessage) (*declcfg.VersionRelease, erro
 
 	// When BundleReleaseSupport is enabled and bundle has explicit release field, use it.
 	if features.OperatorControllerFeatureGate.Enabled(features.BundleReleaseSupport) && releaseField.Release != nil {
-		return parseExplicitRelease(pkg.Version, *releaseField.Release)
+		return ParseExplicitRelease(pkg.Version, *releaseField.Release)
 	}
 
 	// Fall back to legacy registry+v1 behavior (release in build metadata)
@@ -91,12 +92,12 @@ func parseVersionRelease(pkgData json.RawMessage) (*declcfg.VersionRelease, erro
 	return ParseLegacyVersionRelease(pkg.Version)
 }
 
-// parseExplicitRelease parses version and release from separate fields.
+// ParseExplicitRelease parses version and release from separate fields.
 // Build metadata is preserved in the version because with an explicit release field,
 // build metadata serves its proper semver purpose (e.g., git commit, build number).
 // In contrast, ParseLegacyVersionRelease clears build metadata because it
 // interprets build metadata AS the release value for registry+v1 bundles.
-func parseExplicitRelease(version, releaseStr string) (*declcfg.VersionRelease, error) {
+func ParseExplicitRelease(version, releaseStr string) (*declcfg.VersionRelease, error) {
 	vers, err := bsemver.Parse(version)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing version %q: %w", version, err)
@@ -155,10 +156,7 @@ func asLegacyRegistryV1Version(vr declcfg.VersionRelease) bsemver.Version {
 		Build: vr.Version.Build,
 	}
 	if len(vr.Release) > 0 {
-		v.Build = make([]string, len(vr.Release))
-		for i, pr := range vr.Release {
-			v.Build[i] = pr.String()
-		}
+		v.Build = slicesutil.Map(vr.Release, func(pr bsemver.PRVersion) string { return pr.String() })
 	}
 	return v
 }

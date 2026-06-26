@@ -30,27 +30,11 @@ func parseInstalledBundleVersionRelease(installedBundle ocv1.BundleMetadata) (*d
 	// already contain build metadata (e.g., "1.0.0+git.abc"), which serves its proper
 	// semver purpose when using explicit pkg.Release. Concatenating would create invalid
 	// semver like "1.0.0+git.abc+2".
-	version, err := bsemver.Parse(installedBundle.Version)
+	vr, err := bundleutil.ParseExplicitRelease(installedBundle.Version, *installedBundle.Release)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse installed bundle version %q: %w", installedBundle.Version, err)
+		return nil, fmt.Errorf("failed to parse installed bundle version and release: %w", err)
 	}
-
-	var release declcfg.Release
-	if *installedBundle.Release == "" {
-		// Explicit empty release: use empty slice (not nil) to match catalog parsing behavior.
-		// NewRelease("") returns nil, but we need empty slice for roundtrip correctness.
-		release = declcfg.Release([]bsemver.PRVersion{})
-	} else {
-		release, err = declcfg.NewRelease(*installedBundle.Release)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse installed bundle release %q: %w", *installedBundle.Release, err)
-		}
-	}
-
-	return &declcfg.VersionRelease{
-		Version: version,
-		Release: release,
-	}, nil
+	return vr, nil
 }
 
 func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
