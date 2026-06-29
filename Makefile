@@ -74,6 +74,8 @@ ifeq ($(origin KIND_CONFIG), undefined)
 KIND_CONFIG := ./kind-config/kind-config.yaml
 endif
 
+KUBECONFIG_DIR := $(ROOT_DIR)/.kubeconfig
+
 ifneq (, $(shell command -v docker 2>/dev/null))
 CONTAINER_RUNTIME := docker
 else ifneq (, $(shell command -v podman 2>/dev/null))
@@ -95,9 +97,6 @@ STANDARD_E2E_MANIFEST := $(MANIFEST_HOME)/standard-e2e.yaml
 EXPERIMENTAL_MANIFEST := $(MANIFEST_HOME)/experimental.yaml
 EXPERIMENTAL_E2E_MANIFEST := $(MANIFEST_HOME)/experimental-e2e.yaml
 CATALOGS_MANIFEST := $(MANIFEST_HOME)/default-catalogs.yaml
-
-# Disable -j flag for make
-.NOTPARALLEL:
 
 .DEFAULT_GOAL := build
 
@@ -275,25 +274,6 @@ $(eval $(call install-sh,standard,operator-controller-standard.yaml))
 .PHONY: test
 test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run all tests.
 
-.PHONY: e2e
-e2e: E2E_TIMEOUT ?= 20m
-e2e: GODOG_ARGS ?=
-e2e: #EXHELP Run the e2e tests.
-ifeq ($(strip $(GODOG_ARGS)),)
-	trap 'exit 130' INT; \
-	set +e; \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="~@Serial" --godog.concurrency=100; \
-	parallelExit=$$?; \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="@Serial" --godog.concurrency=1; \
-	serialExit=$$?; \
-	if [[ $$parallelExit -ne 0 ]] || [[ $$serialExit -ne 0 ]]; then \
-		echo "e2e tests failed: parallel=$$parallelExit serial=$$serialExit"; \
-		exit 1; \
-	fi
-else
-	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT) -args $(GODOG_ARGS)
-endif
-
 export CLUSTER_REGISTRY_HOST := docker-registry.operator-controller-e2e.svc:5000
 .PHONY: extension-developer-e2e
 extension-developer-e2e: export OPERATOR_SDK := $(OPERATOR_SDK)
@@ -333,46 +313,142 @@ test-regression: #HELP Run regression test
 # may be helpful for debugging purposes after a test run.
 #
 # for example: ARTIFACT_PATH=/tmp/artifacts make test-e2e
-.PHONY: test-e2e
-test-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
-test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
-test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
-test-e2e: COVERAGE_NAME := e2e
-test-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
-test-e2e: export INSTALL_DEFAULT_CATALOGS := false
-test-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+#
+# E2E targets use pattern rules (kind-cluster-%, kind-load-%, etc.) with the stem
+# identifying the variant (e2e, experimental-e2e). Each variant runs on its own KIND
+# cluster, enabling parallel execution via make -j2 test-e2e test-experimental-e2e.
+#
+# Parallel runs require sufficient inotify instances for multiple KIND clusters:
+#   sudo sysctl fs.inotify.max_user_instances=512
+# To persist: echo "fs.inotify.max_user_instances=512" | sudo tee /etc/sysctl.d/99-kind.conf
+#
+ifneq (,$(and $(findstring -j,$(MAKEFLAGS)),$(findstring test-e2e,$(MAKECMDGOALS)),$(findstring test-experimental-e2e,$(MAKECMDGOALS)),$(findstring Linux,$(shell uname))))
+$(info NOTE: Running both standard and experimental e2e tests in parallel requires fs.inotify.max_user_instances>=512 (current: $(shell sysctl -n fs.inotify.max_user_instances)))
+endif
 
-.PHONY: test-experimental-e2e
-test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
-test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
-test-experimental-e2e: KIND_CONFIG := ./kind-config/kind-config-2node.yaml
+# Variant-specific overrides on top-level targets propagate down through the entire chain
+.PHONY: test-e2e test-experimental-e2e
+test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
+test-e2e: E2E_SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
+test-e2e: E2E_RELEASE_MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
-test-experimental-e2e: COVERAGE_NAME := experimental-e2e
-test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
-test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
-test-experimental-e2e: PROMETHEUS_VALUES := testdata/prometheus/values-experimental.yaml
+test-experimental-e2e: KIND_CONFIG := ./kind-config/kind-config-2node.yaml
+test-experimental-e2e: E2E_SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
+test-experimental-e2e: E2E_RELEASE_MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+test-experimental-e2e: E2E_PROMETHEUS_VALUES := testdata/prometheus/values-experimental.yaml
 test-experimental-e2e: E2E_TIMEOUT ?= 25m
-test-experimental-e2e: run-internal prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
+
+# Conventions: cluster name = operator-controller-$*, kubeconfig = $(KUBECONFIG_DIR)/operator-controller-$*.kubeconfig
+E2E_KUBECONFIG = $(KUBECONFIG_DIR)/operator-controller-$*.kubeconfig
 
 CATALOGD_CERT_SECRET = catalogd-service-cert-$(VERSION)
 
-.PHONY: prometheus
-prometheus: PROMETHEUS_NAMESPACE := olmv1-system
-prometheus: PROMETHEUS_CHART_VERSION := 86.2.2
-prometheus: $(HELM) #EXHELP Deploy Prometheus into specified namespace
+.PHONY: kind-cluster-%
+kind-cluster-%: $(KIND) docker-build
+	@KIND_NODE_IMAGE=$$(K8S_VERSION=$(K8S_VERSION) $(VALIDATE_KINDEST_NODE_SCRIPT)) || exit 1; \
+	$(KIND) delete cluster --name operator-controller-$* 2>/dev/null || true; \
+	$(KIND) create cluster --name operator-controller-$* --config $(KIND_CONFIG) --image "$$KIND_NODE_IMAGE"; \
+	mkdir -p $(KUBECONFIG_DIR); \
+	KUBECONFIG=$(E2E_KUBECONFIG) $(KIND) export kubeconfig --name operator-controller-$*; \
+	KUBECONFIG=$(E2E_KUBECONFIG) kubectl wait --for=condition=Ready nodes --all --timeout=2m
+
+.PHONY: kind-load-%
+kind-load-%: kind-cluster-%
+	$(KIND) load docker-image $(OPCON_IMG) --name operator-controller-$*
+	$(KIND) load docker-image $(CATD_IMG) --name operator-controller-$*
+
+.PHONY: kind-deploy-%
+kind-deploy-%: kind-load-% manifests
+	@echo "Using $(E2E_SOURCE_MANIFEST) as source manifest"
+	sed "s/cert-git-version/cert-$(VERSION)/g" $(E2E_SOURCE_MANIFEST) > $(E2E_RELEASE_MANIFEST)
+	export KUBECONFIG=$(E2E_KUBECONFIG) \
+		DEFAULT_CATALOG=$(CATALOGS_MANIFEST) \
+		CERT_MGR_VERSION=$(CERT_MGR_VERSION) \
+		INSTALL_DEFAULT_CATALOGS=false \
+		MANIFEST=$(E2E_RELEASE_MANIFEST); \
+	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+
+.PHONY: lint-deployed-%
+lint-deployed-%: kind-deploy-% $(KUBE_SCORE)
+	(export KUBECONFIG=$(E2E_KUBECONFIG); \
+	for ns in $$(printf "olmv1-system\n%s\n" "$(CATD_NAMESPACE)" | uniq); do \
+		for resource in $$(kubectl api-resources --verbs=list --namespaced -o name); do \
+			kubectl get $$resource -n $$ns -o yaml ; \
+			echo "---" ; \
+		done \
+	done) | $(KUBE_SCORE) score - \
+		--ignore-test container-resources \
+		--ignore-test container-image-pull-policy \
+		--ignore-test container-ephemeral-storage-request-and-limit \
+		--ignore-test container-security-context-user-group-id
+
+.PHONY: wait-%
+wait-%: lint-deployed-%
+	KUBECONFIG=$(E2E_KUBECONFIG) kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
+	KUBECONFIG=$(E2E_KUBECONFIG) kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert
+
+.PHONY: prometheus-%
+prometheus-%: wait-% $(HELM)
 ifeq ($(strip $(E2E_SUMMARY_OUTPUT)),)
 	@echo "E2E_SUMMARY_OUTPUT unset; skipping prometheus deployment"
 else
-	$(HELM) upgrade --install prometheus oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack \
+	KUBECONFIG=$(E2E_KUBECONFIG) $(HELM) upgrade --install prometheus oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack \
 	  --namespace $(PROMETHEUS_NAMESPACE) --create-namespace \
 	  --version $(PROMETHEUS_CHART_VERSION) \
 	  -f testdata/prometheus/values.yaml \
-	  $(if $(PROMETHEUS_VALUES),-f $(PROMETHEUS_VALUES)) \
+	  $(if $(E2E_PROMETHEUS_VALUES),-f $(E2E_PROMETHEUS_VALUES)) \
 	  --set-string 'prometheus.additionalServiceMonitors[1].endpoints[0].tlsConfig.ca.secret.name=$(CATALOGD_CERT_SECRET)' \
 	  --set-string 'prometheus.additionalServiceMonitors[1].endpoints[0].tlsConfig.cert.secret.name=$(CATALOGD_CERT_SECRET)' \
 	  --set-string 'prometheus.additionalServiceMonitors[1].endpoints[0].tlsConfig.keySecret.name=$(CATALOGD_CERT_SECRET)' \
 	  --wait --timeout 5m
 endif
+
+.PHONY: e2e-run-%
+e2e-run-%: E2E_TIMEOUT ?= 20m
+e2e-run-%: GODOG_ARGS ?=
+e2e-run-%: prometheus-%
+ifeq ($(strip $(GODOG_ARGS)),)
+	E2E_PROMETHEUS_PORT=$$(grep -A1 'containerPort: 30900' $(KIND_CONFIG) | grep hostPort | awk '{print $$2}'); \
+	if [[ -z "$$E2E_PROMETHEUS_PORT" ]]; then echo "error: failed to extract prometheus hostPort from $(KIND_CONFIG)" >&2; exit 1; fi; \
+	trap 'exit 130' INT; \
+	set +e; \
+	KUBECONFIG=$(E2E_KUBECONFIG) \
+	MANIFEST=$(E2E_RELEASE_MANIFEST) \
+	INSTALL_DEFAULT_CATALOGS=false \
+	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="~@Serial" --godog.concurrency=100; \
+	parallelExit=$$?; \
+	KUBECONFIG=$(E2E_KUBECONFIG) \
+	MANIFEST=$(E2E_RELEASE_MANIFEST) \
+	INSTALL_DEFAULT_CATALOGS=false \
+	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="@Serial" --godog.concurrency=1; \
+	serialExit=$$?; \
+	if [[ $$parallelExit -ne 0 ]] || [[ $$serialExit -ne 0 ]]; then \
+		echo "e2e tests failed: parallel=$$parallelExit serial=$$serialExit"; \
+		exit 1; \
+	fi
+else
+	E2E_PROMETHEUS_PORT=$$(grep -A1 'containerPort: 30900' $(KIND_CONFIG) | grep hostPort | awk '{print $$2}'); \
+	if [[ -z "$$E2E_PROMETHEUS_PORT" ]]; then echo "error: failed to extract prometheus hostPort from $(KIND_CONFIG)" >&2; exit 1; fi; \
+	KUBECONFIG=$(E2E_KUBECONFIG) \
+	MANIFEST=$(E2E_RELEASE_MANIFEST) \
+	INSTALL_DEFAULT_CATALOGS=false \
+	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT) -args $(GODOG_ARGS)
+endif
+
+.PHONY: e2e-coverage-%
+e2e-coverage-%: e2e-run-%
+	KUBECONFIG=$(E2E_KUBECONFIG) COVERAGE_NAME=$* ./hack/test/e2e-coverage.sh
+
+.PHONY: kind-clean-%
+kind-clean-%: e2e-coverage-%
+	$(KIND) delete cluster --name operator-controller-$*
+
+test-e2e: kind-clean-e2e #HELP Run e2e test suite on local kind cluster
+test-experimental-e2e: kind-clean-experimental-e2e #HELP Run experimental e2e test suite on local kind cluster
+
 
 .PHONY: test-extension-developer-e2e
 test-extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
@@ -423,10 +499,6 @@ test-st2ex-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 test-st2ex-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-st2ex-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
 test-st2ex-e2e: experimental/install.sh standard/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run swichover (standard -> experimental) e2e tests on a local kind cluster
-
-.PHONY: e2e-coverage
-e2e-coverage:
-	COVERAGE_NAME=$(COVERAGE_NAME) ./hack/test/e2e-coverage.sh
 
 TEST_PROFILE_BIN := bin/test-profile
 .PHONY: build-test-profiler
@@ -560,6 +632,9 @@ run-experimental: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 run-experimental: run-internal #HELP Build the operator-controller then deploy it with the experimental manifest into a new kind cluster.
 
 CATD_NAMESPACE := olmv1-system
+PROMETHEUS_NAMESPACE := olmv1-system
+PROMETHEUS_CHART_VERSION := 86.2.2
+
 .PHONY: wait
 wait:
 	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s

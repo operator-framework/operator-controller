@@ -5,7 +5,7 @@ nodes:
     extraPortMappings:
     # prometheus metrics service's NodePort
       - containerPort: 30900
-        hostPort: 30900
+        hostPort: 30901
         listenAddress: "127.0.0.1"
         protocol: tcp
     kubeadmConfigPatches:
