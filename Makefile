@@ -404,7 +404,6 @@ else
 endif
 
 .PHONY: e2e-run-%
-e2e-run-%: E2E_TIMEOUT ?= 20m
 e2e-run-%: GODOG_ARGS ?=
 e2e-run-%: prometheus-%
 ifeq ($(strip $(GODOG_ARGS)),)
@@ -416,13 +415,13 @@ ifeq ($(strip $(GODOG_ARGS)),)
 	MANIFEST=$(E2E_RELEASE_MANIFEST) \
 	INSTALL_DEFAULT_CATALOGS=false \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="~@Serial" --godog.concurrency=100; \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="~@Serial" --godog.concurrency=100; \
 	parallelExit=$$?; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
 	MANIFEST=$(E2E_RELEASE_MANIFEST) \
 	INSTALL_DEFAULT_CATALOGS=false \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="@Serial" --godog.concurrency=1; \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="@Serial" --godog.concurrency=1; \
 	serialExit=$$?; \
 	if [[ $$parallelExit -ne 0 ]] || [[ $$serialExit -ne 0 ]]; then \
 		echo "e2e tests failed: parallel=$$parallelExit serial=$$serialExit"; \
@@ -435,7 +434,7 @@ else
 	MANIFEST=$(E2E_RELEASE_MANIFEST) \
 	INSTALL_DEFAULT_CATALOGS=false \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT) -args $(GODOG_ARGS)
+	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(or $(E2E_TIMEOUT),20m) -args $(GODOG_ARGS)
 endif
 
 .PHONY: e2e-coverage-%
