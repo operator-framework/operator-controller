@@ -270,6 +270,55 @@ Note that when this is done the `make` target will no longer automatically split
 GODOG_ARGS="--godog.tags=~@Serial --godog.concurrency=100" make test-experimental-e2e
 ```
 
+### Iterative Development
+
+For iterating on individual scenarios without full suite setup/teardown each time,
+use the persistent cluster and single-scenario targets:
+
+**1. Set up a persistent cluster (once):**
+
+```bash
+make e2e-setup                     # Standard features
+make experimental-e2e-setup        # Experimental features
+```
+
+This builds images, creates a KIND cluster, deploys OLM, and waits for readiness.
+The cluster persists until explicitly torn down.
+
+**2. Run individual scenarios:**
+
+```bash
+# Run all scenarios in a feature file
+make e2e/install
+
+# Run scenarios matching a name prefix (case-insensitive)
+make e2e/install/Install                      # all "Install ..." scenarios
+make "e2e/install/Install latest"             # prefix with spaces (use quotes)
+make e2e/install/Boxcutter                    # single matching scenario
+
+# Override timeout or kubeconfig
+make e2e/install/Install E2E_TIMEOUT=30m
+make e2e/install KUBECONFIG=~/.kube/config
+```
+
+The prefix matches scenario names from the start. If multiple scenarios match, all
+of them run. If no scenario matches, the command fails with a list of available
+scenario names.
+
+When using `experimental-e2e-setup`, override `KUBECONFIG` to point at the
+experimental cluster:
+
+```bash
+make e2e/install/Install KUBECONFIG=.kubeconfig/operator-controller-experimental-e2e.kubeconfig
+```
+
+**3. Tear down when done:**
+
+```bash
+make e2e-teardown                  # Standard cluster
+make experimental-e2e-teardown     # Experimental cluster
+```
+
 ### Run Specific Feature
 
 ```bash
@@ -302,6 +351,8 @@ Available formats: `pretty`, `cucumber`, `progress`, `junit`
 
 **Custom Flags:**
 
+- `--e2e.scenario=<prefix>`: Run scenarios whose name starts with the given prefix (case-insensitive).
+  Used by `make e2e/<feature>/<prefix>` internally.
 - `--log.debug`: Enable debug logging (development mode)
 - `--k8s.cli=<path>`: Specify path to Kubernetes CLI (default: `kubectl`)
   - Useful for using `oc` or a specific kubectl binary
