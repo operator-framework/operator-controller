@@ -133,20 +133,6 @@ lint-helm: $(HELM) $(CONFTEST) #HELP Run helm linter
 	$(HELM) lint helm/olmv1
 	(set -euo pipefail; $(HELM) template olmv1 helm/olmv1) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -
 
-.PHONY: lint-deployed-resources
-lint-deployed-resources: $(KUBE_SCORE) #EXHELP Lint deployed resources.
-	(for ns in $$(printf "olmv1-system\n%s\n" "$(CATD_NAMESPACE)" | uniq); do \
-		for resource in $$(kubectl api-resources --verbs=list --namespaced -o name); do \
-			kubectl get $$resource -n $$ns -o yaml ; \
-			echo "---" ; \
-		done \
-	done) | $(KUBE_SCORE) score - \
-		`# TODO: currently these checks are failing, decide if resources should be fixed for them to pass (https://github.com/operator-framework/operator-controller/issues/2398)` \
-		--ignore-test container-resources \
-		--ignore-test container-image-pull-policy \
-		--ignore-test container-ephemeral-storage-request-and-limit \
-		--ignore-test container-security-context-user-group-id
-
 .PHONY: custom-linter-build
 custom-linter-build: #EXHELP Build custom linter
 	go build -tags $(GO_BUILD_TAGS) -o ./bin/custom-linter ./hack/ci/custom-linters/cmd
@@ -326,46 +312,51 @@ ifneq (,$(and $(findstring -j,$(MAKEFLAGS)),$(findstring test-e2e,$(MAKECMDGOALS
 $(info NOTE: Running both standard and experimental e2e tests in parallel requires fs.inotify.max_user_instances>=512 (current: $(shell sysctl -n fs.inotify.max_user_instances)))
 endif
 
-# Variant-specific overrides on top-level targets propagate down through the entire chain
+# Variant-specific overrides on top-level targets propagate down through the entire chain.
+# The stem ($*) in pattern rules IS the cluster name (e.g., operator-controller-e2e).
 .PHONY: test-e2e test-experimental-e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
-test-e2e: E2E_SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
-test-e2e: E2E_RELEASE_MANIFEST := $(STANDARD_RELEASE_MANIFEST)
+test-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
+test-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
+test-e2e: export DEFAULT_CATALOG := $(CATALOGS_MANIFEST)
+test-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: KIND_CONFIG := ./kind-config/kind-config-2node.yaml
-test-experimental-e2e: E2E_SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
-test-experimental-e2e: E2E_RELEASE_MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
+test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+test-experimental-e2e: export DEFAULT_CATALOG := $(CATALOGS_MANIFEST)
+test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-experimental-e2e: E2E_PROMETHEUS_VALUES := testdata/prometheus/values-experimental.yaml
 test-experimental-e2e: E2E_TIMEOUT ?= 25m
 
-# Conventions: cluster name = operator-controller-$*, kubeconfig = $(KUBECONFIG_DIR)/operator-controller-$*.kubeconfig
-E2E_KUBECONFIG = $(KUBECONFIG_DIR)/operator-controller-$*.kubeconfig
+E2E_KUBECONFIG = $(KUBECONFIG_DIR)/$*.kubeconfig
 
 CATALOGD_CERT_SECRET = catalogd-service-cert-$(VERSION)
 
 .PHONY: kind-cluster-%
-kind-cluster-%: $(KIND) docker-build
+kind-cluster-%: $(KIND) #EXHELP Create a kind cluster named after the stem (%).
 	@KIND_NODE_IMAGE=$$(K8S_VERSION=$(K8S_VERSION) $(VALIDATE_KINDEST_NODE_SCRIPT)) || exit 1; \
-	$(KIND) delete cluster --name operator-controller-$* 2>/dev/null || true; \
-	$(KIND) create cluster --name operator-controller-$* --config $(KIND_CONFIG) --image "$$KIND_NODE_IMAGE"; \
+	$(KIND) delete cluster --name $* 2>/dev/null || true; \
+	$(KIND) create cluster --name $* --config $(KIND_CONFIG) --image "$$KIND_NODE_IMAGE"; \
 	mkdir -p $(KUBECONFIG_DIR); \
-	KUBECONFIG=$(E2E_KUBECONFIG) $(KIND) export kubeconfig --name operator-controller-$*; \
+	KUBECONFIG=$(E2E_KUBECONFIG) $(KIND) export kubeconfig --name $*; \
 	KUBECONFIG=$(E2E_KUBECONFIG) kubectl wait --for=condition=Ready nodes --all --timeout=2m
 
 .PHONY: kind-load-%
-kind-load-%: kind-cluster-%
-	$(KIND) load docker-image $(OPCON_IMG) --name operator-controller-$*
-	$(KIND) load docker-image $(CATD_IMG) --name operator-controller-$*
+kind-load-%: kind-cluster-% docker-build
+	$(KIND) load docker-image $(OPCON_IMG) --name $*
+	$(KIND) load docker-image $(CATD_IMG) --name $*
 
 .PHONY: kind-deploy-%
 kind-deploy-%: kind-load-% manifests
-	@echo "Using $(E2E_SOURCE_MANIFEST) as source manifest"
-	sed "s/cert-git-version/cert-$(VERSION)/g" $(E2E_SOURCE_MANIFEST) > $(E2E_RELEASE_MANIFEST)
+	@echo "Using $(SOURCE_MANIFEST) as source manifest"
+	sed "s/cert-git-version/cert-$(VERSION)/g" $(SOURCE_MANIFEST) > $(MANIFEST)
+	cp $(CATALOGS_MANIFEST) $(RELEASE_CATALOGS)
 	export KUBECONFIG=$(E2E_KUBECONFIG) \
-		DEFAULT_CATALOG=$(CATALOGS_MANIFEST) \
+		DEFAULT_CATALOG=$(DEFAULT_CATALOG) \
 		CERT_MGR_VERSION=$(CERT_MGR_VERSION) \
-		INSTALL_DEFAULT_CATALOGS=false \
-		MANIFEST=$(E2E_RELEASE_MANIFEST); \
+		INSTALL_DEFAULT_CATALOGS=$(INSTALL_DEFAULT_CATALOGS) \
+		MANIFEST=$(MANIFEST); \
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: lint-deployed-%
@@ -413,14 +404,10 @@ ifeq ($(strip $(GODOG_ARGS)),)
 	trap 'exit 130' INT; \
 	set +e; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
-	MANIFEST=$(E2E_RELEASE_MANIFEST) \
-	INSTALL_DEFAULT_CATALOGS=false \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
 	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="~@Serial" --godog.concurrency=100; \
 	parallelExit=$$?; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
-	MANIFEST=$(E2E_RELEASE_MANIFEST) \
-	INSTALL_DEFAULT_CATALOGS=false \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
 	go test -count=1 -v ./test/e2e/features_test.go -timeout $(E2E_TIMEOUT) -args --godog.tags="@Serial" --godog.concurrency=1; \
 	serialExit=$$?; \
@@ -432,8 +419,6 @@ else
 	E2E_PROMETHEUS_PORT=$$(grep -A1 'containerPort: 30900' $(KIND_CONFIG) | grep hostPort | awk '{print $$2}'); \
 	if [[ -z "$$E2E_PROMETHEUS_PORT" ]]; then echo "error: failed to extract prometheus hostPort from $(KIND_CONFIG)" >&2; exit 1; fi; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
-	MANIFEST=$(E2E_RELEASE_MANIFEST) \
-	INSTALL_DEFAULT_CATALOGS=false \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
 	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(E2E_TIMEOUT) -args $(GODOG_ARGS)
 endif
@@ -443,19 +428,22 @@ e2e-coverage-%: e2e-run-%
 	KUBECONFIG=$(E2E_KUBECONFIG) COVERAGE_NAME=$* ./hack/test/e2e-coverage.sh
 
 .PHONY: kind-clean-%
-kind-clean-%: e2e-coverage-%
-	$(KIND) delete cluster --name operator-controller-$*
+kind-clean-%: $(KIND) #EXHELP Delete the kind cluster named after the stem (%).
+	$(KIND) delete cluster --name $*
 
-test-e2e: kind-clean-e2e #HELP Run e2e test suite on local kind cluster
-test-experimental-e2e: kind-clean-experimental-e2e #HELP Run experimental e2e test suite on local kind cluster
+test-e2e: e2e-coverage-operator-controller-e2e #HELP Run e2e test suite on local kind cluster
+	-$(KIND) delete cluster --name operator-controller-e2e
+test-experimental-e2e: e2e-coverage-operator-controller-experimental-e2e #HELP Run experimental e2e test suite on local kind cluster
+	-$(KIND) delete cluster --name operator-controller-experimental-e2e
 
 
 .PHONY: test-extension-developer-e2e
 test-extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
-test-extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
-test-extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-extension-developer-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
-test-extension-developer-e2e: run-internal extension-developer-e2e kind-clean #HELP Run extension-developer e2e on local kind cluster
+test-extension-developer-e2e: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
+test-extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
+test-extension-developer-e2e: wait-operator-controller-ext-dev-e2e extension-developer-e2e #HELP Run extension-developer e2e on local kind cluster
+	-$(KIND) delete cluster --name operator-controller-ext-dev-e2e
 
 .PHONY: run-latest-release
 run-latest-release:
@@ -467,29 +455,31 @@ test-upgrade-e2e:
 	RELEASE_INSTALL=$(RELEASE_INSTALL) \
 	RELEASE_UPGRADE=$(RELEASE_UPGRADE) \
 	KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) \
+	KUBECONFIG=$(KUBECONFIG_DIR)/$(KIND_CLUSTER_NAME).kubeconfig \
 	ROOT_DIR=$(ROOT_DIR) \
 	go test -count=1 -v ./test/upgrade-e2e/upgrade_test.go
 
-
-TEST_UPGRADE_E2E_TASKS := kind-cluster docker-build kind-load test-upgrade-e2e kind-clean
 
 .PHONY: test-upgrade-st2st-e2e
 test-upgrade-st2st-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh
 test-upgrade-st2st-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/standard-install.sh
 test-upgrade-st2st-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-st2st-e2e
-test-upgrade-st2st-e2e: standard/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (standard -> standard) e2e tests on a local kind cluster
+test-upgrade-st2st-e2e: standard/install.sh kind-load-operator-controller-upgrade-st2st-e2e test-upgrade-e2e #HELP Run upgrade (standard -> standard) e2e tests on a local kind cluster
+	-$(KIND) delete cluster --name operator-controller-upgrade-st2st-e2e
 
 .PHONY: test-upgrade-ex2ex-e2e
 test-upgrade-ex2ex-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install-experimental.sh
 test-upgrade-ex2ex-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-ex2ex-e2e
 test-upgrade-ex2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
-test-upgrade-ex2ex-e2e: experimental/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (experimental -> experimental) e2e tests on a local kind cluster
+test-upgrade-ex2ex-e2e: experimental/install.sh kind-load-operator-controller-upgrade-ex2ex-e2e test-upgrade-e2e #HELP Run upgrade (experimental -> experimental) e2e tests on a local kind cluster
+	-$(KIND) delete cluster --name operator-controller-upgrade-ex2ex-e2e
 
 .PHONY: test-upgrade-st2ex-e2e
 test-upgrade-st2ex-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh
 test-upgrade-st2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
 test-upgrade-st2ex-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-st2ex-e2e
-test-upgrade-st2ex-e2e: experimental/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (standard -> experimental) e2e tests on a local kind cluster
+test-upgrade-st2ex-e2e: experimental/install.sh kind-load-operator-controller-upgrade-st2ex-e2e test-upgrade-e2e #HELP Run upgrade (standard -> experimental) e2e tests on a local kind cluster
+	-$(KIND) delete cluster --name operator-controller-upgrade-st2ex-e2e
 
 .PHONY: test-st2ex-e2e
 test-st2ex-e2e: RELEASE_INSTALL := $(ROOT_DIR)/standard-install.sh
@@ -498,7 +488,8 @@ test-st2ex-e2e: KIND_CLUSTER_NAME := operator-controller-st2ex-e2e
 test-st2ex-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 test-st2ex-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-st2ex-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-st2ex-e2e: experimental/install.sh standard/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run swichover (standard -> experimental) e2e tests on a local kind cluster
+test-st2ex-e2e: experimental/install.sh standard/install.sh kind-load-operator-controller-st2ex-e2e test-upgrade-e2e #HELP Run swichover (standard -> experimental) e2e tests on a local kind cluster
+	-$(KIND) delete cluster --name operator-controller-st2ex-e2e
 
 TEST_PROFILE_BIN := bin/test-profile
 .PHONY: build-test-profiler
@@ -521,46 +512,26 @@ start-profiling/%: build-test-profiler #EXHELP Start profiling in background wit
 stop-profiling: build-test-profiler #EXHELP Stop profiling and generate analysis report
 	$(TEST_PROFILE_BIN) stop
 
+VALIDATE_KINDEST_NODE_SCRIPT := hack/tools/validate_kindest_node.sh
+
 #SECTION KIND Cluster Operations
+# Shortcut targets delegate to pattern rules using $(KIND_CLUSTER_NAME) as the stem.
+
+.PHONY: kind-cluster
+kind-cluster: kind-cluster-$(KIND_CLUSTER_NAME) #EXHELP Standup a kind cluster.
 
 .PHONY: kind-load
-kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND cluster.
-	$(KIND) load docker-image $(OPCON_IMG) --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image $(CATD_IMG) --name $(KIND_CLUSTER_NAME)
+kind-load: kind-load-$(KIND_CLUSTER_NAME) #EXHELP Loads the currently constructed images into the KIND cluster.
 
 .PHONY: kind-deploy
 kind-deploy: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
-kind-deploy: manifests
-	@echo -e "\n\U1F4D8 Using $(SOURCE_MANIFEST) as source manifest\n"
-	sed "s/cert-git-version/cert-$(VERSION)/g" $(SOURCE_MANIFEST) > $(MANIFEST)
-	cp $(CATALOGS_MANIFEST) $(DEFAULT_CATALOG)
-	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
-
-.PHONY: kind-deploy-experimental
-kind-deploy-experimental: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
-kind-deploy-experimental: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
-kind-deploy-experimental: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
-kind-deploy-experimental: NAMESPACE := olmv1-system
-# Have to be a _completely_ separate recipe, rather than having `kind-deploy` as a dependency, because `make` will think it was already built
-kind-deploy-experimental: manifests
-	@echo -e "\n\U1F4D8 Using $(SOURCE_MANIFEST) as source manifest\n"
-	sed "s/cert-git-version/cert-$(VERSION)/g" $(SOURCE_MANIFEST) > $(MANIFEST)
-	cp $(CATALOGS_MANIFEST) $(DEFAULT_CATALOG)
-	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
-
-VALIDATE_KINDEST_NODE_SCRIPT := hack/tools/validate_kindest_node.sh
-
-.PHONY: kind-cluster
-kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
-	@KIND_NODE_IMAGE=$$(K8S_VERSION=$(K8S_VERSION) $(VALIDATE_KINDEST_NODE_SCRIPT)) || exit 1; \
-	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME) 2>/dev/null || true; \
-	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config $(KIND_CONFIG) --image "$$KIND_NODE_IMAGE"; \
-	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME); \
-	kubectl wait --for=condition=Ready nodes --all --timeout=2m
+kind-deploy: kind-deploy-$(KIND_CLUSTER_NAME) #EXHELP Deploy OLM into the kind cluster.
 
 .PHONY: kind-clean
-kind-clean: $(KIND) #EXHELP Delete the kind cluster.
-	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
+kind-clean: kind-clean-$(KIND_CLUSTER_NAME) #EXHELP Delete the kind cluster.
+
+.PHONY: wait
+wait: wait-$(KIND_CLUSTER_NAME) #EXHELP Wait for OLM deployments to be ready.
 
 .PHONY: kind-verify-versions
 kind-verify-versions:
@@ -618,27 +589,21 @@ go-build-linux: BUILDBIN := bin/linux
 go-build-linux: export GOOS=linux
 go-build-linux: $(BINARIES)
 
-.PHONY: run-internal
-run-internal: docker-build kind-cluster kind-load kind-deploy lint-deployed-resources wait
-
 .PHONY: run
 run: SOURCE_MANIFEST := $(STANDARD_MANIFEST)
 run: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
-run: run-internal #HELP Build operator-controller then deploy it with the standard manifest into a new kind cluster.
+run: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
+run: wait-$(KIND_CLUSTER_NAME) #HELP Build operator-controller then deploy it with the standard manifest into a new kind cluster.
 
 .PHONY: run-experimental
 run-experimental: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
 run-experimental: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
-run-experimental: run-internal #HELP Build the operator-controller then deploy it with the experimental manifest into a new kind cluster.
+run-experimental: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
+run-experimental: wait-$(KIND_CLUSTER_NAME) #HELP Build the operator-controller then deploy it with the experimental manifest into a new kind cluster.
 
 CATD_NAMESPACE := olmv1-system
 PROMETHEUS_NAMESPACE := olmv1-system
 PROMETHEUS_CHART_VERSION := 86.2.2
-
-.PHONY: wait
-wait:
-	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.

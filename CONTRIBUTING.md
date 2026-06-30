@@ -39,22 +39,10 @@ Please keep this workflow in mind as you read through the document.
 After creating a fork and cloning the project locally,
 you can follow the steps below to test your changes:
 
-1. Create the cluster:
+1. Build and deploy to a local Kind cluster:
 
     ```sh
-    kind create cluster -n operator-controller
-    ```
-
-2. Build your changes:
-
-    ```sh
-    make build docker-build
-    ```
-
-3. Load the image locally and Deploy to Kind
-
-    ```sh
-    make kind-load kind-deploy
+    make run
     ```
 
 ## How to debug controller tests using ENVTEST
