@@ -5,7 +5,6 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
@@ -13,13 +12,13 @@ import (
 // ExactVersionRelease returns a predicate that matches bundles with an exact
 // version and release match. Both the semver version and the release must match
 // exactly for the predicate to return true.
-func ExactVersionRelease(expect bundle.VersionRelease) filter.Predicate[declcfg.Bundle] {
+func ExactVersionRelease(expect declcfg.VersionRelease) filter.Predicate[declcfg.Bundle] {
 	return func(b declcfg.Bundle) bool {
 		actual, err := bundleutil.GetVersionAndRelease(b)
 		if err != nil {
 			return false
 		}
-		return expect.Compare(*actual) == 0
+		return expect.Compare(actual) == 0
 	}
 }
 

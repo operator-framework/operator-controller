@@ -17,7 +17,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/filter"
@@ -39,7 +38,7 @@ type foundBundle struct {
 }
 
 // Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
-func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
 	l := log.FromContext(ctx)
 	packageName := ext.Spec.Source.Catalog.PackageName
 	versionRange := ext.Spec.Source.Catalog.Version

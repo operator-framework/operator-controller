@@ -51,7 +51,7 @@ func ByVersionAndRelease(b1, b2 declcfg.Bundle) int {
 	if err1 != nil || err2 != nil {
 		return compareErrors(err2, err1)
 	}
-	return vr2.Compare(*vr1)
+	return vr2.Compare(vr1)
 }
 
 func ByDeprecationFunc(deprecation declcfg.Deprecation) func(a, b declcfg.Bundle) int {

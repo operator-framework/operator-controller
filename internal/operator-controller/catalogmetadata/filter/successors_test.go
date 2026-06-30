@@ -13,7 +13,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
@@ -21,8 +20,8 @@ import (
 
 // mustVersionRelease is a test helper that parses a version string into a VersionRelease.
 // For registry+v1 bundles, build metadata is interpreted as release (e.g., "1.0.0+2" -> Version: 1.0.0, Release: 2).
-func mustVersionRelease(versionStr string) bundle.VersionRelease {
-	vr, err := bundle.NewLegacyRegistryV1VersionRelease(versionStr)
+func mustVersionRelease(versionStr string) declcfg.VersionRelease {
+	vr, err := bundleutil.ParseLegacyVersionRelease(versionStr)
 	if err != nil {
 		panic(err)
 	}
@@ -307,7 +306,7 @@ func TestParseInstalledBundleVersionRelease_Errors(t *testing.T) {
 		}
 		_, err := parseInstalledBundleVersionRelease(installedBundle)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to parse installed bundle release")
+		require.Contains(t, err.Error(), "failed to parse installed bundle version and release")
 	})
 }
 
