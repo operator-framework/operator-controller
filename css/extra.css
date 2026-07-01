@@ -1,0 +1,10 @@
+/* Hide banner title */
+.md-header__title {
+    visibility: hidden;
+}
+
+/* Make top-level navigation items bold */
+.md-nav__item--active > .md-nav__link, /* Active top-level items */
+.md-nav__item--nested > .md-nav__link { /* Nested top-level items */
+    font-weight: bold;
+}
