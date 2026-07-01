@@ -328,6 +328,15 @@ test-experimental-e2e: export DEFAULT_CATALOG := $(CATALOGS_MANIFEST)
 test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-experimental-e2e: E2E_PROMETHEUS_VALUES := testdata/prometheus/values-experimental.yaml
 test-experimental-e2e: E2E_TIMEOUT ?= 25m
+e2e-setup: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
+e2e-setup: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
+e2e-setup: export DEFAULT_CATALOG := $(CATALOGS_MANIFEST)
+e2e-setup: export INSTALL_DEFAULT_CATALOGS := false
+experimental-e2e-setup: KIND_CONFIG := ./kind-config/kind-config-2node.yaml
+experimental-e2e-setup: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
+experimental-e2e-setup: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+experimental-e2e-setup: export DEFAULT_CATALOG := $(CATALOGS_MANIFEST)
+experimental-e2e-setup: export INSTALL_DEFAULT_CATALOGS := false
 
 E2E_KUBECONFIG = $(KUBECONFIG_DIR)/$*.kubeconfig
 
@@ -436,6 +445,26 @@ test-e2e: e2e-coverage-operator-controller-e2e #HELP Run e2e test suite on local
 test-experimental-e2e: e2e-coverage-operator-controller-experimental-e2e #HELP Run experimental e2e test suite on local kind cluster
 	-$(KIND) delete cluster --name operator-controller-experimental-e2e
 
+.PHONY: e2e-setup
+e2e-setup: wait-operator-controller-e2e #EXHELP Create a KIND cluster with standard OLM deployed for iterative e2e testing.
+
+.PHONY: experimental-e2e-setup
+experimental-e2e-setup: wait-operator-controller-experimental-e2e #EXHELP Create a KIND cluster with experimental OLM deployed for iterative e2e testing.
+
+.PHONY: e2e-teardown experimental-e2e-teardown
+e2e-teardown: kind-clean-operator-controller-e2e #EXHELP Delete the standard e2e KIND cluster.
+experimental-e2e-teardown: kind-clean-operator-controller-experimental-e2e #EXHELP Delete the experimental e2e KIND cluster.
+
+.PHONY: e2e/%
+e2e/%: E2E_TIMEOUT ?= 20m
+e2e/%: KUBECONFIG ?= $(KUBECONFIG_DIR)/operator-controller-e2e.kubeconfig
+e2e/%: #EXHELP Run e2e scenario against a cluster created by e2e-setup or experimental-e2e-setup (tear down with e2e-teardown).
+	@feature=$$(echo "$*" | cut -d/ -f1); \
+	scenario=$$(echo "$*" | cut -d/ -f2-); \
+	if [ "$$scenario" = "$$feature" ]; then scenario=""; fi; \
+	KUBECONFIG=$(KUBECONFIG) go test -count=1 -v ./test/e2e/features_test.go \
+	  -timeout $(E2E_TIMEOUT) \
+	  -args --godog.concurrency=1 --e2e.scenario="$$scenario" "features/$$feature.feature"
 
 .PHONY: test-extension-developer-e2e
 test-extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)

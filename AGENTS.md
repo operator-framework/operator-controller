@@ -107,6 +107,28 @@ make test-regression
 make test
 ```
 
+### Iterative E2E Development
+
+```bash
+# Set up a persistent e2e cluster (does not tear down after tests)
+make e2e-setup                     # Standard features
+make experimental-e2e-setup        # Experimental features
+
+# Run e2e scenarios against the running cluster
+make e2e/install                              # All scenarios in install.feature
+make e2e/install/Install                      # Scenarios starting with "Install"
+make "e2e/install/Install latest"             # Exact prefix with spaces
+make e2e/install E2E_TIMEOUT=30m              # Override timeout
+make e2e/install KUBECONFIG=~/.kube/config    # Override kubeconfig
+
+# Run against experimental cluster (override KUBECONFIG)
+make e2e/install/Install KUBECONFIG=.kubeconfig/operator-controller-experimental-e2e.kubeconfig
+
+# Tear down the e2e cluster when done
+make e2e-teardown                  # Standard cluster
+make experimental-e2e-teardown     # Experimental cluster
+```
+
 ### Linting & Verification
 
 ```bash
