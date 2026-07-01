@@ -1,11 +1,16 @@
 package applier_test
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -36,6 +41,7 @@ import (
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	bundlecsv "github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
@@ -1860,4 +1866,370 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
 	})
+}
+
+type testChartFile struct {
+	name    string
+	content []byte
+}
+
+func makeChartTgz(t *testing.T, files []testChartFile) []byte {
+	t.Helper()
+	require.NotEmpty(t, files, "chart content required")
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	for _, f := range files {
+		require.NoError(t, tw.WriteHeader(&tar.Header{
+			Name: f.name,
+			Mode: 0600,
+			Size: int64(len(f.content)),
+		}))
+		_, err := tw.Write(f.content)
+		require.NoError(t, err)
+	}
+	require.NoError(t, tw.Close())
+
+	var gzBuf bytes.Buffer
+	gz := gzip.NewWriter(&gzBuf)
+	_, err := gz.Write(buf.Bytes())
+	require.NoError(t, err)
+	require.NoError(t, gz.Close())
+	return gzBuf.Bytes()
+}
+
+func makeChartFS(t *testing.T, tgzData []byte) fs.FS {
+	t.Helper()
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "testchart-0.1.0.tgz"), tgzData, 0600))
+	return os.DirFS(dir)
+}
+
+func Test_SimpleRevisionGenerator_GenerateRevision_HelmChart(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.HelmChartSupport)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.HelmChartSupport)))
+	})
+
+	chartYAML := `apiVersion: v2
+name: testchart
+version: 0.1.0`
+	configmapTemplate := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  namespace: {{ .Release.Namespace }}
+data:
+  version: "0.1.0"`
+
+	tgz := makeChartTgz(t, []testChartFile{
+		{name: "testchart/Chart.yaml", content: []byte(chartYAML)},
+		{name: "testchart/templates/configmap.yaml", content: []byte(configmapTemplate)},
+	})
+	bundleFS := makeChartFS(t, tgz)
+
+	// ManifestProvider should NOT be called — strict mock with no expectations
+	ctrl := gomock.NewController(t)
+	mp := mockapplier.NewMockManifestProvider(ctrl)
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: mp,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-extension",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "test-sa",
+			},
+		},
+	}
+
+	rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{
+		labels.BundleVersionKey: "0.1.0",
+		labels.PackageNameKey:   "test-package",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, rev)
+
+	// Verify the rendered ConfigMap is present in one of the phases
+	var foundConfigMap bool
+	for _, phase := range rev.Spec.Phases {
+		for _, obj := range phase.Objects {
+			if obj.Object.GetKind() == "ConfigMap" && obj.Object.GetName() == "test-extension-config" {
+				foundConfigMap = true
+				require.Equal(t, "test-namespace", obj.Object.GetNamespace())
+			}
+		}
+	}
+	require.True(t, foundConfigMap, "expected rendered ConfigMap in revision phases")
+}
+
+func Test_SimpleRevisionGenerator_GenerateRevision_HelmChart_FeatureDisabled(t *testing.T) {
+	// HelmChartSupport is disabled by default — no setup needed
+
+	chartYAML := `apiVersion: v2
+name: testchart
+version: 0.1.0`
+
+	tgz := makeChartTgz(t, []testChartFile{
+		{name: "testchart/Chart.yaml", content: []byte(chartYAML)},
+		{name: "testchart/templates/configmap.yaml", content: []byte("apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: test")},
+	})
+	bundleFS := makeChartFS(t, tgz)
+
+	// With feature disabled, ManifestProvider.Get() is called, which will fail
+	// on a helm chart bundle (no metadata/annotations.yaml)
+	ctrl := gomock.NewController(t)
+	mp := mockapplier.NewMockManifestProvider(ctrl)
+	mp.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("open metadata/annotations.yaml: no such file or directory"))
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: mp,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-extension"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+		},
+	}
+
+	_, err := b.GenerateRevision(t.Context(), bundleFS, ext, nil, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "metadata/annotations.yaml")
+}
+
+func Test_SimpleRevisionGenerator_GenerateRevision_RegistryV1_WithHelmFeature(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.HelmChartSupport)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.HelmChartSupport)))
+	})
+
+	// Use a registryv1 bundle — IsBundleSourceChart should return false
+	ctrl := gomock.NewController(t)
+	mp := mockapplier.NewMockManifestProvider(ctrl)
+	mp.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+		&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-cm"},
+		},
+	}, nil)
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: mp,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-extension"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+		},
+	}
+
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{})
+	require.NoError(t, err)
+	require.NotNil(t, rev)
+
+	// Verify the registryv1 path was used (ManifestProvider was called)
+	var foundCM bool
+	for _, phase := range rev.Spec.Phases {
+		for _, obj := range phase.Objects {
+			if obj.Object.GetKind() == "ConfigMap" && obj.Object.GetName() == "test-cm" {
+				foundCM = true
+			}
+		}
+	}
+	require.True(t, foundCM, "expected ConfigMap from ManifestProvider in revision phases")
+}
+
+func Test_SimpleRevisionGenerator_GenerateRevision_HelmChart_SkipsNonManifestTemplates(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.HelmChartSupport)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.HelmChartSupport)))
+	})
+
+	chartYAML := `apiVersion: v2
+name: testchart
+version: 0.1.0`
+	configmapTemplate := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  key: value`
+	notesTemplate := `Thank you for installing {{ .Chart.Name }}.
+Your release is named {{ .Release.Name }}.
+To learn more: visit https://example.com`
+	helpersTemplate := `{{- define "testchart.fullname" -}}
+{{- .Release.Name }}-{{ .Chart.Name }}
+{{- end }}`
+
+	tgz := makeChartTgz(t, []testChartFile{
+		{name: "testchart/Chart.yaml", content: []byte(chartYAML)},
+		{name: "testchart/templates/configmap.yaml", content: []byte(configmapTemplate)},
+		{name: "testchart/templates/NOTES.txt", content: []byte(notesTemplate)},
+		{name: "testchart/templates/_helpers.tpl", content: []byte(helpersTemplate)},
+	})
+	bundleFS := makeChartFS(t, tgz)
+
+	ctrl := gomock.NewController(t)
+	mp := mockapplier.NewMockManifestProvider(ctrl)
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: mp,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-extension"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+		},
+	}
+
+	rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, rev)
+
+	// Count total objects — only the configmap.yaml should produce an object;
+	// NOTES.txt and _helpers.tpl must be skipped
+	var objectCount int
+	for _, phase := range rev.Spec.Phases {
+		objectCount += len(phase.Objects)
+	}
+	require.Equal(t, 1, objectCount, "expected exactly 1 object (ConfigMap); NOTES.txt and _helpers.tpl should be skipped")
+}
+
+func Test_SimpleRevisionGenerator_GenerateRevision_HelmChart_UsesChartValues(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.HelmChartSupport)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.HelmChartSupport)))
+	})
+
+	chartYAML := `apiVersion: v2
+name: testchart
+version: 0.1.0`
+	valuesYAML := `replicaCount: 3
+appName: my-app`
+	configmapTemplate := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  replicas: "{{ .Values.replicaCount }}"
+  app: "{{ .Values.appName }}"`
+
+	tgz := makeChartTgz(t, []testChartFile{
+		{name: "testchart/Chart.yaml", content: []byte(chartYAML)},
+		{name: "testchart/values.yaml", content: []byte(valuesYAML)},
+		{name: "testchart/templates/configmap.yaml", content: []byte(configmapTemplate)},
+	})
+	bundleFS := makeChartFS(t, tgz)
+
+	ctrl := gomock.NewController(t)
+	mp := mockapplier.NewMockManifestProvider(ctrl)
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: mp,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-extension"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+		},
+	}
+
+	rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, rev)
+
+	var found bool
+	for _, phase := range rev.Spec.Phases {
+		for _, obj := range phase.Objects {
+			if obj.Object.GetKind() == "ConfigMap" {
+				found = true
+				data, _, _ := unstructured.NestedStringMap(obj.Object.Object, "data")
+				require.Equal(t, "3", data["replicas"], "values.yaml replicaCount should be rendered")
+				require.Equal(t, "my-app", data["app"], "values.yaml appName should be rendered")
+			}
+		}
+	}
+	require.True(t, found, "expected ConfigMap with rendered values")
+}
+
+func Test_SimpleRevisionGenerator_GenerateRevision_HelmChart_SkipsHooks(t *testing.T) {
+	require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=true", features.HelmChartSupport)))
+	t.Cleanup(func() {
+		require.NoError(t, features.OperatorControllerFeatureGate.Set(fmt.Sprintf("%s=false", features.HelmChartSupport)))
+	})
+
+	chartYAML := `apiVersion: v2
+name: testchart
+version: 0.1.0`
+	configmapTemplate := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  key: value`
+	hookTemplate := `apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-migrate
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrate
+          image: busybox
+      restartPolicy: Never`
+
+	tgz := makeChartTgz(t, []testChartFile{
+		{name: "testchart/Chart.yaml", content: []byte(chartYAML)},
+		{name: "testchart/templates/configmap.yaml", content: []byte(configmapTemplate)},
+		{name: "testchart/templates/pre-install-job.yaml", content: []byte(hookTemplate)},
+	})
+	bundleFS := makeChartFS(t, tgz)
+
+	ctrl := gomock.NewController(t)
+	mp := mockapplier.NewMockManifestProvider(ctrl)
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: mp,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-extension"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+		},
+	}
+
+	rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, nil, nil)
+	require.NoError(t, err)
+
+	var objectCount int
+	for _, phase := range rev.Spec.Phases {
+		for _, obj := range phase.Objects {
+			objectCount++
+			require.Equal(t, "ConfigMap", obj.Object.GetKind(), "only ConfigMap should remain; hook Job should be filtered out")
+		}
+	}
+	require.Equal(t, 1, objectCount, "expected exactly 1 object (ConfigMap); hook Job should be filtered out")
 }

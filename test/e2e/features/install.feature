@@ -678,3 +678,33 @@ Feature: Install ClusterExtension
     Then ClusterExtension is available
     And ClusterExtension reports Progressing as True with Reason Succeeded
     And ClusterExtension reports Installed as True
+
+  @HelmChartSupport
+  @BoxcutterRuntime
+  Scenario: Install Helm chart from catalog
+    Given a catalog "test" with packages:
+      | package    | version | channel | chart     |
+      | helm-test  | 1.0.0   | stable  | helm-test |
+    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:helm-test}
+            version: 1.0.0
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+      """
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And resource "configmap/${NAME}-config" is installed

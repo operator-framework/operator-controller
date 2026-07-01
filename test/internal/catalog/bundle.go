@@ -1,6 +1,9 @@
 package catalog
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -41,6 +45,7 @@ type bundleConfig struct {
 	largeCRDFieldCount      int                        // if > 0, generate a CRD with this many fields
 	staticBundleDir         string                     // if set, read bundle from this directory (no parameterization)
 	clusterRegistryOverride string                     // if set, use this host in the FBC image ref instead of the default
+	helmChartDir            string                     // if set, package chart from this directory into a .tgz bundle
 }
 
 // bundleSpec is the resolved bundle: version + file map ready for crane.Image().
@@ -48,6 +53,7 @@ type bundleSpec struct {
 	version                 string
 	files                   map[string][]byte
 	clusterRegistryOverride string // if set, use this host in the FBC image ref
+	isHelmChart             bool   // if set, skip registryv1 OCI labels
 }
 
 // WithCRD includes a CRD in the bundle.
@@ -92,6 +98,14 @@ func WithClusterRegistry(host string) BundleOption {
 	}
 }
 
+// WithHelmChartDir packages the chart at the given directory into a .tgz bundle.
+// The directory must contain Chart.yaml and a templates/ subdirectory.
+func WithHelmChartDir(dir string) BundleOption {
+	return func(c *bundleConfig) {
+		c.helmChartDir = dir
+	}
+}
+
 // StaticBundleDir reads pre-built bundle manifests from the given directory.
 // The bundle content is NOT parameterized — resource names remain as-is.
 // Use this for bundles with real operator binaries that can't have their
@@ -125,6 +139,20 @@ func buildBundle(scenarioID, packageName, version string, opts []BundleOption) (
 	cfg := &bundleConfig{}
 	for _, o := range opts {
 		o(cfg)
+	}
+
+	// Helm chart bundle: package a chart directory into a .tgz
+	if cfg.helmChartDir != "" {
+		tgz, chartName, err := packageHelmChart(cfg.helmChartDir)
+		if err != nil {
+			return bundleSpec{}, fmt.Errorf("failed to package helm chart from %s: %w", cfg.helmChartDir, err)
+		}
+		filename := fmt.Sprintf("%s-%s.tgz", chartName, version)
+		return bundleSpec{
+			version:     version,
+			files:       map[string][]byte{filename: tgz},
+			isHelmChart: true,
+		}, nil
 	}
 
 	// Static bundle: read files from disk without parameterization
@@ -472,4 +500,67 @@ func readBundleDir(dir string) (map[string][]byte, error) {
 		return nil
 	})
 	return files, err
+}
+
+// packageHelmChart reads chart files from dir and produces a .tgz archive.
+// Returns the archive bytes and the chart name parsed from Chart.yaml.
+func packageHelmChart(dir string) ([]byte, string, error) {
+	chartYAML, err := os.ReadFile(filepath.Join(dir, "Chart.yaml"))
+	if err != nil {
+		return nil, "", fmt.Errorf("reading Chart.yaml: %w", err)
+	}
+	var meta struct {
+		Name string `json:"name"`
+	}
+	if err := yaml.Unmarshal(chartYAML, &meta); err != nil {
+		return nil, "", fmt.Errorf("parsing Chart.yaml: %w", err)
+	}
+	if meta.Name == "" {
+		return nil, "", fmt.Errorf("Chart.yaml missing required 'name' field")
+	}
+	chartName := meta.Name
+
+	var tarBuf bytes.Buffer
+	tw := tar.NewWriter(&tarBuf)
+	err = filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if err := tw.WriteHeader(&tar.Header{
+			Name: chartName + "/" + rel,
+			Mode: 0600,
+			Size: int64(len(data)),
+		}); err != nil {
+			return err
+		}
+		_, err = tw.Write(data)
+		return err
+	})
+	if err != nil {
+		return nil, "", err
+	}
+	if err := tw.Close(); err != nil {
+		return nil, "", err
+	}
+
+	var gzBuf bytes.Buffer
+	gz := gzip.NewWriter(&gzBuf)
+	if _, err := gz.Write(tarBuf.Bytes()); err != nil {
+		return nil, "", err
+	}
+	if err := gz.Close(); err != nil {
+		return nil, "", err
+	}
+	return gzBuf.Bytes(), chartName, nil
 }

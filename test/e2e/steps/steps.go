@@ -1587,12 +1587,24 @@ func parseCatalogTable(table *godog.Table) ([]catalog.PackageOption, error) {
 	var packageOrder []string
 	packageSeen := make(map[string]bool)
 
-	for _, row := range table.Rows[1:] { // skip header
-		pkg := row.Cells[0].Value
-		version := row.Cells[1].Value
-		channel := row.Cells[2].Value
-		replaces := row.Cells[3].Value
-		contents := row.Cells[4].Value
+	headerCols := make(map[string]int)
+	for i, cell := range table.Rows[0].Cells {
+		headerCols[strings.ToLower(cell.Value)] = i
+	}
+	cellVal := func(rowIdx int, name string) string {
+		if idx, ok := headerCols[name]; ok && idx < len(table.Rows[rowIdx].Cells) {
+			return table.Rows[rowIdx].Cells[idx].Value
+		}
+		return ""
+	}
+
+	for rowIdx := 1; rowIdx < len(table.Rows); rowIdx++ {
+		pkg := cellVal(rowIdx, "package")
+		version := cellVal(rowIdx, "version")
+		channel := cellVal(rowIdx, "channel")
+		replaces := cellVal(rowIdx, "replaces")
+		contents := cellVal(rowIdx, "contents")
+		chartDir := cellVal(rowIdx, "chart")
 
 		if !packageSeen[pkg] {
 			packageOrder = append(packageOrder, pkg)
@@ -1608,6 +1620,10 @@ func parseCatalogTable(table *godog.Table) ([]catalog.PackageOption, error) {
 			opts, err := parseContents(contents)
 			if err != nil {
 				return nil, fmt.Errorf("bundle %s/%s: %w", pkg, version, err)
+			}
+			if chartDir != "" {
+				absDir := filepath.Join(projectRootDir(), "test/e2e/steps/testdata/charts", chartDir)
+				opts = append(opts, catalog.WithHelmChartDir(absDir))
 			}
 			bundleDefs[bk] = &bundleEntry{opts: opts}
 			bundleOrder = append(bundleOrder, bk)

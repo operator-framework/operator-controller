@@ -9,10 +9,14 @@ import (
 	"io"
 	"io/fs"
 	"maps"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/cert-manager/cert-manager/pkg/apis/certmanager"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/engine"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	appsv1 "k8s.io/api/apps/v1"
@@ -24,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/cli-runtime/pkg/printers"
@@ -39,9 +44,11 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
+	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const (
@@ -120,6 +127,13 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	bundleFS fs.FS, ext *ocv1.ClusterExtension,
 	objectLabels, revisionAnnotations map[string]string,
 ) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
+		meta := new(chart.Metadata)
+		if ok, _ := imageutil.IsBundleSourceChart(bundleFS, meta); ok {
+			return r.generateRevisionFromChart(ctx, bundleFS, ext, meta, objectLabels, revisionAnnotations)
+		}
+	}
+
 	// extract plain manifests
 	plain, err := r.ManifestProvider.Get(bundleFS, ext)
 	if err != nil {
@@ -187,6 +201,148 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
 	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionPrevent)
 	return rev, nil
+}
+
+func (r *SimpleRevisionGenerator) generateRevisionFromChart(
+	ctx context.Context,
+	bundleFS fs.FS, ext *ocv1.ClusterExtension, meta *chart.Metadata,
+	objectLabels, revisionAnnotations map[string]string,
+) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+	filename, err := findChartArchive(bundleFS)
+	if err != nil {
+		return nil, fmt.Errorf("finding chart archive: %w", err)
+	}
+	chrt, err := imageutil.LoadChartFSWithOptions(bundleFS, filename)
+	if err != nil {
+		return nil, fmt.Errorf("loading helm chart %s: %w", filename, err)
+	}
+
+	isUpgrade := ext.Status.Install != nil && ext.Status.Install.Bundle.Name != ""
+	releaseOpts := chartutil.ReleaseOptions{
+		Name:      ext.GetName(),
+		Namespace: ext.Spec.Namespace,
+		Revision:  1,
+		IsInstall: !isUpgrade,
+		IsUpgrade: isUpgrade,
+	}
+	vals, err := chartutil.ToRenderValues(chrt, chrt.Values, releaseOpts, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating render values: %w", err)
+	}
+
+	rendered, err := engine.Render(chrt, vals)
+	if err != nil {
+		return nil, fmt.Errorf("rendering helm chart templates: %w", err)
+	}
+
+	plain, err := parseRenderedChart(rendered, chrt)
+	if err != nil {
+		return nil, fmt.Errorf("parsing rendered chart: %w", err)
+	}
+
+	if revisionAnnotations == nil {
+		revisionAnnotations = map[string]string{}
+	}
+
+	objs := make([]ocv1ac.ClusterObjectSetObjectApplyConfiguration, 0, len(plain))
+	for _, obj := range plain {
+		obj.SetLabels(mergeStringMaps(obj.GetLabels(), objectLabels))
+
+		// Memory optimization: strip large annotations
+		if err := cache.ApplyStripAnnotationsTransform(obj); err != nil {
+			return nil, err
+		}
+		sanitizedUnstructured(ctx, obj)
+
+		annotationUpdates := map[string]string{}
+		if v := revisionAnnotations[labels.BundleVersionKey]; v != "" {
+			annotationUpdates[labels.BundleVersionKey] = v
+		}
+		if v := revisionAnnotations[labels.PackageNameKey]; v != "" {
+			annotationUpdates[labels.PackageNameKey] = v
+		}
+		if len(annotationUpdates) > 0 {
+			obj.SetAnnotations(mergeStringMaps(obj.GetAnnotations(), annotationUpdates))
+		}
+
+		objs = append(objs, *ocv1ac.ClusterObjectSetObject().
+			WithObject(*obj))
+	}
+	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
+	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionPrevent)
+	return rev, nil
+}
+
+func parseRenderedChart(rendered map[string]string, chrt *chart.Chart) ([]*unstructured.Unstructured, error) {
+	var objects []*unstructured.Unstructured
+
+	// Include CRDs from the crds/ directory (not rendered by engine.Render)
+	for _, crd := range chrt.CRDObjects() {
+		objs, err := decodeYAMLDocuments(crd.File.Data)
+		if err != nil {
+			return nil, fmt.Errorf("parsing CRD %s: %w", crd.Name, err)
+		}
+		objects = append(objects, objs...)
+	}
+
+	// Sort template names for deterministic output
+	templateNames := slices.Sorted(maps.Keys(rendered))
+	for _, name := range templateNames {
+		ext := strings.ToLower(filepath.Ext(name))
+		if ext != ".yaml" && ext != ".yml" && ext != ".json" {
+			continue
+		}
+		content := strings.TrimSpace(rendered[name])
+		if content == "" {
+			continue
+		}
+		objs, err := decodeYAMLDocuments([]byte(content))
+		if err != nil {
+			return nil, fmt.Errorf("parsing template %s: %w", name, err)
+		}
+		for _, obj := range objs {
+			if _, isHook := obj.GetAnnotations()["helm.sh/hook"]; isHook {
+				continue
+			}
+			objects = append(objects, obj)
+		}
+	}
+
+	return objects, nil
+}
+
+func decodeYAMLDocuments(data []byte) ([]*unstructured.Unstructured, error) {
+	var objects []*unstructured.Unstructured
+	dec := apimachyaml.NewYAMLOrJSONDecoder(bytes.NewReader(data), 1024)
+	for {
+		obj := unstructured.Unstructured{}
+		err := dec.Decode(&obj)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if len(obj.Object) == 0 {
+			continue
+		}
+		objects = append(objects, &obj)
+	}
+	return objects, nil
+}
+
+func findChartArchive(bundleFS fs.FS) (string, error) {
+	entries, err := fs.ReadDir(bundleFS, ".")
+	if err != nil {
+		return "", fmt.Errorf("reading bundle directory: %w", err)
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.HasSuffix(name, ".tgz") || strings.HasSuffix(name, ".tar.gz") {
+			return name, nil
+		}
+	}
+	return "", fmt.Errorf("no chart archive (.tgz or .tar.gz) found in bundle")
 }
 
 // sanitizedUnstructured takes an unstructured obj, removes status if present, and returns a sanitized copy containing only the allowed metadata entries set below.

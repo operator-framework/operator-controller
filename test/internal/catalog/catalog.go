@@ -142,16 +142,18 @@ func (c *Catalog) Build(ctx context.Context, tag, localRegistry, clusterRegistry
 				return nil, fmt.Errorf("failed to create bundle image for %s:%s: %w", paramPkgName, bd.version, err)
 			}
 
-			labels := map[string]string{
-				"operators.operatorframework.io.bundle.mediatype.v1": "registry+v1",
-				"operators.operatorframework.io.bundle.manifests.v1": "manifests/",
-				"operators.operatorframework.io.bundle.metadata.v1":  "metadata/",
-				"operators.operatorframework.io.bundle.package.v1":   paramPkgName,
-				"operators.operatorframework.io.bundle.channels.v1":  "default",
-			}
-			img, err = mutate.Config(img, v1.Config{Labels: labels})
-			if err != nil {
-				return nil, fmt.Errorf("failed to set bundle labels for %s:%s: %w", paramPkgName, bd.version, err)
+			if !spec.isHelmChart {
+				labels := map[string]string{
+					"operators.operatorframework.io.bundle.mediatype.v1": "registry+v1",
+					"operators.operatorframework.io.bundle.manifests.v1": "manifests/",
+					"operators.operatorframework.io.bundle.metadata.v1":  "metadata/",
+					"operators.operatorframework.io.bundle.package.v1":   paramPkgName,
+					"operators.operatorframework.io.bundle.channels.v1":  "default",
+				}
+				img, err = mutate.Config(img, v1.Config{Labels: labels})
+				if err != nil {
+					return nil, fmt.Errorf("failed to set bundle labels for %s:%s: %w", paramPkgName, bd.version, err)
+				}
 			}
 
 			bundleTag := fmt.Sprintf("%s/bundles/%s:v%s", localRegistry, paramPkgName, bd.version)
