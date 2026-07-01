@@ -225,6 +225,7 @@ Feature: Update ClusterExtension
     And bundle "${PACKAGE:test}.1.0.4" is installed in version "1.0.4"
 
   @BoxcutterRuntime
+  @DeploymentConfig
   Scenario: Detect collision when a second ClusterExtension installs the same package after an upgrade
     Given ClusterExtension is applied
       """
@@ -251,7 +252,6 @@ Feature: Update ClusterExtension
     Then ClusterExtension is rolled out
     And ClusterExtension is available
     And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"
-    And the current ClusterExtension is tracked for cleanup
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -271,10 +271,44 @@ Feature: Update ClusterExtension
                 "olm.operatorframework.io/metadata.name": ${CATALOG:test}
             version: 1.0.1
       """
-    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+    Then ClusterExtension "${NAME}-dup" reports Progressing as True with Reason Retrying and Message includes:
       """
       revision object collisions
       """
+    And ClusterExtension "${NAME}" reports Installed as True
+    # Force a second revision on the dup via env var change — collision must persist
+    When ClusterExtension is updated
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}-dup
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        config:
+          configType: Inline
+          inline:
+            deploymentConfig:
+              env:
+                - name: MY_VAR
+                  value: "my-value"
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+            version: 1.0.1
+      """
+    Then ClusterExtension "${NAME}-dup" owns 2 ClusterObjectSets
+    And ClusterExtension "${NAME}-dup" reports Progressing as True with Reason Retrying and Message includes:
+      """
+      revision object collisions
+      """
+    And ClusterExtension "${NAME}" reports Installed as True
 
   @BoxcutterRuntime
   Scenario: Each update creates a new revision and resources not present in the new revision are removed from the cluster
