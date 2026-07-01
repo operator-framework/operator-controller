@@ -10,7 +10,7 @@ Feature: Preserve user-managed fields on deployed resources
     And a catalog "test" with packages:
       | package | version | channel | replaces | contents                   |
       | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
-    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    And namespace "${TEST_NAMESPACE}" is available
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -19,8 +19,6 @@ Feature: Preserve user-managed fields on deployed resources
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:

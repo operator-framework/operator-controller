@@ -11,8 +11,6 @@ metadata:
   name: argocd
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:

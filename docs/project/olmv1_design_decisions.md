@@ -176,14 +176,13 @@ OLM v1 will include primitives (e.g. templating) to make it possible to have mul
 
 However, it should be noted that the purpose of these primitives is not to enable multi-tenancy. It is to enable administrators to provide configuration for the installation of an extension. The fact that operators can be packaged as separate bundles and parameterized in a way that permits multiple controller installations is incidental, and not something that OLM v1 will encourage or promote.
 
-### Make OLM secure by default
+### Make OLM secure by safeguarding ClusterExtension permissions
 
-OLMv0 runs as cluster-admin, which is a security concern. OLMv0 has optional security controls for operator installations via the OperatorGroup, which allows a user with permission to create or update them to also set a ServiceAccount that will be used for authorization purposes on operator installations and upgrades in that namespace. If a ServiceAccount is not explicitly specified, OLM’s cluster-admin credentials are used. Another avenue that cluster administrators have is to lock down permissions and usage of the CatalogSource API, disable default catalogs, and provide tenants with custom vetted catalogs. However if a cluster admin is not aware of these options, the default configuration of a cluster results in users with permission to create a Subscription in namespaces that contain an OperatorGroup effectively have cluster-admin, because OLMv0 has unlimited permissions to install any bundle available in the default catalogs and the default community catalog is not vetted for limited RBAC. Because OLMv0 is used to install more RBAC and run arbitrary workloads, there are numerous potential vectors that attackers could exploit. While there are no known exploits and there has not been any specific concern reported from customers, we believe CNCF’s reputation rest on secure cloud-native software and that this is a non-negotiable area to improve.
+Initially, OLMv1 was designed as secure-by-default and required cluster administrators to create ServiceAccounts and associated RBAC to enable the installation of ClusterExtensions. However, any users granted permission to create ClusterExtension resources are effectively being delegated cluster-admin trust. Requiring administrators to create least-privileged RBAC for ClusterExtension installation does not remove this avenue of privilege escalation. Thus, OLMv1 adopts cluster-admin scope directly to eliminate the complexity and UX burden of requiring users to manage ServiceAccounts with difficult-to-determine permissions, and enables simpler internal operations for namespace management and content lifecycle.
 
-To make OLM secure by default:
+To safeguard against potential escalation attacks, cluster administrators should treat the ability to create ClusterExtensions as equivalent to having cluster-admin privileges.
 
-- OLM v1 will not be granted cluster admin permissions. Instead, it will require service accounts provided by users to actually install, upgrade, and delete content. In addition to the security this provides, it also fulfills one of OLM’s long-standing requirements: halt when bundle upgrades require additional permissions and wait until those permissions are granted.
-- OLM v1 will use secure communication protocols between all internal components and between itself and its clients.
+Additionally, OLM v1 will use secure communication protocols between all internal components and between itself and its clients.
 
 ### Simple and predictable semantics for install, upgrade, and delete
 
@@ -242,7 +241,7 @@ The Operator Framework team will perform a survey of registry+v1 packages that c
 
 OLMv0 has no official client libraries or CLIs that can be used to augment its functionality or provide a more streamlined user experience. The kubectl "operator" plugin was developed several years ago, but has never been a focus of the core Operator Framework development team, and has never factored into the overall architecture.
 
-OLM v1 will deliver an official CLI (likely by overhauling the kubectl operator plugin) and will use it to meet requirements that are difficult or impossible to implement in a controller, or where an architectural assessment dictates that a client is the better choice. This CLI would automate standard workflows over cluster APIs to facilitate simple administrative actions (e.g. automatically create RBAC and ServiceAccounts necessary for an extension installation as an optional step in the CLI’s extension install experience).
+OLM v1 will deliver an official CLI (likely by overhauling the kubectl operator plugin) and will use it to meet requirements that are difficult or impossible to implement in a controller, or where an architectural assessment dictates that a client is the better choice. This CLI would automate standard workflows over cluster APIs to facilitate simple administrative actions.
 
 The official CLI will provide administrators and users with a UX that covers the most common scenarios users will encounter.
 

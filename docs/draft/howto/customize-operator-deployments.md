@@ -48,8 +48,6 @@ metadata:
   name: my-operator
 spec:
   namespace: my-namespace
-  serviceAccount:
-    name: my-operator-sa
   source:
     sourceType: Catalog
     catalog:
@@ -236,8 +234,6 @@ metadata:
   name: production-operator
 spec:
   namespace: production-operators
-  serviceAccount:
-    name: production-operator-installer
   source:
     sourceType: Catalog
     catalog:
@@ -344,8 +340,6 @@ metadata:
   name: my-operator
 spec:
   namespace: operators
-  serviceAccount:
-    name: my-operator-installer
   source:
     sourceType: Catalog
     catalog:

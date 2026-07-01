@@ -9,7 +9,7 @@ Feature: Report status of the managed ClusterExtension workload
     And a catalog "test" with packages:
       | package | version | channel | replaces | contents                   |
       | test    | 1.0.0   | alpha   |          | CRD, Deployment, ConfigMap |
-    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    And namespace "${TEST_NAMESPACE}" is available
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -18,8 +18,6 @@ Feature: Report status of the managed ClusterExtension workload
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:

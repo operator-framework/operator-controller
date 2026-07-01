@@ -58,13 +58,11 @@ kubectl wait --for=condition=Serving=True clustercatalog/operatorhubio --timeout
 ### Install a Cluster Extension
 
 For simplicity, the following example manifest includes all necessary resources to install the ArgoCD operator.
-The manifest includes installation namespace, installer service account and associated minimal set of RBAC permissions
-needed for installation, and the ClusterExtension resource, which specifies the name and version of the extension to install.
-More information on installing extensions can be found [here](../tutorials/install-extension.md).
+The manifest includes installation namespace and the ClusterExtension resource, which specifies the name and 
+version of the extension to install. More information on installing extensions can be found [here](../tutorials/install-extension.md).
 
 ```bash
-# Apply the sample ClusterExtension. Manifest already includes
-# namespace and adequately privileged service account
+# Apply the sample ClusterExtension. Manifest already includes namespace
 kubectl apply -f https://raw.githubusercontent.com/operator-framework/operator-controller/main/config/samples/olm_v1_clusterextension.yaml
 ```
 
@@ -94,20 +92,9 @@ kubectl delete clusterextension/argocd
 
 ### Cleanup
 
-Extension installation requires the creation of a namespace, an installer service account, and its RBAC. Once the
-extension is uninstalled, these resources can be cleaned up.
+Extension installation requires the creation of a namespace. Once the extension is uninstalled, the namespace can be removed.
 
 ```bash
-# Delete namespace, and by extension, the installer service account, Role, and RoleBinding
+# Delete the namespace
 kubectl delete namespace argocd
-```
-
-```bash
-# Delete installer service account cluster roles
-kubectl delete clusterrole argocd-installer-clusterrole && kubectl delete clusterrole argocd-installer-rbac-clusterrole
-```
-
-```bash
-# Delete installer service account cluster role bindings
-kubectl delete clusterrolebinding argocd-installer-binding && kubectl delete clusterrolebinding argocd-installer-rbac-binding
 ```
