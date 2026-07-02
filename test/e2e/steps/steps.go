@@ -476,6 +476,7 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterextension"})
 	} else if res.GetKind() == "ClusterObjectSet" {
 		sc.clusterObjectSetName = res.GetName()
+		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterobjectset"})
 	} else {
 		namespace := res.GetNamespace()
 		if namespace == "" {
