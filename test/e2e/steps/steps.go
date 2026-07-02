@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -74,7 +75,7 @@ var (
 	k8sCli              string
 	deployImageRegistry = sync.OnceValue(func() error {
 		// Only deploy the registry on kind clusters
-		providerID, err := k8sClient("get", "nodes", "-o", "jsonpath={.items[0].spec.providerID}")
+		providerID, err := k8sClient(context.Background(), "get", "nodes", "-o", "jsonpath={.items[0].spec.providerID}")
 		if err != nil || !strings.HasPrefix(providerID, "kind://") {
 			return nil
 		}
@@ -148,6 +149,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is (?:eventually not found|not installed)$`, ResourceEventuallyNotFound)
 	sc.Step(`^(?i)resource "([^"]+)" exists$`, ResourceAvailable)
 	sc.Step(`^(?i)resource is applied$`, ResourceIsApplied)
+	sc.Step(`^(?i)namespace is applied$`, ResourceIsApplied)
 	sc.Step(`^(?i)deployment "([^"]+)" reports as (not ready|ready)$`, MarkDeploymentReadiness)
 
 	sc.Step(`^(?i)resource apply fails with error msg containing "([^"]+)"$`, ResourceApplyFails)
@@ -240,25 +242,66 @@ func namespaceForComponent(component string) string {
 	return olmNamespace
 }
 
-func k8sClient(args ...string) (string, error) {
-	cmd := exec.Command(k8sCli, args...)
+func k8sClient(ctx context.Context, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, k8sCli, args...)
 	logger.V(1).Info("Running", "command", strings.Join(cmd.Args, " "))
 	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
-	b, err := cmd.Output()
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
+
+	start := time.Now()
+	err := cmd.Run()
+	elapsed := time.Since(start)
+
+	output := stdoutBuf.String()
+	stderrStr := stderrBuf.String()
+
 	if err != nil {
-		logger.V(1).Info("Failed to run", "command", strings.Join(cmd.Args, " "), "stderr", stderrOutput(err), "error", err)
+		logger.V(1).Info("Failed to run", "command", strings.Join(cmd.Args, " "), "stderr", stderrStr, "error", err)
+		// Inject stderr into ExitError so stderrOutput() can extract it.
+		// cmd.Run() with explicit cmd.Stderr does not populate ExitError.Stderr.
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			exitErr.Stderr = []byte(stderrStr)
+		}
 	}
-	output := string(b)
 	logger.V(1).Info("Output", "command", strings.Join(cmd.Args, " "), "output", output)
+
+	if rec := RecorderFromContext(ctx); rec != nil {
+		rec.RecordCommand(strings.Join(cmd.Args, " "), output, stderrStr, elapsed)
+	}
 	return output, err
 }
 
-func k8scliWithInput(yaml string, args ...string) (string, error) {
-	cmd := exec.Command(k8sCli, args...)
+func k8scliWithInput(ctx context.Context, yaml string, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, k8sCli, args...)
 	cmd.Stdin = bytes.NewBufferString(yaml)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
-	b, err := cmd.Output()
-	return string(b), err
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
+
+	start := time.Now()
+	err := cmd.Run()
+	elapsed := time.Since(start)
+
+	output := stdoutBuf.String()
+	stderrStr := stderrBuf.String()
+
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			exitErr.Stderr = []byte(stderrStr)
+		}
+	}
+
+	if rec := RecorderFromContext(ctx); rec != nil {
+		rec.RecordCommandWithInput(strings.Join(cmd.Args, " "), yaml, output, stderrStr, elapsed)
+	}
+	return output, err
 }
 
 // projectRootDir finds the project root by walking up from the source file until go.mod is found.
@@ -301,12 +344,17 @@ func ImageRegistryIsAvailable() error {
 // OLMisAvailable waits for the OLM operator-controller deployment to become available. Polls with timeout.
 func OLMisAvailable(ctx context.Context) error {
 	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient("get", "deployment", "-n", olmNamespace, olmDeploymentName, "-o", "jsonpath='{.status.conditions[?(@.type==\"Available\")].status}'")
+		v, err := k8sClient(ctx, "get", "deployment", "-n", olmNamespace, olmDeploymentName, "-o", "jsonpath='{.status.conditions[?(@.type==\"Available\")].status}'")
 		if err != nil {
 			return false
 		}
 		return v == "'True'"
 	}, timeout, tick)
+
+	if rec := RecorderFromContext(ctx); rec != nil {
+		out, _ := k8sClient(ctx, "get", "deployments", "-n", olmNamespace, "-l", "app.kubernetes.io/part-of=olm")
+		rec.RecordCustom(fmt.Sprintf("kubectl get deployments -n %s", olmNamespace), out, "")
+	}
 	return nil
 }
 
@@ -315,7 +363,7 @@ func BundleInstalled(ctx context.Context, name, version string) error {
 	sc := scenarioCtx(ctx)
 	name = substituteScenarioVars(name, sc)
 	waitFor(ctx, func() bool {
-		v, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.install.bundle}")
+		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.install.bundle}")
 		if err != nil {
 			return false
 		}
@@ -372,7 +420,7 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 		return fmt.Errorf("failed to parse resource yaml: %v", err)
 	}
 	waitFor(ctx, func() bool {
-		_, err := k8scliWithInput(yamlContent, "apply", "-f", "-")
+		_, err := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-")
 		if err == nil {
 			return false
 		}
@@ -390,7 +438,7 @@ func ClusterExtensionOwnsClusterObjectSets(ctx context.Context, extName string, 
 	sc := scenarioCtx(ctx)
 	extName = substituteScenarioVars(extName, sc)
 	waitFor(ctx, func() bool {
-		out, err := k8sClient("get", "clusterobjectsets",
+		out, err := k8sClient(ctx, "get", "clusterobjectsets",
 			"-l", fmt.Sprintf("olm.operatorframework.io/owner-name=%s", extName),
 			"-o", "jsonpath={.items[*].metadata.name}")
 		if err != nil {
@@ -433,7 +481,7 @@ func ClusterExtensionVersionUpdate(ctx context.Context, version string) error {
 	if err != nil {
 		return err
 	}
-	_, err = k8sClient("patch", "clusterextension", sc.clusterExtensionName, "--type", "merge", "-p", string(pb))
+	_, err = k8sClient(ctx, "patch", "clusterextension", sc.clusterExtensionName, "--type", "merge", "-p", string(pb))
 	return err
 }
 
@@ -450,7 +498,7 @@ func ClusterObjectSetLifecycleUpdate(ctx context.Context, cosName, lifecycle str
 	if err != nil {
 		return err
 	}
-	_, err = k8sClient("patch", "clusterobjectset", cosName, "--type", "merge", "-p", string(pb))
+	_, err = k8sClient(ctx, "patch", "clusterobjectset", cosName, "--type", "merge", "-p", string(pb))
 	return err
 }
 
@@ -468,7 +516,7 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 	if err != nil {
 		return fmt.Errorf("failed to marshal resource yaml: %w", err)
 	}
-	out, err := k8scliWithInput(string(annotatedYAML), "apply", "-f", "-")
+	out, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply resource %v; err: %w; stderr: %s", out, err, stderrOutput(err))
 	}
@@ -494,12 +542,24 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 func ClusterExtensionIsAvailable(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.conditions[?(@.type==\"Installed\")].status}")
+		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.conditions[?(@.type==\"Installed\")].status}")
 		if err != nil {
 			return false
 		}
 		return v == "True"
 	}, timeout, tick)
+
+	if rec := RecorderFromContext(ctx); rec != nil {
+		out, _ := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status}")
+		var pretty bytes.Buffer
+		if err := json.Indent(&pretty, []byte(out), "", "  "); err == nil {
+			out = pretty.String()
+		}
+		rec.RecordCustom(
+			fmt.Sprintf("kubectl get clusterextension %s -o jsonpath='{.status}' | jq .", sc.clusterExtensionName),
+			out+"\n", "",
+		)
+	}
 	return nil
 }
 
@@ -508,7 +568,7 @@ func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	waitFor(ctx, func() bool {
 		// Get both generation and observedGeneration in a single kubectl call
-		output, err := k8sClient("get", "clusterextension", sc.clusterExtensionName,
+		output, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName,
 			"-o", "jsonpath={.metadata.generation},{.status.conditions[?(@.type=='Progressing')].observedGeneration}")
 		if err != nil || output == "" {
 			return false
@@ -528,7 +588,7 @@ func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
 func ClusterExtensionIsRolledOut(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.conditions[?(@.type==\"Progressing\")]}")
+		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.conditions[?(@.type==\"Progressing\")]}")
 		if err != nil {
 			return false
 		}
@@ -540,6 +600,11 @@ func ClusterExtensionIsRolledOut(ctx context.Context) error {
 
 		return condition["status"] == "True" && condition["reason"] == "Succeeded" && condition["type"] == "Progressing"
 	}, timeout, tick)
+
+	if rec := RecorderFromContext(ctx); rec != nil {
+		out, _ := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName)
+		rec.RecordCustom(fmt.Sprintf("kubectl get clusterextension %s", sc.clusterExtensionName), out, "")
+	}
 
 	// Save ClusterExtension resources to test context for posterior checks
 	if err := sc.GatherClusterExtensionObjects(); err != nil {
@@ -642,7 +707,7 @@ func messageFragmentComparison(ctx context.Context, msgFragment *godog.DocString
 
 func waitForCondition(ctx context.Context, resourceType, resourceName, conditionType, conditionStatus string, conditionReason *string, msgCmp msgMatchFn) error {
 	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient("get", resourceType, resourceName, "-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
+		v, err := k8sClient(ctx, "get", resourceType, resourceName, "-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
 		if err != nil {
 			return false
 		}
@@ -702,7 +767,7 @@ func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditi
 	t := godog.T(ctx)
 
 	// Get the ClusterExtension's creation timestamp and condition's lastTransitionTime
-	v, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o",
+	v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o",
 		fmt.Sprintf("jsonpath={.metadata.creationTimestamp},{.status.conditions[?(@.type==\"%s\")].lastTransitionTime}", conditionType))
 	require.NoError(t, err)
 
@@ -737,7 +802,7 @@ func ClusterExtensionReportsActiveRevisions(ctx context.Context, rawRevisionName
 	}
 
 	waitFor(ctx, func() bool {
-		v, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.activeRevisions}")
+		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.activeRevisions}")
 		if err != nil {
 			return false
 		}
@@ -777,7 +842,7 @@ func ClusterObjectSetReportsConditionWithMessageFragment(ctx context.Context, re
 func TriggerClusterObjectSetReconciliation(ctx context.Context, cosName string) error {
 	sc := scenarioCtx(ctx)
 	cosName = substituteScenarioVars(cosName, sc)
-	_, err := k8sClient("annotate", "clusterobjectset", cosName, "--overwrite",
+	_, err := k8sClient(ctx, "annotate", "clusterobjectset", cosName, "--overwrite",
 		fmt.Sprintf("e2e-trigger=%d", time.Now().UnixNano()))
 	return err
 }
@@ -790,7 +855,7 @@ func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName st
 	phaseName = substituteScenarioVars(phaseName, sc)
 
 	waitFor(ctx, func() bool {
-		out, err := k8sClient("get", "clusterobjectset", cosName, "-o",
+		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o",
 			fmt.Sprintf(`jsonpath={.status.observedPhases[?(@.name=="%s")].digest}`, phaseName))
 		if err != nil {
 			return false
@@ -859,7 +924,7 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 	// Get the ClusterObjectSet to extract its phase objects
 	var rev ocv1.ClusterObjectSet
 	waitFor(ctx, func() bool {
-		out, err := k8sClient("get", "clusterobjectset", revisionName, "-o", "json")
+		out, err := k8sClient(ctx, "get", "clusterobjectset", revisionName, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -899,7 +964,7 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 				if namespace != "" {
 					args = append(args, "-n", namespace)
 				}
-				out, err := k8sClient(args...)
+				out, err := k8sClient(ctx, args...)
 				if err != nil {
 					return false
 				}
@@ -1141,8 +1206,8 @@ func collectReferredSecretNames(ctx context.Context, revisionName string) ([]str
 
 // listReferredSecrets lists all Secrets in the OLM namespace that have the revision-name label
 // matching the given revision name.
-func listReferredSecrets(_ context.Context, revisionName string) ([]corev1.Secret, error) {
-	out, err := k8sClient("get", "secrets", "-n", olmNamespace,
+func listReferredSecrets(ctx context.Context, revisionName string) ([]corev1.Secret, error) {
+	out, err := k8sClient(ctx, "get", "secrets", "-n", olmNamespace,
 		"-l", "olm.operatorframework.io/revision-name="+revisionName, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("listing referred secrets for revision %q: %w", revisionName, err)
@@ -1163,7 +1228,7 @@ func ResourceAvailable(ctx context.Context, resource string) error {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
 	waitFor(ctx, func() bool {
-		_, err := k8sClient("get", kind, name, "-n", sc.namespace)
+		_, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace)
 		return err == nil
 	})
 	return nil
@@ -1177,7 +1242,7 @@ func ResourceRemoved(ctx context.Context, resource string) error {
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
-	yaml, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "yaml")
+	yaml, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "yaml")
 	if err != nil {
 		return err
 	}
@@ -1186,7 +1251,7 @@ func ResourceRemoved(ctx context.Context, resource string) error {
 		return err
 	}
 	sc.removedResources = append(sc.removedResources, *obj)
-	_, err = k8sClient("delete", kind, name, "-n", sc.namespace)
+	_, err = k8sClient(ctx, "delete", kind, name, "-n", sc.namespace)
 	return err
 }
 
@@ -1200,7 +1265,7 @@ func ResourceEventuallyNotFound(ctx context.Context, resource string) error {
 	}
 
 	waitFor(ctx, func() bool {
-		obj, err := k8sClient("get", kind, name, "-n", sc.namespace, "--ignore-not-found", "-o", "yaml")
+		obj, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "--ignore-not-found", "-o", "yaml")
 		return err == nil && strings.TrimSpace(obj) == ""
 	})
 	return nil
@@ -1219,7 +1284,7 @@ func ResourceMatches(ctx context.Context, resource string, requiredContentTempla
 		return fmt.Errorf("failed to parse required resource yaml: %v", err)
 	}
 	waitFor(ctx, func() bool {
-		objJson, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "json")
+		objJson, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -1254,7 +1319,7 @@ func ResourceRestored(ctx context.Context, resource string) error {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
 	waitFor(ctx, func() bool {
-		yaml, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "yaml")
+		yaml, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "yaml")
 		if err != nil {
 			return false
 		}
@@ -1301,7 +1366,7 @@ func applyServiceAccount(ctx context.Context, serviceAccount string, keyValue ..
 	}
 
 	// Apply the ServiceAccount configuration
-	_, err = k8scliWithInput(yaml, "apply", "-f", "-")
+	_, err = k8scliWithInput(ctx, yaml, "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply ServiceAccount configuration: %v: %s", err, stderrOutput(err))
 	}
@@ -1329,7 +1394,7 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 	}
 
 	// Apply the RBAC configuration
-	_, err = k8scliWithInput(rbacYaml, "apply", "-f", "-")
+	_, err = k8scliWithInput(ctx, rbacYaml, "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply RBAC configuration: %v: %s", err, stderrOutput(err))
 	}
@@ -1443,7 +1508,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 	for k, v := range svc.Spec.Selector {
 		podNameCmd = append(podNameCmd, fmt.Sprintf("--selector=%s=%s", k, v))
 	}
-	v, err := k8sClient(podNameCmd...)
+	v, err := k8sClient(ctx, podNameCmd...)
 	if err != nil {
 		return err
 	}
@@ -1452,7 +1517,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 	if err := json.Unmarshal([]byte(v), &pods); err != nil {
 		return err
 	}
-	token, err := k8sClient("create", "token", serviceAccount, "-n", sc.namespace)
+	token, err := k8sClient(ctx, "create", "token", serviceAccount, "-n", sc.namespace)
 	if err != nil {
 		return err
 	}
@@ -1460,7 +1525,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 	sc.metricsResponse = make(map[string]string)
 	for _, p := range pods {
 		if err := func() error {
-			addr, cleanup, err := portForward(p.Namespace, fmt.Sprintf("pod/%s", p.Name), mPort)
+			addr, cleanup, err := portForward(ctx, p.Namespace, fmt.Sprintf("pod/%s", p.Name), mPort)
 			if err != nil {
 				return err
 			}
@@ -1503,7 +1568,7 @@ func ScenarioCatalogIsDeleted(ctx context.Context, catalogUserName string) error
 	if !ok {
 		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
 	}
-	_, err := k8sClient("delete", "clustercatalog", catalogName, "--ignore-not-found=true", "--wait=true")
+	_, err := k8sClient(ctx, "delete", "clustercatalog", catalogName, "--ignore-not-found=true", "--wait=true")
 	if err != nil {
 		return fmt.Errorf("failed to delete catalog %q: %v", catalogUserName, err)
 	}
@@ -1547,7 +1612,7 @@ func ScenarioCatalogIsUpdatedToVersion(ctx context.Context, catalogUserName, ver
 	if !ok {
 		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
 	}
-	ref, err := k8sClient("get", "clustercatalog", catalogName, "-o", "jsonpath={.spec.source.image.ref}")
+	ref, err := k8sClient(ctx, "get", "clustercatalog", catalogName, "-o", "jsonpath={.spec.source.image.ref}")
 	if err != nil {
 		return err
 	}
@@ -1569,7 +1634,7 @@ func ScenarioCatalogIsUpdatedToVersion(ctx context.Context, catalogUserName, ver
 	if err != nil {
 		return err
 	}
-	_, err = k8sClient("patch", "clustercatalog", catalogName, "--type", "merge", "-p", string(pb))
+	_, err = k8sClient(ctx, "patch", "clustercatalog", catalogName, "--type", "merge", "-p", string(pb))
 	return err
 }
 
@@ -1716,7 +1781,7 @@ spec:
 		return fmt.Errorf("failed to marshal catalog YAML: %w", err)
 	}
 
-	if _, err := k8scliWithInput(string(annotatedYAML), "apply", "-f", "-"); err != nil {
+	if _, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply ClusterCatalog: %w", err)
 	}
 
@@ -1797,7 +1862,7 @@ func OperatorTargetNamespace(ctx context.Context, operator, namespace string) er
 	sc := scenarioCtx(ctx)
 	operator = substituteScenarioVars(operator, sc)
 	namespace = substituteScenarioVars(namespace, sc)
-	raw, err := k8sClient("get", "deployment", "-n", sc.namespace, operator, "-o", "json")
+	raw, err := k8sClient(ctx, "get", "deployment", "-n", sc.namespace, operator, "-o", "json")
 	if err != nil {
 		return err
 	}
@@ -1806,8 +1871,14 @@ func OperatorTargetNamespace(ctx context.Context, operator, namespace string) er
 		return err
 	}
 
-	if tns := d.Spec.Template.Annotations["olm.targetNamespaces"]; tns != namespace {
+	tns := d.Spec.Template.Annotations["olm.targetNamespaces"]
+	if tns != namespace {
 		return fmt.Errorf("expected target namespace %s, got %s", namespace, tns)
+	}
+
+	if rec := RecorderFromContext(ctx); rec != nil {
+		cmd := fmt.Sprintf("kubectl get deployment -n %s %s -o jsonpath='{.spec.template.metadata.annotations.olm\\.targetNamespaces}'", sc.namespace, operator)
+		rec.RecordCustom(cmd, tns+"\n", "")
 	}
 	return nil
 }
@@ -1816,7 +1887,7 @@ func OperatorTargetNamespace(ctx context.Context, operator, namespace string) er
 func MarkDeploymentReadiness(ctx context.Context, deploymentName, state string) error {
 	sc := scenarioCtx(ctx)
 	deploymentName = substituteScenarioVars(deploymentName, sc)
-	v, err := k8sClient("get", "deployment", "-n", sc.namespace, deploymentName, "-o", "jsonpath={.spec.selector.matchLabels}")
+	v, err := k8sClient(ctx, "get", "deployment", "-n", sc.namespace, deploymentName, "-o", "jsonpath={.spec.selector.matchLabels}")
 	if err != nil {
 		return err
 	}
@@ -1828,7 +1899,7 @@ func MarkDeploymentReadiness(ctx context.Context, deploymentName, state string) 
 	for k, v := range labels {
 		podNameCmd = append(podNameCmd, fmt.Sprintf("--selector=%s=%s", k, v))
 	}
-	podName, err := k8sClient(podNameCmd...)
+	podName, err := k8sClient(ctx, podNameCmd...)
 	if err != nil {
 		return err
 	}
@@ -1841,13 +1912,13 @@ func MarkDeploymentReadiness(ctx context.Context, deploymentName, state string) 
 	default:
 		return fmt.Errorf("invalid state %s", state)
 	}
-	_, err = k8sClient("exec", podName, "-n", sc.namespace, "--", op, "/tmp/www/ready")
+	_, err = k8sClient(ctx, "exec", podName, "-n", sc.namespace, "--", op, "/tmp/www/ready")
 	return err
 }
 
 // SetCRDFieldMinValue patches a CRD to set the minimum value for a field.
 // jsonPath is in the format ".spec.fieldName" and gets converted to the CRD schema path.
-func SetCRDFieldMinValue(_ context.Context, resourceType, jsonPath string, minValue int) error {
+func SetCRDFieldMinValue(ctx context.Context, resourceType, jsonPath string, minValue int) error {
 	var crdName string
 	switch resourceType {
 	case "ClusterExtension":
@@ -1868,7 +1939,7 @@ func SetCRDFieldMinValue(_ context.Context, resourceType, jsonPath string, minVa
 	patchPath := fmt.Sprintf("/spec/versions/0/schema/openAPIV3Schema/%s/minimum", strings.Join(schemaParts, "/"))
 
 	patch := fmt.Sprintf(`[{"op": "replace", "path": "%s", "value": %d}]`, patchPath, minValue)
-	_, err := k8sClient("patch", "crd", crdName, "--type=json", "-p", patch)
+	_, err := k8sClient(ctx, "patch", "crd", crdName, "--type=json", "-p", patch)
 	return err
 }
 
@@ -1905,7 +1976,7 @@ func extendMap(m map[string]string, keyValue ...string) map[string]string {
 }
 
 func getResource(kind string, name string, namespace string) (*unstructured.Unstructured, error) {
-	out, err := k8sClient("get", kind, name, "-n", namespace, "-o", "yaml")
+	out, err := k8sClient(context.Background(), "get", kind, name, "-n", namespace, "-o", "yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -1948,7 +2019,7 @@ func listHelmReleaseResources(extName string) ([]client.Object, error) {
 
 // helmReleaseSecretForExtension returns the Helm release secret for the extension with name extName
 func helmReleaseSecretForExtension(extName string) (*corev1.Secret, error) {
-	out, err := k8sClient("get", "secrets", "-n", olmNamespace,
+	out, err := k8sClient(context.Background(), "get", "secrets", "-n", olmNamespace,
 		"-l", fmt.Sprintf("name=%s,status=deployed", extName),
 		"--field-selector", "type=operatorframework.io/index.v1", "-o", "json")
 	if err != nil {
@@ -2044,7 +2115,7 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 
 // resolveObjectRef fetches an object from a Secret ref using kubectl.
 func resolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
-	out, err := k8sClient("get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
+	out, err := k8sClient(context.Background(), "get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("getting Secret %s/%s: %w", ref.Namespace, ref.Name, err)
 	}
@@ -2083,7 +2154,7 @@ func resolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, err
 
 // latestActiveRevisionForExtension returns the latest active revision for the extension called extName
 func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterObjectSet, error) {
-	out, err := k8sClient("get", "clusterobjectsets", "-l", fmt.Sprintf("olm.operatorframework.io/owner-name=%s", extName), "-o", "json")
+	out, err := k8sClient(context.Background(), "get", "clusterobjectsets", "-l", fmt.Sprintf("olm.operatorframework.io/owner-name=%s", extName), "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("error listing revisions for extension '%s': %w", extName, err)
 	}
@@ -2135,7 +2206,7 @@ func AnnotationsAreAdded(ctx context.Context, resourceName string, table *godog.
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}
 	args = append(args, "--overwrite", "-n", sc.namespace)
-	if _, err := k8sClient(args...); err != nil {
+	if _, err := k8sClient(ctx, args...); err != nil {
 		return fmt.Errorf("failed to annotate %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
 	}
 	return nil
@@ -2163,7 +2234,7 @@ func LabelsAreAdded(ctx context.Context, resourceName string, table *godog.Table
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}
 	args = append(args, "--overwrite", "-n", sc.namespace)
-	if _, err := k8sClient(args...); err != nil {
+	if _, err := k8sClient(ctx, args...); err != nil {
 		return fmt.Errorf("failed to label %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
 	}
 	return nil
@@ -2187,7 +2258,7 @@ func ResourceHasAnnotations(ctx context.Context, resourceName string, table *god
 	}
 
 	waitFor(ctx, func() bool {
-		out, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "json")
+		out, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -2236,7 +2307,7 @@ func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Ta
 	}
 
 	waitFor(ctx, func() bool {
-		out, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "json")
+		out, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -2331,7 +2402,7 @@ func RolloutRestartIsPerformed(ctx context.Context, resourceName string) error {
 
 	// Run kubectl rollout restart to add the restart annotation.
 	// This is the real command users run, so we test actual user behavior.
-	out, err := k8sClient("rollout", "restart", resourceName, "-n", sc.namespace)
+	out, err := k8sClient(ctx, "rollout", "restart", resourceName, "-n", sc.namespace)
 	if err != nil {
 		return fmt.Errorf("failed to rollout restart %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
 	}
@@ -2349,7 +2420,7 @@ func DeploymentPodTemplateHasAnnotation(ctx context.Context, deploymentName, ann
 	deploymentName = substituteScenarioVars(deploymentName, sc)
 
 	waitFor(ctx, func() bool {
-		out, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
+		out, err := k8sClient(ctx, "get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -2379,7 +2450,7 @@ func DeploymentPodTemplateHasAnnotation(ctx context.Context, deploymentName, ann
 func TriggerClusterExtensionReconciliation(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 
-	out, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", "json")
+	out, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "json")
 	if err != nil {
 		return fmt.Errorf("failed to get ClusterExtension %s: %w; stderr: %s", sc.clusterExtensionName, err, stderrOutput(err))
 	}
@@ -2397,7 +2468,7 @@ func TriggerClusterExtensionReconciliation(ctx context.Context) error {
 	}
 
 	payload := fmt.Sprintf(`{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"enforcement":%q}}}}}`, newEnforcement)
-	_, err = k8sClient("patch", "clusterextension", sc.clusterExtensionName,
+	_, err = k8sClient(ctx, "patch", "clusterextension", sc.clusterExtensionName,
 		"--type=merge",
 		"-p", payload)
 	if err != nil {
@@ -2413,7 +2484,7 @@ func DeploymentRolloutIsComplete(ctx context.Context, deploymentName string) err
 	deploymentName = substituteScenarioVars(deploymentName, sc)
 
 	waitFor(ctx, func() bool {
-		out, err := k8sClient("rollout", "status", "deployment/"+deploymentName, "-n", sc.namespace, "--watch=false")
+		out, err := k8sClient(ctx, "rollout", "status", "deployment/"+deploymentName, "-n", sc.namespace, "--watch=false")
 		if err != nil {
 			logger.V(1).Info("Failed to get rollout status", "deployment", deploymentName, "error", err)
 			return false
@@ -2436,7 +2507,7 @@ func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expect
 	deploymentName = substituteScenarioVars(deploymentName, sc)
 
 	waitFor(ctx, func() bool {
-		deploymentOut, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
+		deploymentOut, err := k8sClient(ctx, "get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
 		if err != nil {
 			logger.V(1).Info("Failed to get deployment", "deployment", deploymentName, "error", err)
 			return false
@@ -2457,7 +2528,7 @@ func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expect
 			args = append(args, "-l", strings.Join(parts, ","))
 		}
 		args = append(args, "-o", "json")
-		out, err := k8sClient(args...)
+		out, err := k8sClient(ctx, args...)
 		if err != nil {
 			logger.V(1).Info("Failed to get ReplicaSets", "deployment", deploymentName, "error", err)
 			return false

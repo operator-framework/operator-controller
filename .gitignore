@@ -54,6 +54,9 @@ vendor/
 # documentation website asset folder
 site
 
+# generated demo asciicast recordings
+docs/demos/
+
 .tiltbuild/
 .catalogd-tmp/
 .vscode

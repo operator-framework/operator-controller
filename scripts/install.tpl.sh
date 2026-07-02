@@ -45,6 +45,7 @@ fi
 default_catalogs_manifest=$DEFAULT_CATALOG
 cert_mgr_version=$CERT_MGR_VERSION
 install_default_catalogs=$INSTALL_DEFAULT_CATALOGS
+catalog_wait_timeout=${CATALOG_WAIT_TIMEOUT:-60s}
 
 if [[ -z "$cert_mgr_version" ]]; then
     echo "Error: Missing CERT_MGR_VERSION variable"
@@ -124,5 +125,5 @@ kubectl_wait "${olmv1_namespace}" "deployment/operator-controller-controller-man
 
 if [[ "${install_default_catalogs}" != "false" ]]; then
     kubectl apply -f "${default_catalogs_manifest}"
-    kubectl wait --for=condition=Serving "clustercatalog/operatorhubio" --timeout="60s"
+    kubectl wait --for=condition=Serving "clustercatalog/operatorhubio" --timeout="${catalog_wait_timeout}"
 fi
