@@ -2733,7 +2733,6 @@ spec:
             - --feature-gates=BoxcutterRuntime=true
             - --feature-gates=BundleReleaseSupport=true
             - --feature-gates=DeploymentConfig=true
-            - --feature-gates=HelmChartSupport=true
             - --feature-gates=PreflightPermissions=true
             - --feature-gates=SingleOwnNamespaceInstallSupport=true
             - --feature-gates=WebhookProviderCertManager=true
