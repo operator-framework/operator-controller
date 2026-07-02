@@ -59,6 +59,7 @@ var certVolumeConfigs = []certVolumeConfig{
 // BundleCSVDeploymentGenerator generates all deployments defined in rv1's cluster service version (CSV). The generated
 // resource aim to have parity with OLMv0 generated Deployment resources:
 // - olm.targetNamespaces annotation is set with the opts.TargetNamespace value
+// - olm.operatorNamespace annotation is set with the opts.InstallNamespace value
 // - the deployment spec's revision history limit is set to 1
 // - merges csv annotations to the deployment template's annotations
 func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
@@ -78,10 +79,13 @@ func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 		// See https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/install/deployment.go#L142
 		annotations := util.MergeMaps(rv1.CSV.Annotations, depSpec.Spec.Template.Annotations)
 
-		// In OLMv0 CSVs are annotated with the OperatorGroup's .spec.targetNamespaces
+		// In OLMv0, CSVs are annotated with OperatorGroup information:
+		// - olm.targetNamespaces: the OperatorGroup's .spec.targetNamespaces
+		// - olm.operatorNamespace: the namespace where the OperatorGroup is defined (operator's install namespace)
 		// See https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/olm/operatorgroup.go#L279
-		// When the CSVs annotations are copied to the deployment template's annotations, they bring with it this annotation
+		// When the CSVs annotations are copied to the deployment template's annotations, they bring with it these annotations
 		annotations["olm.targetNamespaces"] = strings.Join(opts.TargetNamespaces, ",")
+		annotations["olm.operatorNamespace"] = opts.InstallNamespace
 		depSpec.Spec.Template.Annotations = annotations
 
 		// Hardcode the deployment with RevisionHistoryLimit=1 to maintain parity with OLMv0 behaviour.
