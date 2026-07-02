@@ -268,9 +268,6 @@ func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context
 	}
 
 	forDeletion := sc.addedResources
-	if sc.clusterObjectSetName != "" && featureGates[features.BoxcutterRuntime] {
-		forDeletion = append(forDeletion, resource{name: sc.clusterObjectSetName, kind: "clusterobjectset"})
-	}
 	for _, catalogName := range sc.catalogs {
 		forDeletion = append(forDeletion, resource{name: catalogName, kind: "clustercatalog"})
 	}
