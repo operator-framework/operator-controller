@@ -148,6 +148,7 @@ spec:
         description: Argo CD is a declarative, GitOps continuous delivery tool for
           Kubernetes.
         foo: bar
+        olm.operatorNamespace: argocd-system
         olm.targetNamespaces: ""
         operators.operatorframework.io/builder: operator-sdk-v1.10.0+git
         operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
