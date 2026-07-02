@@ -10,7 +10,7 @@
 package catalogdservice
 
 import (
-	fs "io/fs"
+	context "context"
 	reflect "reflect"
 
 	graphql "github.com/graphql-go/graphql"
@@ -43,33 +43,33 @@ func (m *MockGraphQLService) EXPECT() *MockGraphQLServiceMockRecorder {
 }
 
 // ExecuteQuery mocks base method.
-func (m *MockGraphQLService) ExecuteQuery(catalog string, catalogFS fs.FS, query string) (*graphql.Result, error) {
+func (m *MockGraphQLService) ExecuteQuery(ctx context.Context, catalog, query string) (*graphql.Result, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteQuery", catalog, catalogFS, query)
+	ret := m.ctrl.Call(m, "ExecuteQuery", ctx, catalog, query)
 	ret0, _ := ret[0].(*graphql.Result)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExecuteQuery indicates an expected call of ExecuteQuery.
-func (mr *MockGraphQLServiceMockRecorder) ExecuteQuery(catalog, catalogFS, query any) *gomock.Call {
+func (mr *MockGraphQLServiceMockRecorder) ExecuteQuery(ctx, catalog, query any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteQuery", reflect.TypeOf((*MockGraphQLService)(nil).ExecuteQuery), catalog, catalogFS, query)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteQuery", reflect.TypeOf((*MockGraphQLService)(nil).ExecuteQuery), ctx, catalog, query)
 }
 
 // GetSchema mocks base method.
-func (m *MockGraphQLService) GetSchema(catalog string, catalogFS fs.FS) (*graphql0.DynamicSchema, error) {
+func (m *MockGraphQLService) GetSchema(ctx context.Context, catalog string) (*graphql0.DynamicSchema, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSchema", catalog, catalogFS)
+	ret := m.ctrl.Call(m, "GetSchema", ctx, catalog)
 	ret0, _ := ret[0].(*graphql0.DynamicSchema)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSchema indicates an expected call of GetSchema.
-func (mr *MockGraphQLServiceMockRecorder) GetSchema(catalog, catalogFS any) *gomock.Call {
+func (mr *MockGraphQLServiceMockRecorder) GetSchema(ctx, catalog any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSchema", reflect.TypeOf((*MockGraphQLService)(nil).GetSchema), catalog, catalogFS)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSchema", reflect.TypeOf((*MockGraphQLService)(nil).GetSchema), ctx, catalog)
 }
 
 // InvalidateCache mocks base method.

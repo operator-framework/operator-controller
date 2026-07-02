@@ -1,39 +1,20 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-	"io/fs"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 	"testing/fstest"
+	"time"
 
-	"github.com/operator-framework/operator-controller/internal/catalogd/server"
-	"github.com/operator-framework/operator-controller/internal/catalogd/service"
+	"github.com/graphql-go/graphql"
+
+	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
 )
-
-// demoCatalogStore implements server.CatalogStore backed by an in-memory FS
-type demoCatalogStore struct {
-	catalogs map[string]fs.FS
-}
-
-func (s *demoCatalogStore) GetCatalogData(catalog string) (*os.File, os.FileInfo, error) {
-	return nil, nil, fmt.Errorf("not implemented for demo")
-}
-
-func (s *demoCatalogStore) GetCatalogFS(catalog string) (fs.FS, error) {
-	catFS, ok := s.catalogs[catalog]
-	if !ok {
-		return nil, fs.ErrNotExist
-	}
-	return catFS, nil
-}
-
-func (s *demoCatalogStore) GetIndex(catalog string) (server.Index, error) {
-	return nil, fmt.Errorf("not implemented for demo")
-}
 
 func main() {
 	addr := ":9376"
@@ -41,24 +22,42 @@ func main() {
 		addr = ":" + v
 	}
 
-	store := &demoCatalogStore{
-		catalogs: map[string]fs.FS{
-			"example-catalog": buildCatalog(),
-		},
+	catalogFS := buildCatalog()
+	dynamicSchema, err := gql.LoadAndSummarizeCatalogDynamic(catalogFS)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to build schema: %v\n", err)
+		os.Exit(1)
 	}
-
-	graphqlSvc := service.NewCachedGraphQLService()
-	rootURL, _ := url.Parse("/catalogs/")
-	handlers := server.NewCatalogHandlers(
-		store,
-		graphqlSvc,
-		rootURL,
-		server.MetasHandlerDisabled,
-		server.GraphQLQueriesEnabled,
-	)
+	gql.PrintCatalogSummary(dynamicSchema)
 
 	mux := http.NewServeMux()
-	mux.Handle("/catalogs/", handlers.Handler())
+	mux.HandleFunc("POST /catalogs/{catalog}/api/v1/graphql", func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
+		var params struct {
+			Query string `json:"query"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		if params.Query == "" {
+			http.Error(w, "Query cannot be empty", http.StatusBadRequest)
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		result := graphql.Do(graphql.Params{
+			Schema:        dynamicSchema.Schema,
+			RequestString: params.Query,
+			Context:       ctx,
+		})
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result) //nolint:errcheck
+	})
 
 	fmt.Fprintf(os.Stderr, "GraphQL demo server listening on http://localhost%s\n", addr)
 	fmt.Fprintf(os.Stderr, "Endpoint: POST http://localhost%s/catalogs/example-catalog/api/v1/graphql\n", addr)
@@ -78,8 +77,8 @@ func main() {
 	fmt.Fprintln(os.Stderr, "\nShutting down.")
 }
 
-func buildCatalog() fs.FS {
-	return fstest.MapFS{
+func buildCatalog() *fstest.MapFS {
+	return &fstest.MapFS{
 		"catalog.json": &fstest.MapFile{
 			Data: []byte(catalogJSON),
 		},
@@ -87,7 +86,6 @@ func buildCatalog() fs.FS {
 }
 
 // catalogJSON contains sample FBC data for demonstration purposes.
-// Each line is a separate JSON object (JSONL format parsed by WalkMetasFS).
 const catalogJSON = `{"schema":"olm.package","name":"database-operator","defaultChannel":"stable","description":"An operator for managing database instances."}
 {"schema":"olm.package","name":"logging-operator","defaultChannel":"stable","description":"Logging operator for collecting and forwarding application logs."}
 {"schema":"olm.package","name":"messaging-operator","defaultChannel":"stable","description":"Messaging broker operator based on Apache Kafka."}

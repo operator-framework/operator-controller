@@ -223,15 +223,7 @@ func (h *CatalogHandlers) handleV1GraphQL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Get catalog filesystem
-	catalogFS, err := h.store.GetCatalogFS(catalog)
-	if err != nil {
-		httpError(w, err)
-		return
-	}
-
-	// Execute GraphQL query through the service
-	result, err := h.graphqlSvc.ExecuteQuery(catalog, catalogFS, params.Query)
+	result, err := h.graphqlSvc.ExecuteQuery(r.Context(), catalog, params.Query)
 	if err != nil {
 		httpError(w, err)
 		return
