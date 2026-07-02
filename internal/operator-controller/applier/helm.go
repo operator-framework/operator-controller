@@ -30,9 +30,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
-	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 // HelmChartProvider provides helm charts from bundle sources and cluster extensions
@@ -247,16 +245,6 @@ func (h *Helm) reconcileExistingRelease(ctx context.Context, ac helmclient.Actio
 func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 	if h.HelmChartProvider == nil {
 		return nil, errors.New("HelmChartProvider is nil")
-	}
-	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
-		meta := new(chart.Metadata)
-		if ok, _ := imageutil.IsBundleSourceChart(bundleFS, meta); ok {
-			return imageutil.LoadChartFSWithOptions(
-				bundleFS,
-				fmt.Sprintf("%s-%s.tgz", meta.Name, meta.Version),
-				imageutil.WithInstallNamespace(ext.Spec.Namespace),
-			)
-		}
 	}
 	return h.HelmChartProvider.Get(bundleFS, ext)
 }

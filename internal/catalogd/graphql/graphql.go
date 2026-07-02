@@ -549,7 +549,7 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 		objectType := objectType // Capture loop variable
 		// Generate GraphQL field name from schema name
 		// Convention: remove dots/special chars, lowercase, append 's' for pluralization
-		// Examples: "olm.bundle" -> "olmbundles", "helm.chart" -> "helmcharts"
+		// Examples: "olm.bundle" -> "olmbundles"
 		// LIMITATION: Simple 's' appending doesn't follow English grammar rules or support
 		// non-English languages. Schemas should use names that pluralize well with 's'.
 		sanitized := alphanumericOnlyRE.ReplaceAllString(schemaName, "")

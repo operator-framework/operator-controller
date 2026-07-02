@@ -24,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/shared/util/http"
 )
 
@@ -224,12 +223,6 @@ func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, 
 			panic(err)
 		}
 	}()
-
-	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
-		if hasChart(img) {
-			return pullChart(ctx, ownerID, srcRef, canonicalRef, imgSrc, cache)
-		}
-	}
 
 	ociImg, err := img.OCIConfig(ctx)
 	if err != nil {
