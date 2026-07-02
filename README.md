@@ -34,7 +34,7 @@ To get started with OLM v1, please see our [Getting Started](https://operator-fr
 
 ### Quickstart DEMO
 
-[![asciicast](https://asciinema.org/a/682344.svg)](https://asciinema.org/a/682344)
+[![ClusterCatalog Demo](https://operator-framework.github.io/operator-controller/demos/clustercatalog-quickstart.svg)](https://operator-framework.github.io/operator-controller/)
 
 ### ClusterCatalog Quickstart Steps
 

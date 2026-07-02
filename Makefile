@@ -413,11 +413,11 @@ ifeq ($(strip $(GODOG_ARGS)),)
 	set +e; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="~@Serial" --godog.concurrency=100; \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="~@Serial && ~@demo" --godog.concurrency=100; \
 	parallelExit=$$?; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="@Serial" --godog.concurrency=1; \
+	go test -count=1 -v ./test/e2e/features_test.go -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="@Serial && ~@demo" --godog.concurrency=1; \
 	serialExit=$$?; \
 	if [[ $$parallelExit -ne 0 ]] || [[ $$serialExit -ne 0 ]]; then \
 		echo "e2e tests failed: parallel=$$parallelExit serial=$$serialExit"; \
@@ -693,13 +693,33 @@ deploy-docs: venv
 	. $(VENV)/activate; \
 	mkdocs gh-deploy --force --strict
 
-# The demo script requires to install asciinema with: brew install asciinema to run on mac os envs.
-# Please ensure that all demos are named with the demo name and the suffix -demo-script.sh
-.PHONY: update-demos #EXHELP Validate demo recordings.
-update-demos:
-	@for script in hack/demo/*-demo-script.sh; do \
-	  nm=$$(basename $$script -script.sh); \
-	  ./hack/demo/generate-asciidemo.sh -n $$nm $$(basename $$script); \
+DEMO_OUTPUT_DIR ?= $(ROOT_DIR)/docs/demos
+
+.PHONY: update-demos
+update-demos: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
+update-demos: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+update-demos: export DEFAULT_CATALOG := $(CATALOGS_MANIFEST)
+update-demos: export INSTALL_DEFAULT_CATALOGS := true
+update-demos: export CATALOG_WAIT_TIMEOUT := 5m
+update-demos: wait-operator-controller-experimental-e2e demo-e2e demo-svg experimental-e2e-teardown #EXHELP Record demo scenarios as asciicast and SVG files.
+
+.PHONY: demo-e2e
+demo-e2e:
+	@command -v curl >/dev/null 2>&1 || { echo "Error: curl not found in PATH."; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found in PATH."; exit 1; }
+	@mkdir -p $(DEMO_OUTPUT_DIR)
+	KUBECONFIG=$(KUBECONFIG_DIR)/operator-controller-experimental-e2e.kubeconfig \
+	DEMO_OUTPUT_DIR=$(DEMO_OUTPUT_DIR) go test -count=1 -v ./test/e2e/features_test.go -timeout 30m \
+	  -args --godog.tags="@demo" --godog.concurrency=1
+
+.PHONY: demo-svg
+demo-svg: #EXHELP Convert asciicast recordings to SVG.
+	@command -v docker >/dev/null 2>&1 || { echo "Error: docker not found in PATH."; exit 1; }
+	@for cast in $(DEMO_OUTPUT_DIR)/*.cast; do \
+	  svg=$${cast%.cast}.svg; \
+	  echo "Converting $$(basename $$cast) -> $$(basename $$svg)"; \
+	  docker run --rm -v $(DEMO_OUTPUT_DIR):/data node:alpine \
+	    npx --yes svg-term-cli --in /data/$$(basename $$cast) --out /data/$$(basename $$svg) --window; \
 	done
 
 include Makefile.venv

@@ -1,39 +1,52 @@
 name: update-demos
 
 on:
-  schedule:
-    - cron: '0 3 * * *'  # Runs every day at 03:00 UTC
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'api/*'
       - 'config/*'
-      - 'hack/demo/*'
+      - 'test/e2e/features/demos.feature'
+      - 'test/e2e/steps/demo_steps.go'
+      - 'test/e2e/steps/asciicast_*.go'
       - '.github/workflows/update-demos.yaml'
   pull_request:
     paths:
       - 'api/*'
       - 'config/*'
-      - 'hack/demo/*'
+      - 'test/e2e/features/demos.feature'
+      - 'test/e2e/steps/demo_steps.go'
+      - 'test/e2e/steps/asciicast_*.go'
       - '.github/workflows/update-demos.yaml'
-      
+
 jobs:
-  demo:
+  generate-demos:
     runs-on: ubuntu-latest
+    permissions:
+      contents: ${{ github.event_name == 'push' && 'write' || 'read' }}
     env:
       TERM: linux
     steps:
-      - run: sudo apt update && sudo apt install -y asciinema curl
       - uses: actions/checkout@v7.0.0
       - uses: actions/setup-go@v6.4.0
         with:
           go-version-file: "go.mod"
-      - name: Run Demo Update
-        run: |
-          env -i \
-            HOME="$HOME" \
-            PATH="$PATH" \
-            TERM="xterm-256color" \
-            SHELL="/bin/bash" \
-            make update-demos
+      - uses: actions/setup-python@v6.2.0
+        with:
+          python-version: 3.x
+          cache: pip
+      - name: Generate demo recordings
+        run: make update-demos
 
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: demo-recordings
+          path: |
+            docs/demos/*.cast
+            docs/demos/*.svg
+
+      - name: Deploy docs with updated demos
+        if: github.event_name == 'push'
+        run: make deploy-docs

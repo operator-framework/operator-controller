@@ -85,7 +85,7 @@ func ComponentIsReadyToReconcile(ctx context.Context, component string) error {
 	ns := namespaceForComponent(component)
 
 	// Wait for deployment rollout to complete
-	depName, err := k8sClient("get", "deployments", "-n", ns,
+	depName, err := k8sClient(ctx, "get", "deployments", "-n", ns,
 		"-l", fmt.Sprintf("app.kubernetes.io/name=%s", component),
 		"-o", "jsonpath={.items[0].metadata.name}")
 	if err != nil {
@@ -94,7 +94,7 @@ func ComponentIsReadyToReconcile(ctx context.Context, component string) error {
 	if depName == "" {
 		return fmt.Errorf("failed to find deployment for component %s in namespace %s: no matching deployments found", component, ns)
 	}
-	if _, err := k8sClient("rollout", "status", fmt.Sprintf("deployment/%s", depName),
+	if _, err := k8sClient(ctx, "rollout", "status", fmt.Sprintf("deployment/%s", depName),
 		"-n", ns, fmt.Sprintf("--timeout=%s", timeout)); err != nil {
 		return fmt.Errorf("deployment rollout failed for %s: %w", component, err)
 	}
@@ -107,7 +107,7 @@ func ComponentIsReadyToReconcile(ctx context.Context, component string) error {
 
 	// Leader election can take up to LeaseDuration (137s) + RetryPeriod (26s) ≈ 163s in the worst case
 	waitFor(ctx, func() bool {
-		output, err := k8sClient("get", "lease", leaseName, "-n", ns,
+		output, err := k8sClient(ctx, "get", "lease", leaseName, "-n", ns,
 			"-o", "jsonpath={.spec.holderIdentity}")
 		if err != nil || output == "" {
 			return false
@@ -130,9 +130,9 @@ var resourceTypeToComponent = map[string]string{
 
 // reconcileEndingCheck returns a function that checks whether the leader pod's logs
 // contain a "reconcile ending" entry for the given resource name.
-func reconcileEndingCheck(namespace, leaderPod, resourceName string) func() bool {
+func reconcileEndingCheck(ctx context.Context, namespace, leaderPod, resourceName string) func() bool {
 	return func() bool {
-		logs, err := k8sClient("logs", leaderPod, "-n", namespace, "--all-containers=true", "--tail=1000")
+		logs, err := k8sClient(ctx, "logs", leaderPod, "-n", namespace, "--all-containers=true", "--tail=1000")
 		if err != nil {
 			return false
 		}
@@ -161,15 +161,15 @@ func ClusterExtensionIsReconciled(ctx context.Context) error {
 	}
 
 	leaderPod := sc.leaderPods[component]
-	waitFor(ctx, reconcileEndingCheck(namespaceForComponent(component), leaderPod, resourceName))
+	waitFor(ctx, reconcileEndingCheck(ctx, namespaceForComponent(component), leaderPod, resourceName))
 	return nil
 }
 
 // clusterCatalogUnpackedAfterPodCreation returns a check function that verifies the
 // ClusterCatalog is serving and its lastUnpacked timestamp is after the leader pod's creation.
-func clusterCatalogUnpackedAfterPodCreation(namespace, resourceName, leaderPod string) func() bool {
+func clusterCatalogUnpackedAfterPodCreation(ctx context.Context, namespace, resourceName, leaderPod string) func() bool {
 	return func() bool {
-		catalogJSON, err := k8sClient("get", "clustercatalog", resourceName, "-o", "json")
+		catalogJSON, err := k8sClient(ctx, "get", "clustercatalog", resourceName, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -191,7 +191,7 @@ func clusterCatalogUnpackedAfterPodCreation(namespace, resourceName, leaderPod s
 			return false
 		}
 
-		podJSON, err := k8sClient("get", "pod", leaderPod, "-n", namespace, "-o", "json")
+		podJSON, err := k8sClient(ctx, "get", "pod", leaderPod, "-n", namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -221,7 +221,7 @@ func allResourcesAreReconciled(ctx context.Context, resourceType string) error {
 
 	// Discover all resources
 	pluralType := strings.ToLower(resourceType) + "s"
-	output, err := k8sClient("get", pluralType, "-o", "jsonpath={.items[*].metadata.name}")
+	output, err := k8sClient(ctx, "get", pluralType, "-o", "jsonpath={.items[*].metadata.name}")
 	if err != nil {
 		return fmt.Errorf("failed to list %s resources: %w", resourceType, err)
 	}
@@ -232,7 +232,7 @@ func allResourcesAreReconciled(ctx context.Context, resourceType string) error {
 
 	ns := namespaceForComponent(component)
 	for _, name := range resourceNames {
-		waitFor(ctx, reconcileEndingCheck(ns, leaderPod, name))
+		waitFor(ctx, reconcileEndingCheck(ctx, ns, leaderPod, name))
 	}
 
 	return nil
@@ -257,11 +257,11 @@ func ScenarioCatalogIsReconciled(ctx context.Context, catalogUserName string) er
 	}
 
 	ns := namespaceForComponent(component)
-	waitFor(ctx, reconcileEndingCheck(ns, leaderPod, catalogName))
+	waitFor(ctx, reconcileEndingCheck(ctx, ns, leaderPod, catalogName))
 
 	// Also verify that lastUnpacked is after the leader pod's creation.
 	// This mitigates flakiness caused by https://github.com/operator-framework/operator-controller/issues/1626
-	waitFor(ctx, clusterCatalogUnpackedAfterPodCreation(ns, catalogName, leaderPod))
+	waitFor(ctx, clusterCatalogUnpackedAfterPodCreation(ctx, ns, catalogName, leaderPod))
 	return nil
 }
 
@@ -270,7 +270,22 @@ func ScenarioCatalogReportsCondition(ctx context.Context, catalogUserName, condi
 	sc := scenarioCtx(ctx)
 	catalogName, ok := sc.catalogs[catalogUserName]
 	if !ok {
-		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
+		if _, err := k8sClient(ctx, "get", "clustercatalog", catalogUserName); err != nil {
+			return fmt.Errorf("catalog %q was not created by this scenario and does not exist on the cluster", catalogUserName)
+		}
+		catalogName = catalogUserName
 	}
-	return waitForCondition(ctx, "clustercatalog", catalogName, conditionType, conditionStatus, &conditionReason, nil)
+	err := waitForCondition(ctx, "clustercatalog", catalogName, conditionType, conditionStatus, &conditionReason, nil)
+	if err == nil {
+		if rec := RecorderFromContext(ctx); rec != nil {
+			out, _ := k8sClient(ctx, "get", "clustercatalog", catalogName,
+				"-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
+			rec.RecordCustom(
+				fmt.Sprintf("kubectl get clustercatalog %s -o jsonpath='{.status.conditions[?(@.type==\"%s\")]}' | jq .",
+					catalogName, conditionType),
+				out+"\n", "",
+			)
+		}
+	}
+	return err
 }

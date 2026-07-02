@@ -55,6 +55,10 @@ nav:
     - Contributing: contribute/contributing.md
     - Developing OLM v1: contribute/developer.md
 
+plugins:
+  - search
+  - asciinema-player
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
