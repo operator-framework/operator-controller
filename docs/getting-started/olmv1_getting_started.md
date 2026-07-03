@@ -58,7 +58,7 @@ kubectl wait --for=condition=Serving=True clustercatalog/operatorhubio --timeout
 ### Install a Cluster Extension
 
 For simplicity, the following example manifest includes all necessary resources to install the ArgoCD operator.
-The manifest includes installation namespace and the ClusterExtension resource, which specifies the name and 
+The manifest includes installation namespace and the ClusterExtension resource, which specifies the name and
 version of the extension to install. More information on installing extensions can be found [here](../tutorials/install-extension.md).
 
 ```bash

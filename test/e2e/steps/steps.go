@@ -145,13 +145,15 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is removed$`, ResourceRemoved)
-	sc.Step(`^(?i)resource "([^"]+)" is (?:eventually not found|not installed)$`, ResourceEventuallyNotFound)
+	sc.Step(`^(?i)resource "([^"]+)" is (?:eventually not found|not found|not installed)$`, ResourceEventuallyNotFound)
 	sc.Step(`^(?i)resource "([^"]+)" exists$`, ResourceAvailable)
 	sc.Step(`^(?i)resource is applied$`, ResourceIsApplied)
 	sc.Step(`^(?i)namespace is applied$`, ResourceIsApplied)
 	sc.Step(`^(?i)deployment "([^"]+)" reports as (not ready|ready)$`, MarkDeploymentReadiness)
 
 	sc.Step(`^(?i)resource apply fails with error msg containing "([^"]+)"$`, ResourceApplyFails)
+	sc.Step(`^(?i)resource is applied as user "([^"]+)" in group "([^"]+)"$`, ResourceIsAppliedAsUser)
+	sc.Step(`^(?i)resource apply as user "([^"]+)" in group "([^"]+)" fails with error msg containing "([^"]+)"$`, ResourceApplyAsUserFails)
 	sc.Step(`^(?i)\w+ apply emits warning:$`, ResourceApplyEmitsWarning)
 	sc.Step(`^(?i)\w+ apply does not emit warning$`, ResourceApplyDoesNotEmitWarning)
 	sc.Step(`^(?i)resource "([^"]+)" is eventually restored$`, ResourceRestored)
@@ -180,6 +182,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)catalog "([^"]+)" version "([^"]+)" with packages:$`, CatalogVersionWithPackages)
 	sc.Step(`^(?i)catalog "([^"]+)" image version "([^"]+)" is also tagged as "([^"]+)"$`, ScenarioCatalogTagImage)
 	sc.Step(`^(?i)a catalog "([^"]+)" with packages:$`, CatalogWithPackages)
+	sc.Step(`^(?i)catalog "([^"]+)" is labeled with "([^"]+)"$`, CatalogIsLabeledWith)
+	sc.Step(`^(?i)ValidatingAdmissionPolicy "([^"]+)" is active$`, ValidatingAdmissionPolicyIsActive)
 
 	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
@@ -431,6 +435,76 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 		}
 		return true
 	})
+	return nil
+}
+
+// ResourceIsAppliedAsUser applies the provided YAML using kubectl impersonation (--as/--as-group).
+func ResourceIsAppliedAsUser(ctx context.Context, user, group string, yamlTemplate *godog.DocString) error {
+	sc := scenarioCtx(ctx)
+	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
+	res, err := toUnstructured(yamlContent)
+	if err != nil {
+		return fmt.Errorf("failed to parse resource yaml: %v", err)
+	}
+	injectTestAnnotations(res, sc)
+	annotatedYAML, err := yaml.Marshal(res.Object)
+	if err != nil {
+		return fmt.Errorf("failed to marshal resource yaml: %w", err)
+	}
+	out, stdErr, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-", "--as="+user, "--as-group="+group)
+	if err != nil {
+		return fmt.Errorf("failed to apply resource as %s/%s: %v; stderr: %s", user, group, out, stdErr)
+	}
+	sc.lastApplyStderr = stdErr
+	if res.GetKind() == "ClusterExtension" {
+		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterextension"})
+	} else {
+		namespace := res.GetNamespace()
+		if namespace == "" {
+			namespace = sc.namespace
+		}
+		sc.addedResources = append(sc.addedResources, resource{
+			name:      res.GetName(),
+			kind:      strings.ToLower(res.GetKind()),
+			namespace: namespace,
+		})
+	}
+	return nil
+}
+
+// ResourceApplyAsUserFails polls kubectl apply --dry-run=server with impersonation until the admission controller
+// denies the request with the expected error message. Server-side dry-run sends each request through the full
+// admission chain without persisting the resource, which allows polling until eventually-consistent admission
+// policies (e.g. ValidatingAdmissionPolicy) become active. Once the dry-run confirms denial, a real apply
+// (without dry-run) is issued to verify the actual request is also denied.
+func ResourceApplyAsUserFails(ctx context.Context, user, group, errMsg string, yamlTemplate *godog.DocString) error {
+	sc := scenarioCtx(ctx)
+	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
+	_, err := toUnstructured(yamlContent)
+	if err != nil {
+		return fmt.Errorf("failed to parse resource yaml: %v", err)
+	}
+	// dry-run=server: ValidatingAdmissionPolicy enforcement is eventually consistent — the API server's
+	// informer cache may not have the binding yet. Dry-run avoids persisting the resource on the first
+	// attempt, so we can safely poll until the admission chain starts denying.
+	waitFor(ctx, func() bool {
+		_, stdErr, err := k8scliWithInput(ctx, yamlContent, "apply", "--dry-run=server", "-f", "-", "--as="+user, "--as-group="+group)
+		if err == nil {
+			return false
+		}
+		return strings.Contains(stdErr, errMsg)
+	})
+	_, stdErr, err := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-", "--as="+user, "--as-group="+group)
+	if err == nil {
+		res, _ := toUnstructured(yamlContent)
+		if res != nil {
+			sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: strings.ToLower(res.GetKind())})
+		}
+		return fmt.Errorf("expected apply to fail with %q, but it succeeded", errMsg)
+	}
+	if !strings.Contains(stdErr, errMsg) {
+		return fmt.Errorf("expected apply error containing %q, got: %s", errMsg, stdErr)
+	}
 	return nil
 }
 
@@ -1602,6 +1676,37 @@ func ScenarioCatalogIsDeleted(ctx context.Context, catalogUserName string) error
 	if err != nil {
 		return fmt.Errorf("failed to delete catalog %q: %v", catalogUserName, err)
 	}
+	return nil
+}
+
+func CatalogIsLabeledWith(ctx context.Context, catalogUserName, label string) error {
+	sc := scenarioCtx(ctx)
+	catalogName, ok := sc.catalogs[catalogUserName]
+	if !ok {
+		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
+	}
+	_, err := k8sClient(ctx, "label", "clustercatalog", catalogName, label, "--overwrite")
+	if err != nil {
+		return fmt.Errorf("failed to label catalog %q with %q: %v", catalogUserName, label, err)
+	}
+	return nil
+}
+
+// ValidatingAdmissionPolicyIsActive waits for the named ValidatingAdmissionPolicy to be compiled
+// and active by checking that status.observedGeneration matches metadata.generation.
+// The scenario fails on timeout if the policy never becomes active.
+func ValidatingAdmissionPolicyIsActive(ctx context.Context, name string) error {
+	sc := scenarioCtx(ctx)
+	name = substituteScenarioVars(name, sc)
+	waitFor(ctx, func() bool {
+		out, err := k8sClient(ctx, "get", "validatingadmissionpolicy", name, "-o",
+			"jsonpath={.metadata.generation},{.status.observedGeneration}")
+		if err != nil {
+			return false
+		}
+		parts := strings.Split(out, ",")
+		return len(parts) == 2 && parts[0] != "" && parts[1] != "" && parts[0] == parts[1]
+	})
 	return nil
 }
 

@@ -176,7 +176,7 @@ OLM v1 will include primitives (e.g. templating) to make it possible to have mul
 
 However, it should be noted that the purpose of these primitives is not to enable multi-tenancy. It is to enable administrators to provide configuration for the installation of an extension. The fact that operators can be packaged as separate bundles and parameterized in a way that permits multiple controller installations is incidental, and not something that OLM v1 will encourage or promote.
 
-### Make OLM secure by safeguarding ClusterExtension permissions
+### Secure access to ClusterExtensions through API access RBAC and ValidatingAdmissionPolicy
 
 OLMv1 adopts cluster-admin scope directly. Previously, OLMv1 required cluster administrators to create ServiceAccounts and associated RBAC to enable the installation of ClusterExtensions. The current approach provides the following benefits:
 
@@ -188,7 +188,7 @@ OLMv1 adopts cluster-admin scope directly. Previously, OLMv1 required cluster ad
 
 Because the operator-controller uses its own cluster-admin service account for all operations, cluster administrators should treat the ability to create or modify `ClusterExtension` resources as equivalent to granting cluster-admin privileges, and guard that access accordingly. To restrict which users may trigger installations, use Kubernetes RBAC on the `ClusterExtension` API; for finer-grained constraints such as limiting which packages, catalogs, namespaces, or upgrade policies a user may specify, pair RBAC with a `ValidatingAdmissionPolicy`. For concrete examples of both approaches, see [Protecting OLMv1 API Access](../howto/how-to-protect-olmv1-api-access.md).
 
-Additionally, OLM v1 will use secure communication protocols between all internal components and between itself and its clients.
+OLM v1 also uses secure communication protocols between all internal components and between itself and its clients.
 
 ### Simple and predictable semantics for install, upgrade, and delete
 
