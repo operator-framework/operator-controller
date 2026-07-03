@@ -52,4 +52,8 @@ There's no change in the installation flow. Just install a bundle containing web
 As there is no difference in usage or experience between the CertManager and Openshift-ServiceCA variants, only
 the cert-manager variant is demoed.
 
-[![asciicast](https://asciinema.org/a/GyjsB129GkUadeuxFhNuG4FcS.svg)](https://asciinema.org/a/GyjsB129GkUadeuxFhNuG4FcS)
+```asciinema-player
+{
+  "file": "../../../demos/webhook-support.cast"
+}
+```

@@ -157,7 +157,7 @@ func kindGatewayIP() (string, error) {
 // the "default" namespace, which is the address client-go uses to reach the
 // API server from inside a pod (via the KUBERNETES_SERVICE_HOST env var).
 func kubernetesClusterIP() (string, error) {
-	ip, err := k8sClient("get", "service", "kubernetes", "-n", "default",
+	ip, err := k8sClient(context.Background(), "get", "service", "kubernetes", "-n", "default",
 		"-o", "jsonpath={.spec.clusterIP}")
 	if err != nil {
 		return "", fmt.Errorf("failed to get kubernetes service cluster IP: %w", err)
@@ -168,7 +168,7 @@ func kubernetesClusterIP() (string, error) {
 // getDeploymentContainerEnv returns the environment variables for the named
 // container in the given deployment, as a slice of "NAME=VALUE" strings.
 func getDeploymentContainerEnv(deploymentName, namespace, containerName string) ([]string, error) {
-	raw, err := k8sClient("get", "deployment", deploymentName, "-n", namespace, "-o", "json")
+	raw, err := k8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get deployment %s/%s: %w", namespace, deploymentName, err)
 	}
@@ -196,7 +196,7 @@ func getDeploymentContainerEnv(deploymentName, namespace, containerName string) 
 // the JSON Patch "add" operation, which creates the env field if absent.
 func setDeploymentEnvVars(deploymentName, namespace, containerName string, env []string) error {
 	// Fetch the deployment to find the container index.
-	raw, err := k8sClient("get", "deployment", deploymentName, "-n", namespace, "-o", "json")
+	raw, err := k8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
 	if err != nil {
 		return fmt.Errorf("failed to get deployment %s/%s: %w", namespace, deploymentName, err)
 	}
@@ -243,12 +243,12 @@ func setDeploymentEnvVars(deploymentName, namespace, containerName string, env [
 		return fmt.Errorf("failed to marshal patch: %w", err)
 	}
 
-	if _, err := k8sClient("patch", "deployment", deploymentName, "-n", namespace,
+	if _, err := k8sClient(context.Background(), "patch", "deployment", deploymentName, "-n", namespace,
 		"--type=json", fmt.Sprintf("--patch=%s", string(patchBytes))); err != nil {
 		return fmt.Errorf("failed to patch deployment %s/%s: %w", namespace, deploymentName, err)
 	}
 
-	if _, err := k8sClient("rollout", "status", "deployment", deploymentName, "-n", namespace,
+	if _, err := k8sClient(context.Background(), "rollout", "status", "deployment", deploymentName, "-n", namespace,
 		"--timeout=5m"); err != nil {
 		return fmt.Errorf("rollout of deployment %s/%s did not complete: %w", namespace, deploymentName, err)
 	}

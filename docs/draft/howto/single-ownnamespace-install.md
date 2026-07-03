@@ -25,11 +25,19 @@ include *installModes*.
 
 ### SingleNamespace Install
 
-[![SingleNamespace Install Demo](https://asciinema.org/a/w1IW0xWi1S9cKQFb9jnR07mgh.svg)](https://asciinema.org/a/w1IW0xWi1S9cKQFb9jnR07mgh)
+```asciinema-player
+{
+  "file": "../../../demos/singlenamespace-install-mode.cast"
+}
+```
 
 ### OwnNamespace Install
 
-[![OwnNamespace Install Demo](https://asciinema.org/a/Rxx6WUwAU016bXFDW74XLcM5i.svg)](https://asciinema.org/a/Rxx6WUwAU016bXFDW74XLcM5i)
+```asciinema-player
+{
+  "file": "../../../demos/ownnamespace-install-mode.cast"
+}
+```
 
 ## Enabling the Feature-Gate
 

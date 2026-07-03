@@ -139,5 +139,6 @@ func InitializeSuite(tc *godog.TestSuiteContext) {
 
 func InitializeScenario(sc *godog.ScenarioContext) {
 	steps.RegisterSteps(sc)
+	steps.RegisterDemoSteps(sc)
 	steps.RegisterHooks(sc)
 }

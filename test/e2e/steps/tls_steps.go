@@ -60,7 +60,7 @@ var curveIDByName = map[string]tls.CurveID{
 // The namespace is available via svc.Namespace.
 func getMetricsService(component string) (*corev1.Service, error) {
 	serviceName := fmt.Sprintf("%s-service", component)
-	serviceNs, err := k8sClient("get", "service", "-A", "-o",
+	serviceNs, err := k8sClient(context.Background(), "get", "service", "-A", "-o",
 		fmt.Sprintf(`jsonpath={.items[?(@.metadata.name=="%s")].metadata.namespace}`, serviceName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to find namespace for service %s: %w", serviceName, err)
@@ -70,7 +70,7 @@ func getMetricsService(component string) (*corev1.Service, error) {
 		return nil, fmt.Errorf("service %s not found in any namespace", serviceName)
 	}
 
-	raw, err := k8sClient("get", "service", "-n", serviceNs, serviceName, "-o", "json")
+	raw, err := k8sClient(context.Background(), "get", "service", "-n", serviceNs, serviceName, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service %s: %w", serviceName, err)
 	}
@@ -103,7 +103,7 @@ func randomAvailablePort() (int, error) {
 // portForward starts a kubectl port-forward to target (e.g. "service/foo" or "pod/bar")
 // in the given namespace, mapping a random local port to remotePort. It returns the
 // local address and a cleanup function. The caller is responsible for calling cleanup.
-func portForward(ns, target string, remotePort int32) (string, func(), error) {
+func portForward(ctx context.Context, ns, target string, remotePort int32) (string, func(), error) {
 	localPort, err := randomAvailablePort()
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to find a free local port: %w", err)
@@ -123,6 +123,13 @@ func portForward(ns, target string, remotePort int32) (string, func(), error) {
 		}
 	}
 
+	if rec := RecorderFromContext(ctx); rec != nil {
+		rec.RecordCustom(
+			fmt.Sprintf("%s port-forward -n %s %s %d:%d &", k8sCli, ns, target, localPort, remotePort),
+			"", "",
+		)
+	}
+
 	addr := fmt.Sprintf("127.0.0.1:%d", localPort)
 	return addr, cleanup, nil
 }
@@ -140,7 +147,7 @@ func withMetricsPortForward(ctx context.Context, component string, fn func(addr 
 		return err
 	}
 
-	addr, cleanup, err := portForward(svc.Namespace, fmt.Sprintf("service/%s", svc.Name), port)
+	addr, cleanup, err := portForward(ctx, svc.Namespace, fmt.Sprintf("service/%s", svc.Name), port)
 	if err != nil {
 		return err
 	}
@@ -231,7 +238,7 @@ func componentDeploymentName(component string) (string, error) {
 // getDeploymentContainerArgs returns the args list of the container named "manager"
 // inside the named deployment.
 func getDeploymentContainerArgs(ns, name string) ([]string, error) {
-	raw, err := k8sClient("get", "deployment", name, "-n", ns, "-o", "json")
+	raw, err := k8sClient(context.Background(), "get", "deployment", name, "-n", ns, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("getting deployment %s/%s: %w", ns, name, err)
 	}
@@ -250,7 +257,7 @@ func getDeploymentContainerArgs(ns, name string) ([]string, error) {
 // getDeploymentContainerIndex returns the index of the container named "manager"
 // inside the named deployment.
 func getDeploymentContainerIndex(ns, name string) (int, error) {
-	raw, err := k8sClient("get", "deployment", name, "-n", ns, "-o", "json")
+	raw, err := k8sClient(context.Background(), "get", "deployment", name, "-n", ns, "-o", "json")
 	if err != nil {
 		return -1, fmt.Errorf("getting deployment %s/%s: %w", ns, name, err)
 	}
@@ -278,7 +285,7 @@ func patchDeploymentArgs(ns, name string, args []string) error {
 		return err
 	}
 	patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/%d/args","value":%s}]`, idx, string(argsJSON))
-	_, err = k8sClient("patch", "deployment", name, "-n", ns, "--type=json", "-p", patch)
+	_, err = k8sClient(context.Background(), "patch", "deployment", name, "-n", ns, "--type=json", "-p", patch)
 	return err
 }
 
@@ -334,7 +341,7 @@ func configureDeploymentCustomTLS(ctx context.Context, component, version, ciphe
 	}
 
 	waitFor(ctx, func() bool {
-		_, err := k8sClient("rollout", "status", "-n", olmNamespace,
+		_, err := k8sClient(ctx, "rollout", "status", "-n", olmNamespace,
 			fmt.Sprintf("deployment/%s", deploymentName), "--timeout=10s")
 		return err == nil
 	})
