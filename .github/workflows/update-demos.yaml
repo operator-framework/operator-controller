@@ -24,7 +24,7 @@ jobs:
   generate-demos:
     runs-on: ubuntu-latest
     permissions:
-      contents: ${{ github.event_name == 'push' && 'write' || 'read' }}
+      contents: write
     env:
       TERM: linux
     steps:
