@@ -123,9 +123,10 @@ func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 						Template: corev1.PodTemplateSpec{
 							ObjectMeta: metav1.ObjectMeta{
 								Annotations: map[string]string{
-									"csv":                  "annotation",
-									"olm.targetNamespaces": "watch-namespace-one,watch-namespace-two",
-									"pod":                  "annotation",
+									"csv":                   "annotation",
+									"olm.targetNamespaces":  "watch-namespace-one,watch-namespace-two",
+									"olm.operatorNamespace": "install-namespace",
+									"pod":                   "annotation",
 								},
 							},
 							Spec: corev1.PodSpec{
@@ -148,8 +149,9 @@ func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 						Template: corev1.PodTemplateSpec{
 							ObjectMeta: metav1.ObjectMeta{
 								Annotations: map[string]string{
-									"csv":                  "annotation",
-									"olm.targetNamespaces": "watch-namespace-one,watch-namespace-two",
+									"csv":                   "annotation",
+									"olm.targetNamespaces":  "watch-namespace-one,watch-namespace-two",
+									"olm.operatorNamespace": "install-namespace",
 								},
 							},
 						},

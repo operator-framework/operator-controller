@@ -47,6 +47,7 @@ spec:
           ]
         capabilities: Basic Install
         kubectl.kubernetes.io/default-container: manager
+        olm.operatorNamespace: webhook-system
         olm.targetNamespaces: ""
         operators.operatorframework.io/builder: operator-sdk-v1.41.1
         operators.operatorframework.io/project_layout: go.kubebuilder.io/v4

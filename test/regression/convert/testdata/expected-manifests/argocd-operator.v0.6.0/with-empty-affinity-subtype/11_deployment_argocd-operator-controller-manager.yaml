@@ -144,6 +144,7 @@ spec:
         containerImage: quay.io/argoprojlabs/argocd-operator@sha256:99aeec24cc406d06d18822347d9ac3ed053a702d8419191e4e681075fed7b9bb
         description: Argo CD is a declarative, GitOps continuous delivery tool for
           Kubernetes.
+        olm.operatorNamespace: argocd-system
         olm.targetNamespaces: ""
         operators.operatorframework.io/builder: operator-sdk-v1.10.0+git
         operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
