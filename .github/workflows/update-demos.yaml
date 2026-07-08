@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-go@v6.5.0
         with:
           go-version-file: "go.mod"
-      - uses: actions/setup-python@v6.2.0
+      - uses: actions/setup-python@v6.3.0
         with:
           python-version: 3.x
           cache: pip
