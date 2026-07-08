@@ -1352,7 +1352,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	t.Log("By checking the expected progressing conditions")
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 	require.NotNil(t, progressingCond)
-	require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
+	require.Equal(t, metav1.ConditionFalse, progressingCond.Status)
 	require.Equal(t, ocv1.ReasonSucceeded, progressingCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
@@ -2674,7 +2674,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 
 		progCond := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(t, progCond)
-		require.Equal(t, metav1.ConditionTrue, progCond.Status)
+		require.Equal(t, metav1.ConditionFalse, progCond.Status)
 		require.Equal(t, ocv1.ReasonSucceeded, progCond.Reason)
 
 		// Verify all conditions are present and valid after first reconcile
@@ -2695,7 +2695,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 		// Progressing should be Succeeded (apply completed successfully)
 		progCond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(t, progCond)
-		require.Equal(t, metav1.ConditionTrue, progCond.Status)
+		require.Equal(t, metav1.ConditionFalse, progCond.Status)
 		require.Equal(t, ocv1.ReasonSucceeded, progCond.Reason)
 
 		// Installed should be True (maintaining current version)
@@ -2828,7 +2828,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 
 		progCond := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(t, progCond)
-		require.Equal(t, metav1.ConditionTrue, progCond.Status)
+		require.Equal(t, metav1.ConditionFalse, progCond.Status)
 		require.Equal(t, ocv1.ReasonSucceeded, progCond.Reason)
 
 		// Note: When falling back without catalog access initially, deprecation conditions
@@ -2851,7 +2851,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 
 		progCond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(t, progCond)
-		require.Equal(t, metav1.ConditionTrue, progCond.Status)
+		require.Equal(t, metav1.ConditionFalse, progCond.Status)
 		require.Equal(t, ocv1.ReasonSucceeded, progCond.Reason)
 
 		// Verify all conditions remain valid after upgrade
