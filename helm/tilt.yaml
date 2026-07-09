@@ -16,7 +16,6 @@ options:
       enabled:
         - SingleOwnNamespaceInstallSupport
         - PreflightPermissions
-        - HelmChartSupport
       disabled:
         - WebhookProviderOpenshiftServiceCA
   catalogd:

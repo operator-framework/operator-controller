@@ -93,7 +93,6 @@ var (
 		features.SingleOwnNamespaceInstallSupport:  false,
 		features.SyntheticPermissions:              false,
 		features.WebhookProviderOpenshiftServiceCA: false,
-		features.HelmChartSupport:                  false,
 		features.BoxcutterRuntime:                  false,
 		features.DeploymentConfig:                  false,
 		catalogdHAFeature:                          false,

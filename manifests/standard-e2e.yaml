@@ -1960,7 +1960,6 @@ spec:
             - --feature-gates=BoxcutterRuntime=false
             - --feature-gates=BundleReleaseSupport=false
             - --feature-gates=DeploymentConfig=false
-            - --feature-gates=HelmChartSupport=false
             - --feature-gates=PreflightPermissions=false
             - --feature-gates=SingleOwnNamespaceInstallSupport=false
             - --feature-gates=SyntheticPermissions=false

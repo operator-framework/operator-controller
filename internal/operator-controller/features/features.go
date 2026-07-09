@@ -16,7 +16,6 @@ const (
 	SyntheticPermissions              featuregate.Feature = "SyntheticPermissions"
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
-	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
 	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
 	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
 	BundleReleaseSupport              featuregate.Feature = "BundleReleaseSupport"
@@ -65,14 +64,6 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	WebhookProviderOpenshiftServiceCA: {
 		Default:       true,
 		PreRelease:    featuregate.GA,
-		LockToDefault: false,
-	},
-
-	// HelmChartSupport enables support for installing,
-	// updating and uninstalling Helm Charts via Cluster Extensions.
-	HelmChartSupport: {
-		Default:       false,
-		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
 	},
 
