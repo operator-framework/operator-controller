@@ -178,15 +178,13 @@ However, it should be noted that the purpose of these primitives is not to enabl
 
 ### Secure access to ClusterExtensions through API access RBAC and ValidatingAdmissionPolicy
 
-OLMv1 adopts cluster-admin scope directly. Previously, OLMv1 required cluster administrators to create ServiceAccounts and associated RBAC to enable the installation of ClusterExtensions. The current approach provides the following benefits:
+OLMv1 is a single-tenant system that treats installed extensions as trusted cluster components, consistent with the Kubernetes design assumption that [CRDs and their controllers are trusted cluster extensions](#watched-namespaces-cannot-be-configured-in-a-first-class-api). The operator-controller uses its own cluster-admin service account for all operations.
 
-- Eliminates the complexity of difficult-to-determine permissions
-- Removes the UX burden of requiring users to manage ServiceAccounts
-- Enables simpler internal operations for namespace management and content lifecycle
+Because creating or modifying a `ClusterExtension` triggers cluster-admin-level operations, cluster administrators should treat write access to the `ClusterExtension` API as equivalent to granting cluster-admin privileges. To restrict which users may trigger installations, use Kubernetes RBAC on the `ClusterExtension` API; for finer-grained constraints such as limiting which packages, catalogs, namespaces, or upgrade policies a user may specify, pair RBAC with a `ValidatingAdmissionPolicy`. For concrete examples of both approaches, see [Protecting OLMv1 API Access](../howto/how-to-protect-olmv1-api-access.md).
 
-> **Note:** The `spec.serviceAccount` field is deprecated and will be removed in a future release. The field is retained in the API for backwards compatibility. The API server still accepts the field, but its value is silently ignored.
-
-Because the operator-controller uses its own cluster-admin service account for all operations, cluster administrators should treat the ability to create or modify `ClusterExtension` resources as equivalent to granting cluster-admin privileges, and guard that access accordingly. To restrict which users may trigger installations, use Kubernetes RBAC on the `ClusterExtension` API; for finer-grained constraints such as limiting which packages, catalogs, namespaces, or upgrade policies a user may specify, pair RBAC with a `ValidatingAdmissionPolicy`. For concrete examples of both approaches, see [Protecting OLMv1 API Access](../howto/how-to-protect-olmv1-api-access.md).
+> **Deprecation note:** The `spec.serviceAccount` field is deprecated and will be removed in a future release. The field is retained in the API for backwards compatibility, but its value is silently ignored.
+>
+> Previously, OLMv1 required cluster administrators to bind ServiceAccounts with associated RBAC to scope the permissions available to each ClusterExtension. In practice, this did not provide meaningful security: any user with write access to the ClusterExtension API could reference any existing ServiceAccount in any namespace, including highly-privileged ones. The permission model added UX friction without delivering the isolation and policy guarantees it implied.
 
 OLM v1 also uses secure communication protocols between all internal components and between itself and its clients.
 

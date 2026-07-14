@@ -43,7 +43,7 @@ require (
 	k8s.io/apimachinery v0.36.2
 	k8s.io/apiserver v0.36.2
 	k8s.io/cli-runtime v0.36.2
-	k8s.io/client-go v1.5.2
+	k8s.io/client-go v0.36.2
 	k8s.io/component-base v0.36.2
 	k8s.io/klog/v2 v2.140.0
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5
@@ -54,8 +54,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0
 	sigs.k8s.io/yaml v1.6.0
 )
-
-require k8s.io/kube-openapi v0.0.0-20260520065146-aa012df4f4af // indirect
 
 require (
 	cel.dev/expr v0.25.2 // indirect
@@ -245,8 +243,9 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20260520065146-aa012df4f4af // indirect
 	k8s.io/kubectl v0.36.2 // indirect
-	k8s.io/streaming v0.36.1 // indirect
+	k8s.io/streaming v0.36.2 // indirect
 	oras.land/oras-go/v2 v2.6.1 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
 	sigs.k8s.io/gateway-api v1.5.0 // indirect
@@ -257,25 +256,3 @@ require (
 )
 
 retract v1.5.0 // contains filename with ':' which causes failure creating module zip file
-
-replace k8s.io/api => k8s.io/api v0.36.1
-
-replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.36.1
-
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.36.1
-
-replace k8s.io/apiserver => k8s.io/apiserver v0.36.1
-
-replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.36.1
-
-replace k8s.io/client-go => k8s.io/client-go v0.36.1
-
-replace k8s.io/component-base => k8s.io/component-base v0.36.1
-
-replace k8s.io/component-helpers => k8s.io/component-helpers v0.36.1
-
-replace k8s.io/controller-manager => k8s.io/controller-manager v0.36.1
-
-replace k8s.io/kubectl => k8s.io/kubectl v0.36.1
-
-replace k8s.io/streaming => k8s.io/streaming v0.36.1
