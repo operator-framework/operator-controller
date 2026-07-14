@@ -20,7 +20,7 @@ require (
 	github.com/google/renameio/v2 v2.0.2
 	github.com/gorilla/handlers v1.5.2
 	github.com/graphql-go/graphql v0.8.1
-	github.com/klauspost/compress v1.18.6
+	github.com/klauspost/compress v1.19.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/operator-framework/api v0.44.0
