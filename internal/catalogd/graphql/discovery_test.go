@@ -102,10 +102,6 @@ func TestAnalyzeJSONObject_FieldTypes(t *testing.T) {
 		if fieldInfo.IsArray != shouldBeArray {
 			t.Errorf("Field %s array status: expected %v, got %v", graphqlField, shouldBeArray, fieldInfo.IsArray)
 		}
-
-		if len(fieldInfo.SampleValues) == 0 {
-			t.Errorf("No sample values recorded for field %s", graphqlField)
-		}
 	}
 
 	testField("name", false)

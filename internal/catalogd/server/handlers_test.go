@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 
@@ -146,12 +145,7 @@ func TestHandleV1GraphQL_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	rootURL, _ := url.Parse("http://localhost/")
 
-	// Create a temporary directory for the mock filesystem
-	tmpDir := t.TempDir()
-	catalogFS := os.DirFS(tmpDir)
-
 	store := mockcatalogdserver.NewMockCatalogStore(ctrl)
-	store.EXPECT().GetCatalogFS("test-catalog").Return(catalogFS, nil)
 
 	expectedResult := &graphql.Result{
 		Data: map[string]interface{}{
@@ -162,7 +156,7 @@ func TestHandleV1GraphQL_Success(t *testing.T) {
 	}
 
 	graphqlSvc := mockcatalogdservice.NewMockGraphQLService(ctrl)
-	graphqlSvc.EXPECT().ExecuteQuery("test-catalog", catalogFS, "{ summary { totalSchemas } }").Return(expectedResult, nil)
+	graphqlSvc.EXPECT().ExecuteQuery(gomock.Any(), "test-catalog", "{ summary { totalSchemas } }").Return(expectedResult, nil)
 
 	handlers := server.NewCatalogHandlers(store, graphqlSvc, rootURL, server.MetasHandlerDisabled, server.GraphQLQueriesEnabled)
 	handler := handlers.Handler()
@@ -201,14 +195,14 @@ func TestHandleV1GraphQL_Success(t *testing.T) {
 	}
 }
 
-func TestHandleV1GraphQL_GetCatalogFSError(t *testing.T) {
+func TestHandleV1GraphQL_CatalogNotFoundError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	rootURL, _ := url.Parse("http://localhost/")
 
 	store := mockcatalogdserver.NewMockCatalogStore(ctrl)
-	store.EXPECT().GetCatalogFS("test-catalog").Return(nil, fs.ErrNotExist)
 
 	graphqlSvc := mockcatalogdservice.NewMockGraphQLService(ctrl)
+	graphqlSvc.EXPECT().ExecuteQuery(gomock.Any(), "test-catalog", "{ summary { totalSchemas } }").Return(nil, fs.ErrNotExist)
 
 	handlers := server.NewCatalogHandlers(store, graphqlSvc, rootURL, server.MetasHandlerDisabled, server.GraphQLQueriesEnabled)
 	handler := handlers.Handler()
@@ -228,14 +222,10 @@ func TestHandleV1GraphQL_ExecuteQueryError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	rootURL, _ := url.Parse("http://localhost/")
 
-	tmpDir := t.TempDir()
-	catalogFS := os.DirFS(tmpDir)
-
 	store := mockcatalogdserver.NewMockCatalogStore(ctrl)
-	store.EXPECT().GetCatalogFS("test-catalog").Return(catalogFS, nil)
 
 	graphqlSvc := mockcatalogdservice.NewMockGraphQLService(ctrl)
-	graphqlSvc.EXPECT().ExecuteQuery("test-catalog", catalogFS, "{ summary { totalSchemas } }").Return(nil, context.DeadlineExceeded)
+	graphqlSvc.EXPECT().ExecuteQuery(gomock.Any(), "test-catalog", "{ summary { totalSchemas } }").Return(nil, context.DeadlineExceeded)
 
 	handlers := server.NewCatalogHandlers(store, graphqlSvc, rootURL, server.MetasHandlerDisabled, server.GraphQLQueriesEnabled)
 	handler := handlers.Handler()
@@ -255,10 +245,9 @@ func TestAllowedMethodsHandler_POSTOnlyForGraphQL(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	rootURL, _ := url.Parse("http://localhost/")
 	store := mockcatalogdserver.NewMockCatalogStore(ctrl)
-	store.EXPECT().GetCatalogFS("test-catalog").Return(nil, nil)
 
 	graphqlSvc := mockcatalogdservice.NewMockGraphQLService(ctrl)
-	graphqlSvc.EXPECT().ExecuteQuery("test-catalog", nil, "{ summary { totalSchemas } }").Return(nil, nil)
+	graphqlSvc.EXPECT().ExecuteQuery(gomock.Any(), "test-catalog", "{ summary { totalSchemas } }").Return(nil, nil)
 
 	handlers := server.NewCatalogHandlers(store, graphqlSvc, rootURL, server.MetasHandlerDisabled, server.GraphQLQueriesEnabled)
 	handler := handlers.Handler()

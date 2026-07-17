@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/graphql-go/graphql"
+	"k8s.io/klog/v2"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
@@ -26,10 +27,10 @@ var (
 // FieldInfo represents discovered field information
 type FieldInfo struct {
 	Name         string
+	OriginalName string // The original JSON key before remapping
 	GraphQLType  graphql.Type
 	JSONType     reflect.Kind
 	IsArray      bool
-	SampleValues []interface{}
 	NestedFields map[string]*FieldInfo // For array-of-objects, stores object structure
 }
 
@@ -37,7 +38,6 @@ type FieldInfo struct {
 type SchemaInfo struct {
 	Fields       map[string]*FieldInfo
 	TotalObjects int
-	SampleObject map[string]interface{}
 }
 
 // CatalogSchema holds the complete discovered schema
@@ -45,16 +45,176 @@ type CatalogSchema struct {
 	Schemas map[string]*SchemaInfo // schema name -> info
 }
 
+// serializableFieldInfo is a JSON-friendly representation of FieldInfo
+type serializableFieldInfo struct {
+	Name            string                            `json:"name"`
+	OriginalName    string                            `json:"originalName"`
+	JSONType        string                            `json:"jsonType"`
+	IsArray         bool                              `json:"isArray"`
+	GraphQLTypeName string                            `json:"graphqlTypeName,omitempty"`
+	NestedFields    map[string]*serializableFieldInfo `json:"nestedFields,omitempty"`
+}
+
+// serializableSchemaInfo is a JSON-friendly representation of SchemaInfo
+type serializableSchemaInfo struct {
+	Fields       map[string]*serializableFieldInfo `json:"fields"`
+	TotalObjects int                               `json:"totalObjects"`
+}
+
+// serializableCatalogSchema is a JSON-friendly representation of CatalogSchema
+type serializableCatalogSchema struct {
+	Schemas map[string]*serializableSchemaInfo `json:"schemas"`
+}
+
+func kindToString(k reflect.Kind) string {
+	switch k {
+	case reflect.String:
+		return "string"
+	case reflect.Bool:
+		return "bool"
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return "int"
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return "uint"
+	case reflect.Float32, reflect.Float64:
+		return "float64"
+	default:
+		return "string"
+	}
+}
+
+func stringToKind(s string) reflect.Kind {
+	switch s {
+	case "string":
+		return reflect.String
+	case "bool":
+		return reflect.Bool
+	case "int":
+		return reflect.Int
+	case "uint":
+		return reflect.Uint
+	case "float64":
+		return reflect.Float64
+	default:
+		return reflect.String
+	}
+}
+
+func graphqlTypeName(t graphql.Type) string {
+	if list, ok := t.(*graphql.List); ok {
+		return graphqlTypeName(list.OfType)
+	}
+	return t.Name()
+}
+
+func graphqlTypeFromName(name string, isArray bool) graphql.Type {
+	var base graphql.Type
+	switch name {
+	case "Int":
+		base = graphql.Int
+	case "Float":
+		base = graphql.Float
+	case "Boolean":
+		base = graphql.Boolean
+	default:
+		base = graphql.String
+	}
+	if isArray {
+		return graphql.NewList(base)
+	}
+	return base
+}
+
+func fieldInfoToSerializable(fi *FieldInfo) *serializableFieldInfo {
+	sfi := &serializableFieldInfo{
+		Name:            fi.Name,
+		OriginalName:    fi.OriginalName,
+		JSONType:        kindToString(fi.JSONType),
+		IsArray:         fi.IsArray,
+		GraphQLTypeName: graphqlTypeName(fi.GraphQLType),
+	}
+	if len(fi.NestedFields) > 0 {
+		sfi.NestedFields = make(map[string]*serializableFieldInfo)
+		for k, v := range fi.NestedFields {
+			sfi.NestedFields[k] = fieldInfoToSerializable(v)
+		}
+	}
+	return sfi
+}
+
+func serializableToFieldInfo(sfi *serializableFieldInfo) *FieldInfo {
+	k := stringToKind(sfi.JSONType)
+	var gqlType graphql.Type
+	if sfi.GraphQLTypeName != "" {
+		gqlType = graphqlTypeFromName(sfi.GraphQLTypeName, sfi.IsArray)
+	} else {
+		gqlType = jsonTypeToGraphQL(k, sfi.IsArray, nil)
+	}
+	fi := &FieldInfo{
+		Name:         sfi.Name,
+		OriginalName: sfi.OriginalName,
+		JSONType:     k,
+		IsArray:      sfi.IsArray,
+		GraphQLType:  gqlType,
+	}
+	if len(sfi.NestedFields) > 0 {
+		fi.NestedFields = make(map[string]*FieldInfo)
+		for kk, v := range sfi.NestedFields {
+			fi.NestedFields[kk] = serializableToFieldInfo(v)
+		}
+	}
+	return fi
+}
+
+// MarshalCatalogSchema serializes a CatalogSchema to JSON bytes
+func MarshalCatalogSchema(cs *CatalogSchema) ([]byte, error) {
+	scs := &serializableCatalogSchema{
+		Schemas: make(map[string]*serializableSchemaInfo),
+	}
+	for name, info := range cs.Schemas {
+		si := &serializableSchemaInfo{
+			Fields:       make(map[string]*serializableFieldInfo),
+			TotalObjects: info.TotalObjects,
+		}
+		for fname, finfo := range info.Fields {
+			si.Fields[fname] = fieldInfoToSerializable(finfo)
+		}
+		scs.Schemas[name] = si
+	}
+	return json.Marshal(scs)
+}
+
+// UnmarshalCatalogSchema deserializes a CatalogSchema from JSON bytes
+func UnmarshalCatalogSchema(data []byte) (*CatalogSchema, error) {
+	var scs serializableCatalogSchema
+	if err := json.Unmarshal(data, &scs); err != nil {
+		return nil, err
+	}
+	cs := &CatalogSchema{
+		Schemas: make(map[string]*SchemaInfo),
+	}
+	for name, si := range scs.Schemas {
+		info := &SchemaInfo{
+			Fields:       make(map[string]*FieldInfo),
+			TotalObjects: si.TotalObjects,
+		}
+		for fname, sfi := range si.Fields {
+			info.Fields[fname] = serializableToFieldInfo(sfi)
+		}
+		cs.Schemas[name] = info
+	}
+	return cs, nil
+}
+
+// ObjectLoader reads FBC objects for a given schema from disk with pagination.
+// It is called by the root resolver at query time instead of holding all
+// parsed objects in memory.
+type ObjectLoader func(schemaName string, offset, limit int) ([]map[string]interface{}, error)
+
 // DynamicSchema holds the generated GraphQL schema and metadata
 type DynamicSchema struct {
 	Schema        graphql.Schema
 	CatalogSchema *CatalogSchema
-	ParsedObjects map[string][]map[string]interface{} // Pre-parsed JSON objects cached during schema build
-	// Performance optimization: ParsedObjects avoids json.Unmarshal on every GraphQL query.
-	// Objects are parsed once during schema build and cached for all subsequent queries.
-	// Memory cost: ~same as storing raw blobs (parsed maps ≈ JSON size in memory).
-	// For 1000 bundles @ 5KB each: ~5MB, same as raw metadata storage.
-	// Performance gain: Eliminates N × json.Unmarshal operations per query (where N = returned objects).
 }
 
 // remapFieldName converts field names to valid GraphQL camelCase identifiers
@@ -172,7 +332,13 @@ func determineFieldType(value interface{}) (reflect.Kind, bool) {
 	return reflect.TypeOf(firstElem).Kind(), true
 }
 
-// analyzeFieldValue analyzes a field value and returns type info, sample value, and nested fields
+// maxSampleElements limits how many slice elements are examined when inferring
+// GraphQL types from catalog data, bounding work on large arrays.
+const maxSampleElements = 10
+
+// analyzeFieldValue analyzes a field value and returns type info, sample value, and nested fields.
+// For slices, it examines up to maxSampleElements to detect heterogeneous element types
+// and build a union of nested field structures across multiple elements.
 func analyzeFieldValue(value interface{}) (reflect.Kind, bool, interface{}, map[string]*FieldInfo) {
 	if value == nil {
 		return reflect.String, false, value, nil
@@ -183,28 +349,59 @@ func analyzeFieldValue(value interface{}) (reflect.Kind, bool, interface{}, map[
 		return valueType.Kind(), false, value, nil
 	}
 
-	// Handle slice types
 	slice := reflect.ValueOf(value)
 	if slice.Len() == 0 {
 		return reflect.String, true, value, nil
 	}
 
-	firstElem := slice.Index(0).Interface()
-	if firstElem == nil {
-		return reflect.String, true, value, nil
+	// Scan up to maxSampleElements to determine element type and nested structure
+	var dominantType reflect.Kind
+	var sampleValue interface{}
+	var nestedFields map[string]*FieldInfo
+	heterogeneous := false
+	limit := slice.Len()
+	if limit > maxSampleElements {
+		limit = maxSampleElements
 	}
 
-	jsonType := reflect.TypeOf(firstElem).Kind()
+	for i := 0; i < limit; i++ {
+		elem := slice.Index(i).Interface()
+		if elem == nil {
+			continue
+		}
 
-	// If array element is an object, analyze its structure
-	var nestedFields map[string]*FieldInfo
-	if jsonType == reflect.Map {
-		if elemObj, ok := firstElem.(map[string]interface{}); ok {
-			nestedFields = analyzeNestedObject(elemObj)
+		elemKind := reflect.TypeOf(elem).Kind()
+
+		if sampleValue == nil {
+			dominantType = elemKind
+			sampleValue = elem
+		} else if elemKind != dominantType {
+			heterogeneous = true
+		}
+
+		// For map elements, merge nested structure from each sampled element
+		if elemKind == reflect.Map {
+			if elemObj, ok := elem.(map[string]interface{}); ok {
+				elemFields := analyzeNestedObject(elemObj)
+				if nestedFields == nil {
+					nestedFields = elemFields
+				} else {
+					mergeNestedFields(nestedFields, elemFields)
+				}
+			}
 		}
 	}
 
-	return jsonType, true, firstElem, nestedFields
+	if sampleValue == nil {
+		return reflect.String, true, value, nil
+	}
+
+	// Heterogeneous primitive arrays (string mixed with int, etc.) fall back to String
+	if heterogeneous && nestedFields == nil {
+		return reflect.String, true, sampleValue, nil
+	}
+
+	return dominantType, true, sampleValue, nestedFields
 }
 
 // analyzeNestedObject analyzes a nested object and returns its field structure
@@ -225,10 +422,10 @@ func analyzeNestedObject(obj map[string]interface{}) map[string]*FieldInfo {
 
 		fields[fieldName] = &FieldInfo{
 			Name:         fieldName,
+			OriginalName: key,
 			GraphQLType:  jsonTypeToGraphQL(jsonType, isArray, sampleValue),
 			JSONType:     jsonType,
 			IsArray:      isArray,
-			SampleValues: []interface{}{value},
 		}
 	}
 
@@ -238,12 +435,7 @@ func analyzeNestedObject(obj map[string]interface{}) map[string]*FieldInfo {
 // mergeNestedFields merges discovered nested fields into existing ones
 func mergeNestedFields(existing, new map[string]*FieldInfo) {
 	for fieldName, newInfo := range new {
-		if existingInfo, ok := existing[fieldName]; ok {
-			// Merge sample values
-			for _, sample := range newInfo.SampleValues {
-				existingInfo.SampleValues = appendUnique(existingInfo.SampleValues, sample)
-			}
-		} else {
+		if _, ok := existing[fieldName]; !ok {
 			existing[fieldName] = newInfo
 		}
 	}
@@ -266,17 +458,20 @@ func analyzeJSONObject(obj map[string]interface{}, info *SchemaInfo) {
 		if !ok {
 			info.Fields[fieldName] = &FieldInfo{
 				Name:         fieldName,
+				OriginalName: key,
 				GraphQLType:  jsonTypeToGraphQL(jsonType, isArray, sampleValue),
 				JSONType:     jsonType,
 				IsArray:      isArray,
-				SampleValues: []interface{}{sampleValue},
 				NestedFields: nestedFields,
 			}
 			continue
 		}
 
-		// Update existing field
-		existing.SampleValues = appendUnique(existing.SampleValues, sampleValue)
+		// Different original keys mapping to the same GraphQL field name is a collision
+		if existing.OriginalName != key {
+			klog.V(2).InfoS("field name collision: different JSON keys map to same GraphQL field",
+				"graphqlField", fieldName, "existingKey", existing.OriginalName, "newKey", key)
+		}
 
 		// Merge nested fields if discovered
 		if nestedFields == nil {
@@ -290,68 +485,48 @@ func analyzeJSONObject(obj map[string]interface{}, info *SchemaInfo) {
 	}
 }
 
-// appendUnique adds a value to slice if not already present, using JSON string as key for uniqueness
-func appendUnique(slice []interface{}, value interface{}) []interface{} {
-	seen := make(map[string]struct{}, len(slice))
-
-	for _, existing := range slice {
-		key, err := json.Marshal(existing)
-		if err != nil {
-			continue // skip values that can't be marshaled
+// processMetaIntoSchema parses one meta blob and updates the catalog schema.
+// TotalObjects is incremented only on successful parse so pagination counts
+// reflect objects that can actually be returned by the ObjectLoader.
+func processMetaIntoSchema(catalogSchema *CatalogSchema, meta *declcfg.Meta) {
+	if meta.Schema == "" {
+		return
+	}
+	if catalogSchema.Schemas[meta.Schema] == nil {
+		catalogSchema.Schemas[meta.Schema] = &SchemaInfo{
+			Fields: make(map[string]*FieldInfo),
 		}
-		seen[string(key)] = struct{}{}
+	}
+	info := catalogSchema.Schemas[meta.Schema]
+
+	var obj map[string]interface{}
+	if err := json.Unmarshal(meta.Blob, &obj); err != nil {
+		klog.V(4).InfoS("skipping malformed meta blob during schema discovery",
+			"schema", meta.Schema, "name", meta.Name, "error", err)
+		return
 	}
 
-	valueKey, err := json.Marshal(value)
-	if err != nil {
-		return slice // skip value if it can't be marshaled
-	}
-
-	if _, exists := seen[string(valueKey)]; exists {
-		return slice
-	}
-
-	return append(slice, value)
+	info.TotalObjects++
+	analyzeJSONObject(obj, info)
 }
 
-// DiscoverSchemaFromMetas analyzes Meta objects to discover schema structure
+// DiscoverSchemaFromMetas analyzes Meta objects to discover schema structure.
 func DiscoverSchemaFromMetas(metas []*declcfg.Meta) (*CatalogSchema, error) {
-	catalogSchema := &CatalogSchema{
-		Schemas: make(map[string]*SchemaInfo),
-	}
-
-	// Process each meta object
+	catalogSchema := &CatalogSchema{Schemas: make(map[string]*SchemaInfo)}
 	for _, meta := range metas {
-		if meta.Schema == "" {
-			continue
-		}
-
-		// Ensure schema info exists
-		if catalogSchema.Schemas[meta.Schema] == nil {
-			catalogSchema.Schemas[meta.Schema] = &SchemaInfo{
-				Fields:       make(map[string]*FieldInfo),
-				TotalObjects: 0,
-			}
-		}
-
-		info := catalogSchema.Schemas[meta.Schema]
-		info.TotalObjects++
-
-		// Parse the JSON blob
-		var obj map[string]interface{}
-		if err := json.Unmarshal(meta.Blob, &obj); err != nil {
-			continue // Skip malformed objects
-		}
-
-		// Store a sample object for reference
-		if info.SampleObject == nil {
-			info.SampleObject = obj
-		}
-
-		// Analyze general fields (including nested structures)
-		analyzeJSONObject(obj, info)
+		processMetaIntoSchema(catalogSchema, meta)
 	}
+	return catalogSchema, nil
+}
 
+// DiscoverSchemaFromChannel performs streaming schema discovery, processing
+// one meta at a time through a channel. Each meta's blob is parsed, analyzed,
+// and then goes out of scope — avoiding accumulation of all blobs in memory.
+func DiscoverSchemaFromChannel(metasChan <-chan *declcfg.Meta) (*CatalogSchema, error) {
+	catalogSchema := &CatalogSchema{Schemas: make(map[string]*SchemaInfo)}
+	for meta := range metasChan {
+		processMetaIntoSchema(catalogSchema, meta)
+	}
 	return catalogSchema, nil
 }
 
@@ -509,21 +684,28 @@ func sanitizeTypeName(propType string) string {
 	return result
 }
 
-// BuildDynamicGraphQLSchema creates a complete GraphQL schema from discovered structure
-func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[string][]*declcfg.Meta) (*DynamicSchema, error) {
-	// Pre-parse all meta blobs to avoid unmarshaling on every query
-	// This has minimal memory overhead (parsed objects ≈ raw blob size)
-	// but eliminates expensive json.Unmarshal operations from the query path
-	parsedObjects := make(map[string][]map[string]interface{})
-	for schemaName, metas := range metasBySchema {
-		parsedObjects[schemaName] = make([]map[string]interface{}, 0, len(metas))
-		for _, meta := range metas {
-			var obj map[string]interface{}
-			if err := json.Unmarshal(meta.Blob, &obj); err != nil {
-				continue // Skip malformed objects (same as runtime behavior)
-			}
-			parsedObjects[schemaName] = append(parsedObjects[schemaName], obj)
+// BuildDynamicGraphQLSchema creates a complete GraphQL schema from discovered structure.
+// The loader is called at query time to read objects from disk with pagination.
+func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, loader ObjectLoader) (*DynamicSchema, error) {
+	// Detect type name collisions (distinct schemas that sanitize to the same GraphQL type name)
+	typeNameToOriginal := make(map[string]string)
+	for schemaName := range catalogSchema.Schemas {
+		sanitized := sanitizeTypeName(schemaName)
+		if existing, ok := typeNameToOriginal[sanitized]; ok && existing != schemaName {
+			return nil, fmt.Errorf("type name collision: schemas %q and %q both sanitize to GraphQL type %q", existing, schemaName, sanitized)
 		}
+		typeNameToOriginal[sanitized] = schemaName
+	}
+
+	// Detect root query field name collisions
+	fieldNameToOriginal := make(map[string]string)
+	for schemaName := range catalogSchema.Schemas {
+		sanitized := alphanumericOnlyRE.ReplaceAllString(schemaName, "")
+		fieldName := strings.ToLower(sanitized) + "s"
+		if existing, ok := fieldNameToOriginal[fieldName]; ok && existing != schemaName {
+			return nil, fmt.Errorf("query field collision: schemas %q and %q both map to field %q", existing, schemaName, fieldName)
+		}
+		fieldNameToOriginal[fieldName] = schemaName
 	}
 
 	// Build GraphQL object types for each discovered schema
@@ -570,40 +752,28 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				// O(1) lookup of schema name from pre-built map
 				currentSchemaName, ok := fieldNameToSchema[p.Info.FieldName]
 				if !ok {
 					return nil, fmt.Errorf("unknown schema for field %s", p.Info.FieldName)
 				}
 
-				// Get pre-parsed objects for this schema (no unmarshaling needed!)
-				objects, ok := parsedObjects[currentSchemaName]
-				if !ok {
-					return []interface{}{}, nil
-				}
-
-				// Parse arguments
 				limit, _ := p.Args["limit"].(int)
 				if limit <= 0 || limit > 100 {
-					limit = 100 // Clamp to default/max to prevent DoS
+					limit = 100
 				}
 				offset, _ := p.Args["offset"].(int)
 				if offset < 0 {
-					offset = 0 // Negative offsets make no sense
+					offset = 0
 				}
 
-				// Apply pagination to pre-parsed objects
-				var results []interface{}
+				objects, err := loader(currentSchemaName, offset, limit)
+				if err != nil {
+					return nil, fmt.Errorf("error loading objects for schema %s: %w", currentSchemaName, err)
+				}
+				results := make([]interface{}, len(objects))
 				for i, obj := range objects {
-					if i < offset {
-						continue
-					}
-					if len(results) >= limit {
-						break
-					}
-					results = append(results, obj)
+					results[i] = obj
 				}
-
 				return results, nil
 			},
 		}
@@ -661,15 +831,40 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 	return &DynamicSchema{
 		Schema:        schema,
 		CatalogSchema: catalogSchema,
-		ParsedObjects: parsedObjects,
 	}, nil
 }
 
-// LoadAndSummarizeCatalogDynamic loads FBC using WalkMetasReader and builds dynamic GraphQL schema
+// NewInMemoryObjectLoader creates an ObjectLoader from pre-parsed metas.
+// Used by the demo server and tests where disk-backed loading is not needed.
+func NewInMemoryObjectLoader(metasBySchema map[string][]*declcfg.Meta) ObjectLoader {
+	parsed := make(map[string][]map[string]interface{})
+	for schema, metas := range metasBySchema {
+		for _, meta := range metas {
+			var obj map[string]interface{}
+			if err := json.Unmarshal(meta.Blob, &obj); err != nil {
+				continue
+			}
+			parsed[schema] = append(parsed[schema], obj)
+		}
+	}
+	return func(schemaName string, offset, limit int) ([]map[string]interface{}, error) {
+		objects := parsed[schemaName]
+		if offset >= len(objects) {
+			return nil, nil
+		}
+		end := offset + limit
+		if end > len(objects) {
+			end = len(objects)
+		}
+		return objects[offset:end], nil
+	}
+}
+
+// LoadAndSummarizeCatalogDynamic loads FBC from a filesystem and builds a dynamic GraphQL schema.
+// Uses in-memory object loading — suitable for demos and CLI tools, not production serving.
 func LoadAndSummarizeCatalogDynamic(catalogFS fs.FS) (*DynamicSchema, error) {
 	var metas []*declcfg.Meta
 
-	// Collect all metas from the filesystem
 	err := declcfg.WalkMetasFS(context.Background(), catalogFS, func(path string, meta *declcfg.Meta, err error) error {
 		if err != nil {
 			return err
@@ -683,13 +878,11 @@ func LoadAndSummarizeCatalogDynamic(catalogFS fs.FS) (*DynamicSchema, error) {
 		return nil, fmt.Errorf("error walking catalog metas: %w", err)
 	}
 
-	// Discover schema from collected metas
 	catalogSchema, err := DiscoverSchemaFromMetas(metas)
 	if err != nil {
 		return nil, fmt.Errorf("error discovering schema: %w", err)
 	}
 
-	// Organize metas by schema for resolvers
 	metasBySchema := make(map[string][]*declcfg.Meta)
 	for _, meta := range metas {
 		if meta.Schema != "" {
@@ -697,13 +890,8 @@ func LoadAndSummarizeCatalogDynamic(catalogFS fs.FS) (*DynamicSchema, error) {
 		}
 	}
 
-	// Build dynamic GraphQL schema
-	dynamicSchema, err := BuildDynamicGraphQLSchema(catalogSchema, metasBySchema)
-	if err != nil {
-		return nil, fmt.Errorf("error building GraphQL schema: %w", err)
-	}
-
-	return dynamicSchema, nil
+	loader := NewInMemoryObjectLoader(metasBySchema)
+	return BuildDynamicGraphQLSchema(catalogSchema, loader)
 }
 
 // PrintCatalogSummary prints a comprehensive summary of the discovered schema

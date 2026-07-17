@@ -706,3 +706,110 @@ func generateJSONLinesOrFail(t *testing.T, in []byte) string {
 
 	return out.String()
 }
+
+func TestLocalDirV1_GraphQLEnabled_StoreAndQuery(t *testing.T) {
+	rootURL, _ := url.Parse("http://localhost/catalogs/")
+	s := NewLocalDirV1(
+		t.TempDir(),
+		rootURL,
+		MetasHandlerDisabled,
+		GraphQLQueriesEnabled,
+	)
+
+	if err := s.Store(context.Background(), "test-catalog", createTestFS(t)); err != nil {
+		t.Fatalf("Store with GraphQL enabled failed: %v", err)
+	}
+
+	// Verify graphql-schema.json was written
+	schemaPath := catalogSchemaFilePath(s.catalogDir("test-catalog"))
+	if _, err := os.Stat(schemaPath); err != nil {
+		t.Fatalf("graphql-schema.json not found after Store: %v", err)
+	}
+
+	// Test LoadCatalogSchema
+	cs, err := s.LoadCatalogSchema("test-catalog")
+	if err != nil {
+		t.Fatalf("LoadCatalogSchema failed: %v", err)
+	}
+	if len(cs.Schemas) == 0 {
+		t.Fatal("expected at least 1 schema in catalog")
+	}
+
+	// Test NewObjectLoader
+	loader, err := s.NewObjectLoader("test-catalog")
+	if err != nil {
+		t.Fatalf("NewObjectLoader failed: %v", err)
+	}
+
+	// Query for bundles
+	objs, err := loader("olm.bundle", 0, 100)
+	if err != nil {
+		t.Fatalf("ObjectLoader query failed: %v", err)
+	}
+	if len(objs) == 0 {
+		t.Error("expected at least 1 bundle object from loader")
+	}
+
+	// Query for unknown schema returns nil
+	objs, err = loader("nonexistent.schema", 0, 10)
+	if err != nil {
+		t.Fatalf("ObjectLoader query for unknown schema failed: %v", err)
+	}
+	if objs != nil {
+		t.Errorf("expected nil for unknown schema, got %d objects", len(objs))
+	}
+}
+
+func TestLocalDirV1_GraphQLEnabled_InvalidateAndRebuild(t *testing.T) {
+	rootURL, _ := url.Parse("http://localhost/catalogs/")
+	s := NewLocalDirV1(
+		t.TempDir(),
+		rootURL,
+		MetasHandlerDisabled,
+		GraphQLQueriesEnabled,
+	)
+
+	if err := s.Store(context.Background(), "test-catalog", createTestFS(t)); err != nil {
+		t.Fatalf("Store failed: %v", err)
+	}
+
+	// Invalidate the cache
+	s.graphqlSvc.InvalidateCache("test-catalog")
+
+	// GetSchema should rebuild from disk
+	schema, err := s.graphqlSvc.GetSchema(context.Background(), "test-catalog")
+	if err != nil {
+		t.Fatalf("GetSchema after invalidation failed: %v", err)
+	}
+	if schema == nil {
+		t.Fatal("expected non-nil schema after rebuild")
+	}
+}
+
+func TestLocalDirV1_LoadCatalogSchema_MissingCatalog(t *testing.T) {
+	s := NewLocalDirV1(
+		t.TempDir(),
+		nil,
+		MetasHandlerDisabled,
+		GraphQLQueriesEnabled,
+	)
+
+	_, err := s.LoadCatalogSchema("nonexistent")
+	if err == nil {
+		t.Fatal("expected error for missing catalog")
+	}
+}
+
+func TestLocalDirV1_NewObjectLoader_MissingCatalog(t *testing.T) {
+	s := NewLocalDirV1(
+		t.TempDir(),
+		nil,
+		MetasHandlerDisabled,
+		GraphQLQueriesEnabled,
+	)
+
+	_, err := s.NewObjectLoader("nonexistent")
+	if err == nil {
+		t.Fatal("expected error for missing catalog index")
+	}
+}
