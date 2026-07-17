@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -228,6 +229,38 @@ func (s *LocalDirV1) ContentExists(catalog string) bool {
 		}
 	}
 	return true
+}
+
+// VerifyAndSync verifies that catalog.jsonl exists at RootDir/<catalog>/catalog.jsonl,
+// calls fsync to ensure the file is durably written to disk, and confirms the file is
+// readable by attempting a small read. It should be called after Store() succeeds and
+// before marking the catalog as Serving.
+func (s *LocalDirV1) VerifyAndSync(catalog string) error {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	path := catalogFilePath(s.catalogDir(catalog))
+
+	if _, err := os.Stat(path); err != nil {
+		return fmt.Errorf("catalog.jsonl not found at %q: %w", path, err)
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("catalog.jsonl not readable at %q: %w", path, err)
+	}
+	defer f.Close()
+
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("fsync failed for catalog.jsonl at %q: %w", path, err)
+	}
+
+	buf := make([]byte, 1)
+	if _, err := f.Read(buf); err != nil && !errors.Is(err, io.EOF) {
+		return fmt.Errorf("catalog.jsonl read failed at %q: %w", path, err)
+	}
+
+	return nil
 }
 
 func (s *LocalDirV1) catalogDir(catalog string) string {

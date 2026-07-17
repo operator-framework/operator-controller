@@ -31,9 +31,11 @@ func newMockStore(ctrl *gomock.Controller, shouldError bool) *mockstorage.MockIn
 	if shouldError {
 		m.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("mockstore store error")).AnyTimes()
 		m.EXPECT().Delete(gomock.Any()).Return(errors.New("mockstore delete error")).AnyTimes()
+		m.EXPECT().VerifyAndSync(gomock.Any()).Return(errors.New("mockstore verify error")).AnyTimes()
 	} else {
 		m.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 		m.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
+		m.EXPECT().VerifyAndSync(gomock.Any()).Return(nil).AnyTimes()
 	}
 	m.EXPECT().BaseURL(gomock.Any()).Return("URL").AnyTimes()
 	m.EXPECT().ContentExists(gomock.Any()).Return(true).AnyTimes()
