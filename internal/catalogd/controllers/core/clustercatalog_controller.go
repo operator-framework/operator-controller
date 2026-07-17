@@ -270,6 +270,12 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 	}
 	baseURL := r.Storage.BaseURL(catalog.Name)
 
+	if err := r.Storage.VerifyAndSync(catalog.Name); err != nil {
+		verifyErr := fmt.Errorf("error verifying catalog content before serving: %w", err)
+		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), verifyErr)
+		return ctrl.Result{}, verifyErr
+	}
+
 	updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), nil)
 	updateStatusServing(&catalog.Status, canonicalRef, unpackTime, baseURL, catalog.GetGeneration())
 

@@ -15,6 +15,12 @@ type Instance interface {
 	Delete(catalog string) error
 	ContentExists(catalog string) bool
 
+	// VerifyAndSync confirms that catalog.jsonl exists on disk for the given
+	// catalog, flushes it to stable storage via fsync, and verifies the file
+	// is readable. It must be called after Store and before marking the
+	// catalog as Serving.
+	VerifyAndSync(catalog string) error
+
 	BaseURL(catalog string) string
 	StorageServerHandler() http.Handler
 }
