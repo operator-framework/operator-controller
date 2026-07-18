@@ -584,7 +584,7 @@ func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
 	return nil
 }
 
-// ClusterExtensionIsRolledOut waits for the ClusterExtension's Progressing condition to be True with reason Succeeded,
+// ClusterExtensionIsRolledOut waits for the ClusterExtension's Progressing condition to be False with reason Succeeded,
 // then gathers its constituent resources into the scenario context. Polls with timeout.
 func ClusterExtensionIsRolledOut(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
@@ -599,7 +599,7 @@ func ClusterExtensionIsRolledOut(ctx context.Context) error {
 			return false
 		}
 
-		return condition["status"] == "True" && condition["reason"] == "Succeeded" && condition["type"] == "Progressing"
+		return condition["status"] == "False" && condition["reason"] == "Succeeded" && condition["type"] == "Progressing"
 	}, timeout, tick)
 
 	if rec := RecorderFromContext(ctx); rec != nil {

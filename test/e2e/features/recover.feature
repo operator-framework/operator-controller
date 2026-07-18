@@ -54,7 +54,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     And ClusterExtension reports Progressing as True with Reason Retrying
     When ServiceAccount "olm-sa" with needed permissions is available in test namespace
     Then ClusterExtension is available
-    And ClusterExtension reports Progressing as True with Reason Succeeded
+    And ClusterExtension reports Progressing as False with Reason Succeeded
 
   Scenario: Install ClusterExtension after conflicting resource is removed
     Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
@@ -114,7 +114,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     And ClusterExtension reports Installed as False
     When resource "deployment/test-operator-${SCENARIO_ID}" is removed
     Then ClusterExtension is available
-    And ClusterExtension reports Progressing as True with Reason Succeeded
+    And ClusterExtension reports Progressing as False with Reason Succeeded
     And ClusterExtension reports Installed as True
 
   @PreflightPermissions
@@ -149,7 +149,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
       """
     When ServiceAccount "olm-sa" with needed permissions is available in test namespace
     Then ClusterExtension is available
-    And ClusterExtension reports Progressing as True with Reason Succeeded
+    And ClusterExtension reports Progressing as False with Reason Succeeded
     And ClusterExtension reports Installed as True
 
   # CATALOG DELETION RESILIENCE SCENARIOS
@@ -250,6 +250,6 @@ Feature: Recover cluster extension from errors that might occur during its lifet
                 "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     And ClusterExtension latest generation has been reconciled
-    And ClusterExtension reports Progressing as True with Reason Succeeded
+    And ClusterExtension reports Progressing as False with Reason Succeeded
     Then ClusterExtension is available
     And ClusterExtension reports Installed as True

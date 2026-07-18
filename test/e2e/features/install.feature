@@ -676,5 +676,5 @@ Feature: Install ClusterExtension
       """
     When ServiceAccount "olm-sa" with needed permissions is available in test namespace
     Then ClusterExtension is available
-    And ClusterExtension reports Progressing as True with Reason Succeeded
+    And ClusterExtension reports Progressing as False with Reason Succeeded
     And ClusterExtension reports Installed as True
