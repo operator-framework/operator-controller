@@ -45,9 +45,6 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 						},
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
-						Name: "default",
-					},
 				}))
 			}
 			if tc.unionField == "" {
@@ -56,9 +53,6 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 						SourceType: tc.sourceType,
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
-						Name: "default",
-					},
 				}))
 			}
 
@@ -123,9 +117,6 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for package name %q: %w", tc.pkgName, err)
@@ -221,9 +212,6 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for version %q: %w", tc.version, err)
@@ -245,7 +233,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 		errMsg   string
 	}{
 		{"no channel name", []string{""}, regexMismatchError},
-		{"hypen-separated", []string{"hyphenated-name"}, ""},
+		{"hyphen-separated", []string{"hyphenated-name"}, ""},
 		{"dot-separated", []string{"dotted.name"}, ""},
 		{"includes version", []string{"channel-has-version-1.0.1"}, ""},
 		{"long channel name", []string{strings.Repeat("x", 254)}, tooLongError},
@@ -276,9 +264,6 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for channel %q: %w", tc.channels, err)
@@ -300,7 +285,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 		errMsg    string
 	}{
 		{"just alphanumeric", "justalphanumberic1", ""},
-		{"hypen-separated", "hyphenated-name", ""},
+		{"hyphen-separated", "hyphenated-name", ""},
 		{"no install namespace", "", regexMismatchError},
 		{"dot-separated", "dotted.name", regexMismatchError},
 		{"longest valid install namespace", strings.Repeat("x", 63), ""},
@@ -329,9 +314,6 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 					},
 				},
 				Namespace: tc.namespace,
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for namespace %q: %w", tc.namespace, err)
@@ -343,30 +325,35 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 	}
 }
 
+// TestClusterExtensionAdmissionServiceAccount validates the deprecated spec.serviceAccount field:
+// - CRD-level validation (format, length) still works
+// - ValidatingAdmissionPolicy emits a deprecation warning for valid non-empty values
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 	tooLongError := "spec.serviceAccount.name: Too long: may not be more than 253"
 	regexMismatchError := "name must be a valid DNS1123 subdomain"
+	deprecationWarning := "spec.serviceAccount is deprecated"
 
 	testCases := []struct {
 		name           string
 		serviceAccount string
 		errMsg         string
+		warnMsg        string
 	}{
-		{"just alphanumeric", "justalphanumeric1", ""},
-		{"hypen-separated", "hyphenated-name", ""},
-		{"dot-separated", "dotted.name", ""},
-		{"longest valid service account name", strings.Repeat("x", 253), ""},
-		{"too long service account name", strings.Repeat("x", 254), tooLongError},
-		{"no service account name", "", regexMismatchError},
-		{"spaces", "spaces spaces", regexMismatchError},
-		{"capitalized", "Capitalized", regexMismatchError},
-		{"camel case", "camelCase", regexMismatchError},
-		{"invalid characters", "many/invalid$characters+in_name", regexMismatchError},
-		{"starts with hyphen", "-start-with-hyphen", regexMismatchError},
-		{"ends with hyphen", "end-with-hyphen-", regexMismatchError},
-		{"starts with period", ".start-with-period", regexMismatchError},
-		{"ends with period", "end-with-period.", regexMismatchError},
-		{"multiple sequential separators", "a.-b", regexMismatchError},
+		{"just alphanumeric", "justalphanumeric1", "", deprecationWarning},
+		{"hyphen-separated", "hyphenated-name", "", deprecationWarning},
+		{"dot-separated", "dotted.name", "", deprecationWarning},
+		{"longest valid service account name", strings.Repeat("x", 253), "", deprecationWarning},
+		{"too long service account name", strings.Repeat("x", 254), tooLongError, ""},
+		{"empty service account name (omitzero drops the field)", "", "", ""},
+		{"spaces", "spaces spaces", regexMismatchError, ""},
+		{"capitalized", "Capitalized", regexMismatchError, ""},
+		{"camel case", "camelCase", regexMismatchError, ""},
+		{"invalid characters", "many/invalid$characters+in_name", regexMismatchError, ""},
+		{"starts with hyphen", "-start-with-hyphen", regexMismatchError, ""},
+		{"ends with hyphen", "end-with-hyphen-", regexMismatchError, ""},
+		{"starts with period", ".start-with-period", regexMismatchError, ""},
+		{"ends with period", "end-with-period.", regexMismatchError, ""},
+		{"multiple sequential separators", "a.-b", regexMismatchError, ""},
 	}
 
 	t.Parallel()
@@ -374,7 +361,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			cl := newClient(t)
+			cl, collector := newWarningCapturingClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
@@ -383,7 +370,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // testing deprecated field
 					Name: tc.serviceAccount,
 				},
 			}))
@@ -393,8 +380,76 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)
 			}
+			if tc.warnMsg != "" {
+				require.True(t, collector.hasWarning(tc.warnMsg), "expected deprecation warning containing %q", tc.warnMsg)
+			} else {
+				require.False(t, collector.hasWarning(deprecationWarning), "did not expect deprecation warning for service account name %q", tc.serviceAccount)
+			}
 		})
 	}
+}
+
+func TestClusterExtensionAdmissionServiceAccountLifecycle(t *testing.T) {
+	t.Parallel()
+	baseSpec := func() ocv1.ClusterExtensionSpec {
+		return ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog:    &ocv1.CatalogFilter{PackageName: "package"},
+			},
+			Namespace: "default",
+		}
+	}
+
+	t.Run("create without serviceAccount succeeds", func(t *testing.T) {
+		t.Parallel()
+		cl, _ := newWarningCapturingClient(t)
+		ce := buildClusterExtension(baseSpec())
+		require.NoError(t, cl.Create(context.Background(), ce))
+		t.Cleanup(func() { _ = cl.Delete(context.Background(), ce) })
+	})
+
+	t.Run("create with valid serviceAccount.name succeeds", func(t *testing.T) {
+		t.Parallel()
+		cl, _ := newWarningCapturingClient(t)
+		spec := baseSpec()
+		spec.ServiceAccount = ocv1.ServiceAccountReference{Name: "my-sa"} //nolint:staticcheck // testing deprecated field
+		ce := buildClusterExtension(spec)
+		require.NoError(t, cl.Create(context.Background(), ce))
+		t.Cleanup(func() { _ = cl.Delete(context.Background(), ce) })
+	})
+
+	// Note: "serviceAccount: {}" (empty name) is rejected by CRD MinProperties=1 validation,
+	// but can't be tested via the typed Go client because omitzero on the parent field
+	// drops the entire serviceAccount when Name is empty.
+
+	t.Run("update to clear serviceAccount succeeds", func(t *testing.T) {
+		t.Parallel()
+		cl, _ := newWarningCapturingClient(t)
+		spec := baseSpec()
+		spec.ServiceAccount = ocv1.ServiceAccountReference{Name: "my-sa"} //nolint:staticcheck // testing deprecated field
+		ce := buildClusterExtension(spec)
+		require.NoError(t, cl.Create(context.Background(), ce))
+		t.Cleanup(func() { _ = cl.Delete(context.Background(), ce) })
+
+		ce.Spec.ServiceAccount = ocv1.ServiceAccountReference{} //nolint:staticcheck // testing deprecated field
+		require.NoError(t, cl.Update(context.Background(), ce))
+	})
+
+	t.Run("update to change serviceAccount.name is rejected by immutability rule", func(t *testing.T) {
+		t.Parallel()
+		cl, _ := newWarningCapturingClient(t)
+		spec := baseSpec()
+		spec.ServiceAccount = ocv1.ServiceAccountReference{Name: "original-sa"} //nolint:staticcheck // testing deprecated field
+		ce := buildClusterExtension(spec)
+		require.NoError(t, cl.Create(context.Background(), ce))
+		t.Cleanup(func() { _ = cl.Delete(context.Background(), ce) })
+
+		ce.Spec.ServiceAccount = ocv1.ServiceAccountReference{Name: "different-sa"} //nolint:staticcheck // testing deprecated field
+		err := cl.Update(context.Background(), ce)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "name is immutable once set")
+	})
 }
 
 func TestClusterExtensionAdmissionInstall(t *testing.T) {
@@ -442,10 +497,7 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
-				Install: tc.installConfig,
+				Install:   tc.installConfig,
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for install configuration %v: %w", tc.installConfig, err)
@@ -494,9 +546,6 @@ func Test_ClusterExtensionAdmissionInlineConfig(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 				Config: &ocv1.ClusterExtensionConfig{
 					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
 					Inline: &apiextensionsv1.JSON{

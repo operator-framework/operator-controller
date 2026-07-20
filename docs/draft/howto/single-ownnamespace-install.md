@@ -112,8 +112,6 @@ metadata:
   name: argocd
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   config:
     inline:
       watchNamespace: argocd-watch
@@ -133,8 +131,6 @@ metadata:
   name: argocd
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   config:
     inline:
       watchNamespace: argocd

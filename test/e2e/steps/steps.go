@@ -35,7 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 	k8sresource "k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/component-base/featuregate"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -146,13 +145,17 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is removed$`, ResourceRemoved)
-	sc.Step(`^(?i)resource "([^"]+)" is (?:eventually not found|not installed)$`, ResourceEventuallyNotFound)
+	sc.Step(`^(?i)resource "([^"]+)" is (?:eventually not found|not found|not installed)$`, ResourceEventuallyNotFound)
 	sc.Step(`^(?i)resource "([^"]+)" exists$`, ResourceAvailable)
 	sc.Step(`^(?i)resource is applied$`, ResourceIsApplied)
 	sc.Step(`^(?i)namespace is applied$`, ResourceIsApplied)
 	sc.Step(`^(?i)deployment "([^"]+)" reports as (not ready|ready)$`, MarkDeploymentReadiness)
 
 	sc.Step(`^(?i)resource apply fails with error msg containing "([^"]+)"$`, ResourceApplyFails)
+	sc.Step(`^(?i)resource is applied as user "([^"]+)" in group "([^"]+)"$`, ResourceIsAppliedAsUser)
+	sc.Step(`^(?i)resource apply as user "([^"]+)" in group "([^"]+)" fails with error msg containing "([^"]+)"$`, ResourceApplyAsUserFails)
+	sc.Step(`^(?i)\w+ apply emits warning:$`, ResourceApplyEmitsWarning)
+	sc.Step(`^(?i)\w+ apply does not emit warning$`, ResourceApplyDoesNotEmitWarning)
 	sc.Step(`^(?i)resource "([^"]+)" is eventually restored$`, ResourceRestored)
 	sc.Step(`^(?i)resource "([^"]+)" matches$`, ResourceMatches)
 	sc.Step(`^(?i)rollout restart is performed on "([^"]+)"$`, RolloutRestartIsPerformed)
@@ -166,8 +169,9 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension reconciliation is triggered$`, TriggerClusterExtensionReconciliation)
 
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with permissions to install extensions is available in "([^"]*)" namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace)
+	sc.Step(`^(?i)namespace "([^"]*)" is available$`, NamespaceIsAvailable)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace)
-	sc.Step(`^(?i)ServiceAccount "([^"]*)" without create permissions is available in test namespace$`, ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace)
+
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" is available in test namespace$`, ServiceAccountIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" in test namespace is cluster admin$`, ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" in test namespace has permissions to fetch "([^"]+)" metrics$`, ServiceAccountWithFetchMetricsPermissions)
@@ -178,6 +182,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)catalog "([^"]+)" version "([^"]+)" with packages:$`, CatalogVersionWithPackages)
 	sc.Step(`^(?i)catalog "([^"]+)" image version "([^"]+)" is also tagged as "([^"]+)"$`, ScenarioCatalogTagImage)
 	sc.Step(`^(?i)a catalog "([^"]+)" with packages:$`, CatalogWithPackages)
+	sc.Step(`^(?i)catalog "([^"]+)" is labeled with "([^"]+)"$`, CatalogIsLabeledWith)
+	sc.Step(`^(?i)ValidatingAdmissionPolicy "([^"]+)" is active$`, ValidatingAdmissionPolicyIsActive)
 
 	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
@@ -275,7 +281,7 @@ func k8sClient(ctx context.Context, args ...string) (string, error) {
 	return output, err
 }
 
-func k8scliWithInput(ctx context.Context, yaml string, args ...string) (string, error) {
+func k8scliWithInput(ctx context.Context, yaml string, args ...string) (string, string, error) {
 	cmd := exec.CommandContext(ctx, k8sCli, args...)
 	cmd.Stdin = bytes.NewBufferString(yaml)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
@@ -301,7 +307,7 @@ func k8scliWithInput(ctx context.Context, yaml string, args ...string) (string, 
 	if rec := RecorderFromContext(ctx); rec != nil {
 		rec.RecordCommandWithInput(strings.Join(cmd.Args, " "), yaml, output, stderrStr, elapsed)
 	}
-	return output, err
+	return output, stderrStr, err
 }
 
 // projectRootDir finds the project root by walking up from the source file until go.mod is found.
@@ -420,15 +426,116 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 		return fmt.Errorf("failed to parse resource yaml: %v", err)
 	}
 	waitFor(ctx, func() bool {
-		_, err := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-")
+		_, stdErr, err := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-")
 		if err == nil {
 			return false
 		}
-		if stdErr := stderrOutput(err); !strings.Contains(stdErr, errMsg) {
+		if !strings.Contains(stdErr, errMsg) {
 			return false
 		}
 		return true
 	})
+	return nil
+}
+
+// ResourceIsAppliedAsUser applies the provided YAML using kubectl impersonation (--as/--as-group).
+func ResourceIsAppliedAsUser(ctx context.Context, user, group string, yamlTemplate *godog.DocString) error {
+	sc := scenarioCtx(ctx)
+	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
+	res, err := toUnstructured(yamlContent)
+	if err != nil {
+		return fmt.Errorf("failed to parse resource yaml: %v", err)
+	}
+	injectTestAnnotations(res, sc)
+	annotatedYAML, err := yaml.Marshal(res.Object)
+	if err != nil {
+		return fmt.Errorf("failed to marshal resource yaml: %w", err)
+	}
+	out, stdErr, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-", "--as="+user, "--as-group="+group)
+	if err != nil {
+		return fmt.Errorf("failed to apply resource as %s/%s: %v; stderr: %s", user, group, out, stdErr)
+	}
+	sc.lastApplyStderr = stdErr
+	if res.GetKind() == "ClusterExtension" {
+		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterextension"})
+	} else {
+		namespace := res.GetNamespace()
+		if namespace == "" {
+			namespace = sc.namespace
+		}
+		sc.addedResources = append(sc.addedResources, resource{
+			name:      res.GetName(),
+			kind:      strings.ToLower(res.GetKind()),
+			namespace: namespace,
+		})
+	}
+	return nil
+}
+
+// ResourceApplyAsUserFails polls kubectl apply --dry-run=server with impersonation until the admission controller
+// denies the request with the expected error message. Server-side dry-run sends each request through the full
+// admission chain without persisting the resource, which allows polling until eventually-consistent admission
+// policies (e.g. ValidatingAdmissionPolicy) become active. Once the dry-run confirms denial, a real apply
+// (without dry-run) is issued to verify the actual request is also denied.
+func ResourceApplyAsUserFails(ctx context.Context, user, group, errMsg string, yamlTemplate *godog.DocString) error {
+	sc := scenarioCtx(ctx)
+	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
+	_, err := toUnstructured(yamlContent)
+	if err != nil {
+		return fmt.Errorf("failed to parse resource yaml: %v", err)
+	}
+	// dry-run=server: ValidatingAdmissionPolicy enforcement is eventually consistent — the API server's
+	// informer cache may not have the binding yet. Dry-run avoids persisting the resource on the first
+	// attempt, so we can safely poll until the admission chain starts denying.
+	waitFor(ctx, func() bool {
+		_, stdErr, err := k8scliWithInput(ctx, yamlContent, "apply", "--dry-run=server", "-f", "-", "--as="+user, "--as-group="+group)
+		if err == nil {
+			return false
+		}
+		return strings.Contains(stdErr, errMsg)
+	})
+	_, stdErr, err := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-", "--as="+user, "--as-group="+group)
+	if err == nil {
+		res, _ := toUnstructured(yamlContent)
+		if res != nil {
+			sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: strings.ToLower(res.GetKind())})
+		}
+		return fmt.Errorf("expected apply to fail with %q, but it succeeded", errMsg)
+	}
+	if !strings.Contains(stdErr, errMsg) {
+		return fmt.Errorf("expected apply error containing %q, got: %s", errMsg, stdErr)
+	}
+	return nil
+}
+
+// ResourceApplyEmitsWarning asserts the last kubectl apply produced stderr output containing the expected warning.
+func ResourceApplyEmitsWarning(ctx context.Context, expected *godog.DocString) error {
+	sc := scenarioCtx(ctx)
+	expectedText := strings.TrimSpace(expected.Content)
+	if !strings.Contains(sc.lastApplyStderr, expectedText) {
+		return fmt.Errorf("expected apply warning %q, got stderr: %q", expectedText, sc.lastApplyStderr)
+	}
+	return nil
+}
+
+func ResourceApplyDoesNotEmitWarning(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+	if strings.Contains(sc.lastApplyStderr, "Warning:") {
+		return fmt.Errorf("expected no warnings, got stderr: %q", sc.lastApplyStderr)
+	}
+	return nil
+}
+
+// TrackCurrentClusterExtensionForCleanup saves the current ClusterExtension name in the cleanup list
+// so it gets deleted at the end of the scenario. Call this before applying a second ClusterExtension
+// in the same scenario, because ResourceIsApplied overwrites the tracked name.
+func TrackCurrentClusterExtensionForCleanup(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+	if sc.clusterExtensionName != "" {
+		sc.extensionObjects = append(sc.extensionObjects, &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: sc.clusterExtensionName},
+		})
+	}
 	return nil
 }
 
@@ -516,10 +623,11 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 	if err != nil {
 		return fmt.Errorf("failed to marshal resource yaml: %w", err)
 	}
-	out, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-")
+	out, stdErr, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-")
 	if err != nil {
-		return fmt.Errorf("failed to apply resource %v; err: %w; stderr: %s", out, err, stderrOutput(err))
+		return fmt.Errorf("failed to apply resource %v; err: %w; stderr: %s", out, err, stdErr)
 	}
+	sc.lastApplyStderr = stdErr
 	if res.GetKind() == "ClusterExtension" {
 		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterextension"})
 	} else if res.GetKind() == "ClusterObjectSet" {
@@ -679,11 +787,6 @@ func waitFor(ctx context.Context, conditionFn func() bool) {
 type msgMatchFn func(string) bool
 
 func alwaysMatch(_ string) bool { return true }
-
-func isFeatureGateEnabled(feature featuregate.Feature) bool {
-	enabled, found := featureGates[feature]
-	return enabled && found
-}
 
 func messageComparison(ctx context.Context, msg *godog.DocString) msgMatchFn {
 	msgCmp := alwaysMatch
@@ -1367,9 +1470,9 @@ func applyServiceAccount(ctx context.Context, serviceAccount string, keyValue ..
 	}
 
 	// Apply the ServiceAccount configuration
-	_, err = k8scliWithInput(ctx, yaml, "apply", "-f", "-")
+	_, stdErr, err := k8scliWithInput(ctx, yaml, "apply", "-f", "-")
 	if err != nil {
-		return fmt.Errorf("failed to apply ServiceAccount configuration: %v: %s", err, stderrOutput(err))
+		return fmt.Errorf("failed to apply ServiceAccount configuration: %v: %s", err, stdErr)
 	}
 
 	return nil
@@ -1395,9 +1498,9 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 	}
 
 	// Apply the RBAC configuration
-	_, err = k8scliWithInput(ctx, rbacYaml, "apply", "-f", "-")
+	_, rbacStdErr, err := k8scliWithInput(ctx, rbacYaml, "apply", "-f", "-")
 	if err != nil {
-		return fmt.Errorf("failed to apply RBAC configuration: %v: %s", err, stderrOutput(err))
+		return fmt.Errorf("failed to apply RBAC configuration: %v: %s", err, rbacStdErr)
 	}
 
 	// Track cluster-scoped RBAC resources for cleanup
@@ -1419,6 +1522,23 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 	return nil
 }
 
+// NamespaceIsAvailable ensures the given namespace exists by applying a namespace template.
+func NamespaceIsAvailable(ctx context.Context, ns string) error {
+	sc := scenarioCtx(ctx)
+	ns = substituteScenarioVars(ns, sc)
+	_, thisFile, _, _ := runtime.Caller(0)
+	yaml, err := templateYaml(filepath.Join(filepath.Dir(thisFile), "testdata", "namespace-template.yaml"), map[string]string{
+		"NAMESPACE": ns,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to template namespace yaml: %v", err)
+	}
+	if _, _, err := k8scliWithInput(ctx, yaml, "apply", "-f", "-"); err != nil {
+		return fmt.Errorf("failed to apply namespace %s: %w", ns, err)
+	}
+	return nil
+}
+
 // ServiceAccountIsAvailableInNamespace creates a ServiceAccount in the test namespace without RBAC permissions.
 func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
 	return applyServiceAccount(ctx, serviceAccount)
@@ -1432,23 +1552,6 @@ func ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace(ctx context.C
 		kernel = "boxcutter"
 	}
 	rbacTemplate := fmt.Sprintf("%s-%s-rbac-template.yaml", serviceAccount, kernel)
-	return applyPermissionsToServiceAccount(ctx, serviceAccount, rbacTemplate)
-}
-
-// ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace creates a ServiceAccount with permissions that
-// intentionally exclude the "create" verb to test preflight permission validation for Boxcutter applier.
-// This is used to verify that the preflight check properly detects missing CREATE permissions.
-// Note: This function requires both @BoxcutterRuntime and @PreflightPermissions tags.
-func ServiceAccountWithoutCreatePermissionsIsAvailableInTestNamespace(ctx context.Context, serviceAccount string) error {
-	// This test is only valid with Boxcutter runtime enabled
-	if !isFeatureGateEnabled(features.BoxcutterRuntime) {
-		return fmt.Errorf("this step requires BoxcutterRuntime feature gate to be enabled")
-	}
-	// It also requires preflight permissions checks to be enabled
-	if !isFeatureGateEnabled(features.PreflightPermissions) {
-		return fmt.Errorf("this step requires PreflightPermissions feature gate to be enabled")
-	}
-	rbacTemplate := fmt.Sprintf("%s-boxcutter-no-create-rbac-template.yaml", serviceAccount)
 	return applyPermissionsToServiceAccount(ctx, serviceAccount, rbacTemplate)
 }
 
@@ -1573,6 +1676,37 @@ func ScenarioCatalogIsDeleted(ctx context.Context, catalogUserName string) error
 	if err != nil {
 		return fmt.Errorf("failed to delete catalog %q: %v", catalogUserName, err)
 	}
+	return nil
+}
+
+func CatalogIsLabeledWith(ctx context.Context, catalogUserName, label string) error {
+	sc := scenarioCtx(ctx)
+	catalogName, ok := sc.catalogs[catalogUserName]
+	if !ok {
+		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
+	}
+	_, err := k8sClient(ctx, "label", "clustercatalog", catalogName, label, "--overwrite")
+	if err != nil {
+		return fmt.Errorf("failed to label catalog %q with %q: %v", catalogUserName, label, err)
+	}
+	return nil
+}
+
+// ValidatingAdmissionPolicyIsActive waits for the named ValidatingAdmissionPolicy to be compiled
+// and active by checking that status.observedGeneration matches metadata.generation.
+// The scenario fails on timeout if the policy never becomes active.
+func ValidatingAdmissionPolicyIsActive(ctx context.Context, name string) error {
+	sc := scenarioCtx(ctx)
+	name = substituteScenarioVars(name, sc)
+	waitFor(ctx, func() bool {
+		out, err := k8sClient(ctx, "get", "validatingadmissionpolicy", name, "-o",
+			"jsonpath={.metadata.generation},{.status.observedGeneration}")
+		if err != nil {
+			return false
+		}
+		parts := strings.Split(out, ",")
+		return len(parts) == 2 && parts[0] != "" && parts[1] != "" && parts[0] == parts[1]
+	})
 	return nil
 }
 
@@ -1782,7 +1916,7 @@ spec:
 		return fmt.Errorf("failed to marshal catalog YAML: %w", err)
 	}
 
-	if _, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-"); err != nil {
+	if _, _, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply ClusterCatalog: %w", err)
 	}
 

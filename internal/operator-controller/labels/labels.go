@@ -41,20 +41,6 @@ const (
 	// ClusterObjectSet.
 	BundleReferenceKey = "olm.operatorframework.io/bundle-reference"
 
-	// ServiceAccountNameKey is the annotation key used to record the name of
-	// the ServiceAccount configured on the owning ClusterExtension. It is
-	// applied as an annotation on ClusterObjectSet resources to
-	// capture which ServiceAccount was used for their lifecycle operations.
-	ServiceAccountNameKey = "olm.operatorframework.io/service-account-name"
-
-	// ServiceAccountNamespaceKey is the annotation key used to record the
-	// namespace of the ServiceAccount configured on the owning
-	// ClusterExtension. It is applied as an annotation on
-	// ClusterObjectSet resources together with ServiceAccountNameKey
-	// so that the effective ServiceAccount identity used for
-	// ClusterObjectSet operations is preserved.
-	ServiceAccountNamespaceKey = "olm.operatorframework.io/service-account-namespace"
-
 	// RevisionNameKey is the label key used to record the name of the
 	// ClusterObjectSet that owns or references a resource (e.g. a
 	// ref Secret). It enables efficient listing of all resources associated

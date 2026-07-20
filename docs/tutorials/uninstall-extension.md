@@ -40,4 +40,4 @@ You can uninstall a Kubernetes extension and its associated custom resource defi
 
 ### Cleanup
 
-* Remove the extension namespace, and installer service account cluster-scoped RBAC resources (if applicable).
+* Remove the extension namespace (if applicable).

@@ -46,8 +46,6 @@ metadata:
   name: <extension_name>
 spec:
   namespace: <namespace>
-  serviceAccount:
-    name: <service_account>
   source:
     sourceType: Catalog
     catalog:
@@ -98,8 +96,6 @@ metadata:
   name: extension-sample
 spec:
   namespace: argocd
-  serviceAccount:
-    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:

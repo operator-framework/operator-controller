@@ -14,11 +14,9 @@ options:
         - BoxcutterRuntime
         - BundleReleaseSupport
         - DeploymentConfig
-        - PreflightPermissions
         - SingleOwnNamespaceInstallSupport
         - WebhookProviderCertManager
       disabled:
-        - SyntheticPermissions
         - WebhookProviderOpenshiftServiceCA
 # List of enabled experimental features for catalogd
 # Use with {{- if has "FeatureGate" .Values.options.catalogd.features.enabled }}

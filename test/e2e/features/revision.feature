@@ -13,9 +13,6 @@ Feature: Install ClusterObjectSet
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: pvc-probe-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active
@@ -76,9 +73,6 @@ Feature: Install ClusterObjectSet
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: pvc-probe-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active
@@ -166,9 +160,6 @@ Feature: Install ClusterObjectSet
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: pvc-probe-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active
@@ -227,9 +218,6 @@ Feature: Install ClusterObjectSet
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: pvc-probe-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active
@@ -339,7 +327,7 @@ Feature: Install ClusterObjectSet
     And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
 
   Scenario: User can install a ClusterObjectSet with objects stored in Secrets
-    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    Given namespace "${TEST_NAMESPACE}" is available
     When resource is applied
       """
       apiVersion: v1
@@ -415,9 +403,6 @@ Feature: Install ClusterObjectSet
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: olm-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active
@@ -442,7 +427,7 @@ Feature: Install ClusterObjectSet
     And ClusterObjectSet "${COS_NAME}" has observed phase "resources" with a non-empty digest
 
   Scenario: ClusterObjectSet blocks reconciliation when referenced Secret is mutable
-    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    Given namespace "${TEST_NAMESPACE}" is available
     And resource is applied
       """
       apiVersion: v1
@@ -470,9 +455,6 @@ Feature: Install ClusterObjectSet
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: olm-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active
@@ -492,7 +474,7 @@ Feature: Install ClusterObjectSet
     """
 
   Scenario: ClusterObjectSet blocks reconciliation when referenced Secret content changes
-    Given ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    Given namespace "${TEST_NAMESPACE}" is available
     When resource is applied
       """
       apiVersion: v1
@@ -521,9 +503,6 @@ Feature: Install ClusterObjectSet
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: olm-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active
@@ -601,16 +580,13 @@ Feature: Install ClusterObjectSet
 
   @ProgressDeadline
   Scenario: Archiving a COS with ProgressDeadlineExceeded cleans up its resources
-    Given min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
-    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    Given namespace "${TEST_NAMESPACE}" is available
+    And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
     When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: olm-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active
@@ -670,16 +646,13 @@ Feature: Install ClusterObjectSet
   @ProgressDeadline
   @Serial
   Scenario: COS recovers from ProgressDeadlineExceeded to Succeeded when probes pass
-    Given min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
-    And ServiceAccount "olm-sa" with needed permissions is available in test namespace
+    Given namespace "${TEST_NAMESPACE}" is available
+    And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
     When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        annotations:
-          olm.operatorframework.io/service-account-name: olm-sa
-          olm.operatorframework.io/service-account-namespace: ${TEST_NAMESPACE}
         name: ${COS_NAME}
       spec:
         lifecycleState: Active

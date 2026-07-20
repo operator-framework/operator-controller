@@ -59,6 +59,7 @@ type scenarioContext struct {
 	proxy                *recordingProxy
 	catalogAddr          string
 	catalogCleanup       func()
+	lastApplyStderr      string
 }
 
 // GatherClusterExtensionObjects collects all resources related to the ClusterExtension container in
@@ -89,9 +90,7 @@ var (
 	devMode      = false
 	featureGates = map[featuregate.Feature]bool{
 		features.WebhookProviderCertManager:        true,
-		features.PreflightPermissions:              false,
 		features.SingleOwnNamespaceInstallSupport:  false,
-		features.SyntheticPermissions:              false,
 		features.WebhookProviderOpenshiftServiceCA: false,
 		features.BoxcutterRuntime:                  false,
 		features.DeploymentConfig:                  false,
