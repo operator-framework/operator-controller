@@ -1,0 +1,202 @@
+/*
+==========================================
+    MkDocs asciinema-player plugin CSS
+==========================================
+*/
+
+/* Blue theme */
+
+:root {
+    /* Color */
+    --text-color: #222222;
+    --surface: #c0c0c0;
+    --button-highlight: #ffffff;
+    --button-face: #dfdfdf;
+    --button-shadow: #808080;
+    --window-frame: #0a0a0a;
+    --dialog-blue: #000080;
+    --dialog-blue-light: #1084d0;
+    --dialog-gray: #808080;
+    --dialog-gray-light: #b5b5b5;
+    --link-blue: #0000ff;
+
+    --border-window-outer: inset -1px -1px var(--window-frame), inset 1px 1px var(--button-face);
+    --border-window-inner: inset -2px -2px var(--button-shadow), inset 2px 2px var(--button-highlight);
+    --border-raised-outer: inset -1px -1px var(--window-frame), inset 1px 1px var(--button-highlight);
+    --border-raised-inner: inset -2px -2px var(--button-shadow), inset 2px 2px var(--button-face);
+}
+
+.mkap-window-blue {
+    box-shadow: var(--border-window-outer), var(--border-window-inner);
+    background: var(--surface);
+    padding: 3px;
+    margin-bottom: 24px;
+}
+
+.mkap-title-bar-blue {
+    background: linear-gradient(90deg, var(--dialog-blue), var(--dialog-blue-light));
+    padding: 3px 2px 3px 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mkap-title-bar-text-blue {
+    font-weight: bold;
+    color: white;
+    letter-spacing: 0;
+    margin-right: 24px;
+}
+
+.mkap-title-bar-controls-blue {
+    display: flex;
+}
+
+.mkap-title-bar-controls-blue button {
+    padding: 0;
+    display: block;
+    min-width: 16px;
+    min-height: 14px;
+    box-sizing: border-box;
+    border: none;
+    color: transparent;
+    text-shadow: 0 0 var(--text-color);
+    background: var(--surface);
+    box-shadow: var(--border-raised-outer), var(--border-raised-inner);
+    border-radius: 0;
+}
+
+.mkap-title-bar-controls-blue button[aria-label="Minimize"] {
+    background-image: url("./icons/minimize.svg");
+    background-repeat: no-repeat;
+    background-position: bottom 3px left 4px;
+}
+
+.mkap-title-bar-controls-blue button[aria-label="Maximize"] {
+    background-image: url("./icons/maximize.svg");
+    background-repeat: no-repeat;
+    background-position: top 2px left 3px;
+}
+
+.mkap-title-bar-controls-blue button[aria-label="Close"] {
+    background-image: url("./icons/close.svg");
+    background-repeat: no-repeat;
+    background-position: top 3px left 4px;
+}
+
+.mkap-window-body-blue {
+    margin: 5px;
+}
+
+.mkap-player-blue .ap-wrapper .ap-player {
+    border-radius: 0px;
+}
+
+/* Night theme */
+
+.mkap-window-night {
+    background-color: #37343c;
+    border-radius: 10px;
+    box-shadow: inset 0px 0px 0px 3px #b4b0b8;
+    padding: 4px;
+    margin-bottom: 24px;
+}
+
+.mkap-menu-night {
+    height: 2em;
+    display: flex;
+    align-items: center;
+}
+
+.mkap-button-night {
+    height: 1em;
+    width: 1em;
+    margin-left: 0.3em;
+    border-radius: 50%;
+    border: 1px solid #000;
+}
+
+.mkap-button-group-night {
+    display: flex;
+    width: 15%;
+}
+
+.mkap-button-close-night {
+    background-color: #ff3b47;
+    border-color: #9d252b;
+}
+
+.mkap-button-minimize-night {
+    background-color: #ffc100;
+    border-color: #9d802c;
+}
+
+.mkap-button-zoom-night {
+    background-color: #00d742;
+    border-color: #049931;
+}
+
+.mkap-button-title-night {
+    width: 70%;
+    color: #b4b0b8;
+    text-align: center;
+}
+
+.mkap-player-night {
+    background-color: black;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+/* None theme */
+
+.mkap-player-none {
+    margin-bottom: 24px;
+}
+
+/* Penguin theme */
+
+.mkap-window-penguin {
+    background: linear-gradient(#504b45 0%,#3c3b37 100%);
+    border-radius: 10px;
+    margin-bottom: 24px;
+}
+
+.mkap-menu-penguin {
+    height: 2em;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+}
+
+.mkap-button-penguin {
+    margin-left: 0.1em;
+    border-radius: 50%;
+}
+
+.mkap-button-group-penguin {
+    display: flex;
+    scale: 80%;
+}
+
+.mkap-button-zoom-penguin {
+    background: linear-gradient(#7d7871 0%, #595953 100%);
+}
+
+.mkap-button-minimize-penguin {
+    background: linear-gradient(#7d7871 0%, #595953 100%);
+}
+
+.mkap-button-close-penguin {
+    background: linear-gradient(#f37458 0%, #de4c12 100%);
+}
+
+.mkap-button-title-penguin {
+    width: 80%;
+    color: #d5d0ce;
+    text-align: center;
+}
+
+.mkap-player-penguin {
+    background-color: black;
+}
