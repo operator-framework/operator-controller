@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 )
 
 func TestApplyBundleWithBoxcutter(t *testing.T) {
@@ -133,7 +134,7 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				imageFS: fstest.MapFS{},
 			}
 
-			stepFunc := ApplyBundleWithBoxcutter(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string) (bool, string, error) {
+			stepFunc := ApplyBundleWithBoxcutter(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string, _ *applier.NamespaceConfig) (bool, string, error) {
 				return true, "", nil
 			})
 			result, err := stepFunc(ctx, state, ext)
