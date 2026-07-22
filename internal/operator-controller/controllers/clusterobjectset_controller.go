@@ -600,7 +600,10 @@ func collisionMessage(ores machinery.ObjectResult) string {
 	if gvk.Kind == "Namespace" {
 		return fmt.Sprintf("namespace %q is already managed by another controller", name)
 	}
-	return fmt.Sprintf("%s.%s %s/%s collision: %s", gvk.Kind, gvk.GroupVersion(), obj.GetNamespace(), name, ores.String())
+	if ns := obj.GetNamespace(); ns != "" {
+		return fmt.Sprintf("%s.%s %s/%s collision: %s", gvk.Kind, gvk.GroupVersion(), ns, name, ores.String())
+	}
+	return fmt.Sprintf("%s.%s %s collision: %s", gvk.Kind, gvk.GroupVersion(), name, ores.String())
 }
 
 // EffectiveCollisionProtection resolves the collision protection value using

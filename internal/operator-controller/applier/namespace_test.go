@@ -234,7 +234,8 @@ func TestBuildNamespaceObject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := BuildNamespaceObject(tt.nsName, tt.template)
+			result, err := BuildNamespaceObject(tt.nsName, tt.template)
+			require.NoError(t, err)
 			tt.validate(t, result.Object)
 		})
 	}
@@ -331,4 +332,103 @@ func TestResolveNamespaceName_InvalidTemplate(t *testing.T) {
 	}, "pkg")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to parse namespace template")
+}
+
+func TestResolveNamespaceName_Validation(t *testing.T) {
+	tests := []struct {
+		name        string
+		annotations map[string]string
+		packageName string
+		expectErr   bool
+		errContains string
+	}{
+		{
+			name: "rejects uppercase characters in suggested-namespace",
+			annotations: map[string]string{
+				AnnotationSuggestedNamespace: "Invalid-NS",
+			},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "not a valid DNS1123 label",
+		},
+		{
+			name: "rejects name exceeding 63 characters",
+			annotations: map[string]string{
+				AnnotationSuggestedNamespace: "a234567890123456789012345678901234567890123456789012345678901234",
+			},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "exceeds 63 characters",
+		},
+		{
+			name: "rejects name with dots",
+			annotations: map[string]string{
+				AnnotationSuggestedNamespace: "my.namespace",
+			},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "not a valid DNS1123 label",
+		},
+		{
+			name: "rejects name starting with hyphen",
+			annotations: map[string]string{
+				AnnotationSuggestedNamespace: "-invalid",
+			},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "not a valid DNS1123 label",
+		},
+		{
+			name:        "accepts valid fallback name",
+			annotations: nil,
+			packageName: "my-package",
+			expectErr:   false,
+		},
+		{
+			name: "accepts valid suggested-namespace",
+			annotations: map[string]string{
+				AnnotationSuggestedNamespace: "valid-ns-123",
+			},
+			packageName: "pkg",
+			expectErr:   false,
+		},
+		{
+			name: "rejects invalid name from template",
+			annotations: map[string]string{
+				AnnotationSuggestedNamespaceTemplate: `{"metadata":{"name":"INVALID"}}`,
+			},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "not a valid DNS1123 label",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, err := ResolveNamespaceName(tt.annotations, tt.packageName)
+			if tt.expectErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestBuildNamespaceObject_ReturnsError(t *testing.T) {
+	// BuildNamespaceObject with valid input should not error
+	_, err := BuildNamespaceObject("valid-ns", nil)
+	require.NoError(t, err)
+
+	// With template
+	template := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{"key": "value"},
+		},
+	}
+	obj, err := BuildNamespaceObject("valid-ns", template)
+	require.NoError(t, err)
+	require.Equal(t, "valid-ns", obj.GetName())
+	require.Equal(t, "value", obj.GetLabels()["key"])
 }

@@ -3,12 +3,15 @@ package applier
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+var dns1123LabelRegexp = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 
 const (
 	AnnotationSuggestedNamespaceTemplate = "operatorframework.io/suggested-namespace-template"
@@ -43,26 +46,40 @@ func ResolveNamespaceName(csvAnnotations map[string]string, packageName string) 
 		return "", nil, err
 	}
 
-	if template != nil {
-		if template.Name != "" {
-			return template.Name, template, nil
-		}
-		// Template exists but has no name — fall through to next option,
-		// but keep the template for labels/annotations
-	}
-
-	// Try suggested-namespace annotation
-	if csvAnnotations != nil {
-		if name, ok := csvAnnotations[AnnotationSuggestedNamespace]; ok && name != "" {
-			return name, template, nil
+	var name string
+	if template != nil && template.Name != "" {
+		name = template.Name
+	} else if csvAnnotations != nil {
+		if n, ok := csvAnnotations[AnnotationSuggestedNamespace]; ok && n != "" {
+			name = n
 		}
 	}
 
-	// Fallback: <packageName>-system
-	return fmt.Sprintf("%s-system", packageName), template, nil
+	if name == "" {
+		name = fmt.Sprintf("%s-system", packageName)
+	}
+
+	if err := validateNamespaceName(name); err != nil {
+		return "", nil, err
+	}
+
+	return name, template, nil
 }
 
-func BuildNamespaceObject(name string, template *corev1.Namespace) unstructured.Unstructured {
+func validateNamespaceName(name string) error {
+	if name == "" {
+		return fmt.Errorf("resolved namespace name is empty")
+	}
+	if len(name) > 63 {
+		return fmt.Errorf("resolved namespace name %q exceeds 63 characters", name)
+	}
+	if !dns1123LabelRegexp.MatchString(name) {
+		return fmt.Errorf("resolved namespace name %q is not a valid DNS1123 label", name)
+	}
+	return nil
+}
+
+func BuildNamespaceObject(name string, template *corev1.Namespace) (unstructured.Unstructured, error) {
 	ns := corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -84,8 +101,13 @@ func BuildNamespaceObject(name string, template *corev1.Namespace) unstructured.
 
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&ns)
 	if err != nil {
-		panic(fmt.Sprintf("failed to convert namespace to unstructured: %v", err))
+		return unstructured.Unstructured{}, fmt.Errorf("failed to convert namespace to unstructured: %w", err)
 	}
 
-	return unstructured.Unstructured{Object: unstructuredObj}
+	// Remove empty spec/status to avoid apply drift, consistent with how
+	// other bundle objects are sanitized before storage in a ClusterObjectSet.
+	delete(unstructuredObj, "status")
+	delete(unstructuredObj, "spec")
+
+	return unstructured.Unstructured{Object: unstructuredObj}, nil
 }

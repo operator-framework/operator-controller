@@ -199,8 +199,6 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 								"name":   "test-namespace",
 								"labels": map[string]interface{}{},
 							},
-							"spec":   map[string]interface{}{},
-							"status": map[string]interface{}{},
 						},
 					}),
 			),

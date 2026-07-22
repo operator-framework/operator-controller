@@ -414,9 +414,9 @@ func ResolveNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc 
 			l.V(1).Info("validating user-provided namespace exists", "namespace", ext.Spec.Namespace)
 			_, err := nsClient.Namespaces().Get(ctx, ext.Spec.Namespace, metav1.GetOptions{})
 			if apierrors.IsNotFound(err) {
-				err := fmt.Errorf("namespace %q not found; spec.namespace must reference an existing namespace", ext.Spec.Namespace)
-				setStatusProgressing(ext, reconcile.TerminalError(err))
-				return nil, err
+				termErr := reconcile.TerminalError(fmt.Errorf("namespace %q not found; spec.namespace must reference an existing namespace", ext.Spec.Namespace))
+				setStatusProgressing(ext, termErr)
+				return nil, termErr
 			}
 			if err != nil {
 				return nil, fmt.Errorf("error checking namespace %q: %w", ext.Spec.Namespace, err)
@@ -426,8 +426,14 @@ func ResolveNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc 
 			return nil, nil
 		}
 
-		// Managed mode: resolve name from bundle annotations
+		// Managed mode: resolve name from bundle annotations.
+		// If imageFS is nil (fallback path), preserve the previously resolved namespace
+		// from status to avoid wiping it in later steps.
 		if state.imageFS == nil {
+			if ext.Status.Namespace != "" {
+				state.resolvedNamespace = ext.Status.Namespace
+				state.namespaceManaged = true
+			}
 			return nil, nil
 		}
 
@@ -439,15 +445,15 @@ func ResolveNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc 
 		packageName := getPackageName(ext)
 		resolvedName, template, err := applier.ResolveNamespaceName(bundleAnnotations, packageName)
 		if err != nil {
-			err := fmt.Errorf("error resolving namespace from bundle annotations: %w", err)
-			setStatusProgressing(ext, reconcile.TerminalError(err))
-			return nil, err
+			termErr := reconcile.TerminalError(fmt.Errorf("error resolving namespace from bundle annotations: %w", err))
+			setStatusProgressing(ext, termErr)
+			return nil, termErr
 		}
 
 		if ext.Status.Namespace != "" && ext.Status.Namespace != resolvedName {
-			err := fmt.Errorf("bundle upgrade changes managed namespace from %q to %q; this is not supported", ext.Status.Namespace, resolvedName)
-			setStatusProgressing(ext, reconcile.TerminalError(err))
-			return nil, err
+			termErr := reconcile.TerminalError(fmt.Errorf("bundle upgrade changes managed namespace from %q to %q; this is not supported", ext.Status.Namespace, resolvedName))
+			setStatusProgressing(ext, termErr)
+			return nil, termErr
 		}
 
 		// On first install, verify managed namespace does not already exist.
@@ -456,9 +462,9 @@ func ResolveNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc 
 			l.V(1).Info("checking managed namespace does not already exist", "namespace", resolvedName)
 			_, getErr := nsClient.Namespaces().Get(ctx, resolvedName, metav1.GetOptions{})
 			if getErr == nil {
-				err := fmt.Errorf("managed namespace %q already exists; use spec.namespace to install into an existing namespace", resolvedName)
-				setStatusProgressing(ext, reconcile.TerminalError(err))
-				return nil, err
+				termErr := reconcile.TerminalError(fmt.Errorf("managed namespace %q already exists; use spec.namespace to install into an existing namespace", resolvedName))
+				setStatusProgressing(ext, termErr)
+				return nil, termErr
 			}
 			if !apierrors.IsNotFound(getErr) {
 				return nil, fmt.Errorf("error checking namespace %q: %w", resolvedName, getErr)
@@ -488,6 +494,12 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 			labels.OwnerNameKey: ext.GetName(),
+		}
+
+		if state.namespaceManaged {
+			termErr := reconcile.TerminalError(fmt.Errorf("managed namespace mode (omitting spec.namespace) requires the BoxcutterRuntime feature gate"))
+			setStatusProgressing(ext, termErr)
+			return nil, termErr
 		}
 
 		l.Info("applying bundle contents")

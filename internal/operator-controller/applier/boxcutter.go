@@ -102,7 +102,10 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	}
 
 	if nsConfig != nil && nsConfig.Managed {
-		nsObj := BuildNamespaceObject(nsConfig.Name, nsConfig.Template)
+		nsObj, err := BuildNamespaceObject(nsConfig.Name, nsConfig.Template)
+		if err != nil {
+			return nil, err
+		}
 		nsObj.SetLabels(mergeStringMaps(nsObj.GetLabels(), objectLabels))
 		objs = append(objs, *ocv1ac.ClusterObjectSetObject().WithObject(nsObj))
 	}
@@ -202,7 +205,10 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	}
 
 	if nsConfig != nil && nsConfig.Managed {
-		nsObj := BuildNamespaceObject(nsConfig.Name, nsConfig.Template)
+		nsObj, err := BuildNamespaceObject(nsConfig.Name, nsConfig.Template)
+		if err != nil {
+			return nil, err
+		}
 		nsObj.SetLabels(mergeStringMaps(nsObj.GetLabels(), objectLabels))
 		objs = append(objs, *ocv1ac.ClusterObjectSetObject().WithObject(nsObj))
 	}
