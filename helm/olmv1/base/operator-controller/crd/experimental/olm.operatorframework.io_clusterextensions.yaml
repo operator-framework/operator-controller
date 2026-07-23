@@ -147,12 +147,15 @@ spec:
                   rule: has(self.preflight)
               namespace:
                 description: |-
-                  namespace specifies a Kubernetes namespace.
-                  It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
-                  Some extensions may contain namespace-scoped resources to be applied in other namespaces.
-                  This namespace must exist.
+                  namespace is optional. When set, it specifies an existing namespace where
+                  namespace-scoped resources for the extension are applied. The namespace must
+                  already exist on the cluster. When omitted, operator-controller resolves and
+                  creates a managed namespace from bundle metadata.
 
-                  The namespace field is required, immutable, and follows the DNS label standard as defined in [RFC 1123].
+                  The mode (set vs omitted) is locked at creation time and cannot be changed.
+                  When set, the value is immutable.
+
+                  The namespace field follows the DNS label standard as defined in [RFC 1123].
                   It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
                   and be no longer than 63 characters.
 
@@ -160,10 +163,13 @@ spec:
                 maxLength: 63
                 type: string
                 x-kubernetes-validations:
-                - message: namespace is immutable
-                  rule: self == oldSelf
                 - message: namespace must be a valid DNS1123 label
-                  rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+                  rule: self == '' || self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+                - message: namespace is immutable once set
+                  rule: oldSelf == '' || self == oldSelf
+                - message: namespace cannot be set after creation; mode is locked
+                    at creation time
+                  rule: oldSelf != '' || self == ''
               progressDeadlineMinutes:
                 description: |-
                   progressDeadlineMinutes is an optional field that defines the maximum period
@@ -493,7 +499,6 @@ spec:
                   rule: 'has(self.sourceType) && self.sourceType == ''Catalog'' ?
                     has(self.catalog) : !has(self.catalog)'
             required:
-            - namespace
             - source
             type: object
           status:
@@ -725,6 +730,12 @@ spec:
                 required:
                 - bundle
                 type: object
+              namespace:
+                description: |-
+                  namespace is the resolved namespace where the extension is installed.
+                  For user-provided namespaces, this mirrors spec.namespace.
+                  For managed namespaces, this shows the name resolved from bundle metadata.
+                type: string
             type: object
         type: object
     served: true

@@ -200,23 +200,25 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
-	for i, pres := range rres.GetPhases() {
+	for _, pres := range rres.GetPhases() {
 		if verr := pres.GetValidationError(); verr != nil {
-			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", i)
-			setRetryingConditions(l, cos, fmt.Sprintf("phase %d validation error: %s", i, verr), isDeadlineExceeded)
+			phaseName := pres.GetName()
+			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", phaseName)
+			setRetryingConditions(l, cos, fmt.Sprintf("phase %q validation error: %s", phaseName, verr), isDeadlineExceeded)
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 
 		var collidingObjs []string
 		for _, ores := range pres.GetObjects() {
 			if ores.Action() == machinery.ActionCollision {
-				collidingObjs = append(collidingObjs, ores.String())
+				collidingObjs = append(collidingObjs, collisionMessage(ores))
 			}
 		}
 
 		if len(collidingObjs) > 0 {
-			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", i, "collisions", collidingObjs)
-			setRetryingConditions(l, cos, fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")), isDeadlineExceeded)
+			phaseName := pres.GetName()
+			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", phaseName, "collisions", collidingObjs)
+			setRetryingConditions(l, cos, fmt.Sprintf("revision object collisions in phase %q\n%s", phaseName, strings.Join(collidingObjs, "\n\n")), isDeadlineExceeded)
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	}
@@ -578,6 +580,30 @@ func (c *ClusterObjectSetReconciler) resolveObjectRef(ctx context.Context, ref o
 	}
 
 	return obj, nil
+}
+
+func collisionMessage(ores machinery.ObjectResult) string {
+	obj := ores.Object()
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	name := obj.GetName()
+
+	if collision, ok := ores.(machinery.ObjectResultCollision); ok {
+		if owner, hasOwner := collision.ConflictingOwner(); hasOwner {
+			ownerName := owner.Name
+			if gvk.Kind == "Namespace" {
+				return fmt.Sprintf("namespace %q is already managed by %s %q", name, owner.Kind, ownerName)
+			}
+			return fmt.Sprintf("%s %q is already managed by %s %q", gvk.Kind, name, owner.Kind, ownerName)
+		}
+	}
+
+	if gvk.Kind == "Namespace" {
+		return fmt.Sprintf("namespace %q is already managed by another controller", name)
+	}
+	if ns := obj.GetNamespace(); ns != "" {
+		return fmt.Sprintf("%s.%s %s/%s collision: %s", gvk.Kind, gvk.GroupVersion(), ns, name, ores.String())
+	}
+	return fmt.Sprintf("%s.%s %s collision: %s", gvk.Kind, gvk.GroupVersion(), name, ores.String())
 }
 
 // EffectiveCollisionProtection resolves the collision protection value using

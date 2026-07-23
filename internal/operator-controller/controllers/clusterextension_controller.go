@@ -27,6 +27,7 @@ import (
 	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,6 +67,10 @@ type reconcileState struct {
 	imageFS                  fs.FS
 	resolvedDeprecation      *declcfg.Deprecation
 	hasCatalogData           bool
+
+	resolvedNamespace string
+	namespaceManaged  bool
+	namespaceTemplate *corev1.Namespace
 }
 
 // ReconcileStepFunc represents a single step in the ClusterExtension reconciliation process.

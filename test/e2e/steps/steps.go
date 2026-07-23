@@ -185,6 +185,9 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)catalog "([^"]+)" is labeled with "([^"]+)"$`, CatalogIsLabeledWith)
 	sc.Step(`^(?i)ValidatingAdmissionPolicy "([^"]+)" is active$`, ValidatingAdmissionPolicyIsActive)
 
+	sc.Step(`^(?i)namespace "([^"]+)" has labels$`, NamespaceHasLabels)
+	sc.Step(`^(?i)namespace "([^"]+)" does not have label "([^"]+)"$`, NamespaceDoesNotHaveLabel)
+
 	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
 
@@ -1968,6 +1971,10 @@ func parseContents(contents string) ([]catalog.BundleOption, error) {
 			dir := part[len("StaticBundleDir(") : len(part)-1]
 			absDir := filepath.Join(projectRootDir(), dir)
 			opts = append(opts, catalog.StaticBundleDir(absDir))
+		case strings.HasPrefix(part, "NSTemplate(") && strings.HasSuffix(part, ")"):
+			// NSTemplate(privileged) or NSTemplate(baseline) or NSTemplate(restricted)
+			level := part[len("NSTemplate(") : len(part)-1]
+			opts = append(opts, catalog.WithNSTemplate(level))
 		}
 	}
 	return opts, nil
@@ -2456,6 +2463,53 @@ func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Ta
 		}
 		return true
 	})
+	return nil
+}
+
+// NamespaceHasLabels waits for a namespace (cluster-scoped) to have all labels specified in the data table.
+func NamespaceHasLabels(ctx context.Context, nsName string, table *godog.Table) error {
+	sc := scenarioCtx(ctx)
+	nsName = substituteScenarioVars(nsName, sc)
+
+	expected, err := parseKeyValueTable(table, sc)
+	if err != nil {
+		return fmt.Errorf("invalid labels table: %w", err)
+	}
+
+	waitFor(ctx, func() bool {
+		out, err := k8sClient(ctx, "get", "namespace", nsName, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var obj unstructured.Unstructured
+		if err := json.Unmarshal([]byte(out), &obj); err != nil {
+			return false
+		}
+		if key, got, ok := matchLabels(obj.GetLabels(), expected); !ok {
+			logger.V(1).Info("Namespace label not yet present or value mismatch", "namespace", nsName, "key", key, "expected", expected[key], "actual", got)
+			return false
+		}
+		return true
+	})
+	return nil
+}
+
+// NamespaceDoesNotHaveLabel verifies a namespace does not have the specified label.
+func NamespaceDoesNotHaveLabel(ctx context.Context, nsName string, labelKey string) error {
+	sc := scenarioCtx(ctx)
+	nsName = substituteScenarioVars(nsName, sc)
+
+	out, err := k8sClient(ctx, "get", "namespace", nsName, "-o", "json")
+	if err != nil {
+		return fmt.Errorf("failed to get namespace %q: %w", nsName, err)
+	}
+	var obj unstructured.Unstructured
+	if err := json.Unmarshal([]byte(out), &obj); err != nil {
+		return fmt.Errorf("failed to unmarshal namespace: %w", err)
+	}
+	if v, ok := obj.GetLabels()[labelKey]; ok {
+		return fmt.Errorf("namespace %q has unexpected label %s=%s", nsName, labelKey, v)
+	}
 	return nil
 }
 
