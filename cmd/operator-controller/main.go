@@ -181,7 +181,7 @@ func init() {
 	flags.BoolVar(&cfg.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flags.StringVar(&cfg.cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
+	flags.StringVar(&cfg.cachePath, "cache-path", "/var/cache/operator-controller", "The local directory path used for filesystem based caching")
 	flags.StringVar(&cfg.systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
 	flags.StringVar(&cfg.globalPullSecret, "global-pull-secret", "", "The <namespace>/<name> of the global pull secret that is going to be used to pull bundle images.")
 
