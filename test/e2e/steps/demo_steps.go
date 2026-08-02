@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -41,6 +42,10 @@ func bash(ctx context.Context, script string) (string, error) {
 
 	if err != nil {
 		logger.V(1).Info("Failed to run", "command", script, "stderr", stderr, "error", err)
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			exitErr.Stderr = stderrBuf.Bytes()
+		}
 	}
 	logger.V(1).Info("Output", "command", script, "output", stdout)
 
@@ -81,32 +86,81 @@ func CatalogReportsConditionWithoutReason(ctx context.Context, catalogUserName, 
 func ensureCatalogPortForward(ctx context.Context) (string, error) {
 	sc := scenarioCtx(ctx)
 	if sc.catalogAddr != "" {
-		return sc.catalogAddr, nil
+		if catalogPortForwardAlive(sc.catalogAddr) {
+			return sc.catalogAddr, nil
+		}
+		logger.V(1).Info("Catalog port-forward is dead, re-establishing", "addr", sc.catalogAddr)
+		resetCatalogPortForward(ctx)
 	}
 
-	addr, cleanup, err := portForward(ctx, componentNamespaces["catalogd"], "service/catalogd-service", 443)
+	ns := componentNamespaces["catalogd"]
+	target, err := catalogdLeaderPod(ctx, ns)
+	port := int32(443)
 	if err != nil {
-		return "", fmt.Errorf("failed to start catalog port-forward: %w", err)
+		logger.V(1).Info("Could not resolve catalogd leader pod, falling back to service", "error", err)
+		target = "service/catalogd-service"
+	} else {
+		port = 8443
+	}
+
+	addr, cleanup, err := portForward(ctx, ns, target, port)
+	if err != nil {
+		return "", fmt.Errorf("failed to start catalog port-forward to %s: %w", target, err)
 	}
 	sc.catalogAddr = addr
 	sc.catalogCleanup = cleanup
 
 	waitFor(ctx, func() bool {
-		client := &http.Client{
-			Timeout: 3 * time.Second,
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
-				DialContext:     (&net.Dialer{Timeout: 2 * time.Second}).DialContext,
-			},
-		}
-		resp, err := client.Get(fmt.Sprintf("https://%s/", addr))
-		if err != nil {
-			return false
-		}
-		resp.Body.Close()
-		return true
+		return catalogPortForwardAlive(addr)
 	})
 	return addr, nil
+}
+
+func catalogdLeaderPod(ctx context.Context, ns string) (string, error) {
+	holder, err := k8sClient(ctx, "get", "lease", "catalogd-operator-lock", "-n", ns,
+		"-o", "jsonpath={.spec.holderIdentity}")
+	if err != nil {
+		return "", fmt.Errorf("failed to get catalogd leader lease: %w", err)
+	}
+	holder = strings.TrimSpace(holder)
+	podName := holder
+	if idx := strings.LastIndex(holder, "_"); idx >= 0 {
+		podName = holder[:idx]
+	}
+	if podName == "" {
+		return "", fmt.Errorf("catalogd leader lease has empty holderIdentity")
+	}
+	logger.Info("Resolved catalogd leader pod", "holder", holder, "pod", podName)
+	return fmt.Sprintf("pod/%s", podName), nil
+}
+
+func catalogPortForwardAlive(addr string) bool {
+	client := &http.Client{
+		Timeout: 3 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			DialContext:     (&net.Dialer{Timeout: 2 * time.Second}).DialContext,
+		},
+	}
+	resp, err := client.Get(fmt.Sprintf("https://%s/", addr))
+	if err != nil {
+		return false
+	}
+	resp.Body.Close()
+	return true
+}
+
+// resetCatalogPortForward tears down the cached port-forward so the next
+// call to ensureCatalogPortForward establishes a fresh connection.  With
+// CatalogdHA, non-leader pods return 404 (empty local cache); resetting
+// lets the next retry potentially reach the leader pod.
+func resetCatalogPortForward(ctx context.Context) {
+	sc := scenarioCtx(ctx)
+	if sc.catalogCleanup != nil {
+		sc.catalogCleanup()
+	}
+	sc.catalogAddr = ""
+	sc.catalogCleanup = nil
 }
 
 func catalogCurlJq(ctx context.Context, catalogName, jqFilter string) (string, error) {
@@ -114,46 +168,69 @@ func catalogCurlJq(ctx context.Context, catalogName, jqFilter string) (string, e
 	if err != nil {
 		return "", err
 	}
+	// pipefail: propagate curl exit code through the pipe (e.g. HTTP 404 from a non-leader catalogd pod).
+	// -sS: silent but show errors on stderr.  -k: skip TLS verification for the port-forward.
+	// --compressed: request gzip and stream-decompress (catalogd uses gzhttp); saves network for the large operatorhubio catalog.
+	// --fail: exit 22 on HTTP errors so non-JSON error bodies don't reach jq.
 	script := fmt.Sprintf(
-		`curl -s -k https://%s/catalogs/%s/api/v1/all | jq -s '%s'`,
+		`set -o pipefail; curl -sS -k --compressed --fail https://%s/catalogs/%s/api/v1/all | jq '%s'`,
 		addr, catalogName, jqFilter,
 	)
-	return bash(ctx, script)
+	out, err := bash(ctx, script)
+	if err != nil {
+		resetCatalogPortForward(ctx)
+	}
+	return out, err
 }
 
 func CatalogContainsSomePackages(ctx context.Context, catalogName string) error {
-	out, err := catalogCurlJq(ctx, catalogName,
-		`.[] | select(.schema == "olm.package") | .name`)
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(out) == "" {
-		return fmt.Errorf("catalog %q contains no packages", catalogName)
-	}
+	waitFor(ctx, func() bool {
+		out, err := catalogCurlJq(ctx, catalogName,
+			`objects | select(.schema == "olm.package") | .name`)
+		if err != nil {
+			logger.Info("Catalog query failed, retrying", "catalog", catalogName, "error", err, "stderr", stderrOutput(err))
+			return false
+		}
+		if strings.TrimSpace(out) == "" {
+			logger.Info("Catalog returned no packages, retrying", "catalog", catalogName)
+			return false
+		}
+		return true
+	})
 	return nil
 }
 
 func PackageHasSomeChannels(ctx context.Context, packageName, catalogName string) error {
-	out, err := catalogCurlJq(ctx, catalogName,
-		fmt.Sprintf(`.[] | select(.schema == "olm.channel") | select(.package == "%s") | .name`, packageName))
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(out) == "" {
-		return fmt.Errorf("package %q in catalog %q has no channels", packageName, catalogName)
-	}
+	waitFor(ctx, func() bool {
+		out, err := catalogCurlJq(ctx, catalogName,
+			fmt.Sprintf(`objects | select(.schema == "olm.channel") | select(.package == "%s") | .name`, packageName))
+		if err != nil {
+			logger.Info("Catalog query failed, retrying", "catalog", catalogName, "package", packageName, "error", err, "stderr", stderrOutput(err))
+			return false
+		}
+		if strings.TrimSpace(out) == "" {
+			logger.Info("Package has no channels, retrying", "catalog", catalogName, "package", packageName)
+			return false
+		}
+		return true
+	})
 	return nil
 }
 
 func PackageHasSomeBundles(ctx context.Context, packageName, catalogName string) error {
-	out, err := catalogCurlJq(ctx, catalogName,
-		fmt.Sprintf(`.[] | select(.schema == "olm.bundle") | select(.package == "%s") | .name`, packageName))
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(out) == "" {
-		return fmt.Errorf("package %q in catalog %q has no bundles", packageName, catalogName)
-	}
+	waitFor(ctx, func() bool {
+		out, err := catalogCurlJq(ctx, catalogName,
+			fmt.Sprintf(`objects | select(.schema == "olm.bundle") | select(.package == "%s") | .name`, packageName))
+		if err != nil {
+			logger.Info("Catalog query failed, retrying", "catalog", catalogName, "package", packageName, "error", err, "stderr", stderrOutput(err))
+			return false
+		}
+		if strings.TrimSpace(out) == "" {
+			logger.Info("Package has no bundles, retrying", "catalog", catalogName, "package", packageName)
+			return false
+		}
+		return true
+	})
 	return nil
 }
 
