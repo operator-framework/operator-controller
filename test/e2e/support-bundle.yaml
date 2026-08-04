@@ -7,3 +7,10 @@ spec:
     - clusterResources: {}
     - clusterInfo: {}
     - logs: {}
+    - copyFromHost:
+        collectorName: "persisted-operator-logs"
+        image: "busybox:1.36"
+        hostPath: "/var/log/fluentbit/output/"
+        name: "operator-logs"
+        extractArchive: true
+        timeout: "120s"

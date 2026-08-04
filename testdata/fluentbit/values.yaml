@@ -1,0 +1,55 @@
+# Fluent Bit values for e2e log persistence.
+# Tails operator-controller and catalogd container logs and writes them
+# to the node filesystem so they survive pod deletion during serial tests.
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+config:
+  service: |
+    [SERVICE]
+        Flush        5
+        Log_Level    warn
+        Daemon       off
+        HTTP_Server  On
+  inputs: |
+    [INPUT]
+        Name              tail
+        Path              /var/log/containers/operator-controller-*_olmv1-system_*.log, /var/log/containers/catalogd-*_olmv1-system_*.log
+        multiline.parser  cri
+        Tag               <namespace_name>/<pod_name>.<container_name>
+        Tag_Regex         (?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-[a-z0-9]{64}\.log$
+        Read_from_Head    true
+        Skip_Long_Lines   On
+        Skip_Empty_Lines  On
+        Mem_Buf_Limit     10MB
+        DB                /var/log/fluentbit/tail.db
+  filters: ""
+  outputs: |
+    [OUTPUT]
+        Name              file
+        Match             *
+        Path              /var/log/fluentbit/output
+        Mkdir             true
+  customParsers: ""
+extraVolumes:
+  - name: fluentbit-output
+    hostPath:
+      path: /var/log/fluentbit
+      type: DirectoryOrCreate
+extraVolumeMounts:
+  - name: fluentbit-output
+    mountPath: /var/log/fluentbit
+testFramework:
+  enabled: false
+serviceMonitor:
+  enabled: false
+prometheusRule:
+  enabled: false
+dashboards:
+  enabled: false
+networkPolicy:
+  enabled: false

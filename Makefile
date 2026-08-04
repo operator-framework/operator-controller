@@ -383,6 +383,18 @@ wait-%: lint-deployed-%
 	KUBECONFIG=$(E2E_KUBECONFIG) kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
 	KUBECONFIG=$(E2E_KUBECONFIG) kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert
 
+.PHONY: fluentbit-%
+fluentbit-%: wait-% $(HELM)
+ifeq ($(strip $(ARTIFACT_PATH)),)
+	@echo "ARTIFACT_PATH unset; skipping fluent-bit deployment"
+else
+	KUBECONFIG=$(E2E_KUBECONFIG) $(HELM) upgrade --install fluent-bit oci://ghcr.io/fluent/helm-charts/fluent-bit \
+	  --namespace $(FLUENTBIT_NAMESPACE) --create-namespace \
+	  --version $(FLUENTBIT_CHART_VERSION) \
+	  -f testdata/fluentbit/values.yaml \
+	  --wait --timeout 2m
+endif
+
 .PHONY: prometheus-%
 prometheus-%: wait-% $(HELM)
 ifeq ($(strip $(E2E_SUMMARY_OUTPUT)),)
@@ -401,7 +413,7 @@ endif
 
 .PHONY: e2e-run-%
 e2e-run-%: GODOG_ARGS ?=
-e2e-run-%: prometheus-%
+e2e-run-%: prometheus-% fluentbit-%
 ifeq ($(strip $(GODOG_ARGS)),)
 	E2E_PROMETHEUS_PORT=$$(grep -A1 'containerPort: 30900' $(KIND_CONFIG) | grep hostPort | awk '{print $$2}'); \
 	if [[ -z "$$E2E_PROMETHEUS_PORT" ]]; then echo "error: failed to extract prometheus hostPort from $(KIND_CONFIG)" >&2; exit 1; fi; \
@@ -628,6 +640,8 @@ run-experimental: wait-$(KIND_CLUSTER_NAME) #HELP Build the operator-controller 
 CATD_NAMESPACE := olmv1-system
 PROMETHEUS_NAMESPACE := olmv1-system
 PROMETHEUS_CHART_VERSION := 86.2.2
+FLUENTBIT_NAMESPACE := fluent-bit
+FLUENTBIT_CHART_VERSION := 0.57.9
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
