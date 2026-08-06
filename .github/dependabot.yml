@@ -21,6 +21,22 @@ updates:
         patterns:
         - "k8s.io/*"
         - "sigs.k8s.io/*"
+  - package-ecosystem: "gomod"
+    directory: "/hack/ci/custom-linters/analyzers/testdata"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: ":seedling:"
+  - package-ecosystem: "gomod"
+    directory: "/hack/tools/test-profiling"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: ":seedling:"
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
