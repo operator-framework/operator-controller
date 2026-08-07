@@ -1,9 +1,8 @@
 aliases:
    olmv1-approvers:
    - grokspawn
-   - joelanford
    - kevinrizza
-   - oceanc80
+   - joelanford
    - pedjak
    - perdasilva
    - tmshort
@@ -14,12 +13,9 @@ aliases:
    - fgiudici
    - grokspawn
    - joelanford
-   - oceanc80
-   - OchiengEd
    - perdasilva
    - rashmigottipati
    - tmshort
-   - trgeiger
    - pedjak
 
    api-approvers:
