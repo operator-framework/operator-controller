@@ -49,21 +49,25 @@ const (
 
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
-	// namespace specifies a Kubernetes namespace.
-	// It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
-	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
-	// This namespace must exist.
+	// namespace is optional. When set, it specifies an existing namespace where
+	// namespace-scoped resources for the extension are applied. The namespace must
+	// already exist on the cluster. When omitted, operator-controller resolves and
+	// creates a managed namespace from bundle metadata.
 	//
-	// The namespace field is required, immutable, and follows the DNS label standard as defined in [RFC 1123].
+	// The mode (set vs omitted) is locked at creation time and cannot be changed.
+	// When set, the value is immutable.
+	//
+	// The namespace field follows the DNS label standard as defined in [RFC 1123].
 	// It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
 	// and be no longer than 63 characters.
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
 	// +kubebuilder:validation:MaxLength:=63
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
-	// +required
+	// +kubebuilder:validation:XValidation:rule="self == '' || self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
+	// +kubebuilder:validation:XValidation:rule="oldSelf == '' || self == oldSelf",message="namespace is immutable once set"
+	// +kubebuilder:validation:XValidation:rule="oldSelf != '' || self == ''",message="namespace cannot be set after creation; mode is locked at creation time"
+	// +optional
 	Namespace string `json:"namespace"`
 
 	// serviceAccount is a deprecated field and is completely ignored.
@@ -544,6 +548,13 @@ type ClusterExtensionStatus struct {
 	//
 	// +optional
 	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
+
+	// namespace is the resolved namespace where the extension is installed.
+	// For user-provided namespaces, this mirrors spec.namespace.
+	// For managed namespaces, this shows the name resolved from bundle metadata.
+	//
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
 
 	// activeRevisions holds a list of currently active (non-archived) ClusterObjectSets,
 	// including both installed and rolling out revisions.

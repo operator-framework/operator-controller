@@ -187,7 +187,7 @@ func extensionConfigBytes(ext *ocv1.ClusterExtension) []byte {
 	return nil
 }
 
-func getBundleAnnotations(bundleFS fs.FS) (map[string]string, error) {
+func GetBundleAnnotations(bundleFS fs.FS) (map[string]string, error) {
 	// The need to get the underlying bundle in order to extract its annotations
 	// will go away once we have a bundle interface that can surface the annotations independently of the
 	// underlying bundle format...

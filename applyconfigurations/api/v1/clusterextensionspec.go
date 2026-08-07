@@ -22,12 +22,15 @@ package v1
 //
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpecApplyConfiguration struct {
-	// namespace specifies a Kubernetes namespace.
-	// It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
-	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
-	// This namespace must exist.
+	// namespace is optional. When set, it specifies an existing namespace where
+	// namespace-scoped resources for the extension are applied. The namespace must
+	// already exist on the cluster. When omitted, operator-controller resolves and
+	// creates a managed namespace from bundle metadata.
 	//
-	// The namespace field is required, immutable, and follows the DNS label standard as defined in [RFC 1123].
+	// The mode (set vs omitted) is locked at creation time and cannot be changed.
+	// When set, the value is immutable.
+	//
+	// The namespace field follows the DNS label standard as defined in [RFC 1123].
 	// It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
 	// and be no longer than 63 characters.
 	//
