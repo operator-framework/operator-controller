@@ -14,10 +14,14 @@ options:
   operatorController:
     features:
       enabled:
-        - SingleOwnNamespaceInstallSupport
+        - BundleReleaseSupport
+        - DeploymentConfig
+        - OrbOperatorRuntime
+        - WebhookProviderCertManager
       disabled:
         - WebhookProviderOpenshiftServiceCA
   catalogd:
     features:
       enabled:
         - APIV1MetasHandler
+        - GraphQLCatalogQueries

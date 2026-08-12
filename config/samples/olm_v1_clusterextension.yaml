@@ -14,4 +14,4 @@ spec:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
-      version: 0.6.0
+      version: 0.13.0

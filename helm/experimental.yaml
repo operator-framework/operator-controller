@@ -11,9 +11,9 @@ options:
       replicas: 2
     features:
       enabled:
-        - BoxcutterRuntime
         - BundleReleaseSupport
         - DeploymentConfig
+        - OrbOperatorRuntime
         - SingleOwnNamespaceInstallSupport
         - WebhookProviderCertManager
       disabled:

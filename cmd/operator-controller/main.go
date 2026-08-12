@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	orbv1alpha1 "github.com/joelanford/orb-operator/api/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.podman.io/image/v5/types"
 	corev1 "k8s.io/api/core/v1"
@@ -68,6 +69,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
@@ -130,6 +132,16 @@ type helmReconcilerConfigurator struct {
 	imagePuller           imageutil.Puller
 	finalizers            crfinalizer.Finalizers
 	trackingCache         managedcache.TrackingCache
+}
+
+type orbOperatorReconcilerConfigurator struct {
+	mgr                   manager.Manager
+	preflights            []applier.Preflight
+	regv1ManifestProvider applier.ManifestProvider
+	resolver              resolve.Resolver
+	imageCache            imageutil.Cache
+	imagePuller           imageutil.Puller
+	finalizers            crfinalizer.Finalizers
 }
 
 const (
@@ -226,6 +238,11 @@ func run() error {
 	// log feature gate status after parsing flags and setting up logger
 	features.LogFeatureGateStates(setupLog, features.OperatorControllerFeatureGate)
 
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) &&
+		features.OperatorControllerFeatureGate.Enabled(features.OrbOperatorRuntime) {
+		return fmt.Errorf("BoxcutterRuntime and OrbOperatorRuntime feature gates are mutually exclusive")
+	}
+
 	authFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s-%s.json", authFilePrefix, apimachineryrand.String(8)))
 	var globalPullSecretKey *k8stypes.NamespacedName
 	if cfg.globalPullSecret != "" {
@@ -263,6 +280,21 @@ func run() error {
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		cacheOptions.ByObject[&ocv1.ClusterObjectSet{}] = crcache.ByObject{
 			Label: k8slabels.Everything(),
+		}
+	}
+
+	if features.OperatorControllerFeatureGate.Enabled(features.OrbOperatorRuntime) {
+		ownerKindSelector := k8slabels.SelectorFromSet(k8slabels.Set{
+			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+		})
+		cacheOptions.ByObject[&orbv1alpha1.ClusterObjectDeployment{}] = crcache.ByObject{
+			Label: ownerKindSelector,
+		}
+		cacheOptions.ByObject[&orbv1alpha1.ClusterObjectSet{}] = crcache.ByObject{
+			Label: ownerKindSelector,
+		}
+		cacheOptions.ByObject[&orbv1alpha1.ClusterObjectSlice{}] = crcache.ByObject{
+			Label: ownerKindSelector,
 		}
 	}
 
@@ -477,7 +509,12 @@ func run() error {
 	}
 
 	var ctrlBuilderOpts []controllers.ControllerBuilderOption
-	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+	if features.OperatorControllerFeatureGate.Enabled(features.OrbOperatorRuntime) {
+		ctrlBuilderOpts = append(ctrlBuilderOpts,
+			controllers.WithOwns(&orbv1alpha1.ClusterObjectDeployment{}),
+			controllers.WithOwns(&orbv1alpha1.ClusterObjectSlice{}),
+		)
+	} else if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterObjectSet{}))
 	} else {
 		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithWatchesRawSource(
@@ -509,7 +546,17 @@ func run() error {
 		IsDeploymentConfigEnabled:   features.OperatorControllerFeatureGate.Enabled(features.DeploymentConfig),
 	}
 	var cerCfg reconcilerConfigurator
-	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+	if features.OperatorControllerFeatureGate.Enabled(features.OrbOperatorRuntime) {
+		cerCfg = &orbOperatorReconcilerConfigurator{
+			mgr:                   mgr,
+			preflights:            preflights,
+			regv1ManifestProvider: regv1ManifestProvider,
+			resolver:              resolver,
+			imageCache:            imageCache,
+			imagePuller:           imagePuller,
+			finalizers:            clusterExtensionFinalizers,
+		}
+	} else if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		cerCfg = &boxcutterReconcilerConfigurator{
 			mgr:                   mgr,
 			preflights:            preflights,
@@ -694,6 +741,44 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 	}).SetupWithManager(c.mgr); err != nil {
 		return fmt.Errorf("unable to setup ClusterObjectSet controller: %w", err)
 	}
+	return nil
+}
+
+func (c *orbOperatorReconcilerConfigurator) Configure(ceReconciler *controllers.ClusterExtensionReconciler) error {
+	err := c.finalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		return crfinalizer.Result{}, nil
+	}))
+	if err != nil {
+		setupLog.Error(err, "unable to register content manager cleanup finalizer for orb-operator")
+		return err
+	}
+
+	if err := c.mgr.GetFieldIndexer().IndexField(context.Background(), &orbv1alpha1.ClusterObjectSet{}, "spec.group",
+		func(obj client.Object) []string {
+			return []string{obj.(*orbv1alpha1.ClusterObjectSet).Spec.Group}
+		}); err != nil {
+		return fmt.Errorf("unable to create field indexer for ClusterObjectSet spec.group: %w", err)
+	}
+
+	fieldOwner := fmt.Sprintf("%s/clusterextension-controller", fieldOwnerPrefix)
+	appl := &applier.OrbOperator{
+		Client:     c.mgr.GetClient(),
+		Scheme:     c.mgr.GetScheme(),
+		Preflights: c.preflights,
+		FieldOwner: fieldOwner,
+	}
+	revisionStatesGetter := &controllers.OrbOperatorRevisionStatesGetter{}
+	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
+		controllers.HandleFinalizers(c.finalizers),
+		controllers.ValidateClusterExtension(
+			controllers.ServiceAccountDeprecationWarning(),
+		),
+		controllers.RetrieveRevisionStates(revisionStatesGetter),
+		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
+		controllers.UnpackBundle(c.imagePuller, c.imageCache),
+		controllers.ApplyBundle(appl),
+	}
+
 	return nil
 }
 
