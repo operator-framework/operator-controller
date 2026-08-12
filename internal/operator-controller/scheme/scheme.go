@@ -1,6 +1,7 @@
 package scheme
 
 import (
+	orbv1alpha1 "github.com/joelanford/orb-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,5 +19,6 @@ func init() {
 	utilruntime.Must(ocv1.AddToScheme(Scheme))
 	utilruntime.Must(appsv1.AddToScheme(Scheme))
 	utilruntime.Must(corev1.AddToScheme(Scheme))
+	utilruntime.Must(orbv1alpha1.AddToScheme(Scheme))
 	//+kubebuilder:scaffold:scheme
 }
