@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 # orb-operator Applier Apply Step
 
