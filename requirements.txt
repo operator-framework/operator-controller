@@ -33,4 +33,4 @@ six==1.17.0
 soupsieve==2.9.1
 urllib3==2.7.0
 watchdog==6.0.0
-mkdocs-asciinema-player==1.1.0
+mkdocs-asciinema-player==1.2.0
