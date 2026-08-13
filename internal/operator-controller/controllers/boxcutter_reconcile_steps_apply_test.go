@@ -28,7 +28,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-func TestApplyBundleWithBoxcutter(t *testing.T) {
+func TestApplyBundleWithRevisions(t *testing.T) {
 	type args struct {
 		activeRevisions []ocv1.RevisionStatus
 		revisionStates  *RevisionStates
@@ -133,7 +133,7 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				imageFS: fstest.MapFS{},
 			}
 
-			stepFunc := ApplyBundleWithBoxcutter(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string) (bool, string, error) {
+			stepFunc := ApplyBundleWithRevisions(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string) (bool, string, error) {
 				return true, "", nil
 			})
 			result, err := stepFunc(ctx, state, ext)

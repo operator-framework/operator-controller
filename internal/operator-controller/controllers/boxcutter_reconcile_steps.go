@@ -100,7 +100,15 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 	}
 }
 
-func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error)) ReconcileStepFunc {
+// ApplyBundleWithRevisions is a revision-state-driven apply step shared by the
+// Boxcutter and orb runtimes. It calls the applier only to create/update the
+// revision resources and deliberately discards the applier's (bool, string)
+// return: the ClusterExtension's status is derived entirely from
+// state.revisionStates (populated by the RevisionStatesGetter), whose
+// RevisionMetadata carry ocv1.ClusterObjectSetType{Available,Progressing}
+// conditions. A non-nil apply error is still surfaced via the Progressing
+// condition. (Helm uses the bool-driven ApplyBundle instead.)
+func ApplyBundleWithRevisions(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error)) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		revisionAnnotations := map[string]string{

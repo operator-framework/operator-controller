@@ -706,7 +706,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
-		controllers.ApplyBundleWithBoxcutter(appl.Apply),
+		controllers.ApplyBundleWithRevisions(appl.Apply),
 	}
 
 	baseDiscoveryClient, err := discovery.NewDiscoveryClientForConfig(c.mgr.GetConfig())
@@ -772,7 +772,7 @@ func (c *orbOperatorReconcilerConfigurator) Configure(ceReconciler *controllers.
 		Preflights: c.preflights,
 		FieldOwner: fieldOwner,
 	}
-	revisionStatesGetter := &controllers.OrbOperatorRevisionStatesGetter{}
+	revisionStatesGetter := &controllers.OrbOperatorRevisionStatesGetter{Reader: c.mgr.GetClient()}
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.ValidateClusterExtension(
@@ -781,7 +781,9 @@ func (c *orbOperatorReconcilerConfigurator) Configure(ceReconciler *controllers.
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
-		controllers.ApplyBundle(appl),
+		// Revision-state-driven apply: CE status is derived from the orb
+		// COD/COS state via the getter above, not the applier's return bool.
+		controllers.ApplyBundleWithRevisions(appl.Apply),
 	}
 
 	return nil
