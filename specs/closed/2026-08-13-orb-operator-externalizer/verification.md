@@ -2,8 +2,8 @@
 
 ## Implementation Correctness
 
-- [ ] `Externalize` returns the COD unchanged with nil slices when under the size threshold
-- [ ] `Externalize` rewrites the COD and returns COSLs when over the size threshold
+- [ ] `ExternalizeCOD` returns the COD unchanged with nil slices when under the size threshold
+- [ ] `ExternalizeCOD` rewrites the COD and returns COSLs when over the size threshold
 - [ ] Extracts apiVersion, kind, name, namespace from each raw JSON object
 - [ ] Builds SliceObject entries with correct identity and content
 - [ ] Respects the 900 KiB per-COSL size budget
@@ -13,6 +13,8 @@
 - [ ] ObjectRef entries correctly reference sliceName and object identity
 - [ ] CollisionProtection and Assertions are preserved on PhaseObjects
 - [ ] Nil/empty raw extensions are skipped without error
+- [ ] Each produced COSL inherits the COD's metadata labels
+- [ ] Each produced COSL inherits the COD's owner references
 - [ ] All unit tests pass
 
 ## Project Conventions

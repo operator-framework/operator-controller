@@ -1,7 +1,7 @@
 # Implementation Plan
 
 1. Create the `internal/operator-controller/applier/orb/` package with `externalizer.go`
-   - Implement `Externalize(cod) (cod, cosls, error)`:
+   - Implement `ExternalizeCOD(cod) (cod, cosls, error)`:
      - Serialize COD to JSON, compare against `maxDataSize`
      - If under limit, return unchanged
      - If over limit, iterate phases and objects, extract identity and content from each inline object
@@ -9,6 +9,7 @@
      - Bin-pack into COSLs respecting the 900 KiB size budget and 256-object count limit
      - Generate deterministic COSL names from COD name + content hash
      - Rewrite COD phase objects: clear inline Object, set ObjectRef to sliceName + identity
+     - Propagate the COD's metadata labels and owner references onto each produced COSL
      - Return modified COD and COSL apply configurations
    - Implement internal helpers: `parseObjectIdentity`, `gzipData`, content-addressable naming
 
@@ -20,4 +21,5 @@
    - Test assertion/collisionProtection preservation
    - Test gzip compression of large objects
    - Test deterministic naming
+   - Test label and owner-reference propagation from COD to COSLs
    - Test error cases (invalid JSON)

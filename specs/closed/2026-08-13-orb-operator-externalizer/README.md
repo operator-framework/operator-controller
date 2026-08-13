@@ -1,11 +1,11 @@
 ---
-status: in-progress
+status: done
 ---
 # orb-operator Externalizer
 
 ## Summary
 
-Implement an `Externalize` function that takes a COD apply configuration with inline objects and, if the serialized COD would exceed etcd's size limit, rewrites it to use `objectRef` entries pointing to ClusterObjectSlice (COSL) resources. When the COD is small enough, it is returned unchanged.
+Implement an `ExternalizeCOD` function that takes a COD apply configuration with inline objects and, if the serialized COD would exceed etcd's size limit, rewrites it to use `objectRef` entries pointing to ClusterObjectSlice (COSL) resources. When the COD is small enough, it is returned unchanged.
 
 ## Design
 
@@ -22,7 +22,7 @@ When the estimated serialized size of a COD exceeds the safe threshold (900 KiB,
 The package exposes one function in `internal/operator-controller/applier/orb/externalizer.go`:
 
 ```go
-func Externalize(
+func ExternalizeCOD(
     cod *orbac.ClusterObjectDeploymentApplyConfiguration,
 ) (*orbac.ClusterObjectDeploymentApplyConfiguration, []*orbac.ClusterObjectSliceApplyConfiguration, error)
 ```
@@ -33,6 +33,10 @@ func Externalize(
 3. If over the limit, pack all inline objects into COSLs, rewrite the COD's phase objects to use `objectRef` entries, and return the modified COD plus the COSL apply configurations.
 
 **Callers** create the COSLs before applying the COD. The function does not touch the cluster.
+
+### COSL Labels and owner references
+
+Each produced COSL inherits the COD's metadata labels (e.g. the owner labels `OwnerKindKey`/`OwnerNameKey` set by the applier) and the COD's owner references (the controller ownerReference to the ClusterExtension, set by the COD generator). The labels let callers discover a COD's slices by the same label selector used to find the COD - notably for garbage-collecting orphaned slices. The owner references make the slices garbage-collected when the ClusterExtension is deleted and let owner-based watches (`Owns(&ClusterObjectSlice{})`) enqueue the ClusterExtension on slice changes, matching the COD's behavior. If the COD has no labels / owner references, the COSLs get none.
 
 ### COSL Structure
 
