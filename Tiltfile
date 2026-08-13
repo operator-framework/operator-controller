@@ -1,5 +1,7 @@
 load('.tilt-support', 'deploy_repo')
 
+watch_settings(ignore=['coverage/', '.git/', '.jj/'])
+
 olmv1 = {
     'repos': {
         'catalogd': {

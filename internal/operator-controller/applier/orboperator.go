@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	orb "github.com/operator-framework/operator-controller/internal/operator-controller/applier/orb"
 )
 
 type OrbOperator struct {
@@ -80,6 +81,17 @@ func (o *OrbOperator) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clus
 		return false, "", err
 	}
 	l.Info("preflight checks passed")
+
+	// TODO: use the returned cod and slices in the apply step
+	_, slices, err := orb.Externalize(cod)
+	if err != nil {
+		return false, "", fmt.Errorf("externalizing COD: %w", err)
+	}
+	if len(slices) > 0 {
+		l.Info("externalized COD into ClusterObjectSlices", "sliceCount", len(slices))
+	} else {
+		l.Info("COD fits inline, no externalization needed")
+	}
 
 	return false, "", nil
 }
