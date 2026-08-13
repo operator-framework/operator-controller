@@ -761,9 +761,14 @@ func (c *orbOperatorReconcilerConfigurator) Configure(ceReconciler *controllers.
 	}
 
 	fieldOwner := fmt.Sprintf("%s/clusterextension-controller", fieldOwnerPrefix)
+	codGen := &applier.RegistryV1CODGenerator{
+		ManifestProvider: c.regv1ManifestProvider,
+		Scheme:           c.mgr.GetScheme(),
+	}
 	appl := &applier.OrbOperator{
 		Client:     c.mgr.GetClient(),
 		Scheme:     c.mgr.GetScheme(),
+		Generator:  codGen,
 		Preflights: c.preflights,
 		FieldOwner: fieldOwner,
 	}
