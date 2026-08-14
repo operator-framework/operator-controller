@@ -230,6 +230,13 @@ func scenarioCtx(ctx context.Context) *scenarioContext {
 	return ctx.Value(scenarioContextKey).(*scenarioContext)
 }
 
+// featureEnabled reports whether the given feature gate is present and enabled
+// in the detected operator-controller configuration.
+func featureEnabled(f featuregate.Feature) bool {
+	enabled, found := featureGates[f]
+	return found && enabled
+}
+
 func stderrOutput(err error) string {
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) && exitErr != nil {

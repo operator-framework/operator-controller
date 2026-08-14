@@ -24,6 +24,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-containerregistry/pkg/crane"
+	orbv1alpha1 "github.com/joelanford/orb-operator/api/v1alpha1"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
 	"github.com/spf13/pflag"
@@ -2126,10 +2127,14 @@ func getResource(kind string, name string, namespace string) (*unstructured.Unst
 // this method is best called when the extension has been installed successfully. An error is returned if there was
 // any issue in determining the extension's resources.
 func listExtensionResources(extName string) ([]client.Object, error) {
-	if enabled, found := featureGates[features.BoxcutterRuntime]; found && enabled {
+	switch {
+	case featureEnabled(features.BoxcutterRuntime):
 		return listExtensionRevisionResources(extName)
+	case featureEnabled(features.OrbOperatorRuntime):
+		return listOrbRevisionResources(extName)
+	default:
+		return listHelmReleaseResources(extName)
 	}
-	return listHelmReleaseResources(extName)
 }
 
 // listHelmReleaseResources returns a slice of client.Object containing all resources for a ClusterExtension's
@@ -2161,7 +2166,7 @@ func helmReleaseSecretForExtension(extName string) (*corev1.Secret, error) {
 		return nil, err
 	}
 	if strings.TrimSpace(out) == "" {
-		return nil, err
+		return nil, fmt.Errorf("no deployed helm release secret found for extension %s", extName)
 	}
 
 	var secretList corev1.SecretList
@@ -2169,7 +2174,7 @@ func helmReleaseSecretForExtension(extName string) (*corev1.Secret, error) {
 		return nil, err
 	}
 	if len(secretList.Items) != 1 {
-		return nil, err
+		return nil, fmt.Errorf("expected exactly 1 deployed helm release secret for extension %s, found %d", extName, len(secretList.Items))
 	}
 	return &secretList.Items[0], nil
 }
@@ -2262,29 +2267,138 @@ func resolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, err
 	if !ok {
 		return nil, fmt.Errorf("key %q not found in Secret %s/%s", ref.Key, ref.Namespace, ref.Name)
 	}
-	// Auto-detect gzip compression (magic bytes 0x1f 0x8b)
-	if len(data) >= 2 && data[0] == 0x1f && data[1] == 0x8b {
-		reader, err := gzip.NewReader(bytes.NewReader(data))
-		if err != nil {
-			return nil, fmt.Errorf("creating gzip reader for key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
-		}
-		defer reader.Close()
-		const maxDecompressedSize = 10 * 1024 * 1024 // 10 MiB
-		limited := io.LimitReader(reader, maxDecompressedSize+1)
-		decompressed, err := io.ReadAll(limited)
-		if err != nil {
-			return nil, fmt.Errorf("decompressing key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
-		}
-		if len(decompressed) > maxDecompressedSize {
-			return nil, fmt.Errorf("decompressed data for key %q in Secret %s/%s exceeds maximum size (%d bytes)", ref.Key, ref.Namespace, ref.Name, maxDecompressedSize)
-		}
-		data = decompressed
+	data, err = decodeMaybeGzipped(data)
+	if err != nil {
+		return nil, fmt.Errorf("decoding key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
 	}
 	obj := &unstructured.Unstructured{}
 	if err := json.Unmarshal(data, &obj.Object); err != nil {
 		return nil, fmt.Errorf("unmarshaling object from key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
 	}
 	return obj, nil
+}
+
+// decodeMaybeGzipped returns data decompressed when it carries the gzip magic
+// bytes (0x1f 0x8b), or the data unchanged otherwise. Decompression is bounded
+// to guard against decompression bombs.
+func decodeMaybeGzipped(data []byte) ([]byte, error) {
+	if len(data) < 2 || data[0] != 0x1f || data[1] != 0x8b {
+		return data, nil
+	}
+	reader, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer reader.Close()
+	const maxDecompressedSize = 10 * 1024 * 1024 // 10 MiB
+	limited := io.LimitReader(reader, maxDecompressedSize+1)
+	decompressed, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	if len(decompressed) > maxDecompressedSize {
+		return nil, fmt.Errorf("decompressed data exceeds maximum size (%d bytes)", maxDecompressedSize)
+	}
+	return decompressed, nil
+}
+
+// listOrbRevisionResources lists the objects managed by the latest active orb
+// ClusterObjectSet revision for the extension. Objects are stored either inline
+// in a phase or by reference to a ClusterObjectSlice.
+func listOrbRevisionResources(extName string) ([]client.Object, error) {
+	rev, err := latestActiveOrbRevisionForExtension(extName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest active orb revision for extension %s: %w", extName, err)
+	}
+
+	var objs []client.Object
+	for i := range rev.Spec.Phases {
+		phase := &rev.Spec.Phases[i]
+		for j := range phase.Objects {
+			po := &phase.Objects[j]
+			switch {
+			case po.ObjectRef != nil:
+				resolved, err := resolveOrbObjectRef(po.ObjectRef)
+				if err != nil {
+					return nil, fmt.Errorf("resolving objectRef in phase %q object %d: %w", phase.Name, j, err)
+				}
+				objs = append(objs, resolved)
+			case len(po.Object.Raw) > 0:
+				obj := &unstructured.Unstructured{}
+				if err := json.Unmarshal(po.Object.Raw, &obj.Object); err != nil {
+					return nil, fmt.Errorf("unmarshaling inline object %d in phase %q: %w", j, phase.Name, err)
+				}
+				objs = append(objs, obj)
+			default:
+				return nil, fmt.Errorf("object %d in phase %q has neither object nor objectRef", j, phase.Name)
+			}
+		}
+	}
+	return objs, nil
+}
+
+// latestActiveOrbRevisionForExtension returns the highest-revision, non-archived
+// orb ClusterObjectSet whose spec.group matches the extension name. The orb
+// ClusterObjectSet CRD (orb.operatorframework.io) is distinct from OLM's
+// ClusterObjectSet, so it must be addressed by its fully-qualified resource name.
+func latestActiveOrbRevisionForExtension(extName string) (*orbv1alpha1.ClusterObjectSet, error) {
+	out, err := k8sClient(context.Background(), "get", "clusterobjectsets.orb.operatorframework.io", "-o", "json")
+	if err != nil {
+		return nil, fmt.Errorf("error listing orb revisions for extension '%s': %w", extName, err)
+	}
+
+	var revisionList orbv1alpha1.ClusterObjectSetList
+	if err := json.Unmarshal([]byte(out), &revisionList); err != nil {
+		return nil, fmt.Errorf("error unmarshalling orb revisions for extension '%s': %w", extName, err)
+	}
+
+	var latest *orbv1alpha1.ClusterObjectSet
+	for i := range revisionList.Items {
+		rev := &revisionList.Items[i]
+		if rev.Spec.Group != extName {
+			continue
+		}
+		if rev.Spec.LifecycleState == orbv1alpha1.LifecycleStateArchived {
+			continue
+		}
+		if latest == nil || rev.Spec.Revision > latest.Spec.Revision {
+			latest = rev
+		}
+	}
+
+	if latest == nil {
+		return nil, fmt.Errorf("no active orb revisions found for extension '%s'", extName)
+	}
+	return latest, nil
+}
+
+// resolveOrbObjectRef fetches an object referenced by an orb phase from its
+// ClusterObjectSlice, matching on the reference's identity fields.
+func resolveOrbObjectRef(ref *orbv1alpha1.ObjectRef) (*unstructured.Unstructured, error) {
+	out, err := k8sClient(context.Background(), "get", "clusterobjectslices.orb.operatorframework.io", ref.SliceName, "-o", "json")
+	if err != nil {
+		return nil, fmt.Errorf("getting ClusterObjectSlice %s: %w", ref.SliceName, err)
+	}
+	var slice orbv1alpha1.ClusterObjectSlice
+	if err := json.Unmarshal([]byte(out), &slice); err != nil {
+		return nil, fmt.Errorf("unmarshaling ClusterObjectSlice %s: %w", ref.SliceName, err)
+	}
+	for i := range slice.Objects {
+		so := &slice.Objects[i]
+		if so.APIVersion != ref.APIVersion || so.Kind != ref.Kind || so.Name != ref.Name || so.Namespace != ref.Namespace {
+			continue
+		}
+		data, err := decodeMaybeGzipped(so.Content)
+		if err != nil {
+			return nil, fmt.Errorf("decoding object %s/%s in ClusterObjectSlice %s: %w", ref.Namespace, ref.Name, ref.SliceName, err)
+		}
+		obj := &unstructured.Unstructured{}
+		if err := json.Unmarshal(data, &obj.Object); err != nil {
+			return nil, fmt.Errorf("unmarshaling object %s/%s from ClusterObjectSlice %s: %w", ref.Namespace, ref.Name, ref.SliceName, err)
+		}
+		return obj, nil
+	}
+	return nil, fmt.Errorf("object %s/%s (%s %s) not found in ClusterObjectSlice %s", ref.Namespace, ref.Name, ref.APIVersion, ref.Kind, ref.SliceName)
 }
 
 // latestActiveRevisionForExtension returns the latest active revision for the extension called extName
