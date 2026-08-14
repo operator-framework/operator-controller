@@ -10,11 +10,40 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
+
+// OrbStorageMigrator migrates a ClusterExtension from the legacy Helm runtime to
+// the orb runtime. Unlike the synchronous Boxcutter StorageMigrator, its Migrate
+// returns a ctrl.Result so the reconcile step can requeue and gate the pipeline
+// while adoption of the Helm-managed objects is still in progress.
+type OrbStorageMigrator interface {
+	Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ctrl.Result, error)
+}
+
+// MigrateOrbStorage returns a reconcile step that runs the orb storage migrator.
+// While adoption is in progress the migrator returns a non-nil requeue result,
+// which stops the pipeline before ApplyBundle so the COD is not created until the
+// adopting revision has completed. When there is nothing to migrate (or once
+// migration has finished) it returns a nil result and the pipeline proceeds.
+func MigrateOrbStorage(m OrbStorageMigrator) ReconcileStepFunc {
+	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
+		objLbls := map[string]string{
+			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+			labels.OwnerNameKey: ext.GetName(),
+		}
+
+		res, err := m.Migrate(ctx, ext, objLbls)
+		if err != nil {
+			return nil, fmt.Errorf("migrating storage: %w", err)
+		}
+		return res, nil
+	}
+}
 
 type OrbOperatorRevisionStatesGetter struct {
 	Reader client.Reader

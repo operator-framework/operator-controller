@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	orbv1alpha1 "github.com/joelanford/orb-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,7 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
@@ -413,4 +415,49 @@ func TestOrbGetRevisionStates_AvailablePassesThrough(t *testing.T) {
 	require.NotNil(t, avail)
 	assert.Equal(t, metav1.ConditionFalse, avail.Status)
 	assert.Equal(t, orbv1alpha1.ReasonUnavailable, avail.Reason)
+}
+
+// fakeOrbStorageMigrator is a hand-rolled OrbStorageMigrator for exercising the
+// MigrateOrbStorage step.
+type fakeOrbStorageMigrator struct {
+	res       *ctrl.Result
+	err       error
+	gotLabels map[string]string
+	callCount int
+}
+
+func (f *fakeOrbStorageMigrator) Migrate(_ context.Context, _ *ocv1.ClusterExtension, objectLabels map[string]string) (*ctrl.Result, error) {
+	f.callCount++
+	f.gotLabels = objectLabels
+	return f.res, f.err
+}
+
+func TestMigrateOrbStorage_GatesWithRequeue(t *testing.T) {
+	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "argocd"}}
+	m := &fakeOrbStorageMigrator{res: &ctrl.Result{RequeueAfter: 5 * time.Second}}
+
+	res, err := controllers.MigrateOrbStorage(m)(context.Background(), nil, ext)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	assert.Greater(t, res.RequeueAfter, time.Duration(0))
+	assert.Equal(t, ocv1.ClusterExtensionKind, m.gotLabels[labels.OwnerKindKey])
+	assert.Equal(t, "argocd", m.gotLabels[labels.OwnerNameKey])
+}
+
+func TestMigrateOrbStorage_ProceedsWhenNil(t *testing.T) {
+	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "argocd"}}
+	m := &fakeOrbStorageMigrator{res: nil}
+
+	res, err := controllers.MigrateOrbStorage(m)(context.Background(), nil, ext)
+	require.NoError(t, err)
+	assert.Nil(t, res)
+}
+
+func TestMigrateOrbStorage_WrapsError(t *testing.T) {
+	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "argocd"}}
+	m := &fakeOrbStorageMigrator{err: errors.New("boom")}
+
+	_, err := controllers.MigrateOrbStorage(m)(context.Background(), nil, ext)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "migrating storage")
 }

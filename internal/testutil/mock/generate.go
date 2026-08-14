@@ -31,7 +31,7 @@ package mock
 //go:generate mockgen -destination=catalogdservice/mock_graphqlservice.go -package=catalogdservice github.com/operator-framework/operator-controller/internal/catalogd/service GraphQLService
 
 // Internal interfaces — operator-controller applier
-//go:generate mockgen -destination=applier/mock_applier.go -package=applier github.com/operator-framework/operator-controller/internal/operator-controller/applier Preflight,HelmReleaseToObjectsConverterInterface,HelmChartProvider,ClusterObjectSetGenerator,ManifestProvider
+//go:generate mockgen -destination=applier/mock_applier.go -package=applier github.com/operator-framework/operator-controller/internal/operator-controller/applier Preflight,HelmReleaseToObjectsConverterInterface,HelmChartProvider,ClusterObjectSetGenerator,OrbClusterObjectSetGenerator,ManifestProvider
 
 // Internal interfaces — operator-controller catalogmetadata
 //go:generate mockgen -destination=catalogclient/mock_cache.go -package=catalogclient github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client Cache

@@ -37,67 +37,122 @@ const (
 func ExternalizeCOD(
 	cod *orbac.ClusterObjectDeploymentApplyConfiguration,
 ) (*orbac.ClusterObjectDeploymentApplyConfiguration, []*orbac.ClusterObjectSliceApplyConfiguration, error) {
-	needed, err := shouldExternalize(cod)
+	name := ""
+	if n := cod.GetName(); n != nil {
+		name = *n
+	}
+	var lbls map[string]string
+	var ownerRefs []*metav1ac.OwnerReferenceApplyConfiguration
+	if cod.ObjectMetaApplyConfiguration != nil {
+		lbls = cod.Labels
+		ownerRefs = ownerReferencePointers(cod.OwnerReferences)
+	}
+
+	result, err := externalizePhases(cod, name, cod.Spec.Template.Spec.Phases, lbls, ownerRefs)
 	if err != nil {
 		return nil, nil, err
 	}
-	if !needed {
+	if result == nil {
 		return cod, nil, nil
 	}
 
-	codName := ""
-	if n := cod.GetName(); n != nil {
-		codName = *n
+	replaceInlineWithRefs(cod.Spec.Template.Spec.Phases, result)
+	return cod, result.slices, nil
+}
+
+// ExternalizeCOS is the ClusterObjectSet analogue of ExternalizeCOD. It packs a
+// COS apply configuration's inline phase objects into ClusterObjectSlice apply
+// configurations and rewrites the phases to objectRef entries when the COS would
+// exceed the safe etcd size threshold. A small COS is returned unchanged with a
+// nil slice list. Produced slices inherit the COS's labels and owner references,
+// matching the COD behavior.
+func ExternalizeCOS(
+	cos *orbac.ClusterObjectSetApplyConfiguration,
+) (*orbac.ClusterObjectSetApplyConfiguration, []*orbac.ClusterObjectSliceApplyConfiguration, error) {
+	name := ""
+	if n := cos.GetName(); n != nil {
+		name = *n
+	}
+	var lbls map[string]string
+	var ownerRefs []*metav1ac.OwnerReferenceApplyConfiguration
+	if cos.ObjectMetaApplyConfiguration != nil {
+		lbls = cos.Labels
+		ownerRefs = ownerReferencePointers(cos.OwnerReferences)
 	}
 
-	packer := &slicePacker{codName: codName}
-	result, err := packer.pack(cod.Spec.Template.Spec.Phases)
+	var phases []orbac.PhaseApplyConfiguration
+	if cos.Spec != nil {
+		phases = cos.Spec.Phases
+	}
+
+	result, err := externalizePhases(cos, name, phases, lbls, ownerRefs)
 	if err != nil {
 		return nil, nil, err
 	}
+	if result == nil {
+		return cos, nil, nil
+	}
 
-	// Propagate the COD's labels (owner labels, etc.) and owner references onto
-	// each slice so the slices are discoverable by the same selector used to
-	// find the COD, and are garbage-collected / watched alongside the COD's
+	replaceInlineWithRefs(cos.Spec.Phases, result)
+	return cos, result.slices, nil
+}
+
+// externalizePhases is the shared core of ExternalizeCOD and ExternalizeCOS. It
+// probes the marshaled size of obj; when it fits, it returns a nil result to
+// signal "no externalization needed". Otherwise it packs the phases into slices
+// keyed off name and propagates the given labels and owner references onto each
+// slice.
+func externalizePhases(
+	obj any,
+	name string,
+	phases []orbac.PhaseApplyConfiguration,
+	lbls map[string]string,
+	ownerRefs []*metav1ac.OwnerReferenceApplyConfiguration,
+) (*slicePackResult, error) {
+	needed, err := shouldExternalize(obj)
+	if err != nil {
+		return nil, err
+	}
+	if !needed {
+		return nil, nil
+	}
+
+	packer := &slicePacker{codName: name}
+	result, err := packer.pack(phases)
+	if err != nil {
+		return nil, err
+	}
+
+	// Propagate the object's labels (owner labels, etc.) and owner references
+	// onto each slice so the slices are discoverable by the same selector used
+	// to find the owner, and are garbage-collected / watched alongside the
 	// owner (the ClusterExtension).
-	ownerRefs := codOwnerReferences(cod)
 	for _, slice := range result.slices {
-		slice.WithLabels(codLabels(cod))
+		if len(lbls) > 0 {
+			slice.WithLabels(lbls)
+		}
 		if len(ownerRefs) > 0 {
 			slice.WithOwnerReferences(ownerRefs...)
 		}
 	}
-
-	replaceInlineWithRefs(cod, result)
-	return cod, result.slices, nil
+	return result, nil
 }
 
-// codLabels returns the COD's metadata labels, or nil if none are set.
-func codLabels(cod *orbac.ClusterObjectDeploymentApplyConfiguration) map[string]string {
-	if cod.ObjectMetaApplyConfiguration == nil {
-		return nil
+// ownerReferencePointers returns pointers to the given owner references so they
+// can be copied onto each ClusterObjectSlice.
+func ownerReferencePointers(refs []metav1ac.OwnerReferenceApplyConfiguration) []*metav1ac.OwnerReferenceApplyConfiguration {
+	ptrs := make([]*metav1ac.OwnerReferenceApplyConfiguration, 0, len(refs))
+	for i := range refs {
+		ref := refs[i]
+		ptrs = append(ptrs, &ref)
 	}
-	return cod.Labels
+	return ptrs
 }
 
-// codOwnerReferences returns pointers to the COD's owner references so they can
-// be copied onto each ClusterObjectSlice.
-func codOwnerReferences(cod *orbac.ClusterObjectDeploymentApplyConfiguration) []*metav1ac.OwnerReferenceApplyConfiguration {
-	if cod.ObjectMetaApplyConfiguration == nil {
-		return nil
-	}
-	refs := make([]*metav1ac.OwnerReferenceApplyConfiguration, 0, len(cod.OwnerReferences))
-	for i := range cod.OwnerReferences {
-		ref := cod.OwnerReferences[i]
-		refs = append(refs, &ref)
-	}
-	return refs
-}
-
-func shouldExternalize(cod *orbac.ClusterObjectDeploymentApplyConfiguration) (bool, error) {
-	data, err := json.Marshal(cod)
+func shouldExternalize(obj any) (bool, error) {
+	data, err := json.Marshal(obj)
 	if err != nil {
-		return false, fmt.Errorf("estimating COD size: %w", err)
+		return false, fmt.Errorf("estimating object size: %w", err)
 	}
 	return len(data) > maxDataSize, nil
 }
@@ -209,18 +264,15 @@ func (p *slicePacker) pack(phases []orbac.PhaseApplyConfiguration) (*slicePackRe
 	return result, nil
 }
 
-func replaceInlineWithRefs(cod *orbac.ClusterObjectDeploymentApplyConfiguration, pack *slicePackResult) {
-	if cod == nil || cod.Spec == nil || cod.Spec.Template == nil || cod.Spec.Template.Spec == nil {
-		return
-	}
-	for phaseIdx := range cod.Spec.Template.Spec.Phases {
-		for objIdx := range cod.Spec.Template.Spec.Phases[phaseIdx].Objects {
+func replaceInlineWithRefs(phases []orbac.PhaseApplyConfiguration, pack *slicePackResult) {
+	for phaseIdx := range phases {
+		for objIdx := range phases[phaseIdx].Objects {
 			ref, ok := pack.refs[[2]int{phaseIdx, objIdx}]
 			if !ok {
 				continue
 			}
-			cod.Spec.Template.Spec.Phases[phaseIdx].Objects[objIdx].Object = nil
-			cod.Spec.Template.Spec.Phases[phaseIdx].Objects[objIdx].ObjectRef = ref
+			phases[phaseIdx].Objects[objIdx].Object = nil
+			phases[phaseIdx].Objects[objIdx].ObjectRef = ref
 		}
 	}
 }

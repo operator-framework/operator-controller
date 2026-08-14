@@ -488,6 +488,73 @@ func TestExternalize_MissingIdentity(t *testing.T) {
 	assert.Contains(t, err.Error(), "missing apiVersion or kind")
 }
 
+func TestExternalizeCOS_SmallCOS_Unchanged(t *testing.T) {
+	cos := orbac.ClusterObjectSet("small").
+		WithSpec(orbac.ClusterObjectSetSpec().
+			WithGroup("small").
+			WithPhases(
+				orbac.Phase().WithName("migrate").WithObjects(
+					orbac.PhaseObject().WithObject(rawObject("v1", "ConfigMap", "cm1", "ns1")),
+				),
+			))
+
+	result, slices, err := ExternalizeCOS(cos)
+	require.NoError(t, err)
+	assert.Same(t, cos, result)
+	assert.Nil(t, slices)
+	assert.NotNil(t, result.Spec.Phases[0].Objects[0].Object)
+}
+
+func TestExternalizeCOS_LargeCOS_ProducesSlices(t *testing.T) {
+	objects := make([]*orbac.PhaseObjectApplyConfiguration, 0, 5)
+	for j := range 5 {
+		objects = append(objects, orbac.PhaseObject().WithObject(
+			rawObjectWithData(fmt.Sprintf("cm-%d", j), 500*1024),
+		))
+	}
+	cos := orbac.ClusterObjectSet("large").
+		WithLabels(map[string]string{
+			"olm.operatorframework.io/owner-name": "my-ext",
+		}).
+		WithOwnerReferences(metav1ac.OwnerReference().
+			WithAPIVersion("olm.operatorframework.io/v1").
+			WithKind("ClusterExtension").
+			WithName("my-ext").
+			WithUID("test-uid").
+			WithBlockOwnerDeletion(true)).
+		WithSpec(orbac.ClusterObjectSetSpec().
+			WithGroup("large").
+			WithPhases(
+				orbac.Phase().WithName("migrate").WithObjects(objects...),
+			))
+
+	result, slices, err := ExternalizeCOS(cos)
+	require.NoError(t, err)
+	assert.Same(t, cos, result)
+	require.NotEmpty(t, slices)
+
+	// Phases rewritten to objectRefs, inline objects cleared.
+	sawRef := false
+	for _, phase := range result.Spec.Phases {
+		for _, obj := range phase.Objects {
+			if obj.ObjectRef != nil {
+				sawRef = true
+				assert.True(t, strings.HasPrefix(*obj.ObjectRef.SliceName, "large-"))
+				assert.Nil(t, obj.Object)
+			}
+		}
+	}
+	assert.True(t, sawRef)
+
+	// Labels and owner references propagated to slices; the CE owner reference
+	// remains non-controller.
+	for _, s := range slices {
+		assert.Equal(t, "my-ext", s.Labels["olm.operatorframework.io/owner-name"])
+		require.Len(t, s.OwnerReferences, 1)
+		assert.Nil(t, s.OwnerReferences[0].Controller)
+	}
+}
+
 func TestExternalize_DeterministicNaming(t *testing.T) {
 	makeCOD := func() *orbac.ClusterObjectDeploymentApplyConfiguration {
 		return orbac.ClusterObjectDeployment("det-ext").

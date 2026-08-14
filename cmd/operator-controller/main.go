@@ -760,6 +760,30 @@ func (c *orbOperatorReconcilerConfigurator) Configure(ceReconciler *controllers.
 		return fmt.Errorf("unable to create field indexer for ClusterObjectSet spec.group: %w", err)
 	}
 
+	// Build a Helm ActionClientGetter so the storage migrator can read (and,
+	// once adoption completes, delete the bookkeeping secrets of) the deployed
+	// Helm release. This mirrors the Boxcutter and Helm configurators.
+	coreClient, err := corev1client.NewForConfig(c.mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("unable to create core client: %w", err)
+	}
+	cfgGetter, err := helmclient.NewActionConfigGetter(c.mgr.GetConfig(), c.mgr.GetRESTMapper(),
+		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, c.mgr.GetAPIReader(), cfg.systemNamespace)),
+		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
+			ext := obj.(*ocv1.ClusterExtension)
+			return ext.Spec.Namespace, nil
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create helm action config getter: %w", err)
+	}
+	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
+		helmclient.WithFailureRollbacks(false),
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create helm action client getter: %w", err)
+	}
+
 	fieldOwner := fmt.Sprintf("%s/clusterextension-controller", fieldOwnerPrefix)
 	codGen := &applier.RegistryV1CODGenerator{
 		ManifestProvider: c.regv1ManifestProvider,
@@ -772,12 +796,23 @@ func (c *orbOperatorReconcilerConfigurator) Configure(ceReconciler *controllers.
 		Preflights: c.preflights,
 		FieldOwner: fieldOwner,
 	}
+	storageMigrator := &applier.OrbStorageMigrator{
+		ActionClientGetter: acg,
+		RevisionGenerator:  &applier.SimpleOrbRevisionGenerator{},
+		Client:             c.mgr.GetClient(),
+		Scheme:             c.mgr.GetScheme(),
+		FieldOwner:         fieldOwner,
+	}
 	revisionStatesGetter := &controllers.OrbOperatorRevisionStatesGetter{Reader: c.mgr.GetClient()}
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.ValidateClusterExtension(
 			controllers.ServiceAccountDeprecationWarning(),
 		),
+		// Migration is ordered ahead of resolution: adopting an already-running
+		// Helm workload needs no catalog access, and gating here avoids
+		// resolve/unpack work while adoption is still in progress.
+		controllers.MigrateOrbStorage(storageMigrator),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
