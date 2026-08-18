@@ -101,7 +101,7 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 	}
 }
 
-func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *applier.NamespaceConfig) (bool, string, error)) ReconcileStepFunc {
+func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (bool, string, error)) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		revisionAnnotations := map[string]string{
@@ -119,11 +119,7 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 		}
 
 		l.Info("applying bundle contents")
-		_, _, err := apply(ctx, state.imageFS, ext, objLbls, revisionAnnotations, &applier.NamespaceConfig{
-			Name:     state.resolvedNamespace,
-			Managed:  state.namespaceManaged,
-			Template: state.namespaceTemplate,
-		})
+		_, _, err := apply(ctx, state.imageFS, ext, objLbls, revisionAnnotations, state.nsConfig)
 		if err != nil {
 			// If there was an error applying the resolved bundle,
 			// report the error via the Progressing condition.

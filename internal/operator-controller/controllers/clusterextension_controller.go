@@ -27,7 +27,6 @@ import (
 	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,6 +49,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
@@ -68,9 +68,7 @@ type reconcileState struct {
 	resolvedDeprecation      *declcfg.Deprecation
 	hasCatalogData           bool
 
-	resolvedNamespace string
-	namespaceManaged  bool
-	namespaceTemplate *corev1.Namespace
+	nsConfig applier.NamespaceConfig
 }
 
 // ReconcileStepFunc represents a single step in the ClusterExtension reconciliation process.

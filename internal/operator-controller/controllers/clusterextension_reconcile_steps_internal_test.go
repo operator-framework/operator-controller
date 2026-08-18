@@ -121,8 +121,8 @@ func TestResolveNamespaceManaged(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.True(t, state.namespaceManaged)
-			require.Equal(t, managedNS, state.resolvedNamespace)
+			require.True(t, state.nsConfig.Ensure)
+			require.Equal(t, managedNS, state.nsConfig.Target)
 		})
 	}
 }

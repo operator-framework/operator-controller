@@ -421,8 +421,7 @@ func ResolveNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc 
 			if err != nil {
 				return nil, fmt.Errorf("error checking namespace %q: %w", ext.Spec.Namespace, err)
 			}
-			state.resolvedNamespace = ext.Spec.Namespace
-			state.namespaceManaged = false
+			state.nsConfig = applier.NamespaceConfig{Target: ext.Spec.Namespace}
 			return nil, nil
 		}
 
@@ -468,9 +467,7 @@ func ResolveNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc 
 			}
 		}
 
-		state.resolvedNamespace = resolvedName
-		state.namespaceManaged = true
-		state.namespaceTemplate = template
+		state.nsConfig = applier.NamespaceConfig{Target: resolvedName, Ensure: true, Template: template}
 		l.Info("resolved managed namespace", "namespace", resolvedName)
 		return nil, nil
 	}
@@ -493,7 +490,7 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 			labels.OwnerNameKey: ext.GetName(),
 		}
 
-		if state.namespaceManaged {
+		if state.nsConfig.Ensure {
 			termErr := reconcile.TerminalError(fmt.Errorf("managed namespace mode (omitting spec.namespace) requires the BoxcutterRuntime feature gate"))
 			setStatusProgressing(ext, termErr)
 			return nil, termErr

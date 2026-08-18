@@ -42,19 +42,25 @@ const (
 	ClusterObjectSetRetentionLimit = 5
 )
 
+// NamespaceConfig describes how the install namespace participates in the object set.
 type NamespaceConfig struct {
-	Name     string
-	Managed  bool
+	// Target is the namespace that namespaced bundle resources render into.
+	Target string
+	// Ensure, when true, tells the renderer to emit a Namespace object into the
+	// object set (OLM owns its lifecycle). When false the namespace is expected to
+	// already exist — either user-provided, or supplied by the bundle itself in a
+	// format that can express its own Namespace.
+	Ensure bool
+	// Template optionally seeds labels/annotations (e.g. PSA) on the emitted namespace.
 	Template *corev1.Namespace
 }
 
 type ClusterObjectSetGenerator interface {
-	GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error)
+	GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error)
 	GenerateRevisionFromHelmRelease(
 		ctx context.Context,
 		helmRelease *release.Release, ext *ocv1.ClusterExtension,
 		objectLabels map[string]string,
-		nsConfig *NamespaceConfig,
 	) (*ocv1ac.ClusterObjectSetApplyConfiguration, error)
 }
 
@@ -67,7 +73,6 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	ctx context.Context,
 	helmRelease *release.Release, ext *ocv1.ClusterExtension,
 	objectLabels map[string]string,
-	nsConfig *NamespaceConfig,
 ) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 	docs := splitManifestDocuments(helmRelease.Manifest)
 	objs := make([]ocv1ac.ClusterObjectSetObjectApplyConfiguration, 0, len(docs))
@@ -101,15 +106,6 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 			WithObject(obj))
 	}
 
-	if nsConfig != nil && nsConfig.Managed {
-		nsObj, err := BuildNamespaceObject(nsConfig.Name, nsConfig.Template)
-		if err != nil {
-			return nil, err
-		}
-		nsObj.SetLabels(mergeStringMaps(nsObj.GetLabels(), objectLabels))
-		objs = append(objs, *ocv1ac.ClusterObjectSetObject().WithObject(nsObj))
-	}
-
 	revisionAnnotations := map[string]string{
 		labels.BundleNameKey:      helmRelease.Labels[labels.BundleNameKey],
 		labels.PackageNameKey:     helmRelease.Labels[labels.PackageNameKey],
@@ -130,17 +126,11 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	ctx context.Context,
 	bundleFS fs.FS, ext *ocv1.ClusterExtension,
 	objectLabels, revisionAnnotations map[string]string,
-	nsConfig *NamespaceConfig,
+	nsConfig NamespaceConfig,
 ) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-	// For managed namespaces, the resolved name must be visible to the renderer
-	// so that namespaced bundle resources get the correct default namespace.
-	if nsConfig != nil && nsConfig.Managed && ext.Spec.Namespace == "" {
-		ext = ext.DeepCopy()
-		ext.Spec.Namespace = nsConfig.Name
-	}
-
-	// extract plain manifests
-	plain, err := r.ManifestProvider.Get(bundleFS, ext)
+	// extract plain manifests; the renderer decides whether the managed namespace
+	// is part of the returned object set based on nsConfig.
+	plain, err := r.ManifestProvider.Get(bundleFS, ext, nsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -202,15 +192,6 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 
 		objs = append(objs, *ocv1ac.ClusterObjectSetObject().
 			WithObject(unstr))
-	}
-
-	if nsConfig != nil && nsConfig.Managed {
-		nsObj, err := BuildNamespaceObject(nsConfig.Name, nsConfig.Template)
-		if err != nil {
-			return nil, err
-		}
-		nsObj.SetLabels(mergeStringMaps(nsObj.GetLabels(), objectLabels))
-		objs = append(objs, *ocv1ac.ClusterObjectSetObject().WithObject(nsObj))
 	}
 
 	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
@@ -353,7 +334,7 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		}
 	}
 
-	rev, err := m.RevisionGenerator.GenerateRevisionFromHelmRelease(ctx, helmRelease, ext, objectLabels, nil)
+	rev, err := m.RevisionGenerator.GenerateRevisionFromHelmRelease(ctx, helmRelease, ext, objectLabels)
 	if err != nil {
 		return err
 	}
@@ -494,7 +475,7 @@ type Boxcutter struct {
 	SystemNamespace   string
 }
 
-func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *NamespaceConfig) (bool, string, error) {
+func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig NamespaceConfig) (bool, string, error) {
 	// List existing revisions first to validate cluster connectivity before checking contentFS.
 	// This ensures we fail fast on API errors rather than attempting fallback behavior when
 	// cluster access is unavailable (since the ClusterObjectSet controller also requires

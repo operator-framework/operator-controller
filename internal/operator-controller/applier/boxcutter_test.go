@@ -89,7 +89,7 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 		"my-label": "my-value",
 	}
 
-	rev, err := g.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, objectLabels, &applier.NamespaceConfig{Managed: true, Name: "test-namespace"})
+	rev, err := g.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
 	require.NoError(t, err)
 
 	assert.Equal(t, "test-123-1", *rev.Name)
@@ -107,18 +107,11 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 	assert.Equal(t, ptr.To(ocv1.CollisionProtectionNone), rev.Spec.CollisionProtection)
 	assert.Equal(t, ptr.To(int64(1)), rev.Spec.Revision)
 
-	// Verify phases - should have namespaces phase and configuration phase
-	require.Len(t, rev.Spec.Phases, 2)
+	// The Helm-release migration path never injects a namespace (the release's
+	// namespace already exists), so only the configuration phase is present.
+	require.Len(t, rev.Spec.Phases, 1)
 
-	// Verify namespace phase
-	namespacesPhase := rev.Spec.Phases[0]
-	assert.Equal(t, "namespaces", *namespacesPhase.Name)
-	require.Len(t, namespacesPhase.Objects, 1)
-	assert.Equal(t, "Namespace", namespacesPhase.Objects[0].Object.GetKind())
-	assert.Equal(t, "test-namespace", namespacesPhase.Objects[0].Object.GetName())
-
-	// Verify configuration phase
-	configPhase := rev.Spec.Phases[1]
+	configPhase := rev.Spec.Phases[0]
 	assert.Equal(t, "configuration", *configPhase.Name)
 	require.Len(t, configPhase.Objects, 2)
 	assert.Equal(t, "ConfigMap", configPhase.Objects[0].Object.GetKind())
@@ -128,7 +121,7 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+	r.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return([]client.Object{
 		&corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-service",
@@ -173,7 +166,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{
 		labels.BundleVersionKey: "1.0.0",
 		labels.PackageNameKey:   "test-package",
-	}, &applier.NamespaceConfig{Managed: true, Name: "test-namespace"})
+	}, applier.NamespaceConfig{Target: "test-namespace"})
 	require.NoError(t, err)
 
 	t.Log("by checking the olm.operatorframework.io/owner-name and owner-kind labels are set")
@@ -187,21 +180,6 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	require.Equal(t, ptr.To(ocv1.CollisionProtectionPrevent), rev.Spec.CollisionProtection)
 	t.Log("by checking the rendered objects are present in the correct phases")
 	require.Equal(t, []ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
-		*ocv1ac.ClusterObjectSetPhase().
-			WithName(string(applier.PhaseNamespaces)).
-			WithObjects(
-				ocv1ac.ClusterObjectSetObject().
-					WithObject(unstructured.Unstructured{
-						Object: map[string]interface{}{
-							"apiVersion": "v1",
-							"kind":       "Namespace",
-							"metadata": map[string]interface{}{
-								"name":   "test-namespace",
-								"labels": map[string]interface{}{},
-							},
-						},
-					}),
-			),
 		*ocv1ac.ClusterObjectSetPhase().
 			WithName(string(applier.PhaseInfrastructure)).
 			WithObjects(
@@ -260,7 +238,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
+	r.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
 
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
@@ -284,7 +262,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.
 			WithCSV(bundlecsv.Builder().WithName("test-csv").Build()).
 			Build()
 
-		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{}, nil)
+		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 		require.NoError(t, err)
 
 		t.Log("by checking bundle properties are added to the revision annotations")
@@ -298,7 +276,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.
 			WithCSV(bundlecsv.Builder().WithName("test-csv").Build()).
 			Build()
 
-		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{}, nil)
+		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 		require.NoError(t, err)
 
 		t.Log("by checking olm.properties is not present in the revision annotations")
@@ -318,7 +296,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.
 				Build()).
 			Build()
 
-		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{}, nil)
+		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 		require.NoError(t, err)
 
 		t.Log("by checking csv annotations are not added to the revision annotations")
@@ -327,7 +305,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.
 	})
 
 	t.Run("errors getting bundle properties are surfaced", func(t *testing.T) {
-		_, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, map[string]string{}, map[string]string{}, nil)
+		_, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "metadata/annotations.yaml: file does not exist")
 	})
@@ -341,8 +319,8 @@ func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
 	}
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(dummyBundle, ext).DoAndReturn(
-		func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
+	r.EXPECT().Get(dummyBundle, ext, gomock.Any()).DoAndReturn(
+		func(b fs.FS, e *ocv1.ClusterExtension, _ applier.NamespaceConfig) ([]client.Object, error) {
 			t.Log("by checking renderer was called with the correct parameters")
 			require.Equal(t, dummyBundle, b)
 			require.Equal(t, ext, e)
@@ -353,7 +331,7 @@ func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
 		ManifestProvider: r,
 	}
 
-	_, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{}, nil)
+	_, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 	require.NoError(t, err)
 }
 
@@ -378,7 +356,7 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 	}
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return(renderedObjs, nil).AnyTimes()
+	r.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(renderedObjs, nil).AnyTimes()
 
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
@@ -395,7 +373,7 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 		},
 	}, map[string]string{
 		"some": "value",
-	}, revAnnotations, &applier.NamespaceConfig{Managed: true, Name: "test-namespace"})
+	}, revAnnotations, applier.NamespaceConfig{Ensure: true, Target: "test-namespace"})
 	require.NoError(t, err)
 	t.Log("by checking the rendered objects contain the given object labels")
 	for _, phase := range rev.Spec.Phases {
@@ -420,7 +398,7 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
+	r.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
 
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
@@ -466,7 +444,7 @@ func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T
 				ext.Spec.ProgressDeadlineMinutes = *pd
 			}
 
-			rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, empty, empty, nil)
+			rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, empty, empty, applier.NamespaceConfig{})
 			require.NoError(t, err)
 			require.Equal(t, tc.want.progressDeadlineMinutes, rev.Spec.ProgressDeadlineMinutes)
 		})
@@ -476,7 +454,7 @@ func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T
 func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("some-error")).AnyTimes()
+	r.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("some-error")).AnyTimes()
 
 	b := applier.SimpleRevisionGenerator{
 		Scheme:           k8scheme.Scheme,
@@ -487,7 +465,7 @@ func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: "test-namespace",
 		},
-	}, map[string]string{}, map[string]string{}, nil)
+	}, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 	require.Nil(t, rev)
 	t.Log("by checking rendering errors are propagated")
 	require.Error(t, err)
@@ -571,7 +549,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
 				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 						return ocv1ac.ClusterObjectSet("").
 							WithAnnotations(revisionAnnotations).
 							WithLabels(map[string]string{
@@ -596,7 +574,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 								),
 							), nil
 					}).AnyTimes()
-				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
 			},
 			validate: func(t *testing.T, c client.Client) {
@@ -619,7 +597,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
 				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 						return ocv1ac.ClusterObjectSet("").
 							WithAnnotations(revisionAnnotations).
 							WithLabels(map[string]string{
@@ -644,7 +622,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 								),
 							), nil
 					}).AnyTimes()
-				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
 			},
 			existingObjs: []client.Object{
@@ -665,7 +643,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
 				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 						return ocv1ac.ClusterObjectSet("").
 							WithAnnotations(revisionAnnotations).
 							WithLabels(map[string]string{
@@ -690,7 +668,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 								),
 							), nil
 					}).AnyTimes()
-				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
 			},
 			clientIterceptor: allowedRevisionValue(2),
@@ -723,7 +701,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
 				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("render boom")).AnyTimes()
-				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
 			},
 			expectedErr: "render boom",
@@ -741,7 +719,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
 				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 						return ocv1ac.ClusterObjectSet("").
 							WithAnnotations(revisionAnnotations).
 							WithLabels(map[string]string{
@@ -749,7 +727,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 							}).
 							WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
 					}).AnyTimes()
-				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
 			},
 			existingObjs: []client.Object{
@@ -847,7 +825,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
 				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 						return ocv1ac.ClusterObjectSet("").
 							WithAnnotations(revisionAnnotations).
 							WithLabels(map[string]string{
@@ -855,7 +833,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 							}).
 							WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
 					}).AnyTimes()
-				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
 			},
 			existingObjs: []client.Object{
@@ -969,7 +947,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
 				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig *applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 						return ocv1ac.ClusterObjectSet("").
 							WithAnnotations(revisionAnnotations).
 							WithLabels(map[string]string{
@@ -994,7 +972,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 								),
 							), nil
 					}).AnyTimes()
-				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
 			},
 			existingObjs: []client.Object{
@@ -1081,7 +1059,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					labels.PackageNameKey:   "test-package",
 				}
 			}
-			completed, status, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations, nil)
+			completed, status, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations, applier.NamespaceConfig{})
 
 			// Assert
 			if tc.expectedErr != "" {
@@ -1122,8 +1100,8 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 	newStorageMigratorGenerator := func(t *testing.T) *mockapplier.MockClusterObjectSetGenerator {
 		ctrl := gomock.NewController(t)
 		m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
-		m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-			func(ctx context.Context, helmRelease *release.Release, e *ocv1.ClusterExtension, objectLabels map[string]string, nsConfig *applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+		m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+			func(ctx context.Context, helmRelease *release.Release, e *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 				return defaultHelmRevisionResult(e), nil
 			}).AnyTimes()
 		return m
@@ -1485,8 +1463,8 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
-		brb.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), expectedRelease, gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, helmRelease *release.Release, e *ocv1.ClusterExtension, objectLabels map[string]string, nsConfig *applier.NamespaceConfig) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+		brb.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), expectedRelease, gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, helmRelease *release.Release, e *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
 				return defaultHelmRevisionResult(e), nil
 			}).Times(1)
 
@@ -1645,133 +1623,17 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 	})
 }
 
-func Test_SimpleRevisionGenerator_GenerateRevision_NamespaceInjection(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
-
-	b := applier.SimpleRevisionGenerator{
-		Scheme:           k8scheme.Scheme,
-		ManifestProvider: r,
-	}
-
-	ext := &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-extension",
-		},
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "test-namespace",
-			ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // deprecated field used in test
-				Name: "test-sa",
-			},
-		},
-	}
-
-	objectLabels := map[string]string{
-		"test-label": "test-value",
-	}
-
-	t.Run("with namespace template", func(t *testing.T) {
-		nsTemplate := `{
-			"metadata": {
-				"name": "template-name",
-				"labels": {
-					"template-label": "template-value",
-					"security": "restricted"
-				},
-				"annotations": {
-					"template-annotation": "template-annotation-value"
-				}
-			}
-		}`
-
-		bundleFS := bundlefs.Builder().
-			WithPackageName("test-package").
-			WithCSV(bundlecsv.Builder().
-				WithName("test-csv").
-				WithAnnotations(map[string]string{
-					applier.AnnotationSuggestedNamespaceTemplate: nsTemplate,
-				}).
-				Build()).
-			Build()
-
-		// Parse the namespace template to pass via NamespaceConfig
-		bundleAnnotations, err := applier.GetBundleAnnotations(bundleFS)
-		require.NoError(t, err)
-		parsedTemplate, err := applier.ParseNamespaceTemplate(bundleAnnotations)
-		require.NoError(t, err)
-
-		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, objectLabels, map[string]string{}, &applier.NamespaceConfig{Managed: true, Name: "test-namespace", Template: parsedTemplate})
-		require.NoError(t, err)
-		require.NotNil(t, rev)
-
-		// Find the namespaces phase
-		var namespacesPhase *ocv1ac.ClusterObjectSetPhaseApplyConfiguration
-		for i := range rev.Spec.Phases {
-			if *rev.Spec.Phases[i].Name == string(applier.PhaseNamespaces) {
-				namespacesPhase = &rev.Spec.Phases[i]
-				break
-			}
-		}
-
-		require.NotNil(t, namespacesPhase, "namespaces phase should exist")
-		require.Len(t, namespacesPhase.Objects, 1, "namespaces phase should contain exactly one object")
-
-		nsObj := namespacesPhase.Objects[0].Object
-		require.NotNil(t, nsObj)
-		require.Equal(t, "v1", nsObj.GetAPIVersion())
-		require.Equal(t, "Namespace", nsObj.GetKind())
-		require.Equal(t, "test-namespace", nsObj.GetName(), "namespace name should match ext.Spec.Namespace, not template name")
-
-		// Verify template labels are present
-		labels := nsObj.GetLabels()
-		require.Equal(t, "template-value", labels["template-label"])
-		require.Equal(t, "restricted", labels["security"])
-		// Verify objectLabels are also present
-		require.Equal(t, "test-value", labels["test-label"])
-
-		// Verify template annotations are present
-		annotations := nsObj.GetAnnotations()
-		require.Equal(t, "template-annotation-value", annotations["template-annotation"])
-	})
-
-	t.Run("without namespace template", func(t *testing.T) {
-		rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, objectLabels, map[string]string{}, &applier.NamespaceConfig{Managed: true, Name: "test-namespace"})
-		require.NoError(t, err)
-		require.NotNil(t, rev)
-
-		// Find the namespaces phase
-		var namespacesPhase *ocv1ac.ClusterObjectSetPhaseApplyConfiguration
-		for i := range rev.Spec.Phases {
-			if *rev.Spec.Phases[i].Name == string(applier.PhaseNamespaces) {
-				namespacesPhase = &rev.Spec.Phases[i]
-				break
-			}
-		}
-
-		require.NotNil(t, namespacesPhase, "namespaces phase should exist even without template")
-		require.Len(t, namespacesPhase.Objects, 1, "namespaces phase should contain exactly one object")
-
-		nsObj := namespacesPhase.Objects[0].Object
-		require.NotNil(t, nsObj)
-		require.Equal(t, "v1", nsObj.GetAPIVersion())
-		require.Equal(t, "Namespace", nsObj.GetKind())
-		require.Equal(t, "test-namespace", nsObj.GetName())
-
-		// Verify objectLabels are present
-		labels := nsObj.GetLabels()
-		require.Equal(t, "test-value", labels["test-label"])
-
-		// Should not have template-specific labels
-		require.NotContains(t, labels, "template-label")
-		require.NotContains(t, labels, "security")
-	})
-}
-
 func Test_SimpleRevisionGenerator_GenerateRevision_NamespacePhaseCollisionProtection(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+	// The renderer (mocked here) is responsible for emitting the Namespace object;
+	// this test verifies the generator organizes it into the namespaces phase.
+	r.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return([]client.Object{
+		&corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-namespace",
+			},
+		},
 		&corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-service",
@@ -1796,7 +1658,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision_NamespacePhaseCollisionProtec
 		},
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{}, &applier.NamespaceConfig{Managed: true, Name: "test-namespace"})
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 	require.NoError(t, err)
 	require.NotNil(t, rev)
 
@@ -1824,51 +1686,20 @@ func Test_SimpleRevisionGenerator_GenerateRevision_NamespacePhaseCollisionProtec
 	}
 }
 
-func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease_IncludesNamespace(t *testing.T) {
-	g := &applier.SimpleRevisionGenerator{}
-
-	helmRelease := &release.Release{
-		Name:     "test-123",
-		Manifest: `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"test-cm"}}`,
-		Labels: map[string]string{
-			labels.BundleNameKey:    "my-bundle",
-			labels.PackageNameKey:   "my-package",
-			labels.BundleVersionKey: "1.0.0",
-		},
-	}
-
-	ext := &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-123"},
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace:      "test-namespace",
-			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"}, //nolint:staticcheck // deprecated field used in test
-		},
-	}
-
-	rev, err := g.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, nil, &applier.NamespaceConfig{Managed: true, Name: "test-namespace"})
-	require.NoError(t, err)
-
-	var foundNS bool
-	for _, phase := range rev.Spec.Phases {
-		if *phase.Name == "namespaces" {
-			for _, obj := range phase.Objects {
-				if obj.Object.GetKind() == "Namespace" {
-					foundNS = true
-					assert.Equal(t, "test-namespace", obj.Object.GetName())
-				}
-			}
-		}
-	}
-	assert.True(t, foundNS, "expected Namespace in Helm migration revision")
-}
-
 func Test_GenerateRevision_NamespacePhaseIsFirst(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+	// The renderer (mocked here) emits the Namespace object; this test verifies the
+	// generator places the namespaces phase first for proper deletion ordering.
+	r.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return([]client.Object{
 		&corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-service",
+			},
+		},
+		&corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-namespace",
 			},
 		},
 		&appsv1.Deployment{
@@ -1896,7 +1727,7 @@ func Test_GenerateRevision_NamespacePhaseIsFirst(t *testing.T) {
 		},
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{}, &applier.NamespaceConfig{Managed: true, Name: "test-namespace"})
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 	require.NoError(t, err)
 
 	t.Log("by checking that phases are present")
@@ -1918,7 +1749,7 @@ func Test_GenerateRevision_NamespacePhaseIsFirst(t *testing.T) {
 func Test_GenerateRevision_COSHasOwnerLabels(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	r := mockapplier.NewMockManifestProvider(ctrl)
-	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+	r.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return([]client.Object{
 		&corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-configmap",
@@ -1943,7 +1774,7 @@ func Test_GenerateRevision_COSHasOwnerLabels(t *testing.T) {
 		},
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{}, nil)
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{}, applier.NamespaceConfig{})
 	require.NoError(t, err)
 
 	t.Log("by checking that the COS has owner-kind label")
