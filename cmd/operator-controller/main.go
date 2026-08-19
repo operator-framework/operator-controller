@@ -659,7 +659,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
-		controllers.ResolveNamespace(coreClient),
+		controllers.ValidateInstallNamespace(coreClient),
 		controllers.ApplyBundleWithBoxcutter(appl.Apply),
 	}
 
@@ -747,7 +747,7 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
-		controllers.ResolveNamespace(coreClient),
+		controllers.ValidateInstallNamespace(coreClient),
 		controllers.ApplyBundle(appl),
 	}
 

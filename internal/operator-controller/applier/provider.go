@@ -23,9 +23,8 @@ import (
 // ManifestProvider returns the manifests that should be applied by OLM given a bundle and its associated ClusterExtension
 type ManifestProvider interface {
 	// Get returns a set of resource manifests in bundle that take into account the
-	// configuration in ext. nsConfig dictates the namespace the resources render into
-	// and whether a Namespace object is included in the returned set.
-	Get(bundle fs.FS, ext *ocv1.ClusterExtension, nsConfig NamespaceConfig) ([]client.Object, error)
+	// configuration in ext.
+	Get(bundle fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
 }
 
 // RegistryV1ManifestProvider generates the manifests that should be installed for a registry+v1 bundle
@@ -38,7 +37,7 @@ type RegistryV1ManifestProvider struct {
 	IsDeploymentConfigEnabled   bool
 }
 
-func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension, nsConfig NamespaceConfig) ([]client.Object, error) {
+func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
 	rv1, err := source.FromFS(bundleFS).GetBundle()
 	if err != nil {
 		return nil, err
@@ -73,40 +72,31 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		render.WithCertificateProvider(r.CertificateProvider),
 	}
 
+	// When the user set spec.namespace, the install namespace is caller-managed:
+	// render into it and do not emit a Namespace object. Otherwise the renderer
+	// resolves a system-managed namespace from the bundle and emits it.
+	if ext.Spec.Namespace != "" {
+		opts = append(opts, render.WithSelfManagedInstallNamespace(ext.Spec.Namespace))
+	}
+
 	// Always validate inline config when present so that disabled features produce
 	// a clear error rather than being silently ignored. When IsSingleOwnNamespaceEnabled
 	// is true we also call this with no config to validate required fields (e.g.
 	// watchNamespace for OwnNamespace-only bundles).
 	if r.IsSingleOwnNamespaceEnabled || ext.Spec.Config != nil {
-		configOpts, err := r.extractBundleConfigOptions(&rv1, ext, nsConfig.Target)
+		configOpts, err := r.extractBundleConfigOptions(&rv1, ext)
 		if err != nil {
 			return nil, err
 		}
 		opts = append(opts, configOpts...)
 	}
 
-	objs, err := r.BundleRenderer.Render(rv1, nsConfig.Target, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	// When the namespace is OLM-managed, the bundle format cannot express its own
-	// Namespace, so we emit one here as part of the object set. Formats that can
-	// declare their own Namespace would set Ensure=false and include it in the bundle.
-	if nsConfig.Ensure {
-		nsObj, err := BuildNamespaceObject(nsConfig.Target, nsConfig.Template)
-		if err != nil {
-			return nil, err
-		}
-		objs = append([]client.Object{&nsObj}, objs...)
-	}
-
-	return objs, nil
+	return r.BundleRenderer.Render(rv1, opts...)
 }
 
 // extractBundleConfigOptions extracts and validates configuration options from a ClusterExtension.
 // Returns render options for watchNamespace and deploymentConfig if present in the extension's configuration.
-func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.RegistryV1, ext *ocv1.ClusterExtension, targetNamespace string) ([]render.Option, error) {
+func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.RegistryV1, ext *ocv1.ClusterExtension) ([]render.Option, error) {
 	schema, err := rv1.GetConfigSchema()
 	if err != nil {
 		return nil, fmt.Errorf("error getting configuration schema: %w", err)
@@ -121,7 +111,7 @@ func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.Regi
 	}
 
 	bundleConfigBytes := extensionConfigBytes(ext)
-	bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, targetNamespace)
+	bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, ext.Spec.Namespace)
 	if err != nil {
 		return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid ClusterExtension configuration: %w", err))
 	}
@@ -151,9 +141,7 @@ type RegistryV1HelmChartProvider struct {
 }
 
 func (r *RegistryV1HelmChartProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
-	// The Helm path never manages the namespace lifecycle, so it renders into the
-	// user-provided namespace and never emits a Namespace object.
-	objs, err := r.ManifestProvider.Get(bundleFS, ext, NamespaceConfig{Target: ext.Spec.Namespace})
+	objs, err := r.ManifestProvider.Get(bundleFS, ext)
 	if err != nil {
 		return nil, err
 	}

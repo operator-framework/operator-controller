@@ -16,7 +16,6 @@ import (
 
 	v1 "github.com/operator-framework/operator-controller/api/v1"
 	v10 "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
-	applier "github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	gomock "go.uber.org/mock/gomock"
 	chart "helm.sh/helm/v3/pkg/chart"
 	release "helm.sh/helm/v3/pkg/release"
@@ -178,18 +177,18 @@ func (m *MockClusterObjectSetGenerator) EXPECT() *MockClusterObjectSetGeneratorM
 }
 
 // GenerateRevision mocks base method.
-func (m *MockClusterObjectSetGenerator) GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *v1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (*v10.ClusterObjectSetApplyConfiguration, error) {
+func (m *MockClusterObjectSetGenerator) GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *v1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*v10.ClusterObjectSetApplyConfiguration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateRevision", ctx, bundleFS, ext, objectLabels, revisionAnnotations, nsConfig)
+	ret := m.ctrl.Call(m, "GenerateRevision", ctx, bundleFS, ext, objectLabels, revisionAnnotations)
 	ret0, _ := ret[0].(*v10.ClusterObjectSetApplyConfiguration)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateRevision indicates an expected call of GenerateRevision.
-func (mr *MockClusterObjectSetGeneratorMockRecorder) GenerateRevision(ctx, bundleFS, ext, objectLabels, revisionAnnotations, nsConfig any) *gomock.Call {
+func (mr *MockClusterObjectSetGeneratorMockRecorder) GenerateRevision(ctx, bundleFS, ext, objectLabels, revisionAnnotations any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateRevision", reflect.TypeOf((*MockClusterObjectSetGenerator)(nil).GenerateRevision), ctx, bundleFS, ext, objectLabels, revisionAnnotations, nsConfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateRevision", reflect.TypeOf((*MockClusterObjectSetGenerator)(nil).GenerateRevision), ctx, bundleFS, ext, objectLabels, revisionAnnotations)
 }
 
 // GenerateRevisionFromHelmRelease mocks base method.
@@ -232,16 +231,16 @@ func (m *MockManifestProvider) EXPECT() *MockManifestProviderMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockManifestProvider) Get(bundle fs.FS, ext *v1.ClusterExtension, nsConfig applier.NamespaceConfig) ([]client.Object, error) {
+func (m *MockManifestProvider) Get(bundle fs.FS, ext *v1.ClusterExtension) ([]client.Object, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", bundle, ext, nsConfig)
+	ret := m.ctrl.Call(m, "Get", bundle, ext)
 	ret0, _ := ret[0].([]client.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockManifestProviderMockRecorder) Get(bundle, ext, nsConfig any) *gomock.Call {
+func (mr *MockManifestProviderMockRecorder) Get(bundle, ext any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockManifestProvider)(nil).Get), bundle, ext, nsConfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockManifestProvider)(nil).Get), bundle, ext)
 }

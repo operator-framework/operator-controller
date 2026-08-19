@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -101,7 +100,7 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 	}
 }
 
-func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string, nsConfig applier.NamespaceConfig) (bool, string, error)) ReconcileStepFunc {
+func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error)) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		revisionAnnotations := map[string]string{
@@ -119,7 +118,7 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 		}
 
 		l.Info("applying bundle contents")
-		_, _, err := apply(ctx, state.imageFS, ext, objLbls, revisionAnnotations, state.nsConfig)
+		_, _, err := apply(ctx, state.imageFS, ext, objLbls, revisionAnnotations)
 		if err != nil {
 			// If there was an error applying the resolved bundle,
 			// report the error via the Progressing condition.

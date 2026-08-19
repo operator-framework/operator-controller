@@ -66,6 +66,11 @@ type Options struct {
 	// DeploymentConfig contains optional customizations to apply to CSV deployments.
 	// If nil, no customizations are applied.
 	DeploymentConfig *config.DeploymentConfig
+
+	// selfManagedNamespace records that the install namespace is managed by the
+	// caller (i.e. it was supplied via WithSelfManagedInstallNamespace). When false,
+	// the renderer resolves a system-managed namespace and emits a Namespace object.
+	selfManagedNamespace bool
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -89,6 +94,18 @@ func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 }
 
 type Option func(*Options)
+
+// WithSelfManagedInstallNamespace declares that the install namespace is managed by
+// the caller (e.g. the user set spec.namespace on the ClusterExtension). The renderer
+// renders resources into ns and does NOT emit a Namespace object. When this option is
+// absent, the renderer resolves a system-managed namespace from the bundle and emits
+// the corresponding Namespace object.
+func WithSelfManagedInstallNamespace(ns string) Option {
+	return func(o *Options) {
+		o.InstallNamespace = ns
+		o.selfManagedNamespace = true
+	}
+}
 
 // WithTargetNamespaces sets the target namespaces to be used when rendering the bundle
 // The value will only be used if len(namespaces) > 0. Otherwise, the default value for the bundle
@@ -126,28 +143,44 @@ type BundleRenderer struct {
 	ResourceGenerators []ResourceGenerator
 }
 
-func (r BundleRenderer) Render(rv1 bundle.RegistryV1, installNamespace string, opts ...Option) ([]client.Object, error) {
+func (r BundleRenderer) Render(rv1 bundle.RegistryV1, opts ...Option) ([]client.Object, error) {
 	// validate bundle
 	if err := r.BundleValidator.Validate(&rv1); err != nil {
 		return nil, err
 	}
 
-	// generate bundle objects
-	genOpts, errs := (&Options{
+	genOpts := (&Options{
 		// default options
-		InstallNamespace:    installNamespace,
 		TargetNamespaces:    defaultTargetNamespacesForBundle(&rv1),
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
 		CertificateProvider: nil,
-	}).apply(opts...).validate(&rv1)
+	}).apply(opts...)
 
-	if len(errs) > 0 {
+	// When the install namespace is not caller-managed, resolve a system-managed
+	// namespace from the bundle and emit a Namespace object as part of the set.
+	var systemNamespace client.Object
+	if !genOpts.selfManagedNamespace {
+		name, template, err := resolveSystemManagedNamespace(&rv1)
+		if err != nil {
+			return nil, err
+		}
+		genOpts.InstallNamespace = name
+		if systemNamespace, err = buildNamespaceObject(name, template); err != nil {
+			return nil, err
+		}
+	}
+
+	if _, errs := genOpts.validate(&rv1); len(errs) > 0 {
 		return nil, fmt.Errorf("invalid option(s): %w", errors.Join(errs...))
 	}
 
 	objs, err := ResourceGenerators(r.ResourceGenerators).GenerateResources(&rv1, *genOpts)
 	if err != nil {
 		return nil, err
+	}
+
+	if systemNamespace != nil {
+		objs = append([]client.Object{systemNamespace}, objs...)
 	}
 
 	return objs, nil

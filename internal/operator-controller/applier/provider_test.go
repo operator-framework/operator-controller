@@ -36,7 +36,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 				Namespace: "install-namespace",
 			},
 		}
-		_, err := provider.Get(fstest.MapFS{}, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		_, err := provider.Get(fstest.MapFS{}, ext)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "metadata/annotations.yaml: file does not exist")
 	})
@@ -63,7 +63,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 			},
 		}
 
-		_, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		_, err := provider.Get(bundleFS, ext)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "some error")
 	})
@@ -99,7 +99,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 			},
 		}
 
-		_, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		_, err := provider.Get(bundleFS, ext)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid ClusterExtension configuration")
 	})
@@ -128,7 +128,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 			},
 		}
 
-		_, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		_, err := provider.Get(bundleFS, ext)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid ClusterExtension configuration")
 		// Assert that config validation errors are terminal (not retriable)
@@ -155,7 +155,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 				Namespace: "install-namespace",
 			},
 		}
-		objs, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		objs, err := provider.Get(bundleFS, ext)
 		require.NoError(t, err)
 
 		exp := ToUnstructuredT(t, &corev1.Service{
@@ -175,30 +175,25 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 		require.Equal(t, []client.Object{exp}, objs)
 	})
 
-	t.Run("emits a managed Namespace object when nsConfig.Ensure is set", func(t *testing.T) {
+	t.Run("emits a system-managed Namespace object when spec.namespace is empty", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: registryv1.Renderer,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
+			WithCSV(bundlecsv.Builder().
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
+				WithAnnotations(map[string]string{
+					render.AnnotationSuggestedNamespaceTemplate: `{"metadata":{"name":"managed-ns","labels":{"pod-security.kubernetes.io/enforce":"privileged"},"annotations":{"example.com/note":"hello"}}}`,
+				}).Build()).
 			WithBundleResource("service.yaml", &corev1.Service{
 				TypeMeta:   metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String(), Kind: "Service"},
 				ObjectMeta: metav1.ObjectMeta{Name: "test-service"},
 			}).Build()
+		// No spec.namespace -> system-managed: the renderer resolves the name from
+		// bundle annotations and emits the Namespace object.
 		ext := &ocv1.ClusterExtension{}
 
-		template := &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels:      map[string]string{"pod-security.kubernetes.io/enforce": "privileged"},
-				Annotations: map[string]string{"example.com/note": "hello"},
-			},
-		}
-
-		objs, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{
-			Target:   "managed-ns",
-			Ensure:   true,
-			Template: template,
-		})
+		objs, err := provider.Get(bundleFS, ext)
 		require.NoError(t, err)
 		require.NotEmpty(t, objs)
 
@@ -212,7 +207,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 		require.Equal(t, "hello", ns.GetAnnotations()["example.com/note"])
 	})
 
-	t.Run("does not emit a Namespace object when nsConfig.Ensure is false", func(t *testing.T) {
+	t.Run("does not emit a Namespace object when spec.namespace is set", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: registryv1.Renderer,
 		}
@@ -224,7 +219,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 			}).Build()
 		ext := &ocv1.ClusterExtension{Spec: ocv1.ClusterExtensionSpec{Namespace: "install-namespace"}}
 
-		objs, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		objs, err := provider.Get(bundleFS, ext)
 		require.NoError(t, err)
 		for _, o := range objs {
 			require.NotEqual(t, "Namespace", o.GetObjectKind().GroupVersionKind().Kind, "no Namespace should be emitted when Ensure is false")
@@ -245,7 +240,7 @@ func Test_RegistryV1ManifestProvider_APIServiceSupport(t *testing.T) {
 			},
 		}
 
-		_, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		_, err := provider.Get(bundleFS, ext)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unsupported bundle: apiServiceDefintions are not supported")
 	})
@@ -266,7 +261,7 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 			},
 		}
 
-		_, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		_, err := provider.Get(bundleFS, ext)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 	})
@@ -286,7 +281,7 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 			},
 		}
 
-		_, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		_, err := provider.Get(bundleFS, ext)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 	})
@@ -311,7 +306,7 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 			},
 		}
 
-		_, err := provider.Get(bundleFS, ext, applier.NamespaceConfig{Target: ext.Spec.Namespace})
+		_, err := provider.Get(bundleFS, ext)
 		require.NoError(t, err)
 	})
 }
@@ -329,7 +324,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Equal(t, "unsupported bundle: bundle does not support AllNamespaces install mode", err.Error())
 	})
 
@@ -352,7 +347,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unsupported bundle")
 	})
@@ -367,7 +362,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unsupported bundle")
 	})
@@ -400,7 +395,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.NoError(t, err)
 	})
 
@@ -416,7 +411,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), `required field "watchNamespace" is missing`)
 	})
@@ -447,7 +442,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{Target: installNamespace})
+		})
 		require.NoError(t, err)
 	})
 
@@ -461,7 +456,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), `required field "watchNamespace" is missing`)
 	})
@@ -482,7 +477,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{Target: "install-namespace"})
+		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid ClusterExtension configuration:")
 		require.Contains(t, err.Error(), "must be")
@@ -499,7 +494,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Equal(t, "unsupported bundle: bundle must support at least one of [AllNamespaces SingleNamespace OwnNamespace] install modes", err.Error())
 	})
 }
@@ -537,7 +532,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.NoError(t, err)
 	})
 
@@ -564,7 +559,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 				Namespace: "install-namespace",
 				// No config provided
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.NoError(t, err)
 	})
 
@@ -607,7 +602,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.NoError(t, err)
 	})
 
@@ -650,7 +645,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.NoError(t, err)
 	})
 
@@ -682,7 +677,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.NoError(t, err)
 	})
 
@@ -714,7 +709,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid ClusterExtension configuration")
 		require.Contains(t, err.Error(), "deploymentConfig.env")
@@ -747,7 +742,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unknown field \"deploymentConfig\"")
 		require.ErrorIs(t, err, reconcile.TerminalError(nil), "feature gate disabled error should be terminal")
@@ -779,7 +774,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-		}, applier.NamespaceConfig{})
+		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unknown field \"deploymentConfig\"")
 		require.ErrorIs(t, err, reconcile.TerminalError(nil), "config should not be silently ignored when both feature gates are disabled")
@@ -805,7 +800,7 @@ func Test_RegistryV1HelmChartProvider_Integration(t *testing.T) {
 	t.Run("surfaces manifest provider failures", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		mockMP := mockapplier.NewMockManifestProvider(ctrl)
-		mockMP.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("some error")).AnyTimes()
+		mockMP.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, errors.New("some error")).AnyTimes()
 
 		provider := applier.RegistryV1HelmChartProvider{
 			ManifestProvider: mockMP,
@@ -865,6 +860,6 @@ func Test_RegistryV1HelmChartProvider_Chart(t *testing.T) {
 
 func newDummyManifestProvider(ctrl *gomock.Controller) *mockapplier.MockManifestProvider {
 	m := mockapplier.NewMockManifestProvider(ctrl)
-	m.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
+	m.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{}, nil).AnyTimes()
 	return m
 }

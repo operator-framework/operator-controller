@@ -982,7 +982,7 @@ func TestValidateClusterExtension(t *testing.T) {
 	}
 }
 
-func TestResolveNamespace(t *testing.T) {
+func TestValidateInstallNamespace(t *testing.T) {
 	tests := []struct {
 		name                 string
 		specNamespace        string
@@ -1024,7 +1024,7 @@ func TestResolveNamespace(t *testing.T) {
 				Client: cl,
 				ReconcileSteps: controllers.ReconcileSteps{
 					controllers.HandleFinalizers(crfinalizer.NewFinalizers()),
-					controllers.ResolveNamespace(fakeClient.CoreV1()),
+					controllers.ValidateInstallNamespace(fakeClient.CoreV1()),
 				},
 			}
 

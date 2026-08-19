@@ -49,7 +49,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
@@ -67,8 +66,6 @@ type reconcileState struct {
 	imageFS                  fs.FS
 	resolvedDeprecation      *declcfg.Deprecation
 	hasCatalogData           bool
-
-	nsConfig applier.NamespaceConfig
 }
 
 // ReconcileStepFunc represents a single step in the ClusterExtension reconciliation process.
