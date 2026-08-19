@@ -42,6 +42,7 @@ ENVTEST_VERSION := $(K8S_VERSION).x
 
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.18.2
+ORB_OPERATOR_VERSION := $(shell go list -m -f '{{.Version}}' github.com/joelanford/orb-operator)
 export WAIT_TIMEOUT := 60s
 
 # Install default ClusterCatalogs
@@ -247,11 +248,11 @@ define install-sh
 $(1)/install.sh: manifests
 	@echo -e "\n\U1F4D8 Using $(1).yaml as source manifest\n"
 	sed "s/cert-git-version/cert-$$(VERSION)/g" manifests/$(1).yaml > $(2)
-	MANIFEST=$(2) INSTALL_DEFAULT_CATALOGS=false DEFAULT_CATALOG=$$(RELEASE_CATALOGS) envsubst '$$$$DEFAULT_CATALOG,$$$$CERT_MGR_VERSION,$$$$INSTALL_DEFAULT_CATALOGS,$$$$MANIFEST' < scripts/install.tpl.sh > $(1)-install.sh
+	MANIFEST=$(2) INSTALL_DEFAULT_CATALOGS=false DEFAULT_CATALOG=$$(RELEASE_CATALOGS) $(3) envsubst '$$$$DEFAULT_CATALOG,$$$$CERT_MGR_VERSION,$$$$INSTALL_DEFAULT_CATALOGS,$$$$MANIFEST,$$$$ORB_OPERATOR_VERSION' < scripts/install.tpl.sh > $(1)-install.sh
 endef
 
-$(eval $(call install-sh,experimental,operator-controller-experimental.yaml))
-$(eval $(call install-sh,standard,operator-controller-standard.yaml))
+$(eval $(call install-sh,experimental,operator-controller-experimental.yaml,ORB_OPERATOR_VERSION=$$(ORB_OPERATOR_VERSION)))
+$(eval $(call install-sh,standard,operator-controller-standard.yaml,))
 
 .PHONY: test
 test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run all tests.
@@ -322,6 +323,7 @@ test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-experimental-e2e: export DEFAULT_CATALOG := $(CATALOGS_MANIFEST)
 test-experimental-e2e: export INSTALL_DEFAULT_CATALOGS := false
+test-experimental-e2e: export ORB_OPERATOR_VERSION := $(ORB_OPERATOR_VERSION)
 test-experimental-e2e: E2E_PROMETHEUS_VALUES := testdata/prometheus/values-experimental.yaml
 test-experimental-e2e: E2E_TIMEOUT ?= 25m
 e2e-setup: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
@@ -333,6 +335,7 @@ experimental-e2e-setup: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
 experimental-e2e-setup: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 experimental-e2e-setup: export DEFAULT_CATALOG := $(CATALOGS_MANIFEST)
 experimental-e2e-setup: export INSTALL_DEFAULT_CATALOGS := false
+experimental-e2e-setup: export ORB_OPERATOR_VERSION := $(ORB_OPERATOR_VERSION)
 
 E2E_KUBECONFIG = $(KUBECONFIG_DIR)/$*.kubeconfig
 
@@ -362,7 +365,7 @@ kind-deploy-%: kind-load-% manifests
 		CERT_MGR_VERSION=$(CERT_MGR_VERSION) \
 		INSTALL_DEFAULT_CATALOGS=$(INSTALL_DEFAULT_CATALOGS) \
 		MANIFEST=$(MANIFEST); \
-	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST,$$ORB_OPERATOR_VERSION' < scripts/install.tpl.sh | bash -s
 
 .PHONY: lint-deployed-%
 lint-deployed-%: kind-deploy-% $(KUBE_SCORE)
@@ -635,6 +638,7 @@ run: wait-$(KIND_CLUSTER_NAME) #HELP Build operator-controller then deploy it wi
 run-experimental: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
 run-experimental: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 run-experimental: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
+run-experimental: export ORB_OPERATOR_VERSION := $(ORB_OPERATOR_VERSION)
 run-experimental: wait-$(KIND_CLUSTER_NAME) #HELP Build the operator-controller then deploy it with the experimental manifest into a new kind cluster.
 
 CATD_NAMESPACE := olmv1-system
@@ -672,8 +676,8 @@ quickstart: manifests #EXHELP Generate the unified installation release manifest
 	sed "s/:devel/:$(VERSION)/g" $(STANDARD_MANIFEST) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(STANDARD_RELEASE_MANIFEST)
 	sed "s/:devel/:$(VERSION)/g" $(EXPERIMENTAL_MANIFEST) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(EXPERIMENTAL_RELEASE_MANIFEST)
 	cp $(CATALOGS_MANIFEST) $(RELEASE_CATALOGS)
-	MANIFEST=$(STANDARD_MANIFEST_URL) envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(STANDARD_RELEASE_INSTALL)
-	MANIFEST=$(EXPERIMENTAL_MANIFEST_URL) envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(EXPERIMENTAL_RELEASE_INSTALL)
+	MANIFEST=$(STANDARD_MANIFEST_URL) envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST,$$ORB_OPERATOR_VERSION' < scripts/install.tpl.sh > $(STANDARD_RELEASE_INSTALL)
+	MANIFEST=$(EXPERIMENTAL_MANIFEST_URL) ORB_OPERATOR_VERSION=$(ORB_OPERATOR_VERSION) envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST,$$ORB_OPERATOR_VERSION' < scripts/install.tpl.sh > $(EXPERIMENTAL_RELEASE_INSTALL)
 
 ##@ Docs
 

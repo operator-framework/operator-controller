@@ -44,6 +44,7 @@ fi
 
 default_catalogs_manifest=$DEFAULT_CATALOG
 cert_mgr_version=$CERT_MGR_VERSION
+orb_operator_version=$ORB_OPERATOR_VERSION
 install_default_catalogs=$INSTALL_DEFAULT_CATALOGS
 catalog_wait_timeout=${CATALOG_WAIT_TIMEOUT:-60s}
 
@@ -111,6 +112,17 @@ kubectl_wait "cert-manager" "deployment/cert-manager-cainjector" "60s"
 kubectl_wait "cert-manager" "deployment/cert-manager" "60s"
 kubectl_wait_for_query "mutatingwebhookconfigurations/cert-manager-webhook" '{.webhooks[0].clientConfig.caBundle}' 60 5
 kubectl_wait_for_query "validatingwebhookconfigurations/cert-manager-webhook" '{.webhooks[0].clientConfig.caBundle}' 60 5
+
+# Install orb-operator only if version is set (experimental variant only).
+if [[ -n "$orb_operator_version" ]]; then
+    if kubectl get crd clusterobjectdeployments.orb.operatorframework.io &>/dev/null && \
+       kubectl get deployment -n orb-operator-system orb-operator &>/dev/null; then
+        echo "orb-operator is already installed, skipping installation"
+    else
+        kubectl apply -f "https://github.com/joelanford/orb-operator/releases/download/${orb_operator_version}/install.json"
+    fi
+    kubectl_wait "orb-operator-system" "deployment/orb-operator" "60s"
+fi
 
 # Change the file into a file:// url
 if [ -f "${olmv1_manifest}" ]; then

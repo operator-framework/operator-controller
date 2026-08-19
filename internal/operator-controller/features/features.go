@@ -15,6 +15,7 @@ const (
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
 	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
+	OrbOperatorRuntime                featuregate.Feature = "OrbOperatorRuntime"
 	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
 	BundleReleaseSupport              featuregate.Feature = "BundleReleaseSupport"
 )
@@ -53,6 +54,13 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 
 	// BoxcutterRuntime configures OLM to use the Boxcutter runtime for extension lifecycling
 	BoxcutterRuntime: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// OrbOperatorRuntime configures OLM to use the orb-operator runtime for extension lifecycling
+	OrbOperatorRuntime: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
