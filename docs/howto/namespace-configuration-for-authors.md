@@ -1,6 +1,11 @@
 # Namespace Configuration for Bundle Authors
 
-Bundle authors can specify their preferred namespace configuration through CSV annotations. These annotations are used by operator-controller when the cluster admin does not provide an explicit `spec.namespace`.
+> **Note:** Managed namespaces (omitting `spec.namespace`) are available only in the
+> experimental feature set, which enables the `BoxcutterRuntime` feature gate. In the
+> standard feature set, `spec.namespace` is required, and the annotations described
+> below are not consulted.
+
+Bundle authors can specify their preferred namespace configuration through CSV annotations. These annotations are used by operator-controller when the cluster admin does not provide an explicit `spec.namespace`, which requires the experimental feature set.
 
 ## Annotations
 

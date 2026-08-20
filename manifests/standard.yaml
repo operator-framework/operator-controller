@@ -684,13 +684,10 @@ spec:
                   rule: has(self.preflight)
               namespace:
                 description: |-
-                  namespace is optional. When set, it specifies an existing namespace where
-                  namespace-scoped resources for the extension are applied. The namespace must
-                  already exist on the cluster. When omitted, operator-controller resolves and
-                  creates a managed namespace from bundle metadata.
+                  namespace references an existing namespace where namespace-scoped resources
+                  for the extension are applied. The namespace must already exist on the cluster.
 
-                  The mode (set vs omitted) is locked at creation time and cannot be changed.
-                  When set, the value is immutable.
+                  namespace is required.
 
                   The namespace field follows the DNS label standard as defined in [RFC 1123].
                   It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
@@ -704,9 +701,6 @@ spec:
                   rule: self == '' || self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
                 - message: namespace is immutable once set
                   rule: oldSelf == '' || self == oldSelf
-                - message: namespace cannot be set after creation; mode is locked
-                    at creation time
-                  rule: oldSelf != '' || self == ''
               serviceAccount:
                 description: |-
                   serviceAccount is a deprecated field and is completely ignored.
@@ -1027,6 +1021,7 @@ spec:
                     has(self.catalog) : !has(self.catalog)'
             required:
             - source
+            - namespace
             type: object
           status:
             description: status is an optional field that defines the observed state

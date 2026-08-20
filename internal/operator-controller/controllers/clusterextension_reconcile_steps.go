@@ -449,12 +449,6 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 			labels.OwnerNameKey: ext.GetName(),
 		}
 
-		if ext.Spec.Namespace == "" {
-			termErr := reconcile.TerminalError(fmt.Errorf("managed namespace mode (omitting spec.namespace) requires the BoxcutterRuntime feature gate"))
-			setStatusProgressing(ext, termErr)
-			return nil, termErr
-		}
-
 		l.Info("applying bundle contents")
 		// NOTE: We need to be cautious of eating errors here.
 		// We should always return any error that occurs during an

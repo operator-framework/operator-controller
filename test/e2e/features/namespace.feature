@@ -8,6 +8,7 @@ Feature: Namespace PSA Management
     Given OLM is available
     And an image registry is available
 
+  @BoxcutterRuntime
   Scenario: Managed namespace with PSA template applies labels
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents                                |

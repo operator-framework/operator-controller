@@ -2,6 +2,10 @@
 
 ## What is a managed namespace?
 
+> **Note:** Managed namespaces (omitting `spec.namespace`) are available only in the
+> experimental feature set, which enables the `BoxcutterRuntime` feature gate. In the
+> standard feature set, `spec.namespace` is required.
+
 For registry+v1 bundles, when you create a ClusterExtension without specifying `spec.namespace`, operator-controller automatically creates and manages a namespace for the operator. The namespace name comes from the bundle's metadata or defaults to `<packageName>-system`.
 
 When you specify `spec.namespace`, the namespace must already exist on the cluster and operator-controller installs into it without managing its lifecycle.

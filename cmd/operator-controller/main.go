@@ -507,6 +507,7 @@ func run() error {
 		IsWebhookSupportEnabled:     certProvider != nil,
 		IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
 		IsDeploymentConfigEnabled:   features.OperatorControllerFeatureGate.Enabled(features.DeploymentConfig),
+		IsBoxcutterRuntimeEnabled:   features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime),
 	}
 	var cerCfg reconcilerConfigurator
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {

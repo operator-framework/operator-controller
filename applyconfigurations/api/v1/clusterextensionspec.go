@@ -22,17 +22,25 @@ package v1
 //
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpecApplyConfiguration struct {
-	// namespace is optional. When set, it specifies an existing namespace where
-	// namespace-scoped resources for the extension are applied. The namespace must
-	// already exist on the cluster. When omitted, operator-controller resolves and
-	// creates a managed namespace from bundle metadata.
+	// namespace references an existing namespace where namespace-scoped resources
+	// for the extension are applied. The namespace must already exist on the cluster.
 	//
-	// The mode (set vs omitted) is locked at creation time and cannot be changed.
-	// When set, the value is immutable.
+	// <opcon:standard:description>
+	// namespace is required.
+	// </opcon:standard:description>
+	// <opcon:experimental:description>
+	// namespace is optional. When omitted, operator-controller resolves and creates a
+	// managed namespace from bundle metadata. The mode (set vs omitted) is locked at
+	// creation time and cannot be changed. Omitting namespace requires the experimental
+	// feature set (BoxcutterRuntime).
+	// </opcon:experimental:description>
 	//
 	// The namespace field follows the DNS label standard as defined in [RFC 1123].
 	// It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
 	// and be no longer than 63 characters.
+	//
+	// <opcon:standard:validation:Required>
+	// <opcon:experimental:validation:XValidation:rule="oldSelf != ” || self == ”",message="namespace cannot be set after creation; mode is locked at creation time">
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	Namespace *string `json:"namespace,omitempty"`

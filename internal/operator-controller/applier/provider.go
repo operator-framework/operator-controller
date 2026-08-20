@@ -35,6 +35,7 @@ type RegistryV1ManifestProvider struct {
 	IsWebhookSupportEnabled     bool
 	IsSingleOwnNamespaceEnabled bool
 	IsDeploymentConfigEnabled   bool
+	IsBoxcutterRuntimeEnabled   bool
 }
 
 func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -66,6 +67,10 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
 	) {
 		return nil, fmt.Errorf("unsupported bundle: bundle must support at least one of [AllNamespaces SingleNamespace OwnNamespace] install modes")
+	}
+
+	if ext.Spec.Namespace == "" && !r.IsBoxcutterRuntimeEnabled {
+		return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("spec.namespace is required unless the BoxcutterRuntime feature gate is enabled"))
 	}
 
 	opts := []render.Option{
