@@ -13,6 +13,49 @@ import (
 
 const controllerToolsVersion = "v0.21.0"
 
+// TestOpconTweaksXValidation verifies that a channel-specific XValidation opcon
+// tag maps the captured rule and message into the correct ValidationRule fields.
+func TestOpconTweaksXValidation(t *testing.T) {
+	tests := []struct {
+		name            string
+		channel         string
+		description     string
+		expectRule      string
+		expectMessage   string
+		expectRuleCount int
+	}{
+		{
+			name:            "experimental xvalidation applied in experimental channel",
+			channel:         ExperimentalChannel,
+			description:     `Field description.` + "\n" + `<opcon:experimental:validation:XValidation:rule="oldSelf != '' || self == ''",message="mode is locked at creation time">`,
+			expectRule:      "oldSelf != '' || self == ''",
+			expectMessage:   "mode is locked at creation time",
+			expectRuleCount: 1,
+		},
+		{
+			name:            "experimental xvalidation ignored in standard channel",
+			channel:         StandardChannel,
+			description:     `Field description.` + "\n" + `<opcon:experimental:validation:XValidation:rule="oldSelf != '' || self == ''",message="mode is locked at creation time">`,
+			expectRuleCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			jsonProps := apiextensionsv1.JSONSchemaProps{
+				Description: tt.description,
+				Type:        "string",
+			}
+			out, _ := opconTweaks(tt.channel, "namespace", jsonProps)
+			require.Len(t, out.XValidations, tt.expectRuleCount)
+			if tt.expectRuleCount > 0 {
+				require.Equal(t, tt.expectRule, out.XValidations[0].Rule)
+				require.Equal(t, tt.expectMessage, out.XValidations[0].Message)
+			}
+		})
+	}
+}
+
 func TestRunGenerator(t *testing.T) {
 	here, err := os.Getwd()
 	require.NoError(t, err)

@@ -114,7 +114,8 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	bundleFS fs.FS, ext *ocv1.ClusterExtension,
 	objectLabels, revisionAnnotations map[string]string,
 ) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-	// extract plain manifests
+	// extract plain manifests; the renderer decides whether a system-managed
+	// Namespace object is part of the returned object set.
 	plain, err := r.ManifestProvider.Get(bundleFS, ext)
 	if err != nil {
 		return nil, err
@@ -125,7 +126,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	}
 
 	// add bundle properties of interest to revision annotations
-	bundleAnnotations, err := getBundleAnnotations(bundleFS)
+	bundleAnnotations, err := GetBundleAnnotations(bundleFS)
 	if err != nil {
 		return nil, fmt.Errorf("error getting bundle annotations: %w", err)
 	}
@@ -178,6 +179,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		objs = append(objs, *ocv1ac.ClusterObjectSetObject().
 			WithObject(unstr))
 	}
+
 	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
 	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionPrevent)
 	return rev, nil
@@ -273,6 +275,11 @@ type boxcutterStorageMigratorClient interface {
 // Migrate creates a ClusterObjectSet from an existing Helm release if no revisions exist yet.
 // The migration is idempotent and skipped if revisions already exist or no Helm release is found.
 func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) error {
+	// Managed namespace mode (spec.namespace empty) means this is a new-style extension
+	// that never had a Helm release, so there's nothing to migrate.
+	if ext.Spec.Namespace == "" {
+		return nil
+	}
 	existingRevisionList := ocv1.ClusterObjectSetList{}
 	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingLabels{
 		labels.OwnerNameKey: ext.Name,

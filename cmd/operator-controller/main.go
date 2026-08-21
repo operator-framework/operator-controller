@@ -507,6 +507,7 @@ func run() error {
 		IsWebhookSupportEnabled:     certProvider != nil,
 		IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
 		IsDeploymentConfigEnabled:   features.OperatorControllerFeatureGate.Enabled(features.DeploymentConfig),
+		IsBoxcutterRuntimeEnabled:   features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime),
 	}
 	var cerCfg reconcilerConfigurator
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
@@ -659,6 +660,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
+		controllers.ValidateInstallNamespace(coreClient),
 		controllers.ApplyBundleWithBoxcutter(appl.Apply),
 	}
 
@@ -746,6 +748,7 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
+		controllers.ValidateInstallNamespace(coreClient),
 		controllers.ApplyBundle(appl),
 	}
 

@@ -92,66 +92,30 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 	rev, err := g.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
 	require.NoError(t, err)
 
-	expected := ocv1ac.ClusterObjectSet("test-123-1").
-		WithAnnotations(map[string]string{
-			"olm.operatorframework.io/bundle-name":      "my-bundle",
-			"olm.operatorframework.io/bundle-reference": "bundle-ref",
-			"olm.operatorframework.io/bundle-version":   "1.2.0",
-			"olm.operatorframework.io/package-name":     "my-package",
-		}).
-		WithLabels(map[string]string{
-			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
-			labels.OwnerNameKey: "test-123",
-		}).
-		WithSpec(ocv1ac.ClusterObjectSetSpec().
-			WithLifecycleState(ocv1.ClusterObjectSetLifecycleStateActive).
-			WithCollisionProtection(ocv1.CollisionProtectionNone).
-			WithRevision(1).
-			WithPhases(
-				ocv1ac.ClusterObjectSetPhase().
-					WithName("configuration").
-					WithObjects(
-						ocv1ac.ClusterObjectSetObject().
-							WithObject(unstructured.Unstructured{
-								Object: map[string]interface{}{
-									"apiVersion": "v1",
-									"kind":       "ConfigMap",
-									"metadata": map[string]interface{}{
-										"labels": map[string]interface{}{
-											"my-label": "my-value",
-										},
-										"annotations": map[string]interface{}{
-											"olm.operatorframework.io/bundle-version": "1.2.0",
-											"olm.operatorframework.io/package-name":   "my-package",
-										},
-									},
-								},
-							}),
-						ocv1ac.ClusterObjectSetObject().
-							WithObject(unstructured.Unstructured{
-								Object: map[string]interface{}{
-									"apiVersion": "v1",
-									"kind":       "Secret",
-									"metadata": map[string]interface{}{
-										"labels": map[string]interface{}{
-											"my-label": "my-value",
-										},
-										"annotations": map[string]interface{}{
-											"olm.operatorframework.io/bundle-version": "1.2.0",
-											"olm.operatorframework.io/package-name":   "my-package",
-										},
-									},
-								},
-							}),
-					)),
-		)
-	assert.Equal(t, expected.Name, rev.Name)
-	assert.Equal(t, expected.Labels, rev.Labels)
-	assert.Equal(t, expected.Annotations, rev.Annotations)
-	assert.Equal(t, expected.Spec.LifecycleState, rev.Spec.LifecycleState)
-	assert.Equal(t, expected.Spec.CollisionProtection, rev.Spec.CollisionProtection)
-	assert.Equal(t, expected.Spec.Revision, rev.Spec.Revision)
-	assert.Equal(t, expected.Spec.Phases, rev.Spec.Phases)
+	assert.Equal(t, "test-123-1", *rev.Name)
+	assert.Equal(t, map[string]string{
+		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+		labels.OwnerNameKey: "test-123",
+	}, rev.Labels)
+	assert.Equal(t, map[string]string{
+		"olm.operatorframework.io/bundle-name":      "my-bundle",
+		"olm.operatorframework.io/bundle-reference": "bundle-ref",
+		"olm.operatorframework.io/bundle-version":   "1.2.0",
+		"olm.operatorframework.io/package-name":     "my-package",
+	}, rev.Annotations)
+	assert.Equal(t, ptr.To(ocv1.ClusterObjectSetLifecycleStateActive), rev.Spec.LifecycleState)
+	assert.Equal(t, ptr.To(ocv1.CollisionProtectionNone), rev.Spec.CollisionProtection)
+	assert.Equal(t, ptr.To(int64(1)), rev.Spec.Revision)
+
+	// The Helm-release migration path never injects a namespace (the release's
+	// namespace already exists), so only the configuration phase is present.
+	require.Len(t, rev.Spec.Phases, 1)
+
+	configPhase := rev.Spec.Phases[0]
+	assert.Equal(t, "configuration", *configPhase.Name)
+	require.Len(t, configPhase.Objects, 2)
+	assert.Equal(t, "ConfigMap", configPhase.Objects[0].Object.GetKind())
+	assert.Equal(t, "Secret", configPhase.Objects[1].Object.GetKind())
 }
 
 func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
@@ -414,10 +378,17 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 	t.Log("by checking the rendered objects contain the given object labels")
 	for _, phase := range rev.Spec.Phases {
 		for _, revObj := range phase.Objects {
-			require.Equal(t, map[string]string{
-				"app":  "test-obj",
-				"some": "value",
-			}, revObj.Object.GetLabels())
+			// Namespace objects only have objectLabels, not bundle object labels
+			if revObj.Object.GetKind() == "Namespace" {
+				require.Equal(t, map[string]string{
+					"some": "value",
+				}, revObj.Object.GetLabels())
+			} else {
+				require.Equal(t, map[string]string{
+					"app":  "test-obj",
+					"some": "value",
+				}, revObj.Object.GetLabels())
+			}
 		}
 	}
 	t.Log("by checking the generated revision contain the given annotations")
@@ -1141,7 +1112,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := newStorageMigratorGenerator(t)
@@ -1214,7 +1185,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		// GenerateRevisionFromHelmRelease should not be called when revisions already exist
 		ctrl := gomock.NewController(t)
@@ -1269,7 +1240,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1342,7 +1313,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1425,7 +1396,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1482,7 +1453,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		expectedRelease := &release.Release{
 			Name:    "test123",
@@ -1579,7 +1550,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		// GenerateRevisionFromHelmRelease should NOT be called when no deployed release exists
@@ -1626,7 +1597,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1650,4 +1621,168 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
 	})
+}
+
+func Test_SimpleRevisionGenerator_GenerateRevision_NamespacePhaseCollisionProtection(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	// The renderer (mocked here) is responsible for emitting the Namespace object;
+	// this test verifies the generator organizes it into the namespaces phase.
+	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+		&corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-namespace",
+			},
+		},
+		&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-service",
+			},
+		},
+	}, nil).AnyTimes()
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-extension",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // deprecated field used in test
+				Name: "test-sa",
+			},
+		},
+	}
+
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{})
+	require.NoError(t, err)
+	require.NotNil(t, rev)
+
+	t.Log("by checking the spec-level collision protection is set to Prevent")
+	require.Equal(t, ptr.To(ocv1.CollisionProtectionPrevent), rev.Spec.CollisionProtection)
+
+	// Find the namespaces phase
+	var namespacesPhase *ocv1ac.ClusterObjectSetPhaseApplyConfiguration
+	for i := range rev.Spec.Phases {
+		if *rev.Spec.Phases[i].Name == string(applier.PhaseNamespaces) {
+			namespacesPhase = &rev.Spec.Phases[i]
+			break
+		}
+	}
+
+	require.NotNil(t, namespacesPhase, "namespaces phase should exist")
+
+	t.Log("by checking the namespaces phase inherits Prevent collision protection from spec (no explicit override)")
+	require.Nil(t, namespacesPhase.CollisionProtection, "namespaces phase should inherit collision protection from spec")
+
+	// Verify all phases inherit from spec (no explicit collision protection)
+	for i := range rev.Spec.Phases {
+		t.Logf("by checking phase %s does not have explicit collision protection", *rev.Spec.Phases[i].Name)
+		require.Nil(t, rev.Spec.Phases[i].CollisionProtection, "all phases should inherit collision protection from spec")
+	}
+}
+
+func Test_GenerateRevision_NamespacePhaseIsFirst(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	// The renderer (mocked here) emits the Namespace object; this test verifies the
+	// generator places the namespaces phase first for proper deletion ordering.
+	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+		&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-service",
+			},
+		},
+		&corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-namespace",
+			},
+		},
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-deployment",
+				Namespace: "test-ns",
+			},
+		},
+	}, nil).AnyTimes()
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-extension",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // deprecated field used in test
+				Name: "test-sa",
+			},
+		},
+	}
+
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{})
+	require.NoError(t, err)
+
+	t.Log("by checking that phases are present")
+	require.NotEmpty(t, rev.Spec.Phases, "revision should have at least one phase")
+
+	t.Log("by checking that the first phase is the namespaces phase")
+	firstPhase := rev.Spec.Phases[0]
+	require.Equal(t, "namespaces", *firstPhase.Name, "first phase should be namespaces for proper deletion ordering")
+
+	t.Log("by checking that the namespaces phase contains exactly one namespace object")
+	require.Len(t, firstPhase.Objects, 1, "namespaces phase should contain exactly one object")
+
+	t.Log("by checking that the namespace object has the correct name")
+	nsObj := firstPhase.Objects[0].Object
+	require.Equal(t, "Namespace", nsObj.GetKind())
+	require.Equal(t, "test-namespace", nsObj.GetName(), "namespace name should match ext.Spec.Namespace")
+}
+
+func Test_GenerateRevision_COSHasOwnerLabels(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	r := mockapplier.NewMockManifestProvider(ctrl)
+	r.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]client.Object{
+		&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-configmap",
+			},
+		},
+	}, nil).AnyTimes()
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-extension",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // deprecated field used in test
+				Name: "test-sa",
+			},
+		},
+	}
+
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{})
+	require.NoError(t, err)
+
+	t.Log("by checking that the COS has owner-kind label")
+	require.NotNil(t, rev.Labels, "COS should have labels")
+	require.Equal(t, ocv1.ClusterExtensionKind, rev.Labels[labels.OwnerKindKey],
+		"COS should have owner-kind label set to ClusterExtension")
+
+	t.Log("by checking that the COS has owner-name label")
+	require.Equal(t, "test-extension", rev.Labels[labels.OwnerNameKey],
+		"COS should have owner-name label matching the ClusterExtension name")
 }

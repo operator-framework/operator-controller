@@ -21,12 +21,15 @@ import (
 	"errors"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
@@ -398,6 +401,33 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 		}
 
 		state.imageFS = imageFS
+		return nil, nil
+	}
+}
+
+// ValidateInstallNamespace validates a user-provided spec.namespace: it must
+// reference an existing namespace. When spec.namespace is omitted the install
+// namespace is system-managed and resolved+created by the bundle renderer, so
+// there is nothing to validate here — the emitted Namespace object is treated
+// like any other rendered object (conflicts are handled by collision protection).
+func ValidateInstallNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc {
+	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
+		l := log.FromContext(ctx)
+
+		if ext.Spec.Namespace == "" {
+			return nil, nil
+		}
+
+		l.V(1).Info("validating user-provided namespace exists", "namespace", ext.Spec.Namespace)
+		_, err := nsClient.Namespaces().Get(ctx, ext.Spec.Namespace, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			termErr := reconcile.TerminalError(fmt.Errorf("namespace %q not found; spec.namespace must reference an existing namespace", ext.Spec.Namespace))
+			setStatusProgressing(ext, termErr)
+			return nil, termErr
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error checking namespace %q: %w", ext.Spec.Namespace, err)
+		}
 		return nil, nil
 	}
 }

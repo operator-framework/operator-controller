@@ -723,12 +723,12 @@ spec:
                   rule: has(self.preflight)
               namespace:
                 description: |-
-                  namespace specifies a Kubernetes namespace.
-                  It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
-                  Some extensions may contain namespace-scoped resources to be applied in other namespaces.
-                  This namespace must exist.
+                  namespace references an existing namespace where namespace-scoped resources
+                  for the extension are applied. The namespace must already exist on the cluster.
 
-                  The namespace field is required, immutable, and follows the DNS label standard as defined in [RFC 1123].
+                  namespace is required.
+
+                  The namespace field follows the DNS label standard as defined in [RFC 1123].
                   It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
                   and be no longer than 63 characters.
 
@@ -736,10 +736,10 @@ spec:
                 maxLength: 63
                 type: string
                 x-kubernetes-validations:
-                - message: namespace is immutable
-                  rule: self == oldSelf
                 - message: namespace must be a valid DNS1123 label
-                  rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+                  rule: self == '' || self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+                - message: namespace is immutable once set
+                  rule: oldSelf == '' || self == oldSelf
               serviceAccount:
                 description: |-
                   serviceAccount is a deprecated field and is completely ignored.
@@ -1059,8 +1059,8 @@ spec:
                   rule: 'has(self.sourceType) && self.sourceType == ''Catalog'' ?
                     has(self.catalog) : !has(self.catalog)'
             required:
-            - namespace
             - source
+            - namespace
             type: object
           status:
             description: status is an optional field that defines the observed state

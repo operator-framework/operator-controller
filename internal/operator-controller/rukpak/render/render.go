@@ -28,33 +28,49 @@ func (v BundleValidator) Validate(rv1 *bundle.RegistryV1) error {
 	return errors.Join(errs...)
 }
 
-// ResourceGenerator generates resources given a registry+v1 bundle and options
-type ResourceGenerator func(rv1 *bundle.RegistryV1, opts Options) ([]client.Object, error)
+// Context is the shared state threaded through the mutator pipeline. Each mutator reads
+// and writes it. It subsumes the render Options and accumulates the rendered object set:
+// configuration is seeded from the Options, InstallNamespace is resolved by the
+// NamespaceMutator, and Objects is grown by the object mutators.
+type Context struct {
+	RV1 *bundle.RegistryV1
 
-func (g ResourceGenerator) GenerateResources(rv1 *bundle.RegistryV1, opts Options) ([]client.Object, error) {
-	return g(rv1, opts)
+	// Configuration, seeded from the render Options / With* funcs.
+	TargetNamespaces    []string
+	UniqueNameGenerator UniqueNameGenerator
+	CertificateProvider CertificateProvider
+	// DeploymentConfig contains optional customizations to apply to CSV deployments.
+	// If nil, no customizations are applied.
+	DeploymentConfig *config.DeploymentConfig
+	// selfManagedNamespace records that the install namespace was supplied by the caller.
+	selfManagedNamespace bool
+
+	// InstallNamespace is resolved by the NamespaceMutator and read by every later mutator.
+	InstallNamespace string
+
+	// Objects is the accumulating rendered object set.
+	Objects []client.Object
 }
 
-// ResourceGenerators aggregates generators. Its GenerateResource method will call all of its generators and return
-// generated resources.
-type ResourceGenerators []ResourceGenerator
-
-func (r ResourceGenerators) GenerateResources(rv1 *bundle.RegistryV1, opts Options) ([]client.Object, error) {
-	//nolint:prealloc
-	var renderedObjects []client.Object
-	for _, generator := range r {
-		objs, err := generator.GenerateResources(rv1, opts)
-		if err != nil {
-			return nil, err
-		}
-		renderedObjects = append(renderedObjects, objs...)
+// validate checks the context configuration once the install namespace is known.
+func (c *Context) validate() error {
+	var errs []error
+	if c.UniqueNameGenerator == nil {
+		errs = append(errs, errors.New("unique name generator must be specified"))
 	}
-	return renderedObjects, nil
+	if err := validateTargetNamespaces(c.RV1, c.InstallNamespace, c.TargetNamespaces); err != nil {
+		errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", c.TargetNamespaces, err))
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("invalid option(s): %w", errors.Join(errs...))
+	}
+	return nil
 }
 
-func (r ResourceGenerators) ResourceGenerator() ResourceGenerator {
-	return r.GenerateResources
-}
+// Mutator reads and mutates the shared render Context. Order in the pipeline is significant:
+// the NamespaceMutator runs first (so later mutators can read ctx.InstallNamespace) and the
+// certificate mutator runs last (so it can decorate every object the others produced).
+type Mutator func(*Context) error
 
 type UniqueNameGenerator func(string, interface{}) string
 
@@ -66,6 +82,11 @@ type Options struct {
 	// DeploymentConfig contains optional customizations to apply to CSV deployments.
 	// If nil, no customizations are applied.
 	DeploymentConfig *config.DeploymentConfig
+
+	// selfManagedNamespace records that the install namespace is managed by the
+	// caller (i.e. it was supplied via WithSelfManagedInstallNamespace). When false,
+	// the renderer resolves a system-managed namespace and emits a Namespace object.
+	selfManagedNamespace bool
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -77,18 +98,19 @@ func (o *Options) apply(opts ...Option) *Options {
 	return o
 }
 
-func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
-	var errs []error
-	if o.UniqueNameGenerator == nil {
-		errs = append(errs, errors.New("unique name generator must be specified"))
-	}
-	if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
-		errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
-	}
-	return o, errs
-}
-
 type Option func(*Options)
+
+// WithSelfManagedInstallNamespace declares that the install namespace is managed by
+// the caller (e.g. the user set spec.namespace on the ClusterExtension). The renderer
+// renders resources into ns and does NOT emit a Namespace object. When this option is
+// absent, the renderer resolves a system-managed namespace from the bundle and emits
+// the corresponding Namespace object.
+func WithSelfManagedInstallNamespace(ns string) Option {
+	return func(o *Options) {
+		o.InstallNamespace = ns
+		o.selfManagedNamespace = true
+	}
+}
 
 // WithTargetNamespaces sets the target namespaces to be used when rendering the bundle
 // The value will only be used if len(namespaces) > 0. Otherwise, the default value for the bundle
@@ -121,36 +143,52 @@ func WithDeploymentConfig(deploymentConfig *config.DeploymentConfig) Option {
 	}
 }
 
-type BundleRenderer struct {
-	BundleValidator    BundleValidator
-	ResourceGenerators []ResourceGenerator
+// newContext builds a render Context seeded from these Options.
+func (o *Options) newContext(rv1 *bundle.RegistryV1) *Context {
+	return &Context{
+		RV1:                  rv1,
+		TargetNamespaces:     o.TargetNamespaces,
+		UniqueNameGenerator:  o.UniqueNameGenerator,
+		CertificateProvider:  o.CertificateProvider,
+		DeploymentConfig:     o.DeploymentConfig,
+		selfManagedNamespace: o.selfManagedNamespace,
+		InstallNamespace:     o.InstallNamespace,
+	}
 }
 
-func (r BundleRenderer) Render(rv1 bundle.RegistryV1, installNamespace string, opts ...Option) ([]client.Object, error) {
+// NewContext builds a render Context seeded from opts. It is exported for tests that need to
+// exercise individual mutators without going through the full Render pipeline.
+func NewContext(rv1 *bundle.RegistryV1, opts Options) *Context {
+	return opts.newContext(rv1)
+}
+
+type BundleRenderer struct {
+	BundleValidator BundleValidator
+	// Mutators is the ordered pipeline applied to the shared render Context.
+	Mutators []Mutator
+}
+
+func (r BundleRenderer) Render(rv1 bundle.RegistryV1, opts ...Option) ([]client.Object, error) {
 	// validate bundle
 	if err := r.BundleValidator.Validate(&rv1); err != nil {
 		return nil, err
 	}
 
-	// generate bundle objects
-	genOpts, errs := (&Options{
+	genOpts := (&Options{
 		// default options
-		InstallNamespace:    installNamespace,
 		TargetNamespaces:    defaultTargetNamespacesForBundle(&rv1),
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
 		CertificateProvider: nil,
-	}).apply(opts...).validate(&rv1)
+	}).apply(opts...)
 
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("invalid option(s): %w", errors.Join(errs...))
+	ctx := genOpts.newContext(&rv1)
+	for _, mutate := range r.Mutators {
+		if err := mutate(ctx); err != nil {
+			return nil, err
+		}
 	}
 
-	objs, err := ResourceGenerators(r.ResourceGenerators).GenerateResources(&rv1, *genOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	return objs, nil
+	return ctx.Objects, nil
 }
 
 func DefaultUniqueNameGenerator(base string, o interface{}) string {

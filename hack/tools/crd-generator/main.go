@@ -260,8 +260,8 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 
 			numValid++
 			jsonProps.XValidations = append(jsonProps.XValidations, apiextensionsv1.ValidationRule{
-				Message: celMatch[1],
-				Rule:    celMatch[2],
+				Rule:    celMatch[1],
+				Message: celMatch[2],
 			})
 		}
 		optReqRe := regexp.MustCompile(validationPrefix + "(Optional|Required)>")
