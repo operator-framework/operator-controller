@@ -51,12 +51,13 @@ func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
 	expectedUniqueNameGenerator := render.DefaultUniqueNameGenerator
 
 	renderer := render.BundleRenderer{
-		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-				require.Equal(t, expectedInstallNamespace, opts.InstallNamespace)
-				require.Equal(t, expectedTargetNamespaces, opts.TargetNamespaces)
+		Mutators: []render.Mutator{
+			render.NamespaceMutator,
+			func(ctx *render.Context) error {
+				require.Equal(t, expectedInstallNamespace, ctx.InstallNamespace)
+				require.Equal(t, expectedTargetNamespaces, ctx.TargetNamespaces)
 				require.Equal(t, reflect.ValueOf(expectedUniqueNameGenerator).Pointer(), reflect.ValueOf(render.DefaultUniqueNameGenerator).Pointer(), "options has unexpected default unique name generator")
-				return nil, nil
+				return nil
 			},
 		},
 	}
@@ -149,10 +150,11 @@ func Test_BundleRenderer_DefaultTargetNamespaces(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			renderer := render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						require.Equal(t, tc.expectedTargetNamespaces, opts.TargetNamespaces)
-						return nil, nil
+				Mutators: []render.Mutator{
+					render.NamespaceMutator,
+					func(ctx *render.Context) error {
+						require.Equal(t, tc.expectedTargetNamespaces, ctx.TargetNamespaces)
+						return nil
 					},
 				},
 			}
@@ -280,7 +282,9 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			renderer := render.BundleRenderer{}
+			renderer := render.BundleRenderer{
+				Mutators: []render.Mutator{render.NamespaceMutator},
+			}
 			_, err := renderer.Render(
 				bundle.RegistryV1{CSV: tc.csv},
 				append([]render.Option{render.WithSelfManagedInstallNamespace(tc.installNamespace)}, tc.opts...)...,
@@ -330,14 +334,16 @@ func Test_WithCertificateProvide(t *testing.T) {
 	require.Equal(t, expectedCertProvider, opts.CertificateProvider)
 }
 
-func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
+func Test_BundleRenderer_CallsMutators(t *testing.T) {
 	renderer := render.BundleRenderer{
-		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
+		Mutators: []render.Mutator{
+			func(ctx *render.Context) error {
+				ctx.Objects = append(ctx.Objects, &corev1.Namespace{}, &corev1.Service{})
+				return nil
 			},
-			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-				return []client.Object{&appsv1.Deployment{}}, nil
+			func(ctx *render.Context) error {
+				ctx.Objects = append(ctx.Objects, &appsv1.Deployment{})
+				return nil
 			},
 		},
 	}
@@ -349,14 +355,15 @@ func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 	require.Equal(t, []client.Object{&corev1.Namespace{}, &corev1.Service{}, &appsv1.Deployment{}}, objs)
 }
 
-func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
+func Test_BundleRenderer_ReturnsMutatorErrors(t *testing.T) {
 	renderer := render.BundleRenderer{
-		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
+		Mutators: []render.Mutator{
+			func(ctx *render.Context) error {
+				ctx.Objects = append(ctx.Objects, &corev1.Namespace{}, &corev1.Service{})
+				return nil
 			},
-			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-				return nil, fmt.Errorf("generator error")
+			func(ctx *render.Context) error {
+				return fmt.Errorf("generator error")
 			},
 		},
 	}
@@ -395,10 +402,10 @@ func Test_WithDeploymentConfig(t *testing.T) {
 
 		var receivedConfig *config.DeploymentConfig
 		renderer := render.BundleRenderer{
-			ResourceGenerators: []render.ResourceGenerator{
-				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-					receivedConfig = opts.DeploymentConfig
-					return nil, nil
+			Mutators: []render.Mutator{
+				func(ctx *render.Context) error {
+					receivedConfig = ctx.DeploymentConfig
+					return nil
 				},
 			},
 		}
@@ -418,10 +425,10 @@ func Test_WithDeploymentConfig(t *testing.T) {
 	t.Run("deployment config is nil when not provided", func(t *testing.T) {
 		var receivedConfig *config.DeploymentConfig
 		renderer := render.BundleRenderer{
-			ResourceGenerators: []render.ResourceGenerator{
-				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-					receivedConfig = opts.DeploymentConfig
-					return nil, nil
+			Mutators: []render.Mutator{
+				func(ctx *render.Context) error {
+					receivedConfig = ctx.DeploymentConfig
+					return nil
 				},
 			},
 		}
@@ -440,10 +447,10 @@ func Test_WithDeploymentConfig(t *testing.T) {
 	t.Run("deployment config is nil when explicitly set to nil", func(t *testing.T) {
 		var receivedConfig *config.DeploymentConfig
 		renderer := render.BundleRenderer{
-			ResourceGenerators: []render.ResourceGenerator{
-				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-					receivedConfig = opts.DeploymentConfig
-					return nil, nil
+			Mutators: []render.Mutator{
+				func(ctx *render.Context) error {
+					receivedConfig = ctx.DeploymentConfig
+					return nil
 				},
 			},
 		}

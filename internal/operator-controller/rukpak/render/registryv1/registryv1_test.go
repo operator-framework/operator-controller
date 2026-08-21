@@ -44,8 +44,9 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 	}
 }
 
-func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
-	expectedGenerators := []render.ResourceGenerator{
+func Test_MutatorsHasAllMutators(t *testing.T) {
+	expectedMutators := []render.Mutator{
+		render.NamespaceMutator,
 		generators.BundleCSVServiceAccountGenerator,
 		generators.BundleCSVPermissionsGenerator,
 		generators.BundleCSVClusterPermissionsGenerator,
@@ -54,14 +55,13 @@ func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
 		generators.BundleCSVDeploymentGenerator,
 		generators.BundleValidatingWebhookResourceGenerator,
 		generators.BundleMutatingWebhookResourceGenerator,
-		generators.BundleDeploymentServiceResourceGenerator,
-		generators.CertProviderResourceGenerator,
+		generators.CertMutator,
 	}
-	actualGenerators := registryv1.ResourceGenerators
+	actualMutators := registryv1.Mutators
 
-	require.Len(t, actualGenerators, len(expectedGenerators))
-	for i := range expectedGenerators {
-		require.Equal(t, reflect.ValueOf(expectedGenerators[i]).Pointer(), reflect.ValueOf(actualGenerators[i]).Pointer(), "bundle validator has unexpected validation function")
+	require.Len(t, actualMutators, len(expectedMutators))
+	for i := range expectedMutators {
+		require.Equal(t, reflect.ValueOf(expectedMutators[i]).Pointer(), reflect.ValueOf(actualMutators[i]).Pointer(), "bundle validator has unexpected validation function")
 	}
 }
 

@@ -114,10 +114,10 @@ func Test_CertificateProvisioner_Errors(t *testing.T) {
 func Test_CertProvisionerFor(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockCert := mockrender.NewMockCertificateProvider(ctrl)
-	prov := render.CertProvisionerFor("my.deployment.thing", render.Options{
+	prov := render.CertProvisionerFor("my.deployment.thing", render.NewContext(nil, render.Options{
 		InstallNamespace:    "my-namespace",
 		CertificateProvider: mockCert,
-	})
+	}))
 
 	require.Equal(t, prov.CertProvider, mockCert)
 	require.Equal(t, "my-deployment-thing-service", prov.ServiceName)
@@ -126,7 +126,7 @@ func Test_CertProvisionerFor(t *testing.T) {
 }
 
 func Test_CertProvisionerFor_ExtraLargeName_MoreThan63Chars(t *testing.T) {
-	prov := render.CertProvisionerFor("my.object.thing.has.a.really.really.really.really.really.long.name", render.Options{})
+	prov := render.CertProvisionerFor("my.object.thing.has.a.really.really.really.really.really.long.name", render.NewContext(nil, render.Options{}))
 
 	require.Len(t, prov.ServiceName, 63)
 	require.Len(t, prov.CertName, 63)

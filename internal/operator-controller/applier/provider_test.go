@@ -19,7 +19,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
@@ -45,9 +44,9 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 	t.Run("surfaces bundle renderer errors", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						return nil, errors.New("some error")
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
+						return errors.New("some error")
 					},
 				},
 			},
@@ -72,9 +71,9 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 	t.Run("surfaces bundle config unmarshall errors", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						return nil, nil
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
+						return nil
 					},
 				},
 			},
@@ -108,9 +107,9 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 	t.Run("returns terminal error for invalid config", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						return nil, nil
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
+						return nil
 					},
 				},
 			},
@@ -420,11 +419,11 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 		expectedWatchNamespace := "some-namespace"
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
 						t.Log("ensure watch namespace is appropriately configured")
-						require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
-						return nil, nil
+						require.Equal(t, []string{expectedWatchNamespace}, ctx.TargetNamespaces)
+						return nil
 					},
 				},
 			},
@@ -469,11 +468,11 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 		installNamespace := "some-namespace"
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
 						t.Log("ensure watch namespace is appropriately configured")
-						require.Equal(t, []string{installNamespace}, opts.TargetNamespaces)
-						return nil, nil
+						require.Equal(t, []string{installNamespace}, ctx.TargetNamespaces)
+						return nil
 					},
 				},
 			},
@@ -555,12 +554,12 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
 						t.Log("ensure deploymentConfig is passed to renderer")
-						require.NotNil(t, opts.DeploymentConfig)
-						require.Equal(t, expectedEnvVars, opts.DeploymentConfig.Env)
-						return nil, nil
+						require.NotNil(t, ctx.DeploymentConfig)
+						require.Equal(t, expectedEnvVars, ctx.DeploymentConfig.Env)
+						return nil
 					},
 				},
 			},
@@ -588,11 +587,11 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 	t.Run("does not pass deploymentConfig to renderer when not provided in configuration", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
 						t.Log("ensure deploymentConfig is nil when not provided")
-						require.Nil(t, opts.DeploymentConfig)
-						return nil, nil
+						require.Nil(t, ctx.DeploymentConfig)
+						return nil
 					},
 				},
 			},
@@ -619,13 +618,13 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
 						t.Log("ensure all deploymentConfig fields are passed to renderer")
-						require.NotNil(t, opts.DeploymentConfig)
-						require.Equal(t, expectedNodeSelector, opts.DeploymentConfig.NodeSelector)
-						require.Equal(t, expectedTolerations, opts.DeploymentConfig.Tolerations)
-						return nil, nil
+						require.NotNil(t, ctx.DeploymentConfig)
+						require.Equal(t, expectedNodeSelector, ctx.DeploymentConfig.NodeSelector)
+						require.Equal(t, expectedTolerations, ctx.DeploymentConfig.Tolerations)
+						return nil
 					},
 				},
 			},
@@ -662,13 +661,13 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		}
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
 						t.Log("ensure both watchNamespace and deploymentConfig are passed to renderer")
-						require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
-						require.NotNil(t, opts.DeploymentConfig)
-						require.Equal(t, expectedEnvVars, opts.DeploymentConfig.Env)
-						return nil, nil
+						require.Equal(t, []string{expectedWatchNamespace}, ctx.TargetNamespaces)
+						require.NotNil(t, ctx.DeploymentConfig)
+						require.Equal(t, expectedEnvVars, ctx.DeploymentConfig.Env)
+						return nil
 					},
 				},
 			},
@@ -701,11 +700,11 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 	t.Run("handles empty deploymentConfig gracefully", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
 						t.Log("ensure deploymentConfig is empty for empty config object")
-						require.Equal(t, &config.DeploymentConfig{}, opts.DeploymentConfig)
-						return nil, nil
+						require.Equal(t, &config.DeploymentConfig{}, ctx.DeploymentConfig)
+						return nil
 					},
 				},
 			},
@@ -733,9 +732,9 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 	t.Run("returns terminal error when deploymentConfig has invalid structure", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						return nil, nil
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
+						return nil
 					},
 				},
 			},
@@ -768,9 +767,9 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 	t.Run("returns terminal error when deploymentConfig is used but feature gate is disabled", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						return nil, nil
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
+						return nil
 					},
 				},
 			},
@@ -800,9 +799,9 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 	t.Run("returns terminal error when deploymentConfig is used with SingleOwnNamespace disabled and DeploymentConfig gate disabled", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						return nil, nil
+				Mutators: []render.Mutator{
+					func(ctx *render.Context) error {
+						return nil
 					},
 				},
 			},

@@ -25,6 +25,29 @@ const (
 
 var dns1123LabelRegexp = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 
+// NamespaceMutator resolves the install namespace onto the context and, for
+// system-managed namespaces, emits the Namespace object. It runs first in the pipeline so
+// every later mutator can read ctx.InstallNamespace. When the caller supplied the install
+// namespace (self-managed), the namespace is left as-is and no Namespace object is emitted.
+// After the namespace is known, it validates the context configuration.
+func NamespaceMutator(ctx *Context) error {
+	if !ctx.selfManagedNamespace {
+		name, template, err := resolveSystemManagedNamespace(ctx.RV1)
+		if err != nil {
+			return err
+		}
+		ctx.InstallNamespace = name
+
+		nsObj, err := buildNamespaceObject(name, template)
+		if err != nil {
+			return err
+		}
+		ctx.Objects = append(ctx.Objects, nsObj)
+	}
+
+	return ctx.validate()
+}
+
 // resolveSystemManagedNamespace derives the name of the namespace OLM should
 // create and manage for a bundle, using the precedence:
 //
