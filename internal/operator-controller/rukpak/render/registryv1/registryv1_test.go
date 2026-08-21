@@ -35,6 +35,7 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 		validators.CheckConversionWebhooksReferenceOwnedCRDs,
 		validators.CheckWebhookRules,
 		validators.CheckObjectSupport,
+		validators.CheckAPIServiceDeploymentReferentialIntegrity,
 	}
 	actualValidationFns := registryv1.BundleValidator
 
@@ -55,6 +56,7 @@ func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
 		generators.BundleValidatingWebhookResourceGenerator,
 		generators.BundleMutatingWebhookResourceGenerator,
 		generators.BundleDeploymentServiceResourceGenerator,
+		generators.BundleCSVAPIServiceGenerator,
 		generators.CertProviderResourceGenerator,
 	}
 	actualGenerators := registryv1.ResourceGenerators

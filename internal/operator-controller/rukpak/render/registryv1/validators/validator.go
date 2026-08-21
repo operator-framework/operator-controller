@@ -362,3 +362,24 @@ func CheckObjectSupport(rv1 *bundle.RegistryV1) []error {
 	}
 	return errs
 }
+
+// CheckAPIServiceDeploymentReferentialIntegrity validates that each owned APIService
+// entry in csv.spec.apiservicedefinitions.owned references a deployment that exists
+// in the CSV's install spec. APIServices with no deploymentName are not validated.
+func CheckAPIServiceDeploymentReferentialIntegrity(rv1 *bundle.RegistryV1) []error {
+	deploymentNames := sets.New[string]()
+	for _, dep := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		deploymentNames.Insert(dep.Name)
+	}
+
+	var errs []error
+	for _, desc := range rv1.CSV.Spec.APIServiceDefinitions.Owned {
+		if desc.DeploymentName != "" && !deploymentNames.Has(desc.DeploymentName) {
+			errs = append(errs, fmt.Errorf(
+				"owned apiservice %q references deployment %q which does not exist in the CSV install spec",
+				desc.GetName(), desc.DeploymentName,
+			))
+		}
+	}
+	return errs
+}
