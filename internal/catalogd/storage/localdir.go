@@ -48,6 +48,10 @@ type LocalDirV1 struct {
 	EnableMetasHandler   MetasHandlerMode
 	EnableGraphQLQueries GraphQLQueriesMode
 
+	// IsLeader reports whether the current pod is the leader-elected instance.
+	// When nil, the pod is assumed to be the leader (single-replica / standalone).
+	IsLeader func() bool
+
 	m sync.RWMutex
 	// this singleflight Group is used in `GetIndex()` to handle concurrent HTTP requests
 	// optimally. With the use of this singleflight group, the index is loaded from disk
@@ -413,7 +417,12 @@ func (s *LocalDirV1) BaseURL(catalog string) string {
 // StorageServerHandler returns an HTTP handler for serving catalog content
 // This implements the Instance interface for backward compatibility
 func (s *LocalDirV1) StorageServerHandler() http.Handler {
-	handlers := server.NewCatalogHandlers(s, s.graphqlSvc, s.RootURL, s.EnableMetasHandler, s.EnableGraphQLQueries)
+	isLeader := s.IsLeader
+	if isLeader == nil {
+		// Default: assume leader (single-replica / standalone mode).
+		isLeader = func() bool { return true }
+	}
+	handlers := server.NewCatalogHandlers(s, s.graphqlSvc, s.RootURL, s.EnableMetasHandler, s.EnableGraphQLQueries, isLeader)
 	return handlers.Handler()
 }
 
