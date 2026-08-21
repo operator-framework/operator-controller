@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -3792,6 +3793,224 @@ func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
 			objs, err := generators.BundleCSVDeploymentGenerator(tc.bundle, tc.opts)
 			require.NoError(t, err)
 			tc.verify(t, objs)
+		})
+	}
+}
+
+func Test_BundleCSVAPIServiceGenerator_FailsOnNil(t *testing.T) {
+	objs, err := generators.BundleCSVAPIServiceGenerator(nil, render.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
+func Test_BundleCSVAPIServiceGenerator_NoOwnedAPIServices(t *testing.T) {
+	rv1 := &bundle.RegistryV1{
+		CSV: csv.Builder().WithName("test-operator.v1.0.0").Build(),
+	}
+	objs, err := generators.BundleCSVAPIServiceGenerator(rv1, render.Options{
+		InstallNamespace: "test-ns",
+	})
+	require.NoError(t, err)
+	require.Empty(t, objs)
+}
+
+func Test_BundleCSVAPIServiceGenerator_Succeeds(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	fakeProvider := mockrender.NewMockCertificateProvider(ctrl)
+	fakeProvider.EXPECT().InjectCABundle(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(obj client.Object, _ render.CertificateProvisionerConfig) error {
+			obj.SetAnnotations(map[string]string{"cert-injected": "true"})
+			return nil
+		},
+	).AnyTimes()
+	fakeProvider.EXPECT().GetCertSecretInfo(gomock.Any()).Return(render.CertSecretInfo{
+		SecretName:     "test-cert",
+		CertificateKey: "tls.crt",
+		PrivateKeyKey:  "tls.key",
+	}).AnyTimes()
+
+	containerPort := int32(5443)
+	rv1 := &bundle.RegistryV1{
+		CSV: csv.Builder().
+			WithName("test-operator.v1.0.0").
+			WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+				Name:           "v1alpha1.mygroup.example.com",
+				Group:          "mygroup.example.com",
+				Version:        "v1alpha1",
+				Kind:           "MyKind",
+				DeploymentName: "test-deployment",
+				ContainerPort:  containerPort,
+			}).
+			Build(),
+	}
+
+	opts := render.Options{
+		InstallNamespace:    "test-ns",
+		CertificateProvider: fakeProvider,
+	}
+
+	objs, err := generators.BundleCSVAPIServiceGenerator(rv1, opts)
+	require.NoError(t, err)
+	// Each owned APIService produces: APIService + ClusterRoleBinding (auth-delegator) + RoleBinding (auth-reader)
+	require.Len(t, objs, 3)
+
+	// [0] APIService
+	apiSvc, ok := objs[0].(*apiregistrationv1.APIService)
+	require.True(t, ok, "expected *apiregistrationv1.APIService, got %T", objs[0])
+	require.Equal(t, "v1alpha1.mygroup.example.com", apiSvc.Name)
+	require.Equal(t, "mygroup.example.com", apiSvc.Spec.Group)
+	require.Equal(t, "v1alpha1", apiSvc.Spec.Version)
+	require.EqualValues(t, 2000, apiSvc.Spec.GroupPriorityMinimum)
+	require.EqualValues(t, 15, apiSvc.Spec.VersionPriority)
+	require.NotNil(t, apiSvc.Spec.Service)
+	require.Equal(t, "test-ns", apiSvc.Spec.Service.Namespace)
+	require.Equal(t, containerPort, *apiSvc.Spec.Service.Port)
+	require.False(t, apiSvc.Spec.InsecureSkipTLSVerify)
+	require.Equal(t, "true", apiSvc.GetAnnotations()["cert-injected"])
+
+	// [1] ClusterRoleBinding: <service>-system:auth-delegator
+	crb, ok := objs[1].(*rbacv1.ClusterRoleBinding)
+	require.True(t, ok, "expected *rbacv1.ClusterRoleBinding, got %T", objs[1])
+	require.Equal(t, "test-deployment-service-system:auth-delegator", crb.Name)
+	require.Equal(t, "ClusterRole", crb.RoleRef.Kind)
+	require.Equal(t, "system:auth-delegator", crb.RoleRef.Name)
+	require.Len(t, crb.Subjects, 1)
+	require.Equal(t, "ServiceAccount", crb.Subjects[0].Kind)
+	require.Equal(t, "test-ns", crb.Subjects[0].Namespace)
+
+	// [2] RoleBinding: <service>-auth-reader in kube-system
+	rb, ok := objs[2].(*rbacv1.RoleBinding)
+	require.True(t, ok, "expected *rbacv1.RoleBinding, got %T", objs[2])
+	require.Equal(t, "test-deployment-service-auth-reader", rb.Name)
+	require.Equal(t, "kube-system", rb.Namespace)
+	require.Equal(t, "Role", rb.RoleRef.Kind)
+	require.Equal(t, "extension-apiserver-authentication-reader", rb.RoleRef.Name)
+	require.Len(t, rb.Subjects, 1)
+	require.Equal(t, "ServiceAccount", rb.Subjects[0].Kind)
+	require.Equal(t, "test-ns", rb.Subjects[0].Namespace)
+}
+
+func Test_BundleCSVAPIServiceGenerator_DefaultPort(t *testing.T) {
+	rv1 := &bundle.RegistryV1{
+		CSV: csv.Builder().
+			WithName("test-operator.v1.0.0").
+			WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+				Name:           "v1.mygroup.example.com",
+				Group:          "mygroup.example.com",
+				Version:        "v1",
+				Kind:           "MyKind",
+				DeploymentName: "test-deployment",
+				// ContainerPort deliberately zero → should default to 443
+			}).
+			Build(),
+	}
+
+	objs, err := generators.BundleCSVAPIServiceGenerator(rv1, render.Options{InstallNamespace: "test-ns"})
+	require.NoError(t, err)
+	// APIService + ClusterRoleBinding + RoleBinding
+	require.Len(t, objs, 3)
+
+	apiSvc, ok := objs[0].(*apiregistrationv1.APIService)
+	require.True(t, ok)
+	require.EqualValues(t, 443, *apiSvc.Spec.Service.Port)
+
+	// Verify RBAC resources are present with correct types
+	_, ok = objs[1].(*rbacv1.ClusterRoleBinding)
+	require.True(t, ok, "expected *rbacv1.ClusterRoleBinding, got %T", objs[1])
+	_, ok = objs[2].(*rbacv1.RoleBinding)
+	require.True(t, ok, "expected *rbacv1.RoleBinding, got %T", objs[2])
+}
+
+func Test_BundleCSVAPIServiceGenerator_DeduplicatesByGroupVersion(t *testing.T) {
+	// Two descriptions with the same group+version but different Kind → only one APIService.
+	rv1 := &bundle.RegistryV1{
+		CSV: csv.Builder().
+			WithName("test-operator.v1.0.0").
+			WithOwnedAPIServiceDescriptions(
+				v1alpha1.APIServiceDescription{
+					Name: "v1.mygroup.example.com", Group: "mygroup.example.com",
+					Version: "v1", Kind: "MyKind", DeploymentName: "test-deployment",
+				},
+				v1alpha1.APIServiceDescription{
+					Name: "v1.mygroup.example.com", Group: "mygroup.example.com",
+					Version: "v1", Kind: "OtherKind", DeploymentName: "test-deployment",
+				},
+			).
+			Build(),
+	}
+
+	objs, err := generators.BundleCSVAPIServiceGenerator(rv1, render.Options{InstallNamespace: "test-ns"})
+	require.NoError(t, err)
+	// GetOwnedAPIServiceDescriptions deduplicates by group+version:
+	// 1 APIService + 1 ClusterRoleBinding + 1 RoleBinding
+	require.Len(t, objs, 3)
+
+	apiSvc, ok := objs[0].(*apiregistrationv1.APIService)
+	require.True(t, ok)
+	require.Equal(t, "v1.mygroup.example.com", apiSvc.Name)
+}
+
+func Test_BundleCSVAPIServiceGenerator_DeduplicatesRBACPerDeployment(t *testing.T) {
+	// Two descriptions with distinct group+versions sharing one deployment → 2 APIServices but 1 set of RBAC.
+	rv1 := &bundle.RegistryV1{
+		CSV: csv.Builder().
+			WithName("test-operator.v1.0.0").
+			WithOwnedAPIServiceDescriptions(
+				v1alpha1.APIServiceDescription{
+					Name: "v1.groupA.example.com", Group: "groupA.example.com",
+					Version: "v1", Kind: "KindA", DeploymentName: "shared-deployment",
+				},
+				v1alpha1.APIServiceDescription{
+					Name: "v1beta1.groupB.example.com", Group: "groupB.example.com",
+					Version: "v1beta1", Kind: "KindB", DeploymentName: "shared-deployment",
+				},
+			).
+			Build(),
+	}
+
+	objs, err := generators.BundleCSVAPIServiceGenerator(rv1, render.Options{InstallNamespace: "test-ns"})
+	require.NoError(t, err)
+	// 2 distinct APIServices + 1 ClusterRoleBinding + 1 RoleBinding (RBAC deduped per deployment).
+	// Order: first APIService → its RBAC → second APIService (no duplicate RBAC for same deployment).
+	require.Len(t, objs, 4)
+
+	_, ok := objs[0].(*apiregistrationv1.APIService)
+	require.True(t, ok, "objs[0] should be *apiregistrationv1.APIService, got %T", objs[0])
+	_, ok = objs[1].(*rbacv1.ClusterRoleBinding)
+	require.True(t, ok, "objs[1] should be *rbacv1.ClusterRoleBinding, got %T", objs[1])
+	_, ok = objs[2].(*rbacv1.RoleBinding)
+	require.True(t, ok, "objs[2] should be *rbacv1.RoleBinding, got %T", objs[2])
+	_, ok = objs[3].(*apiregistrationv1.APIService)
+	require.True(t, ok, "objs[3] should be *apiregistrationv1.APIService, got %T", objs[3])
+}
+
+func Test_BundleCSVAPIServiceGenerator_RejectsInvalidPort(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		port int32
+	}{
+		{name: "negative port", port: -1},
+		{name: "port above 65535", port: 65536},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rv1 := &bundle.RegistryV1{
+				CSV: csv.Builder().
+					WithName("test-operator.v1.0.0").
+					WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+						Name:           "v1alpha1.mygroup.example.com",
+						Group:          "mygroup.example.com",
+						Version:        "v1alpha1",
+						Kind:           "MyKind",
+						DeploymentName: "test-deployment",
+						ContainerPort:  tc.port,
+					}).
+					Build(),
+			}
+			objs, err := generators.BundleCSVAPIServiceGenerator(rv1, render.Options{InstallNamespace: "test-ns"})
+			require.Error(t, err)
+			require.Nil(t, objs)
+			require.Contains(t, err.Error(), "outside the valid Kubernetes port range")
 		})
 	}
 }
