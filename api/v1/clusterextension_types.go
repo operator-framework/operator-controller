@@ -49,17 +49,18 @@ const (
 
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
-	// namespace references an existing namespace where namespace-scoped resources
-	// for the extension are applied. The namespace must already exist on the cluster.
+	// namespace selects the namespace that namespace-scoped resources for the extension
+	// are applied to.
 	//
 	// <opcon:standard:description>
-	// namespace is required.
+	// In the standard configuration, namespace is required and must reference an existing
+	// namespace on the cluster.
 	// </opcon:standard:description>
 	// <opcon:experimental:description>
-	// namespace is optional. When omitted, operator-controller resolves and creates a
-	// managed namespace from bundle metadata. The mode (set vs omitted) is locked at
-	// creation time and cannot be changed. Omitting namespace requires the experimental
-	// feature set (BoxcutterRuntime).
+	// BoxcutterRuntime feature set, namespace is optional.
+	// When set, it must reference an existing namespace. When omitted, operator-controller
+	// resolves and creates a managed namespace from bundle metadata. The mode (set vs omitted)
+	// is locked at creation time and cannot be changed.
 	// </opcon:experimental:description>
 	//
 	// The namespace field follows the DNS label standard as defined in [RFC 1123].
@@ -69,6 +70,7 @@ type ClusterExtensionSpec struct {
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
 	// <opcon:standard:validation:Required>
+	// <opcon:standard:validation:XValidation:rule="self != ''",message="namespace is required">
 	// <opcon:experimental:validation:XValidation:rule="oldSelf != '' || self == ''",message="namespace cannot be set after creation; mode is locked at creation time">
 	//
 	// +kubebuilder:validation:MaxLength:=63

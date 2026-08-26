@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
+	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
 
 const (
@@ -47,7 +49,9 @@ func resolveSystemManagedNamespace(rv1 *bundle.RegistryV1) (string, *corev1.Name
 	case csvAnnotations[AnnotationSuggestedNamespace] != "":
 		name = csvAnnotations[AnnotationSuggestedNamespace]
 	default:
-		name = fmt.Sprintf("%s-system", rv1.PackageName)
+		// The auto-derived default must always be a valid namespace, even for package names
+		// with disallowed characters (e.g. dots) or names that are too long.
+		name = defaultInstallNamespace(rv1.PackageName)
 	}
 
 	if err := validateNamespaceName(name); err != nil {
@@ -71,17 +75,65 @@ func parseNamespaceTemplate(csvAnnotations map[string]string) (*corev1.Namespace
 	return &ns, nil
 }
 
+const maxNamespaceNameLength = 63
+
 func validateNamespaceName(name string) error {
 	if name == "" {
 		return fmt.Errorf("resolved namespace name is empty")
 	}
-	if len(name) > 63 {
-		return fmt.Errorf("resolved namespace name %q exceeds 63 characters", name)
+	if len(name) > maxNamespaceNameLength {
+		return fmt.Errorf("resolved namespace name %q exceeds %d characters", name, maxNamespaceNameLength)
 	}
 	if !dns1123LabelRegexp.MatchString(name) {
 		return fmt.Errorf("resolved namespace name %q is not a valid DNS1123 label", name)
 	}
 	return nil
+}
+
+// defaultInstallNamespace derives a deterministic, DNS1123-label-valid namespace name for a
+// package when the bundle does not suggest one. It normalizes disallowed characters (e.g. dots)
+// and enforces the namespace length limit. When the normalized name must be truncated, a short
+// hash of the original package name is appended to preserve deterministic collision resistance.
+func defaultInstallNamespace(packageName string) string {
+	const suffix = "system"
+
+	base := sanitizeDNS1123Label(packageName)
+
+	// Fast path: an already-valid, short base keeps the historical "<package>-system" name.
+	if base != "" && len(base)+1+len(suffix) <= maxNamespaceNameLength {
+		return base + "-" + suffix
+	}
+
+	// Otherwise keep the name deterministic and collision-resistant: append a short hash of the
+	// original package name and truncate the base to fit within the length limit.
+	hash := hashutil.DeepHashObject(packageName)[:8]
+	maxBase := maxNamespaceNameLength - len(suffix) - len(hash) - 2 // account for two '-' separators
+	if len(base) > maxBase {
+		base = base[:maxBase]
+	}
+	base = strings.Trim(base, "-")
+	if base == "" {
+		return hash + "-" + suffix
+	}
+	return base + "-" + hash + "-" + suffix
+}
+
+// sanitizeDNS1123Label lowercases s, replaces each run of disallowed characters with a single
+// hyphen, and trims leading/trailing hyphens so the result is a valid DNS1123 label (or empty).
+func sanitizeDNS1123Label(s string) string {
+	var b strings.Builder
+	lastHyphen := false
+	for _, r := range strings.ToLower(s) {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+			lastHyphen = false
+		case !lastHyphen:
+			b.WriteByte('-')
+			lastHyphen = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
 }
 
 // BuildNamespaceObject returns the Namespace object to include in the rendered set,

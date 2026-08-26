@@ -684,10 +684,11 @@ spec:
                   rule: has(self.preflight)
               namespace:
                 description: |-
-                  namespace references an existing namespace where namespace-scoped resources
-                  for the extension are applied. The namespace must already exist on the cluster.
+                  namespace selects the namespace that namespace-scoped resources for the extension
+                  are applied to.
 
-                  namespace is required.
+                  In the standard configuration, namespace is required and must reference an existing
+                  namespace on the cluster.
 
                   The namespace field follows the DNS label standard as defined in [RFC 1123].
                   It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
@@ -701,6 +702,8 @@ spec:
                   rule: self == '' || self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
                 - message: namespace is immutable once set
                   rule: oldSelf == '' || self == oldSelf
+                - message: namespace is required
+                  rule: self != ''
               serviceAccount:
                 description: |-
                   serviceAccount is a deprecated field and is completely ignored.

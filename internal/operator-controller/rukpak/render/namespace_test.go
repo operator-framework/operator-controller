@@ -1,6 +1,7 @@
 package render
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -300,4 +301,62 @@ func TestBuildNamespaceObject(t *testing.T) {
 			tt.validate(t, result.(*unstructured.Unstructured).Object)
 		})
 	}
+}
+
+func TestDefaultInstallNamespace(t *testing.T) {
+	tests := []struct {
+		name        string
+		packageName string
+		want        string // exact expected name; empty means only assert validity
+	}{
+		{
+			name:        "valid short name keeps <package>-system",
+			packageName: "argocd-operator",
+			want:        "argocd-operator-system",
+		},
+		{
+			name:        "dotted package name is normalized",
+			packageName: "my.operator",
+			want:        "my-operator-system",
+		},
+		{
+			name:        "uppercase and underscores are normalized",
+			packageName: "My_Operator",
+			want:        "my-operator-system",
+		},
+		{
+			name:        "overlong package name is truncated to a valid label",
+			packageName: strings.Repeat("a", 80),
+			// no exact expectation; validated below
+		},
+		{
+			name:        "package name with no valid characters still yields a valid namespace",
+			packageName: "...",
+			// no exact expectation; validated below
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := defaultInstallNamespace(tt.packageName)
+
+			// The default must always be a valid, length-bounded namespace name.
+			require.NoError(t, validateNamespaceName(got))
+
+			// It must be deterministic.
+			require.Equal(t, got, defaultInstallNamespace(tt.packageName))
+
+			if tt.want != "" {
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+
+	t.Run("distinct overlong names that share a prefix do not collide", func(t *testing.T) {
+		a := defaultInstallNamespace(strings.Repeat("a", 70) + "-one")
+		b := defaultInstallNamespace(strings.Repeat("a", 70) + "-two")
+		require.NoError(t, validateNamespaceName(a))
+		require.NoError(t, validateNamespaceName(b))
+		require.NotEqual(t, a, b)
+	})
 }
