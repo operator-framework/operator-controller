@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
@@ -410,6 +409,10 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 // namespace is system-managed and resolved+created by the bundle renderer, so
 // there is nothing to validate here — the emitted Namespace object is treated
 // like any other rendered object (conflicts are handled by collision protection).
+//
+// A missing namespace is a recoverable condition (the user can create it), so it
+// is surfaced as a retryable error rather than a terminal one: the next reconcile
+// succeeds once the namespace exists.
 func ValidateInstallNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
@@ -421,9 +424,9 @@ func ValidateInstallNamespace(nsClient corev1client.NamespacesGetter) ReconcileS
 		l.V(1).Info("validating user-provided namespace exists", "namespace", ext.Spec.Namespace)
 		_, err := nsClient.Namespaces().Get(ctx, ext.Spec.Namespace, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
-			termErr := reconcile.TerminalError(fmt.Errorf("namespace %q not found; spec.namespace must reference an existing namespace", ext.Spec.Namespace))
-			setStatusProgressing(ext, termErr)
-			return nil, termErr
+			nsErr := fmt.Errorf("namespace %q not found; spec.namespace must reference an existing namespace", ext.Spec.Namespace)
+			setStatusProgressing(ext, nsErr)
+			return nil, nsErr
 		}
 		if err != nil {
 			return nil, fmt.Errorf("error checking namespace %q: %w", ext.Spec.Namespace, err)

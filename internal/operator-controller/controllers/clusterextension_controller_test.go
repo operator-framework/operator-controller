@@ -1057,8 +1057,10 @@ func TestValidateInstallNamespace(t *testing.T) {
 				require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 				progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 				require.NotNil(t, progressingCond)
-				require.Equal(t, metav1.ConditionFalse, progressingCond.Status)
-				require.Equal(t, ocv1.ReasonBlocked, progressingCond.Reason)
+				// A missing namespace is retryable (not terminal): the user can create it and
+				// the next reconcile succeeds, so Progressing stays True with Reason=Retrying.
+				require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
+				require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
 				require.Contains(t, progressingCond.Message, tt.errorMessageIncludes)
 			} else {
 				require.NoError(t, err)

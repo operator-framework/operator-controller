@@ -62,6 +62,45 @@ func Test_ResourceGenerators_Errors(t *testing.T) {
 	require.Contains(t, err.Error(), "generator error")
 }
 
+func Test_BundleInstallNamespaceGenerator(t *testing.T) {
+	t.Run("is a no-op when rendering the install namespace was not requested", func(t *testing.T) {
+		objs, err := generators.BundleInstallNamespaceGenerator(&bundle.RegistryV1{}, render.Options{
+			InstallNamespace: "install-namespace",
+		})
+		require.NoError(t, err)
+		require.Empty(t, objs)
+	})
+
+	t.Run("emits a Namespace object for the install namespace when requested", func(t *testing.T) {
+		objs, err := generators.BundleInstallNamespaceGenerator(&bundle.RegistryV1{}, render.Options{
+			InstallNamespace:         "install-namespace",
+			GenerateInstallNamespace: true,
+		})
+		require.NoError(t, err)
+		require.Len(t, objs, 1)
+		require.Equal(t, "install-namespace", objs[0].GetName())
+		require.Equal(t, "Namespace", objs[0].GetObjectKind().GroupVersionKind().Kind)
+	})
+
+	t.Run("seeds labels and annotations from the template", func(t *testing.T) {
+		objs, err := generators.BundleInstallNamespaceGenerator(&bundle.RegistryV1{}, render.Options{
+			InstallNamespace:         "install-namespace",
+			GenerateInstallNamespace: true,
+			InstallNamespaceTemplate: &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      map[string]string{"pod-security.kubernetes.io/enforce": "privileged"},
+					Annotations: map[string]string{"example.com/foo": "bar"},
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, objs, 1)
+		require.Equal(t, "install-namespace", objs[0].GetName())
+		require.Equal(t, map[string]string{"pod-security.kubernetes.io/enforce": "privileged"}, objs[0].GetLabels())
+		require.Equal(t, map[string]string{"example.com/foo": "bar"}, objs[0].GetAnnotations())
+	})
+}
+
 func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 	for _, tc := range []struct {
 		name              string

@@ -295,7 +295,7 @@ func TestBuildNamespaceObject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := buildNamespaceObject(tt.nsName, tt.template)
+			result, err := BuildNamespaceObject(tt.nsName, tt.template)
 			require.NoError(t, err)
 			tt.validate(t, result.(*unstructured.Unstructured).Object)
 		})

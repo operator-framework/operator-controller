@@ -84,10 +84,10 @@ func validateNamespaceName(name string) error {
 	return nil
 }
 
-// buildNamespaceObject returns the Namespace object to include in the rendered set,
+// BuildNamespaceObject returns the Namespace object to include in the rendered set,
 // seeding labels and annotations from the optional template. Empty spec/status are
 // stripped to avoid apply drift.
-func buildNamespaceObject(name string, template *corev1.Namespace) (client.Object, error) {
+func BuildNamespaceObject(name string, template *corev1.Namespace) (client.Object, error) {
 	ns := corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",

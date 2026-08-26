@@ -56,6 +56,22 @@ var certVolumeConfigs = []certVolumeConfig{
 	},
 }
 
+// BundleInstallNamespaceGenerator emits the install Namespace object when the caller requested
+// it via render.RenderInstallNamespace (opts.GenerateInstallNamespace). The install namespace
+// name and template are resolved during Render setup; this generator stamps the name into the
+// optional template. When rendering the namespace was not requested (e.g. the caller supplied an
+// existing namespace), it is a no-op.
+func BundleInstallNamespaceGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+	if !opts.GenerateInstallNamespace {
+		return nil, nil
+	}
+	obj, err := render.BuildNamespaceObject(opts.InstallNamespace, opts.InstallNamespaceTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return []client.Object{obj}, nil
+}
+
 // BundleCSVDeploymentGenerator generates all deployments defined in rv1's cluster service version (CSV). The generated
 // resource aim to have parity with OLMv0 generated Deployment resources:
 // - olm.targetNamespaces annotation is set with the opts.TargetNamespace value
