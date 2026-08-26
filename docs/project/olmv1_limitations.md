@@ -14,6 +14,7 @@ Currently, OLM v1 only supports installing operators packaged in [OLM v0 bundles
     * `olm.gvk.required`
     * `olm.package.required`
     * `olm.constraint`
+* **must not** define `APIService`s in the `ClusterServiceVersion`
 
 OLM v1 verifies these criteria at install time and will surface violations in the `ClusterExtensions`'s `.status.conditions`.
 
