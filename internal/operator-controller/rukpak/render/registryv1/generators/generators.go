@@ -56,16 +56,15 @@ var certVolumeConfigs = []certVolumeConfig{
 	},
 }
 
-// BundleInstallNamespaceGenerator emits the install Namespace object when the caller requested
-// it via render.RenderInstallNamespace (opts.GenerateInstallNamespace). The install namespace
-// name and template are resolved during Render setup; this generator stamps the name into the
-// optional template. When rendering the namespace was not requested (e.g. the caller supplied an
-// existing namespace), it is a no-op.
+// BundleInstallNamespaceGenerator emits the install Namespace object for the system-managed
+// install namespace (the default), whose name, labels, and annotations are resolved during Render
+// setup. When the caller opted into a self-managed install namespace
+// (opts.SelfManagedInstallNamespace), that namespace is assumed to already exist and this is a no-op.
 func BundleInstallNamespaceGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-	if !opts.GenerateInstallNamespace {
+	if opts.SelfManagedInstallNamespace {
 		return nil, nil
 	}
-	obj, err := render.BuildNamespaceObject(opts.InstallNamespace, opts.InstallNamespaceTemplate)
+	obj, err := render.BuildNamespaceObject(opts.InstallNamespace, opts.InstallNamespaceLabels, opts.InstallNamespaceAnnotations)
 	if err != nil {
 		return nil, err
 	}

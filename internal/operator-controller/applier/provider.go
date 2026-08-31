@@ -30,12 +30,12 @@ type ManifestProvider interface {
 // RegistryV1ManifestProvider generates the manifests that should be installed for a registry+v1 bundle
 // given the user specified configuration given by the ClusterExtension API surface
 type RegistryV1ManifestProvider struct {
-	BundleRenderer              render.BundleRenderer
-	CertificateProvider         render.CertificateProvider
-	IsWebhookSupportEnabled     bool
-	IsSingleOwnNamespaceEnabled bool
-	IsDeploymentConfigEnabled   bool
-	IsBoxcutterRuntimeEnabled   bool
+	BundleRenderer               render.BundleRenderer
+	CertificateProvider          render.CertificateProvider
+	IsWebhookSupportEnabled      bool
+	IsSingleOwnNamespaceEnabled  bool
+	IsDeploymentConfigEnabled    bool
+	IsNamespaceManagementEnabled bool
 }
 
 func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -69,7 +69,7 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		return nil, fmt.Errorf("unsupported bundle: bundle must support at least one of [AllNamespaces SingleNamespace OwnNamespace] install modes")
 	}
 
-	if ext.Spec.Namespace == "" && !r.IsBoxcutterRuntimeEnabled {
+	if ext.Spec.Namespace == "" && !r.IsNamespaceManagementEnabled {
 		return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("spec.namespace is required unless the BoxcutterRuntime feature gate is enabled"))
 	}
 
@@ -77,13 +77,11 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		render.WithCertificateProvider(r.CertificateProvider),
 	}
 
-	// When the user set spec.namespace, render into that (already-existing) namespace and do
-	// not emit a Namespace object. Otherwise default to the bundle's system-managed namespace
-	// and have the renderer emit the Namespace object for it.
+	// When the user set spec.namespace, render into that caller-managed (already-existing)
+	// namespace and do not emit a Namespace object. Otherwise the renderer defaults to the
+	// bundle's system-managed namespace and emits the Namespace object for it.
 	if ext.Spec.Namespace != "" {
-		opts = append(opts, render.WithInstallNamespace(ext.Spec.Namespace))
-	} else {
-		opts = append(opts, render.RenderInstallNamespace())
+		opts = append(opts, render.WithSelfManagedInstallNamespace(ext.Spec.Namespace))
 	}
 
 	// Always validate inline config when present so that disabled features produce
@@ -203,8 +201,8 @@ func extensionConfigBytes(ext *ocv1.ClusterExtension) []byte {
 	return nil
 }
 
-// GetBundleAnnotations returns the annotations from the bundle's CSV metadata.
-func GetBundleAnnotations(bundleFS fs.FS) (map[string]string, error) {
+// getBundleAnnotations returns the annotations from the bundle's CSV metadata.
+func getBundleAnnotations(bundleFS fs.FS) (map[string]string, error) {
 	// The need to get the underlying bundle in order to extract its annotations
 	// will go away once we have a bundle interface that can surface the annotations independently of the
 	// underlying bundle format...

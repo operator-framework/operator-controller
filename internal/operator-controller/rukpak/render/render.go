@@ -67,14 +67,16 @@ type Options struct {
 	// If nil, no customizations are applied.
 	DeploymentConfig *config.DeploymentConfig
 
-	// GenerateInstallNamespace, when true, has the renderer emit a Namespace object for the
-	// install namespace (see RenderInstallNamespace). When false, the install namespace is
-	// assumed to already exist and no Namespace object is rendered.
-	GenerateInstallNamespace bool
-	// InstallNamespaceTemplate seeds labels/annotations (e.g. PSA) on the emitted Namespace
-	// object. It is defaulted from the bundle's suggested-namespace-template annotation during
-	// Render setup and only consulted when GenerateInstallNamespace is true.
-	InstallNamespaceTemplate *corev1.Namespace
+	// SelfManagedInstallNamespace, when true, means the caller supplies InstallNamespace and
+	// manages that namespace itself: it is assumed to already exist and no Namespace object is
+	// rendered. When false (the default), the renderer resolves the bundle's system-managed
+	// namespace and emits a Namespace object for it (see WithSelfManagedInstallNamespace).
+	SelfManagedInstallNamespace bool
+	// InstallNamespaceLabels and InstallNamespaceAnnotations seed metadata (e.g. PSA) on the
+	// emitted Namespace object. They are defaulted from the bundle's suggested-namespace-template
+	// annotation during Render setup and only consulted when SelfManagedInstallNamespace is false.
+	InstallNamespaceLabels      map[string]string
+	InstallNamespaceAnnotations map[string]string
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -91,6 +93,9 @@ func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 	if o.UniqueNameGenerator == nil {
 		errs = append(errs, errors.New("unique name generator must be specified"))
 	}
+	if o.SelfManagedInstallNamespace && o.InstallNamespace == "" {
+		errs = append(errs, errors.New("self-managed install namespace requires a namespace name"))
+	}
 	if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
 		errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
 	}
@@ -99,23 +104,14 @@ func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 
 type Option func(*Options)
 
-// WithInstallNamespace overrides the install namespace that namespace-scoped resources are
-// rendered into. When unset, the renderer defaults to the bundle's system-managed namespace
-// (resolved from CSV annotations, else "<packageName>-system"). This only sets the namespace
-// name; it does not cause a Namespace object to be emitted (see RenderInstallNamespace).
-func WithInstallNamespace(ns string) Option {
+// WithSelfManagedInstallNamespace renders namespace-scoped resources into ns and treats it as
+// a caller-managed namespace: it is assumed to already exist and no Namespace object is emitted.
+// Without this option the renderer defaults to the bundle's system-managed namespace (resolved
+// from CSV annotations, else "<packageName>-system") and emits a Namespace object for it.
+func WithSelfManagedInstallNamespace(ns string) Option {
 	return func(o *Options) {
 		o.InstallNamespace = ns
-	}
-}
-
-// RenderInstallNamespace instructs the renderer to also emit a Namespace object for the
-// install namespace (seeded from the bundle's suggested-namespace-template annotation, if any).
-// Without this option the install namespace is assumed to already exist and no Namespace object
-// is rendered.
-func RenderInstallNamespace() Option {
-	return func(o *Options) {
-		o.GenerateInstallNamespace = true
+		o.SelfManagedInstallNamespace = true
 	}
 }
 
@@ -168,19 +164,19 @@ func (r BundleRenderer) Render(rv1 bundle.RegistryV1, opts ...Option) ([]client.
 		CertificateProvider: nil,
 	}).apply(opts...)
 
-	// Default the install namespace (and its Namespace template) from the bundle's
-	// system-managed namespace metadata. The derived name is only needed when the caller did
-	// not supply an install namespace; the template is only needed when we emit a Namespace
-	// object. The BundleInstallNamespaceGenerator emits the Namespace object when requested.
-	if genOpts.InstallNamespace == "" || genOpts.GenerateInstallNamespace {
+	// Unless the caller opted into a self-managed install namespace, resolve the bundle's
+	// system-managed namespace (and its Namespace template) from CSV metadata. The template
+	// seeds labels/annotations on the Namespace object that BundleInstallNamespaceGenerator emits.
+	if !genOpts.SelfManagedInstallNamespace {
 		name, template, err := resolveSystemManagedNamespace(&rv1)
 		if err != nil {
 			return nil, err
 		}
-		if genOpts.InstallNamespace == "" {
-			genOpts.InstallNamespace = name
+		genOpts.InstallNamespace = name
+		if template != nil {
+			genOpts.InstallNamespaceLabels = template.Labels
+			genOpts.InstallNamespaceAnnotations = template.Annotations
 		}
-		genOpts.InstallNamespaceTemplate = template
 	}
 
 	if _, errs := genOpts.validate(&rv1); len(errs) > 0 {

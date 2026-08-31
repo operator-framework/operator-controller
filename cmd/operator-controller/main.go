@@ -502,12 +502,12 @@ func run() error {
 
 	certProvider := getCertificateProvider()
 	regv1ManifestProvider := &applier.RegistryV1ManifestProvider{
-		BundleRenderer:              registryv1.Renderer,
-		CertificateProvider:         certProvider,
-		IsWebhookSupportEnabled:     certProvider != nil,
-		IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
-		IsDeploymentConfigEnabled:   features.OperatorControllerFeatureGate.Enabled(features.DeploymentConfig),
-		IsBoxcutterRuntimeEnabled:   features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime),
+		BundleRenderer:               registryv1.Renderer,
+		CertificateProvider:          certProvider,
+		IsWebhookSupportEnabled:      certProvider != nil,
+		IsSingleOwnNamespaceEnabled:  features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
+		IsDeploymentConfigEnabled:    features.OperatorControllerFeatureGate.Enabled(features.DeploymentConfig),
+		IsNamespaceManagementEnabled: features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime),
 	}
 	var cerCfg reconcilerConfigurator
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
@@ -748,7 +748,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
-		controllers.ValidateInstallNamespace(coreClient),
 		controllers.ApplyBundle(appl),
 	}
 

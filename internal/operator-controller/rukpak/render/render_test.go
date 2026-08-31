@@ -26,7 +26,7 @@ func Test_BundleRenderer_NoConfig(t *testing.T) {
 	objs, err := renderer.Render(
 		bundle.RegistryV1{
 			CSV: csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
-		}, render.WithInstallNamespace("install-namespace"), nil)
+		}, render.WithSelfManagedInstallNamespace("install-namespace"), nil)
 	require.NoError(t, err)
 	require.Empty(t, objs)
 }
@@ -39,7 +39,7 @@ func Test_BundleRenderer_ValidatesBundle(t *testing.T) {
 			},
 		},
 	}
-	objs, err := renderer.Render(bundle.RegistryV1{}, render.WithInstallNamespace("install-namespace"))
+	objs, err := renderer.Render(bundle.RegistryV1{}, render.WithSelfManagedInstallNamespace("install-namespace"))
 	require.Nil(t, objs)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "this bundle is invalid")
@@ -61,7 +61,7 @@ func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
 		},
 	}
 
-	_, _ = renderer.Render(bundle.RegistryV1{}, render.WithInstallNamespace(expectedInstallNamespace))
+	_, _ = renderer.Render(bundle.RegistryV1{}, render.WithSelfManagedInstallNamespace(expectedInstallNamespace))
 }
 
 func Test_BundleRenderer_DefaultTargetNamespaces(t *testing.T) {
@@ -160,7 +160,7 @@ func Test_BundleRenderer_DefaultTargetNamespaces(t *testing.T) {
 				CSV: csv.Builder().
 					WithName("test").
 					WithInstallModeSupportFor(tc.supportedInstallModes...).Build(),
-			}, render.WithInstallNamespace("some-namespace"))
+			}, render.WithSelfManagedInstallNamespace("some-namespace"))
 			if tc.expectedErrMsg != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.expectedErrMsg)
@@ -283,7 +283,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 			renderer := render.BundleRenderer{}
 			_, err := renderer.Render(
 				bundle.RegistryV1{CSV: tc.csv},
-				append([]render.Option{render.WithInstallNamespace(tc.installNamespace)}, tc.opts...)...,
+				append([]render.Option{render.WithSelfManagedInstallNamespace(tc.installNamespace)}, tc.opts...)...,
 			)
 			if tc.err == nil {
 				require.NoError(t, err)
@@ -297,7 +297,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 
 func Test_BundleRenderer_AppliesUserOptions(t *testing.T) {
 	isOptionApplied := false
-	_, _ = render.BundleRenderer{}.Render(bundle.RegistryV1{}, render.WithInstallNamespace("install-namespace"), func(options *render.Options) {
+	_, _ = render.BundleRenderer{}.Render(bundle.RegistryV1{}, render.WithSelfManagedInstallNamespace("install-namespace"), func(options *render.Options) {
 		isOptionApplied = true
 	})
 	require.True(t, isOptionApplied)
@@ -344,7 +344,7 @@ func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 	objs, err := renderer.Render(
 		bundle.RegistryV1{
 			CSV: csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
-		}, render.WithInstallNamespace("install-namespace"))
+		}, render.WithSelfManagedInstallNamespace("install-namespace"))
 	require.NoError(t, err)
 	require.Equal(t, []client.Object{&corev1.Namespace{}, &corev1.Service{}, &appsv1.Deployment{}}, objs)
 }
@@ -363,7 +363,7 @@ func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
 	objs, err := renderer.Render(
 		bundle.RegistryV1{
 			CSV: csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
-		}, render.WithInstallNamespace("install-namespace"))
+		}, render.WithSelfManagedInstallNamespace("install-namespace"))
 	require.Nil(t, objs)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "generator error")
@@ -407,7 +407,7 @@ func Test_WithDeploymentConfig(t *testing.T) {
 			bundle.RegistryV1{
 				CSV: csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			},
-			render.WithInstallNamespace("test-namespace"),
+			render.WithSelfManagedInstallNamespace("test-namespace"),
 			render.WithDeploymentConfig(expectedConfig),
 		)
 
@@ -430,7 +430,7 @@ func Test_WithDeploymentConfig(t *testing.T) {
 			bundle.RegistryV1{
 				CSV: csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			},
-			render.WithInstallNamespace("test-namespace"),
+			render.WithSelfManagedInstallNamespace("test-namespace"),
 		)
 
 		require.NoError(t, err)
@@ -452,7 +452,7 @@ func Test_WithDeploymentConfig(t *testing.T) {
 			bundle.RegistryV1{
 				CSV: csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			},
-			render.WithInstallNamespace("test-namespace"),
+			render.WithSelfManagedInstallNamespace("test-namespace"),
 			render.WithDeploymentConfig(nil),
 		)
 

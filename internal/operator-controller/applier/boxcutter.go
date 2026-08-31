@@ -126,7 +126,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	}
 
 	// add bundle properties of interest to revision annotations
-	bundleAnnotations, err := GetBundleAnnotations(bundleFS)
+	bundleAnnotations, err := getBundleAnnotations(bundleFS)
 	if err != nil {
 		return nil, fmt.Errorf("error getting bundle annotations: %w", err)
 	}

@@ -764,10 +764,10 @@ spec:
                   namespace selects the namespace that namespace-scoped resources for the extension
                   are applied to.
 
-                  BoxcutterRuntime feature set, namespace is optional.
-                  When set, it must reference an existing namespace. When omitted, operator-controller
-                  resolves and creates a managed namespace from bundle metadata. The mode (set vs omitted)
-                  is locked at creation time and cannot be changed.
+                  namespace is optional. When set, it must reference an existing namespace on the cluster.
+                  When omitted, operator-controller resolves and creates a managed namespace from the
+                  bundle's metadata. Whether namespace is set or omitted is fixed at creation time and
+                  cannot be changed afterwards.
 
                   The namespace field follows the DNS label standard as defined in [RFC 1123].
                   It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
@@ -1115,6 +1115,10 @@ spec:
             required:
             - source
             type: object
+            x-kubernetes-validations:
+            - message: namespace presence is immutable; it cannot be added or removed
+                after creation
+              rule: has(oldSelf.namespace) == has(self.namespace)
           status:
             description: status is an optional field that defines the observed state
               of the ClusterExtension.

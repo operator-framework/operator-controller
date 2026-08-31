@@ -276,7 +276,7 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 
 	// Convert RegistryV1 to plain manifests
 	opts := []render.Option{
-		render.WithInstallNamespace(installNamespace),
+		render.WithSelfManagedInstallNamespace(installNamespace),
 		render.WithTargetNamespaces(watchNamespace),
 	}
 	if deploymentConfig != nil {

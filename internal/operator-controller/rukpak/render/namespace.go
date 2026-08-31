@@ -137,9 +137,9 @@ func sanitizeDNS1123Label(s string) string {
 }
 
 // BuildNamespaceObject returns the Namespace object to include in the rendered set,
-// seeding labels and annotations from the optional template. Empty spec/status are
-// stripped to avoid apply drift.
-func BuildNamespaceObject(name string, template *corev1.Namespace) (client.Object, error) {
+// seeding the given labels and annotations. Empty spec/status are stripped to avoid
+// apply drift.
+func BuildNamespaceObject(name string, labels, annotations map[string]string) (client.Object, error) {
 	ns := corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -150,13 +150,11 @@ func BuildNamespaceObject(name string, template *corev1.Namespace) (client.Objec
 		},
 	}
 
-	if template != nil {
-		if len(template.Labels) > 0 {
-			ns.Labels = template.Labels
-		}
-		if len(template.Annotations) > 0 {
-			ns.Annotations = template.Annotations
-		}
+	if len(labels) > 0 {
+		ns.Labels = labels
+	}
+	if len(annotations) > 0 {
+		ns.Annotations = annotations
 	}
 
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&ns)

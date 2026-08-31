@@ -251,7 +251,10 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 			}
 		}
 
-		celRe := regexp.MustCompile(validationPrefix + "XValidation:rule=\"([^\"]*)\",message=\"([^\"]*)\">")
+		// The rule is captured non-greedily so it may itself contain double quotes (e.g. a CEL
+		// self.matches("...") call); it extends to the real ",message=" delimiter. The message
+		// remains quote-free.
+		celRe := regexp.MustCompile(validationPrefix + "XValidation:rule=\"(.*?)\",message=\"([^\"]*)\">")
 		celMatches := celRe.FindAllStringSubmatch(jsonProps.Description, 64)
 		for _, celMatch := range celMatches {
 			if len(celMatch) != 3 {

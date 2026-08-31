@@ -38,6 +38,22 @@ func TestOpconTweaksXValidation(t *testing.T) {
 			description:     `Field description.` + "\n" + `<opcon:experimental:validation:XValidation:rule="oldSelf != '' || self == ''",message="mode is locked at creation time">`,
 			expectRuleCount: 0,
 		},
+		{
+			name:            "rule containing double quotes is captured in full",
+			channel:         StandardChannel,
+			description:     `Field description.` + "\n" + `<opcon:standard:validation:XValidation:rule="self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">`,
+			expectRule:      `self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")`,
+			expectMessage:   "namespace must be a valid DNS1123 label",
+			expectRuleCount: 1,
+		},
+		{
+			name:            "quoted rule combined with disjunction is captured in full",
+			channel:         ExperimentalChannel,
+			description:     `Field description.` + "\n" + `<opcon:experimental:validation:XValidation:rule="self == '' || self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">`,
+			expectRule:      `self == '' || self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")`,
+			expectMessage:   "namespace must be a valid DNS1123 label",
+			expectRuleCount: 1,
+		},
 	}
 
 	for _, tt := range tests {

@@ -168,8 +168,8 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 
 	t.Run("emits a system-managed Namespace object when spec.namespace is empty", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer:            registryv1.Renderer,
-			IsBoxcutterRuntimeEnabled: true,
+			BundleRenderer:               registryv1.Renderer,
+			IsNamespaceManagementEnabled: true,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
 			WithCSV(bundlecsv.Builder().
@@ -217,8 +217,8 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 func Test_RegistryV1ManifestProvider_BoxcutterRuntimeGate(t *testing.T) {
 	t.Run("rejects empty spec.namespace when the BoxcutterRuntime feature gate is disabled", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer:            registryv1.Renderer,
-			IsBoxcutterRuntimeEnabled: false,
+			BundleRenderer:               registryv1.Renderer,
+			IsNamespaceManagementEnabled: false,
 		}
 		bundleFS := newAllNamespacesBundleFS(t)
 		ext := &ocv1.ClusterExtension{}
@@ -231,8 +231,8 @@ func Test_RegistryV1ManifestProvider_BoxcutterRuntimeGate(t *testing.T) {
 
 	t.Run("allows empty spec.namespace and renders a managed Namespace when the BoxcutterRuntime feature gate is enabled", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer:            registryv1.Renderer,
-			IsBoxcutterRuntimeEnabled: true,
+			BundleRenderer:               registryv1.Renderer,
+			IsNamespaceManagementEnabled: true,
 		}
 		bundleFS := newAllNamespacesBundleFS(t)
 		ext := &ocv1.ClusterExtension{}
@@ -244,8 +244,8 @@ func Test_RegistryV1ManifestProvider_BoxcutterRuntimeGate(t *testing.T) {
 
 	t.Run("ignores the BoxcutterRuntime feature gate when spec.namespace is set", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer:            registryv1.Renderer,
-			IsBoxcutterRuntimeEnabled: false,
+			BundleRenderer:               registryv1.Renderer,
+			IsNamespaceManagementEnabled: false,
 		}
 		bundleFS := newAllNamespacesBundleFS(t)
 		ext := &ocv1.ClusterExtension{Spec: ocv1.ClusterExtensionSpec{Namespace: "install-namespace"}}

@@ -238,19 +238,16 @@ func TestResolveSystemManagedNamespace_Validation(t *testing.T) {
 
 func TestBuildNamespaceObject(t *testing.T) {
 	tests := []struct {
-		name     string
-		nsName   string
-		template *corev1.Namespace
-		validate func(t *testing.T, obj map[string]interface{})
+		name        string
+		nsName      string
+		labels      map[string]string
+		annotations map[string]string
+		validate    func(t *testing.T, obj map[string]interface{})
 	}{
 		{
-			name:   "with template labels",
+			name:   "with labels",
 			nsName: "my-ns",
-			template: &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"pod-security.kubernetes.io/enforce": "restricted"},
-				},
-			},
+			labels: map[string]string{"pod-security.kubernetes.io/enforce": "restricted"},
 			validate: func(t *testing.T, obj map[string]interface{}) {
 				assert.Equal(t, "v1", obj["apiVersion"])
 				assert.Equal(t, "Namespace", obj["kind"])
@@ -261,25 +258,13 @@ func TestBuildNamespaceObject(t *testing.T) {
 			},
 		},
 		{
-			name:     "nil template",
-			nsName:   "my-ns",
-			template: nil,
+			name:   "no labels or annotations",
+			nsName: "my-ns",
 			validate: func(t *testing.T, obj map[string]interface{}) {
 				metadata := obj["metadata"].(map[string]interface{})
 				assert.Equal(t, "my-ns", metadata["name"])
 				_, hasLabels := metadata["labels"]
 				assert.False(t, hasLabels)
-			},
-		},
-		{
-			name:   "template name is overridden",
-			nsName: "override",
-			template: &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{Name: "template-name"},
-			},
-			validate: func(t *testing.T, obj map[string]interface{}) {
-				metadata := obj["metadata"].(map[string]interface{})
-				assert.Equal(t, "override", metadata["name"])
 			},
 		},
 		{
@@ -296,7 +281,7 @@ func TestBuildNamespaceObject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := BuildNamespaceObject(tt.nsName, tt.template)
+			result, err := BuildNamespaceObject(tt.nsName, tt.labels, tt.annotations)
 			require.NoError(t, err)
 			tt.validate(t, result.(*unstructured.Unstructured).Object)
 		})

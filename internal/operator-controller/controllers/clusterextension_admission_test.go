@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
@@ -285,7 +286,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 		errMsg    string
 	}{
 		{"just alphanumeric", "justalphanumberic1", ""},
-		{"hypen-separated", "hyphenated-name", ""},
+		{"hyphen-separated", "hyphenated-name", ""},
 		{"no install namespace (managed mode)", "", ""},
 		{"dot-separated", "dotted.name", regexMismatchError},
 		{"longest valid install namespace", strings.Repeat("x", 63), ""},
@@ -404,6 +405,62 @@ func TestClusterExtensionAdmissionNamespaceImmutability(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestClusterExtensionAdmissionNamespacePresenceImmutability covers the presence-lock that the
+// typed-client test above cannot reach: the typed client always serializes spec.namespace (its
+// json tag has no omitempty), so it can only exercise the empty-string representation. A client
+// that truly omits the field (here, unstructured) would otherwise bypass the field-scoped
+// transition rules, so a spec-level rule enforces that namespace presence cannot change.
+func TestClusterExtensionAdmissionNamespacePresenceImmutability(t *testing.T) {
+	newExt := func(withNamespace bool) *unstructured.Unstructured {
+		spec := map[string]any{
+			"source": map[string]any{
+				"sourceType": "Catalog",
+				"catalog": map[string]any{
+					"packageName": "package",
+				},
+			},
+		}
+		if withNamespace {
+			spec["namespace"] = "my-ns"
+		}
+		return &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": ocv1.GroupVersion.String(),
+			"kind":       "ClusterExtension",
+			"metadata":   map[string]any{"generateName": "test-extension-"},
+			"spec":       spec,
+		}}
+	}
+
+	t.Parallel()
+	t.Run("namespace cannot be added when omitted at creation", func(t *testing.T) {
+		t.Parallel()
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := newExt(false)
+		require.NoError(t, cl.Create(ctx, ext))
+
+		require.NoError(t, unstructured.SetNestedField(ext.Object, "my-ns", "spec", "namespace"))
+		err := cl.Update(ctx, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "namespace presence is immutable")
+	})
+
+	t.Run("namespace cannot be removed once set", func(t *testing.T) {
+		t.Parallel()
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := newExt(true)
+		require.NoError(t, cl.Create(ctx, ext))
+
+		unstructured.RemoveNestedField(ext.Object, "spec", "namespace")
+		err := cl.Update(ctx, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "namespace presence is immutable")
+	})
 }
 
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
