@@ -5,9 +5,9 @@ go 1.26.3
 require (
 	github.com/google/pprof v0.0.0-20251007162407-5df77e3f7d1d
 	github.com/spf13/cobra v1.10.2
-	k8s.io/api v0.36.3
+	k8s.io/api v0.36.4
 	k8s.io/apimachinery v0.36.4
-	k8s.io/client-go v0.36.3
+	k8s.io/client-go v0.36.4
 )
 
 require (
