@@ -29,6 +29,11 @@ updates:
       default-days: 14
     commit-message:
       prefix: ":seedling:"
+    groups:
+      k8s-dependencies:
+        patterns:
+        - "k8s.io/*"
+        - "sigs.k8s.io/*"
   - package-ecosystem: "gomod"
     directory: "/hack/tools/test-profiling"
     schedule:
@@ -37,6 +42,11 @@ updates:
       default-days: 14
     commit-message:
       prefix: ":seedling:"
+    groups:
+      k8s-dependencies:
+        patterns:
+        - "k8s.io/*"
+        - "sigs.k8s.io/*"
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
