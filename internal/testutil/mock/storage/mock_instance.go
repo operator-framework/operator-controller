@@ -111,3 +111,17 @@ func (mr *MockInstanceMockRecorder) Store(ctx, catalog, fsys any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockInstance)(nil).Store), ctx, catalog, fsys)
 }
+
+// VerifyAndSync mocks base method.
+func (m *MockInstance) VerifyAndSync(catalog string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyAndSync", catalog)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VerifyAndSync indicates an expected call of VerifyAndSync.
+func (mr *MockInstanceMockRecorder) VerifyAndSync(catalog any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyAndSync", reflect.TypeOf((*MockInstance)(nil).VerifyAndSync), catalog)
+}
