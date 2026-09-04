@@ -74,6 +74,54 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 	}
 }
 
+func TestClusterExtensionOCIImageSourceConfig(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name      string
+		source    ocv1.SourceConfig
+		wantError bool
+	}{
+		{
+			name: "valid tagged image",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   &ocv1.OCIImageSource{Ref: "quay.io/example/operator:latest"},
+			},
+		},
+		{
+			name:      "missing image payload",
+			source:    ocv1.SourceConfig{SourceType: ocv1.SourceTypeOCIImage},
+			wantError: true,
+		},
+		{
+			name: "catalog payload with image source",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   &ocv1.OCIImageSource{Ref: "quay.io/example/operator:latest"},
+				Catalog:    &ocv1.CatalogFilter{PackageName: "example"},
+			},
+			wantError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source:    tc.source,
+				Namespace: "default",
+			}))
+			if tc.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 	tooLongError := "spec.source.catalog.packageName: Too long: may not be more than 253"
 	regexMismatchError := "packageName must be a valid DNS1123 subdomain"
