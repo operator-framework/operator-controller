@@ -362,3 +362,34 @@ func CheckObjectSupport(rv1 *bundle.RegistryV1) []error {
 	}
 	return errs
 }
+
+// CheckAPIServiceDeploymentReferentialIntegrity validates that each owned APIService
+// entry in csv.spec.apiservicedefinitions.owned has a non-empty deploymentName that
+// references a deployment present in the CSV's install spec. An empty deploymentName
+// is rejected because the APIService would have no backend to serve requests.
+func CheckAPIServiceDeploymentReferentialIntegrity(rv1 *bundle.RegistryV1) []error {
+	deploymentNames := sets.New[string]()
+	for _, dep := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		deploymentNames.Insert(dep.Name)
+	}
+
+	var errs []error
+	// Intentionally iterate the raw Owned slice rather than GetOwnedAPIServiceDescriptions()
+	// (which deduplicates by group+version). Validation is fail-closed: every declared entry,
+	// including duplicates, must reference a valid deployment. Generators use the deduplicated
+	// method to avoid emitting duplicate objects; validation takes the conservative approach.
+	for _, desc := range rv1.CSV.Spec.APIServiceDefinitions.Owned {
+		if desc.DeploymentName == "" {
+			errs = append(errs, fmt.Errorf(
+				"owned apiservice %q has no deploymentName; a deployment is required to back the extension API server",
+				desc.GetName(),
+			))
+		} else if !deploymentNames.Has(desc.DeploymentName) {
+			errs = append(errs, fmt.Errorf(
+				"owned apiservice %q references deployment %q which does not exist in the CSV install spec",
+				desc.GetName(), desc.DeploymentName,
+			))
+		}
+	}
+	return errs
+}

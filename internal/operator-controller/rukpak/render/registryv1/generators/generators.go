@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/sets"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -73,6 +74,15 @@ func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 		webhookDeployments.Insert(wh.DeploymentName)
 	}
 
+	// collect deployments that service owned APIServices
+	// GetOwnedAPIServiceDescriptions() deduplicates by group+version (GetName() identity).
+	apiServiceDeployments := sets.Set[string]{}
+	for _, desc := range rv1.CSV.GetOwnedAPIServiceDescriptions() {
+		if desc.DeploymentName != "" {
+			apiServiceDeployments.Insert(desc.DeploymentName)
+		}
+	}
+
 	objs := make([]client.Object, 0, len(rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs))
 	for _, depSpec := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 		// Add CSV annotations to template annotations
@@ -100,7 +110,7 @@ func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 		)
 
 		secretInfo := render.CertProvisionerFor(depSpec.Name, opts).GetCertSecretInfo()
-		if webhookDeployments.Has(depSpec.Name) && secretInfo != nil {
+		if (webhookDeployments.Has(depSpec.Name) || apiServiceDeployments.Has(depSpec.Name)) && secretInfo != nil {
 			ensureCorrectDeploymentCertVolumes(deploymentResource, *secretInfo)
 		}
 
@@ -414,6 +424,113 @@ func BundleMutatingWebhookResourceGenerator(rv1 *bundle.RegistryV1, opts render.
 	return objs, nil
 }
 
+// BundleCSVAPIServiceGenerator generates APIService resources and the supporting RBAC
+// for each entry in csv.spec.apiservicedefinitions.owned, matching OLMv0 behavior:
+//
+//   - APIService object (group+version, service reference, CA bundle injection)
+//   - ClusterRoleBinding <service>-system:auth-delegator — lets kube-apiserver delegate
+//     TokenReview/SubjectAccessReview to the extension API server (required for aggregation auth)
+//   - RoleBinding <service>-auth-reader in kube-system — lets the extension API server read
+//     the extension-apiserver-authentication ConfigMap (required for reading client CA config)
+//
+// Priority values follow OLMv0 conventions: GroupPriorityMinimum=2000, VersionPriority=15.
+func BundleCSVAPIServiceGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+	if rv1 == nil {
+		return nil, fmt.Errorf("bundle cannot be nil")
+	}
+
+	// Build a map from deployment name → ServiceAccount name for RBAC subject lookup.
+	depSAName := make(map[string]string, len(rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs))
+	for _, dep := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		depSAName[dep.Name] = saNameOrDefault(dep.Spec.Template.Spec.ServiceAccountName)
+	}
+
+	// GetOwnedAPIServiceDescriptions() deduplicates by group+version (GetName() identity),
+	// preventing duplicate APIService objects when multiple Kinds share the same group+version.
+	// Track which deployments have already had RBAC emitted; multiple group+versions can share
+	// a single deployment and must not produce duplicate ClusterRoleBinding/RoleBinding objects.
+	generatedRBACForDeployment := sets.New[string]()
+	var objs []client.Object
+	for _, desc := range rv1.CSV.GetOwnedAPIServiceDescriptions() {
+		certProvisioner := render.CertProvisionerFor(desc.DeploymentName, opts)
+
+		containerPort, err := resolveAPIServicePort(desc.ContainerPort)
+		if err != nil {
+			return nil, fmt.Errorf("invalid port for owned APIService %q: %w", desc.GetName(), err)
+		}
+
+		apiService := &apiregistrationv1.APIService{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "apiregistration.k8s.io/v1",
+				Kind:       "APIService",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: desc.GetName(), // "<version>.<group>"
+			},
+			Spec: apiregistrationv1.APIServiceSpec{
+				Group:                desc.Group,
+				Version:              desc.Version,
+				GroupPriorityMinimum: 2000,
+				VersionPriority:      15,
+				Service: &apiregistrationv1.ServiceReference{
+					Namespace: opts.InstallNamespace,
+					Name:      certProvisioner.ServiceName,
+					Port:      &containerPort,
+				},
+				InsecureSkipTLSVerify: false,
+			},
+		}
+
+		if err := certProvisioner.InjectCABundle(apiService); err != nil {
+			return nil, err
+		}
+		objs = append(objs, apiService)
+
+		// Emit RBAC once per deployment — multiple group+versions may share one deployment,
+		// and creating duplicate ClusterRoleBinding/RoleBinding names would be rejected by k8s.
+		if !generatedRBACForDeployment.Has(desc.DeploymentName) {
+			generatedRBACForDeployment.Insert(desc.DeploymentName)
+
+			saName := saNameOrDefault(depSAName[desc.DeploymentName])
+			subject := rbacv1.Subject{
+				Kind:      "ServiceAccount",
+				Name:      saName,
+				Namespace: opts.InstallNamespace,
+			}
+
+			// ClusterRoleBinding: <service>-system:auth-delegator
+			// Grants the extension API server's SA the system:auth-delegator ClusterRole so
+			// kube-apiserver can delegate TokenReview/SubjectAccessReview requests to it.
+			// Mirrors OLMv0 behavior: pkg/controller/install/certresources.go:500-520
+			objs = append(objs, CreateClusterRoleBindingResource(
+				certProvisioner.ServiceName+"-system:auth-delegator",
+				WithSubjects(subject),
+				WithRoleRef(rbacv1.RoleRef{
+					APIGroup: rbacv1.GroupName,
+					Kind:     "ClusterRole",
+					Name:     "system:auth-delegator",
+				}),
+			))
+
+			// RoleBinding: <service>-auth-reader in kube-system
+			// Allows the extension API server's SA to read the extension-apiserver-authentication
+			// ConfigMap in kube-system, which contains the cluster's client CA and request-header config.
+			// Mirrors OLMv0 behavior: pkg/controller/install/certresources.go:522-537
+			objs = append(objs, CreateRoleBindingResource(
+				certProvisioner.ServiceName+"-auth-reader",
+				"kube-system",
+				WithSubjects(subject),
+				WithRoleRef(rbacv1.RoleRef{
+					APIGroup: rbacv1.GroupName,
+					Kind:     "Role",
+					Name:     "extension-apiserver-authentication-reader",
+				}),
+			))
+		}
+	}
+	return objs, nil
+}
+
 // BundleDeploymentServiceResourceGenerator generates Service resources that support, e.g. the webhooks,
 // defined in the bundle's cluster service version spec. The resource is modified by the CertificateProvider in opts
 // to add any annotations or modifications necessary for certificate injection.
@@ -422,22 +539,52 @@ func BundleDeploymentServiceResourceGenerator(rv1 *bundle.RegistryV1, opts rende
 		return nil, fmt.Errorf("bundle cannot be nil")
 	}
 
-	// collect webhook service ports
-	webhookServicePortsByDeployment := map[string]sets.Set[corev1.ServicePort]{}
+	// collect service ports from webhooks and owned APIService definitions
+	servicePortsByDeployment := map[string]sets.Set[corev1.ServicePort]{}
 	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
-		if _, ok := webhookServicePortsByDeployment[wh.DeploymentName]; !ok {
-			webhookServicePortsByDeployment[wh.DeploymentName] = sets.Set[corev1.ServicePort]{}
+		if _, ok := servicePortsByDeployment[wh.DeploymentName]; !ok {
+			servicePortsByDeployment[wh.DeploymentName] = sets.Set[corev1.ServicePort]{}
 		}
-		webhookServicePortsByDeployment[wh.DeploymentName].Insert(getWebhookServicePort(wh))
+		servicePortsByDeployment[wh.DeploymentName].Insert(getWebhookServicePort(wh))
+	}
+	// GetOwnedAPIServiceDescriptions() deduplicates by group+version identity.
+	for _, desc := range rv1.CSV.GetOwnedAPIServiceDescriptions() {
+		if desc.DeploymentName == "" {
+			continue
+		}
+		port, err := resolveAPIServicePort(desc.ContainerPort)
+		if err != nil {
+			return nil, fmt.Errorf("invalid port for owned APIService %q: %w", desc.GetName(), err)
+		}
+		if _, ok := servicePortsByDeployment[desc.DeploymentName]; !ok {
+			servicePortsByDeployment[desc.DeploymentName] = sets.Set[corev1.ServicePort]{}
+		}
+		apiSvcPort := corev1.ServicePort{
+			Name:       strconv.Itoa(int(port)),
+			Port:       port,
+			TargetPort: intstr.FromInt32(port),
+		}
+		// Detect conflicts: if the deployment already has a port with the same port
+		// number but different configuration (e.g., a webhook with a different TargetPort),
+		// reject rather than generate an invalid Service with duplicate port numbers.
+		for existing := range servicePortsByDeployment[desc.DeploymentName] {
+			if existing.Port == port && existing != apiSvcPort {
+				return nil, fmt.Errorf(
+					"deployment %q has a Service port conflict: APIService port %d conflicts with an existing webhook port configuration",
+					desc.DeploymentName, port,
+				)
+			}
+		}
+		servicePortsByDeployment[desc.DeploymentName].Insert(apiSvcPort)
 	}
 
-	objs := make([]client.Object, 0, len(webhookServicePortsByDeployment))
+	objs := make([]client.Object, 0, len(servicePortsByDeployment))
 	for _, deploymentSpec := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
-		if _, ok := webhookServicePortsByDeployment[deploymentSpec.Name]; !ok {
+		if _, ok := servicePortsByDeployment[deploymentSpec.Name]; !ok {
 			continue
 		}
 
-		servicePorts := webhookServicePortsByDeployment[deploymentSpec.Name]
+		servicePorts := servicePortsByDeployment[deploymentSpec.Name]
 		ports := servicePorts.UnsortedList()
 		slices.SortStableFunc(ports, func(a, b corev1.ServicePort) int {
 			return cmp.Or(cmp.Compare(a.Port, b.Port), cmp.Compare(a.TargetPort.IntValue(), b.TargetPort.IntValue()))
@@ -471,15 +618,24 @@ func BundleDeploymentServiceResourceGenerator(rv1 *bundle.RegistryV1, opts rende
 
 // CertProviderResourceGenerator generates any resources necessary for the CertificateProvider
 // in opts to function correctly, e.g. Issuer or Certificate resources.
+// It covers both webhook-serving and APIService-serving deployments: both require a
+// certificate so that the CA bundle injected onto the webhook/APIService object is valid.
+// Omitting an APIService deployment would leave the injected cert-manager annotation
+// pointing at a non-existent Certificate, causing API aggregation TLS failures.
 func CertProviderResourceGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-	deploymentsWithWebhooks := sets.Set[string]{}
+	deploymentsNeedingCerts := sets.Set[string]{}
 
 	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
-		deploymentsWithWebhooks.Insert(wh.DeploymentName)
+		deploymentsNeedingCerts.Insert(wh.DeploymentName)
+	}
+	for _, desc := range rv1.CSV.GetOwnedAPIServiceDescriptions() {
+		if desc.DeploymentName != "" {
+			deploymentsNeedingCerts.Insert(desc.DeploymentName)
+		}
 	}
 
 	var objs []client.Object
-	for _, depName := range deploymentsWithWebhooks.UnsortedList() {
+	for _, depName := range deploymentsNeedingCerts.UnsortedList() {
 		certCfg := render.CertProvisionerFor(depName, opts)
 		certObjs, err := certCfg.AdditionalObjects()
 		if err != nil {
@@ -494,6 +650,19 @@ func CertProviderResourceGenerator(rv1 *bundle.RegistryV1, opts render.Options) 
 
 func saNameOrDefault(saName string) string {
 	return cmp.Or(saName, "default")
+}
+
+// resolveAPIServicePort returns the effective container port for an APIServiceDescription,
+// defaulting zero to 443 and rejecting values outside the valid Kubernetes port range [1,65535].
+func resolveAPIServicePort(raw int32) (int32, error) {
+	port := raw
+	if port == 0 {
+		port = 443
+	}
+	if port < 1 || port > 65535 {
+		return 0, fmt.Errorf("APIServiceDescription.ContainerPort %d is outside the valid Kubernetes port range [1, 65535]", raw)
+	}
+	return port, nil
 }
 
 func getWebhookServicePort(wh v1alpha1.WebhookDescription) corev1.ServicePort {
