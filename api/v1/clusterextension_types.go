@@ -79,7 +79,6 @@ type ClusterExtensionSpec struct {
 	// source is required and selects the installation source of content for this ClusterExtension.
 	// Set the sourceType field to perform the selection.
 	//
-	// Catalog is currently the only implemented sourceType.
 	// Setting sourceType to "Catalog" requires the catalog field to also be defined.
 	//
 	// Below is a minimal example of a source definition (in yaml):
@@ -122,23 +121,30 @@ type ClusterExtensionSpec struct {
 	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
 }
 
-const SourceTypeCatalog = "Catalog"
+const (
+	SourceTypeCatalog  = "Catalog"
+	SourceTypeOCIImage = "OCIImage"
+)
 
 // SourceConfig is a discriminated union which selects the installation source.
 //
 // +union
 // +kubebuilder:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'Catalog' ? has(self.catalog) : !has(self.catalog)",message="catalog is required when sourceType is Catalog, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'OCIImage' ? has(self.ociImage) : !has(self.ociImage)",message="ociImage is required when sourceType is OCIImage, and forbidden otherwise"
 type SourceConfig struct {
 	// sourceType is required and specifies the type of install source.
 	//
-	// The only allowed value is "Catalog".
+	// The allowed values are "Catalog" and "OCIImage".
+	//
+	// When set to "OCIImage", the bundle image is used directly. Direct sources do not perform
+	// dependency resolution and are only supported by the Boxcutter runtime.
 	//
 	// When set to "Catalog", information for determining the appropriate bundle of content to install
 	// is fetched from ClusterCatalog resources on the cluster.
 	// When using the Catalog sourceType, the catalog field must also be set.
 	//
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Catalog"
+	// +kubebuilder:validation:Enum:="Catalog";"OCIImage"
 	// +required
 	SourceType string `json:"sourceType"`
 
@@ -147,6 +153,29 @@ type SourceConfig struct {
 	//
 	// +optional
 	Catalog *CatalogFilter `json:"catalog,omitempty"`
+
+	// ociImage configures a bundle image to install directly.
+	// They do not provide catalog dependency resolution or upgrade safety.
+	//
+	// +optional
+	OCIImage *OCIImageSource `json:"ociImage,omitempty"`
+}
+
+// OCIImageSource identifies a bundle image to install directly from an OCI registry.
+type OCIImageSource struct {
+	// ref is a Docker-style image reference with a tag or digest.
+	//
+	// +required
+	// +kubebuilder:validation:MaxLength:=1000
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\\\b\")",message="must start with a valid domain"
+	// +kubebuilder:validation:XValidation:rule="self.find(\"(\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)\") != \"\"",message="a valid image name is required"
+	// +kubebuilder:validation:XValidation:rule="self.find(\"(@.*:)\") != \"\" || self.find(\":.*$\") != \"\"",message="must end with a digest or a tag"
+	// +kubebuilder:validation:XValidation:rule="self.find(\"(@.*:)\") == \"\" ? (self.find(\":.*$\") != \"\" ? self.find(\":.*$\").substring(1).size() <= 127 : true) : true",message="tag is invalid"
+	// +kubebuilder:validation:XValidation:rule="self.find(\"(@.*:)\") == \"\" ? (self.find(\":.*$\") != \"\" ? self.find(\":.*$\").matches(\":[\\\\w][\\\\w.-]*$\") : true) : true",message="tag is invalid"
+	// +kubebuilder:validation:XValidation:rule="self.find(\"(@.*:)\") != \"\" ? self.find(\"(@.*:)\").matches(\"(@[A-Za-z][A-Za-z0-9]*([-_+.][A-Za-z][A-Za-z0-9]*)*[:])\") : true",message="digest algorithm is not valid"
+	// +kubebuilder:validation:XValidation:rule="self.find(\"(@.*:)\") != \"\" ? self.find(\":.*$\").substring(1).size() >= 32 : true",message="digest is not valid"
+	// +kubebuilder:validation:XValidation:rule="self.find(\"(@.*:)\") != \"\" ? self.find(\":.*$\").matches(\":[0-9A-Fa-f]*$\") : true",message="digest is not valid"
+	Ref string `json:"ref"`
 }
 
 // ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.

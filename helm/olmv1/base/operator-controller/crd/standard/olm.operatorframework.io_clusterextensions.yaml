@@ -175,7 +175,6 @@ spec:
                   source is required and selects the installation source of content for this ClusterExtension.
                   Set the sourceType field to perform the selection.
 
-                  Catalog is currently the only implemented sourceType.
                   Setting sourceType to "Catalog" requires the catalog field to also be defined.
 
                   Below is a minimal example of a source definition (in yaml):
@@ -424,17 +423,60 @@ spec:
                     required:
                     - packageName
                     type: object
+                  ociImage:
+                    description: |-
+                      ociImage configures a bundle image to install directly.
+                      They do not provide catalog dependency resolution or upgrade safety.
+                    properties:
+                      ref:
+                        description: ref is a Docker-style image reference with a
+                          tag or digest.
+                        maxLength: 1000
+                        type: string
+                        x-kubernetes-validations:
+                        - message: must start with a valid domain
+                          rule: self.matches("^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\b")
+                        - message: a valid image name is required
+                          rule: self.find("(\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)")
+                            != ""
+                        - message: must end with a digest or a tag
+                          rule: self.find("(@.*:)") != "" || self.find(":.*$") !=
+                            ""
+                        - message: tag is invalid
+                          rule: 'self.find("(@.*:)") == "" ? (self.find(":.*$") !=
+                            "" ? self.find(":.*$").substring(1).size() <= 127 : true)
+                            : true'
+                        - message: tag is invalid
+                          rule: 'self.find("(@.*:)") == "" ? (self.find(":.*$") !=
+                            "" ? self.find(":.*$").matches(":[\\w][\\w.-]*$") : true)
+                            : true'
+                        - message: digest algorithm is not valid
+                          rule: 'self.find("(@.*:)") != "" ? self.find("(@.*:)").matches("(@[A-Za-z][A-Za-z0-9]*([-_+.][A-Za-z][A-Za-z0-9]*)*[:])")
+                            : true'
+                        - message: digest is not valid
+                          rule: 'self.find("(@.*:)") != "" ? self.find(":.*$").substring(1).size()
+                            >= 32 : true'
+                        - message: digest is not valid
+                          rule: 'self.find("(@.*:)") != "" ? self.find(":.*$").matches(":[0-9A-Fa-f]*$")
+                            : true'
+                    required:
+                    - ref
+                    type: object
                   sourceType:
                     description: |-
                       sourceType is required and specifies the type of install source.
 
-                      The only allowed value is "Catalog".
+                      The allowed values are "Catalog" and "OCIImage".
+
+                      When set to "OCIImage", the bundle image is used directly. Direct sources do not perform
+                      dependency resolution and are only supported by the Boxcutter runtime.
 
                       When set to "Catalog", information for determining the appropriate bundle of content to install
                       is fetched from ClusterCatalog resources on the cluster.
                       When using the Catalog sourceType, the catalog field must also be set.
                     enum:
                     - Catalog
+                    - OCIImage
                     type: string
                 required:
                 - sourceType
@@ -444,6 +486,10 @@ spec:
                     otherwise
                   rule: 'has(self.sourceType) && self.sourceType == ''Catalog'' ?
                     has(self.catalog) : !has(self.catalog)'
+                - message: ociImage is required when sourceType is OCIImage, and forbidden
+                    otherwise
+                  rule: 'has(self.sourceType) && self.sourceType == ''OCIImage'' ?
+                    has(self.ociImage) : !has(self.ociImage)'
             required:
             - namespace
             - source

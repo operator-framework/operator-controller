@@ -30,6 +30,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -108,6 +109,18 @@ func ServiceAccountDeprecationWarning() ClusterExtensionValidator {
 	}
 }
 
+// DirectBundleRequiresBoxcutter rejects direct OCI image sources when the
+// Boxcutter runtime is unavailable. The Helm runtime has no direct-source
+// implementation and must never silently interpret the source as a catalog.
+func DirectBundleRequiresBoxcutter() ClusterExtensionValidator {
+	return func(_ context.Context, ext *ocv1.ClusterExtension) error {
+		if ext.Spec.Source.SourceType == ocv1.SourceTypeOCIImage && !features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+			return fmt.Errorf("sourceType %q requires the %s feature gate", ocv1.SourceTypeOCIImage, features.BoxcutterRuntime)
+		}
+		return nil
+	}
+}
+
 func RetrieveRevisionStates(r RevisionStatesGetter) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
@@ -143,6 +156,27 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 			}
 			SetDeprecationStatus(ext, installedBundleName, nil, false)
 			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
+			return nil, nil
+		}
+
+		// Direct OCIImage sources have no catalog metadata, so resolve them
+		// without running catalog fallback or deprecation handling.
+		if ext.Spec.Source.SourceType == ocv1.SourceTypeOCIImage {
+			l.V(1).Info("resolving direct OCI image bundle")
+			resolvedBundle, resolvedBundleVersion, _, err := r.Resolve(ctx, ext, nil)
+			if err != nil {
+				setStatusProgressing(ext, err)
+				setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+				return nil, err
+			}
+			state.hasCatalogData = false
+			state.resolvedDeprecation = nil
+			SetDeprecationStatus(ext, installedBundleName(state.revisionStates), nil, false)
+			state.resolvedRevisionMetadata = &RevisionMetadata{
+				Package:        resolvedBundle.Package,
+				Image:          resolvedBundle.Image,
+				BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
+			}
 			return nil, nil
 		}
 
@@ -196,6 +230,13 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		}
 		return nil, nil
 	}
+}
+
+func installedBundleName(states *RevisionStates) string {
+	if states != nil && states.Installed != nil {
+		return states.Installed.Name
+	}
+	return ""
 }
 
 // handleResolutionError handles the case when bundle resolution fails.
