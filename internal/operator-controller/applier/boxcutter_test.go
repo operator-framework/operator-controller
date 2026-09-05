@@ -1141,7 +1141,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := newStorageMigratorGenerator(t)
@@ -1214,7 +1214,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		// GenerateRevisionFromHelmRelease should not be called when revisions already exist
 		ctrl := gomock.NewController(t)
@@ -1269,7 +1269,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1342,7 +1342,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1425,7 +1425,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1482,7 +1482,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		expectedRelease := &release.Release{
 			Name:    "test123",
@@ -1579,7 +1579,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		// GenerateRevisionFromHelmRelease should NOT be called when no deployed release exists
@@ -1626,7 +1626,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
 		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1646,6 +1646,33 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 
 		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil)
+
+		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
+		require.NoError(t, err)
+	})
+
+	t.Run("skips migration for managed namespace mode (empty spec.namespace)", func(t *testing.T) {
+		testScheme := runtime.NewScheme()
+		require.NoError(t, ocv1.AddToScheme(testScheme))
+
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+		ctrl := gomock.NewController(t)
+		// A managed-namespace extension never had a Helm release, so migration must be a no-op:
+		// no List, no action client, and no revision generation. No expectations are set, so
+		// gomock fails the test if any of these are called.
+		brb := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+		mag := newMockActionGetter(ctrl, mockActionGetterConfig{})
+		mockClient := mockctrlclient.NewMockClient(ctrl)
+
+		sm := &applier.BoxcutterStorageMigrator{
+			RevisionGenerator:  brb,
+			ActionClientGetter: mag,
+			Client:             mockClient,
+			Scheme:             testScheme,
+			FieldOwner:         "test-owner",
+		}
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)

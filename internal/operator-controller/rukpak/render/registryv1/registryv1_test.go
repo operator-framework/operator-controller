@@ -46,6 +46,7 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 
 func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
 	expectedGenerators := []render.ResourceGenerator{
+		generators.BundleInstallNamespaceGenerator,
 		generators.BundleCSVServiceAccountGenerator,
 		generators.BundleCSVPermissionsGenerator,
 		generators.BundleCSVClusterPermissionsGenerator,
@@ -84,7 +85,7 @@ func Test_Renderer_Success(t *testing.T) {
 		},
 	}
 
-	objs, err := registryv1.Renderer.Render(someBundle, "install-namespace")
+	objs, err := registryv1.Renderer.Render(someBundle, render.WithSelfManagedInstallNamespace("install-namespace"))
 	t.Log("Check renderer returns objects and no errors")
 	require.NoError(t, err)
 	require.NotEmpty(t, objs)
@@ -96,6 +97,38 @@ func Test_Renderer_Success(t *testing.T) {
 	t.Log("Check correct name and that the correct namespace was applied")
 	require.Equal(t, "my-service", objs[0].GetName())
 	require.Equal(t, "install-namespace", objs[0].GetNamespace())
+}
+
+func Test_Renderer_SystemManagedInstallNamespace(t *testing.T) {
+	someBundle := bundle.RegistryV1{
+		PackageName: "my-package",
+		CSV: csv.Builder().
+			WithName("test-bundle").
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+		Others: []unstructured.Unstructured{
+			*ToUnstructuredT(t, &corev1.Service{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Service",
+					APIVersion: corev1.SchemeGroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+			}),
+		},
+	}
+
+	objs, err := registryv1.Renderer.Render(someBundle)
+	require.NoError(t, err)
+
+	t.Log("Check the install namespace defaults to <packageName>-system and a Namespace object is emitted")
+	require.Len(t, objs, 2)
+	require.Equal(t, "Namespace", objs[0].GetObjectKind().GroupVersionKind().Kind)
+	require.Equal(t, "my-package-system", objs[0].GetName())
+
+	t.Log("Check namespace-scoped resources are rendered into the defaulted install namespace")
+	require.Equal(t, "my-service", objs[1].GetName())
+	require.Equal(t, "my-package-system", objs[1].GetNamespace())
 }
 
 func Test_Renderer_Failure_UnsupportedKind(t *testing.T) {
@@ -117,7 +150,7 @@ func Test_Renderer_Failure_UnsupportedKind(t *testing.T) {
 		},
 	}
 
-	objs, err := registryv1.Renderer.Render(someBundle, "install-namespace")
+	objs, err := registryv1.Renderer.Render(someBundle, render.WithSelfManagedInstallNamespace("install-namespace"))
 	t.Log("Check renderer returns objects and no errors")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
