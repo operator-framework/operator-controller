@@ -1194,7 +1194,7 @@ func newTestClusterExtension() *ocv1.ClusterExtension {
 			Namespace: "some-namespace",
 			Source: ocv1.SourceConfig{
 				SourceType: ocv1.SourceTypeCatalog,
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: "some-package",
 				},
 			},
@@ -1410,7 +1410,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 						Namespace: "ns-a",
 						Source: ocv1.SourceConfig{
 							SourceType: ocv1.SourceTypeCatalog,
-							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
+							Catalog:    ocv1.CatalogFilter{PackageName: "pkg"},
 						},
 					},
 				}
@@ -1420,7 +1420,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 						Namespace: "ns-b",
 						Source: ocv1.SourceConfig{
 							SourceType: ocv1.SourceTypeCatalog,
-							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
+							Catalog:    ocv1.CatalogFilter{PackageName: "pkg"},
 						},
 					},
 				}
@@ -1476,7 +1476,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 						Namespace: "ns-a",
 						Source: ocv1.SourceConfig{
 							SourceType: ocv1.SourceTypeCatalog,
-							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
+							Catalog:    ocv1.CatalogFilter{PackageName: "pkg"},
 						},
 					},
 				}
@@ -1532,7 +1532,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 						Namespace: "ns-b",
 						Source: ocv1.SourceConfig{
 							SourceType: ocv1.SourceTypeCatalog,
-							Catalog:    &ocv1.CatalogFilter{PackageName: "pkg"},
+							Catalog:    ocv1.CatalogFilter{PackageName: "pkg"},
 						},
 					},
 				}

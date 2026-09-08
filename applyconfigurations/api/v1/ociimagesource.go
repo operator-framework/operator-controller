@@ -22,7 +22,42 @@ package v1
 //
 // OCIImageSource identifies a bundle image to install directly from an OCI registry.
 type OCIImageSourceApplyConfiguration struct {
-	// ref is a Docker-style image reference with a tag or digest.
+	// ref is a required field that defines the reference to a container image for a registry+v1 bundle.
+	// It cannot be more than 1000 characters.
+	//
+	// A reference has 3 parts: the domain, name, and identifier.
+	//
+	// The domain is typically the registry where an image is located.
+	// It must be alphanumeric characters (lowercase and uppercase) separated by the "." character.
+	// Hyphenation is allowed, but the domain must start and end with alphanumeric characters.
+	// Specifying a port to use is also allowed by adding the ":" character followed by numeric values.
+	// The port must be the last value in the domain.
+	// Some examples of valid domain values are "registry.mydomain.io", "quay.io", "my-registry.io:8080".
+	//
+	// The name is typically the repository in the registry where an image is located.
+	// It must contain lowercase alphanumeric characters separated only by the ".", "_", "__", "-" characters.
+	// Multiple names can be concatenated with the "/" character.
+	// The domain and name are combined using the "/" character.
+	// Some examples of valid name values are "operatorhubio/catalog", "catalog", "my-catalog.prod".
+	// An example of the domain and name parts of a reference being combined is "quay.io/operatorhubio/catalog".
+	//
+	// The identifier is typically the tag or digest for an image reference and is present at the end of the reference.
+	// It starts with a separator character used to distinguish the end of the name and beginning of the identifier.
+	// For a digest-based reference, the "@" character is the separator.
+	// For a tag-based reference, the ":" character is the separator.
+	// An identifier is required in the reference.
+	//
+	// Digest-based references must contain an algorithm reference immediately after the "@" separator.
+	// The algorithm reference must be followed by the ":" character and an encoded string.
+	// The algorithm must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the "-", "_", "+", and "." characters.
+	// Some examples of valid algorithm values are "sha256", "sha256+b64u", "multihash+base58".
+	// The encoded string following the algorithm must be hex digits (a-f, A-F, 0-9) and must be a minimum of 32 characters.
+	//
+	// Tag-based references must begin with a word character (alphanumeric + "_") followed by word characters or ".", and "-" characters.
+	// The tag must not be longer than 127 characters.
+	//
+	// An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"
+	// An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest"
 	Ref *string `json:"ref,omitempty"`
 }
 

@@ -463,14 +463,15 @@ _Appears in:_
 
 OCIImageSource identifies a bundle image to install directly from an OCI registry.
 
-
+_Validation:_
+- MinProperties: 1
 
 _Appears in:_
 - [SourceConfig](#sourceconfig)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `ref` _string_ | ref is a Docker-style image reference with a tag or digest. |  | MaxLength: 1000 <br />Required: \{\} <br /> |
+| `ref` _string_ | ref is a required field that defines the reference to a container image for a registry+v1 bundle.<br />It cannot be more than 1000 characters.<br />A reference has 3 parts: the domain, name, and identifier.<br />The domain is typically the registry where an image is located.<br />It must be alphanumeric characters (lowercase and uppercase) separated by the "." character.<br />Hyphenation is allowed, but the domain must start and end with alphanumeric characters.<br />Specifying a port to use is also allowed by adding the ":" character followed by numeric values.<br />The port must be the last value in the domain.<br />Some examples of valid domain values are "registry.mydomain.io", "quay.io", "my-registry.io:8080".<br />The name is typically the repository in the registry where an image is located.<br />It must contain lowercase alphanumeric characters separated only by the ".", "_", "__", "-" characters.<br />Multiple names can be concatenated with the "/" character.<br />The domain and name are combined using the "/" character.<br />Some examples of valid name values are "operatorhubio/catalog", "catalog", "my-catalog.prod".<br />An example of the domain and name parts of a reference being combined is "quay.io/operatorhubio/catalog".<br />The identifier is typically the tag or digest for an image reference and is present at the end of the reference.<br />It starts with a separator character used to distinguish the end of the name and beginning of the identifier.<br />For a digest-based reference, the "@" character is the separator.<br />For a tag-based reference, the ":" character is the separator.<br />An identifier is required in the reference.<br />Digest-based references must contain an algorithm reference immediately after the "@" separator.<br />The algorithm reference must be followed by the ":" character and an encoded string.<br />The algorithm must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the "-", "_", "+", and "." characters.<br />Some examples of valid algorithm values are "sha256", "sha256+b64u", "multihash+base58".<br />The encoded string following the algorithm must be hex digits (a-f, A-F, 0-9) and must be a minimum of 32 characters.<br />Tag-based references must begin with a word character (alphanumeric + "_") followed by word characters or ".", and "-" characters.<br />The tag must not be longer than 127 characters.<br />An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"<br />An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest" |  | MaxLength: 1000 <br />Required: \{\} <br /> |
 
 
 #### ObjectSelector
@@ -624,14 +625,16 @@ SourceConfig is a discriminated union which selects the installation source.
 
 
 
+
+
 _Appears in:_
 - [ClusterExtensionSpec](#clusterextensionspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `sourceType` _string_ | sourceType is required and specifies the type of install source.<br />The allowed values are "Catalog" and "OCIImage".<br />When set to "OCIImage", the bundle image is used directly. Direct sources do not perform<br />dependency resolution and are only supported by the Boxcutter runtime.<br />When set to "Catalog", information for determining the appropriate bundle of content to install<br />is fetched from ClusterCatalog resources on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set. |  | Enum: [Catalog OCIImage] <br />Required: \{\} <br /> |
+| `sourceType` _string_ | sourceType is required and specifies the type of install source.<br />**Standard channel:** <br />The allowed value is "Catalog".<br />When set to "Catalog", information for determining the appropriate bundle of content to install<br />is fetched from ClusterCatalog resources on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set.<br /><br />**Experimental channel:** <br />The allowed values are "Catalog" and "OCIImage".<br />When set to "OCIImage", the bundle image is used directly. Direct sources do not perform<br />dependency resolution and are only supported by the Boxcutter runtime.<br />When set to "Catalog", information for determining the appropriate bundle of content to install<br />is fetched from ClusterCatalog resources on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set.<br /><br /> |  | Enum: [Catalog] <br />Required: \{\} <br /> |
 | `catalog` _[CatalogFilter](#catalogfilter)_ | catalog configures how information is sourced from a catalog.<br />It is required when sourceType is "Catalog", and forbidden otherwise. |  | Optional: \{\} <br /> |
-| `ociImage` _[OCIImageSource](#ociimagesource)_ | ociImage configures a bundle image to install directly.<br />They do not provide catalog dependency resolution or upgrade safety. |  | Optional: \{\} <br /> |
+| `ociImage` _[OCIImageSource](#ociimagesource)_ | ociImage configures a bundle image to install directly.<br />**Experimental channel:** <br />They do not provide catalog dependency resolution or upgrade safety.<br /><br />**Experimental channel:**  |  | MinProperties: 1 <br />Optional: \{\} <br /> |
 
 
 #### SourceType
