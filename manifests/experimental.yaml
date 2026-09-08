@@ -1049,39 +1049,20 @@ spec:
                   ociImage:
                     description: |-
                       ociImage configures a bundle image to install directly.
+
                       They do not provide catalog dependency resolution or upgrade safety.
+                    minProperties: 1
                     properties:
                       ref:
                         description: ref is a Docker-style image reference with a
                           tag or digest.
                         maxLength: 1000
+                        minLength: 1
                         type: string
                         x-kubernetes-validations:
-                        - message: must start with a valid domain
-                          rule: self.matches("^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\b")
-                        - message: a valid image name is required
-                          rule: self.find("(\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)")
-                            != ""
-                        - message: must end with a digest or a tag
-                          rule: self.find("(@.*:)") != "" || self.find(":.*$") !=
-                            ""
-                        - message: tag is invalid
-                          rule: 'self.find("(@.*:)") == "" ? (self.find(":.*$") !=
-                            "" ? self.find(":.*$").substring(1).size() <= 127 : true)
-                            : true'
-                        - message: tag is invalid
-                          rule: 'self.find("(@.*:)") == "" ? (self.find(":.*$") !=
-                            "" ? self.find(":.*$").matches(":[\\w][\\w.-]*$") : true)
-                            : true'
-                        - message: digest algorithm is not valid
-                          rule: 'self.find("(@.*:)") != "" ? self.find("(@.*:)").matches("(@[A-Za-z][A-Za-z0-9]*([-_+.][A-Za-z][A-Za-z0-9]*)*[:])")
-                            : true'
-                        - message: digest is not valid
-                          rule: 'self.find("(@.*:)") != "" ? self.find(":.*$").substring(1).size()
-                            >= 32 : true'
-                        - message: digest is not valid
-                          rule: 'self.find("(@.*:)") != "" ? self.find(":.*$").matches(":[0-9A-Fa-f]*$")
-                            : true'
+                        - message: must be a complete image reference with a valid
+                            repository and tag or digest
+                          rule: self.matches("^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?(:[0-9]+)?/[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*(:[A-Za-z0-9_][A-Za-z0-9_.-]{0,126}|@[A-Za-z][A-Za-z0-9+._-]*:[0-9A-Fa-f]{32,})$")
                     required:
                     - ref
                     type: object
@@ -1109,10 +1090,6 @@ spec:
                     otherwise
                   rule: 'has(self.sourceType) && self.sourceType == ''Catalog'' ?
                     has(self.catalog) : !has(self.catalog)'
-                - message: ociImage is required when sourceType is OCIImage, and forbidden
-                    otherwise
-                  rule: 'has(self.sourceType) && self.sourceType == ''OCIImage'' ?
-                    has(self.ociImage) : !has(self.ociImage)'
             required:
             - namespace
             - source

@@ -3,7 +3,6 @@ package resolve
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
 
@@ -21,28 +20,14 @@ import (
 // OCIImageResolver resolves a bundle directly from an OCI image. The image is
 // unpacked through the shared image cache before its content is inspected.
 type OCIImageResolver struct {
-	Puller    imageutil.Puller
-	Cache     imageutil.Cache
-	Detectors []BundleContentDetector
-}
-
-// BundleContentDetector identifies and loads a supported bundle format from
-// already-unpacked image content.
-type BundleContentDetector interface {
-	Detect(fs.FS, string) (*declcfg.Bundle, error)
-}
-
-// RegistryV1ContentDetector loads registry+v1 bundles from their filesystem layout.
-type RegistryV1ContentDetector struct{}
-
-func (RegistryV1ContentDetector) Detect(bundleFS fs.FS, image string) (*declcfg.Bundle, error) {
-	return bundleFromFS(bundleFS, image)
+	Puller imageutil.Puller
+	Cache  imageutil.Cache
 }
 
 // Resolve loads a registry+v1 bundle from the direct OCIImage source. Direct
 // sources intentionally do not consult catalogs or perform dependency resolution.
 func (r *OCIImageResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
-	if ext.Spec.Source.OCIImage == nil {
+	if ext.Spec.Source.OCIImage.Ref == "" {
 		return nil, nil, nil, reconcile.TerminalError(fmt.Errorf("OCIImage source is missing ociImage.ref"))
 	}
 	if r.Puller == nil || r.Cache == nil {
@@ -57,7 +42,7 @@ func (r *OCIImageResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensi
 		return nil, nil, nil, fmt.Errorf("direct bundle image pull returned no canonical reference")
 	}
 
-	bundle, err := r.detect(imageFS, canonicalRef.String())
+	bundle, err := bundleFromFS(imageFS, canonicalRef.String())
 	if err != nil {
 		return nil, nil, nil, reconcile.TerminalError(fmt.Errorf("invalid direct bundle image: %w", err))
 	}
@@ -66,22 +51,6 @@ func (r *OCIImageResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensi
 		return nil, nil, nil, reconcile.TerminalError(err)
 	}
 	return bundle, versionRelease, nil, nil
-}
-
-func (r *OCIImageResolver) detect(bundleFS fs.FS, image string) (*declcfg.Bundle, error) {
-	detectors := r.Detectors
-	if len(detectors) == 0 {
-		detectors = []BundleContentDetector{RegistryV1ContentDetector{}}
-	}
-	var errs []error
-	for _, detector := range detectors {
-		bundle, err := detector.Detect(bundleFS, image)
-		if err == nil {
-			return bundle, nil
-		}
-		errs = append(errs, err)
-	}
-	return nil, errors.Join(errs...)
 }
 
 func bundleFromFS(bundleFS fs.FS, image string) (*declcfg.Bundle, error) {
@@ -102,17 +71,35 @@ func bundleFromFS(bundleFS fs.FS, image string) (*declcfg.Bundle, error) {
 	if err := json.Unmarshal([]byte(propertiesJSON), &bundle.Properties); err != nil {
 		return nil, fmt.Errorf("failed to parse bundle properties: %w", err)
 	}
-	if !hasPackageProperty(bundle.Properties) {
-		return nil, fmt.Errorf("bundle %q has no package property", bundle.Name)
+	if err := validatePackageProperty(bundle.Properties, registryBundle.PackageName); err != nil {
+		return nil, err
 	}
 	return bundle, nil
 }
 
-func hasPackageProperty(properties []property.Property) bool {
+func validatePackageProperty(properties []property.Property, expectedPackageName string) error {
+	var packageProperties []property.Property
 	for _, p := range properties {
 		if p.Type == property.TypePackage {
-			return true
+			packageProperties = append(packageProperties, p)
 		}
 	}
-	return false
+	if len(packageProperties) != 1 {
+		return fmt.Errorf("expected exactly one %q package property, found %d", property.TypePackage, len(packageProperties))
+	}
+
+	var packageData struct {
+		PackageName string `json:"packageName"`
+		Version     string `json:"version"`
+	}
+	if err := json.Unmarshal(packageProperties[0].Value, &packageData); err != nil {
+		return fmt.Errorf("failed to parse %q package property: %w", property.TypePackage, err)
+	}
+	if packageData.PackageName == "" || packageData.PackageName != expectedPackageName {
+		return fmt.Errorf("package property name %q does not match bundle package name %q", packageData.PackageName, expectedPackageName)
+	}
+	if packageData.Version == "" {
+		return fmt.Errorf("package property for %q has no version", expectedPackageName)
+	}
+	return nil
 }

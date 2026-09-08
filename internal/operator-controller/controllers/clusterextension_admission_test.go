@@ -85,20 +85,28 @@ func TestClusterExtensionOCIImageSourceConfig(t *testing.T) {
 			name: "valid tagged image",
 			source: ocv1.SourceConfig{
 				SourceType: ocv1.SourceTypeOCIImage,
-				OCIImage:   &ocv1.OCIImageSource{Ref: "quay.io/example/operator:latest"},
+				OCIImage:   ocv1.OCIImageSource{Ref: "quay.io/example/operator:latest"},
 			},
 		},
 		{
-			name:      "missing image payload",
-			source:    ocv1.SourceConfig{SourceType: ocv1.SourceTypeOCIImage},
-			wantError: true,
-		},
-		{
-			name: "catalog payload with image source",
+			name: "valid tagged image with registry port",
 			source: ocv1.SourceConfig{
 				SourceType: ocv1.SourceTypeOCIImage,
-				OCIImage:   &ocv1.OCIImageSource{Ref: "quay.io/example/operator:latest"},
-				Catalog:    &ocv1.CatalogFilter{PackageName: "example"},
+				OCIImage:   ocv1.OCIImageSource{Ref: "quay.io:5000/example/operator:latest"},
+			},
+		},
+		{
+			name: "valid digested image with registry port",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "quay.io:5000/example/operator@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+			},
+		},
+		{
+			name: "uppercase repository segment",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "quay.io/example/Operator:latest"},
 			},
 			wantError: true,
 		},

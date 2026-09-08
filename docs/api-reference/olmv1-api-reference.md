@@ -463,14 +463,15 @@ _Appears in:_
 
 OCIImageSource identifies a bundle image to install directly from an OCI registry.
 
-
+_Validation:_
+- MinProperties: 1
 
 _Appears in:_
 - [SourceConfig](#sourceconfig)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `ref` _string_ | ref is a Docker-style image reference with a tag or digest. |  | MaxLength: 1000 <br />Required: \{\} <br /> |
+| `ref` _string_ | ref is a Docker-style image reference with a tag or digest. |  | MaxLength: 1000 <br />MinLength: 1 <br />Required: \{\} <br /> |
 
 
 #### ObjectSelector
@@ -622,6 +623,8 @@ _Appears in:_
 
 SourceConfig is a discriminated union which selects the installation source.
 
+<opcon:experimental:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'OCIImage' ? self.ociImage.ref.size() != 0 : self.ociImage.ref.size() == 0",message="ociImage is required when sourceType is OCIImage, and forbidden otherwise">
+
 
 
 _Appears in:_
@@ -629,9 +632,9 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `sourceType` _string_ | sourceType is required and specifies the type of install source.<br />The allowed values are "Catalog" and "OCIImage".<br />When set to "OCIImage", the bundle image is used directly. Direct sources do not perform<br />dependency resolution and are only supported by the Boxcutter runtime.<br />When set to "Catalog", information for determining the appropriate bundle of content to install<br />is fetched from ClusterCatalog resources on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set. |  | Enum: [Catalog OCIImage] <br />Required: \{\} <br /> |
+| `sourceType` _string_ | sourceType is required and specifies the type of install source.<br /><opcon:standard:description><br />The allowed value is "Catalog".<br />When set to "Catalog", information for determining the appropriate bundle of content to install<br />is fetched from ClusterCatalog resources on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set.<br /></opcon:standard:description><br /><opcon:experimental:description><br />The allowed values are "Catalog" and "OCIImage".<br />When set to "OCIImage", the bundle image is used directly. Direct sources do not perform<br />dependency resolution and are only supported by the Boxcutter runtime.<br />When set to "Catalog", information for determining the appropriate bundle of content to install<br />is fetched from ClusterCatalog resources on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set.<br /></opcon:experimental:description><br /><opcon:experimental:validation:Enum=Catalog;OCIImage> |  | Enum: [Catalog] <br />Required: \{\} <br /> |
 | `catalog` _[CatalogFilter](#catalogfilter)_ | catalog configures how information is sourced from a catalog.<br />It is required when sourceType is "Catalog", and forbidden otherwise. |  | Optional: \{\} <br /> |
-| `ociImage` _[OCIImageSource](#ociimagesource)_ | ociImage configures a bundle image to install directly.<br />They do not provide catalog dependency resolution or upgrade safety. |  | Optional: \{\} <br /> |
+| `ociImage` _[OCIImageSource](#ociimagesource)_ | ociImage configures a bundle image to install directly.<br /><opcon:experimental:description><br />They do not provide catalog dependency resolution or upgrade safety.<br /></opcon:experimental:description><br /><opcon:experimental> |  | MinProperties: 1 <br />Optional: \{\} <br /> |
 
 
 #### SourceType

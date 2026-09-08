@@ -21,9 +21,20 @@ package v1
 // with apply.
 //
 // SourceConfig is a discriminated union which selects the installation source.
+//
+// <opcon:experimental:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'OCIImage' ? self.ociImage.ref.size() != 0 : self.ociImage.ref.size() == 0",message="ociImage is required when sourceType is OCIImage, and forbidden otherwise">
 type SourceConfigApplyConfiguration struct {
 	// sourceType is required and specifies the type of install source.
 	//
+	// <opcon:standard:description>
+	// The allowed value is "Catalog".
+	//
+	// When set to "Catalog", information for determining the appropriate bundle of content to install
+	// is fetched from ClusterCatalog resources on the cluster.
+	// When using the Catalog sourceType, the catalog field must also be set.
+	// </opcon:standard:description>
+	//
+	// <opcon:experimental:description>
 	// The allowed values are "Catalog" and "OCIImage".
 	//
 	// When set to "OCIImage", the bundle image is used directly. Direct sources do not perform
@@ -32,12 +43,18 @@ type SourceConfigApplyConfiguration struct {
 	// When set to "Catalog", information for determining the appropriate bundle of content to install
 	// is fetched from ClusterCatalog resources on the cluster.
 	// When using the Catalog sourceType, the catalog field must also be set.
+	// </opcon:experimental:description>
+	//
+	// <opcon:experimental:validation:Enum=Catalog;OCIImage>
 	SourceType *string `json:"sourceType,omitempty"`
 	// catalog configures how information is sourced from a catalog.
 	// It is required when sourceType is "Catalog", and forbidden otherwise.
 	Catalog *CatalogFilterApplyConfiguration `json:"catalog,omitempty"`
 	// ociImage configures a bundle image to install directly.
+	// <opcon:experimental:description>
 	// They do not provide catalog dependency resolution or upgrade safety.
+	// </opcon:experimental:description>
+	// <opcon:experimental>
 	OCIImage *OCIImageSourceApplyConfiguration `json:"ociImage,omitempty"`
 }
 

@@ -664,6 +664,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		controllers.ValidateClusterExtension(
 			controllers.ServiceAccountDeprecationWarning(),
 			controllers.DirectBundleRequiresBoxcutter(),
+			controllers.ValidateDirectBundleSource(),
 		),
 		controllers.MigrateStorage(storageMigrator),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
@@ -753,6 +754,7 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		controllers.ValidateClusterExtension(
 			controllers.ServiceAccountDeprecationWarning(),
 			controllers.DirectBundleRequiresBoxcutter(),
+			controllers.ValidateDirectBundleSource(),
 		),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
