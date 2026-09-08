@@ -146,7 +146,7 @@ func TestExtensionDeveloper(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: regPkgName,
 				},
 			},

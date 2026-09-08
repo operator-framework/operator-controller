@@ -29,7 +29,7 @@ func TestOCIImageResolverResolve(t *testing.T) {
 	resolver := &OCIImageResolver{Puller: fakePuller{fs: bundleFS, ref: ref}, Cache: fakeCache{}}
 	ext := &ocv1.ClusterExtension{Spec: ocv1.ClusterExtensionSpec{Source: ocv1.SourceConfig{
 		SourceType: ocv1.SourceTypeOCIImage,
-		OCIImage:   &ocv1.OCIImageSource{Ref: ref},
+		OCIImage:   ocv1.OCIImageSource{Ref: ref},
 	}}}
 
 	bundle, version, deprecation, err := resolver.Resolve(context.Background(), ext, nil)
@@ -46,12 +46,31 @@ func TestOCIImageResolverRejectsInvalidBundle(t *testing.T) {
 	resolver := &OCIImageResolver{Puller: fakePuller{fs: bundlefs.Builder().Build(), ref: ref}, Cache: fakeCache{}}
 	ext := &ocv1.ClusterExtension{Spec: ocv1.ClusterExtensionSpec{Source: ocv1.SourceConfig{
 		SourceType: ocv1.SourceTypeOCIImage,
-		OCIImage:   &ocv1.OCIImageSource{Ref: ref},
+		OCIImage:   ocv1.OCIImageSource{Ref: ref},
 	}}}
 
 	_, _, _, err := resolver.Resolve(context.Background(), ext, nil)
 	require.Error(t, err)
 	require.ErrorIs(t, err, reconcile.TerminalError(nil))
+}
+
+func TestOCIImageResolverRejectsMismatchedPackageProperty(t *testing.T) {
+	ref := "quay.io/example/operator@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	bundleFS := bundlefs.Builder().
+		WithPackageName("example-operator").
+		WithCSV(csvbuilder.Builder().WithName("example-operator.v1.2.3").WithAnnotations(map[string]string{
+			source.PropertyOLMProperties: `[{"type":"olm.package","value":{"packageName":"other-operator","version":"1.2.3"}}]`,
+		}).Build()).
+		Build()
+	resolver := &OCIImageResolver{Puller: fakePuller{fs: bundleFS, ref: ref}, Cache: fakeCache{}}
+	ext := &ocv1.ClusterExtension{Spec: ocv1.ClusterExtensionSpec{Source: ocv1.SourceConfig{
+		SourceType: ocv1.SourceTypeOCIImage,
+		OCIImage:   ocv1.OCIImageSource{Ref: ref},
+	}}}
+
+	_, _, _, err := resolver.Resolve(context.Background(), ext, nil)
+	require.ErrorIs(t, err, reconcile.TerminalError(nil))
+	require.ErrorContains(t, err, "does not match bundle package name")
 }
 
 type fakePuller struct {

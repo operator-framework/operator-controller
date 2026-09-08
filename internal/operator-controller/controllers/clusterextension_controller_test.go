@@ -104,7 +104,7 @@ func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							PackageName: pkgName,
 						},
 					},
@@ -142,7 +142,7 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: pkgName,
 				},
 			},
@@ -205,7 +205,7 @@ func TestClusterExtensionResolutionFailsWithDeprecationData(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
+				Catalog:    ocv1.CatalogFilter{PackageName: pkgName},
 			},
 			Namespace: "default",
 		},
@@ -293,7 +293,7 @@ func TestClusterExtensionUpgradeShowsInstalledBundleDeprecation(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
+				Catalog:    ocv1.CatalogFilter{PackageName: pkgName},
 			},
 			Namespace: "default",
 		},
@@ -392,7 +392,7 @@ func TestClusterExtensionUpgradeFromDeprecatedBundleClearsDeprecation(t *testing
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
+				Catalog:    ocv1.CatalogFilter{PackageName: pkgName},
 			},
 			Namespace: "default",
 		},
@@ -486,7 +486,7 @@ func TestClusterExtensionResolutionFailsWithoutCatalogDeprecationData(t *testing
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog:    &ocv1.CatalogFilter{PackageName: pkgName},
+				Catalog:    ocv1.CatalogFilter{PackageName: pkgName},
 			},
 			Namespace: "default",
 		},
@@ -555,7 +555,7 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							PackageName: pkgName,
 							Version:     pkgVer,
 							Channels:    []string{pkgChan},
@@ -676,7 +676,7 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: pkgName,
 					Version:     pkgVer,
 					Channels:    []string{pkgChan},
@@ -783,7 +783,7 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: "prometheus",
 					Version:     "1.0.0",
 					Channels:    []string{"beta"},
@@ -941,7 +941,7 @@ func TestValidateClusterExtension(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							PackageName: "test-package",
 						},
 					},
@@ -1025,7 +1025,7 @@ func TestValidateInstallNamespace(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog:    &ocv1.CatalogFilter{PackageName: "test-package"},
+						Catalog:    ocv1.CatalogFilter{PackageName: "test-package"},
 					},
 					Namespace: tt.specNamespace,
 					ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // deprecated field used in test
@@ -1121,7 +1121,7 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: pkgName,
 					Version:     pkgVer,
 					Channels:    []string{pkgChan},
@@ -1200,7 +1200,7 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: pkgName,
 					Version:     pkgVer,
 					Channels:    []string{pkgChan},
@@ -1273,7 +1273,7 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 			Source: ocv1.SourceConfig{
 				SourceType: ocv1.SourceTypeCatalog,
 
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: pkgName,
 					Version:     pkgVer,
 					Channels:    []string{pkgChan},
@@ -1346,7 +1346,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: pkgName,
 					Version:     pkgVer,
 					Channels:    []string{pkgChan},
@@ -1428,7 +1428,7 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: pkgName,
 					Version:     pkgVer,
 					Channels:    []string{pkgChan},
@@ -1737,7 +1737,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog:    &ocv1.CatalogFilter{},
+						Catalog:    ocv1.CatalogFilter{},
 					},
 				},
 				Status: ocv1.ClusterExtensionStatus{
@@ -1751,7 +1751,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog:    &ocv1.CatalogFilter{},
+						Catalog:    ocv1.CatalogFilter{},
 					},
 				},
 				Status: ocv1.ClusterExtensionStatus{
@@ -1809,7 +1809,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"nondeprecated"},
 						},
 					},
@@ -1825,7 +1825,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"nondeprecated"},
 						},
 					},
@@ -1886,7 +1886,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel"},
 						},
 					},
@@ -1902,7 +1902,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel"},
 						},
 					},
@@ -1964,7 +1964,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel"},
 						},
 					},
@@ -1980,7 +1980,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel"},
 						},
 					},
@@ -2055,7 +2055,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel"},
 						},
 					},
@@ -2071,7 +2071,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel"},
 						},
 					},
@@ -2140,7 +2140,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel"},
 						},
 					},
@@ -2156,7 +2156,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel"},
 						},
 					},
@@ -2224,7 +2224,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel", "anotherbadchannel"},
 						},
 					},
@@ -2240,7 +2240,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							Channels: []string{"badchannel", "anotherbadchannel"},
 						},
 					},
@@ -2670,7 +2670,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "test-pkg",
 						// No version - should fall back
 					},
@@ -2751,7 +2751,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "test-pkg",
 						Version:     "1.0.1", // Requesting upgrade
 					},
@@ -2822,7 +2822,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "test-pkg",
 						// No version - auto-update to latest
 					},
@@ -2921,7 +2921,7 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "test-pkg",
 						// No version specified
 					},
@@ -2968,7 +2968,7 @@ func TestCheckCatalogsExist(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "test-pkg",
 					},
 				},
@@ -2988,7 +2988,7 @@ func TestCheckCatalogsExist(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "test-pkg",
 						Selector:    nil, // No selector
 					},
@@ -3009,7 +3009,7 @@ func TestCheckCatalogsExist(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "test-pkg",
 						Selector:    &metav1.LabelSelector{}, // Empty selector (matches everything)
 					},
@@ -3030,7 +3030,7 @@ func TestCheckCatalogsExist(t *testing.T) {
 			Spec: ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "test-pkg",
 						Selector: &metav1.LabelSelector{
 							MatchExpressions: []metav1.LabelSelectorRequirement{
