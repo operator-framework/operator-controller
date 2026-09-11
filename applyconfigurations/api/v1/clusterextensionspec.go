@@ -22,6 +22,7 @@ package v1
 //
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpecApplyConfiguration struct {
+	// <opcon:standard:description>
 	// namespace specifies a Kubernetes namespace.
 	// It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
 	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
@@ -32,6 +33,29 @@ type ClusterExtensionSpecApplyConfiguration struct {
 	// and be no longer than 63 characters.
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	// </opcon:standard:description>
+	// <opcon:experimental:description>
+	// namespace selects the namespace that namespace-scoped resources for the extension
+	// are applied to.
+	//
+	// namespace is optional. When set, it must reference an existing namespace on the cluster.
+	// When omitted, operator-controller resolves and creates a managed namespace from the
+	// bundle's metadata. Whether namespace is set or omitted is fixed at creation time and
+	// cannot be changed afterwards.
+	//
+	// The namespace field follows the DNS label standard as defined in [RFC 1123].
+	// It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
+	// and be no longer than 63 characters.
+	//
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	// </opcon:experimental:description>
+	//
+	// <opcon:standard:validation:XValidation:rule="self == oldSelf",message="namespace is immutable">
+	// <opcon:standard:validation:XValidation:rule="self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">
+	// <opcon:experimental:validation:XValidation:rule="self == ” || self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">
+	// <opcon:experimental:validation:XValidation:rule="oldSelf == ” || self == oldSelf",message="namespace is immutable once set">
+	// <opcon:experimental:validation:XValidation:rule="oldSelf != ” || self == ”",message="namespace cannot be set after creation; mode is locked at creation time">
+	// <opcon:experimental:validation:Optional>
 	Namespace *string `json:"namespace,omitempty"`
 	// serviceAccount is a deprecated field and is completely ignored.
 	// OLMv1 is a single-tenant system where users with ClusterExtension write access are

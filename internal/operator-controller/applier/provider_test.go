@@ -2,6 +2,7 @@ package applier_test
 
 import (
 	"errors"
+	"io/fs"
 	"testing"
 	"testing/fstest"
 
@@ -139,17 +140,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: registryv1.Renderer,
 		}
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
-			WithBundleResource("service.yaml", &corev1.Service{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: corev1.SchemeGroupVersion.String(),
-					Kind:       "Service",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-service",
-				},
-			}).Build()
+		bundleFS := newAllNamespacesBundleFS(t)
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
@@ -174,6 +165,115 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 
 		require.Equal(t, []client.Object{exp}, objs)
 	})
+
+	t.Run("emits a system-managed Namespace object when spec.namespace is empty", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer:               registryv1.Renderer,
+			IsNamespaceManagementEnabled: true,
+		}
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(bundlecsv.Builder().
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
+				WithAnnotations(map[string]string{
+					render.AnnotationSuggestedNamespaceTemplate: `{"metadata":{"name":"managed-ns","labels":{"pod-security.kubernetes.io/enforce":"privileged"},"annotations":{"example.com/note":"hello"}}}`,
+				}).Build()).
+			WithBundleResource("service.yaml", &corev1.Service{
+				TypeMeta:   metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String(), Kind: "Service"},
+				ObjectMeta: metav1.ObjectMeta{Name: "test-service"},
+			}).Build()
+		// No spec.namespace -> system-managed: the renderer resolves the name from
+		// bundle annotations and emits the Namespace object.
+		ext := &ocv1.ClusterExtension{}
+
+		objs, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err)
+		require.NotEmpty(t, objs)
+
+		t.Log("by checking the Namespace object is emitted first")
+		ns := objs[0]
+		require.Equal(t, "Namespace", ns.GetObjectKind().GroupVersionKind().Kind)
+		require.Equal(t, "managed-ns", ns.GetName())
+
+		t.Log("by checking template labels and annotations are applied")
+		require.Equal(t, "privileged", ns.GetLabels()["pod-security.kubernetes.io/enforce"])
+		require.Equal(t, "hello", ns.GetAnnotations()["example.com/note"])
+	})
+
+	t.Run("does not emit a Namespace object when spec.namespace is set", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: registryv1.Renderer,
+		}
+		bundleFS := newAllNamespacesBundleFS(t)
+		ext := &ocv1.ClusterExtension{Spec: ocv1.ClusterExtensionSpec{Namespace: "install-namespace"}}
+
+		objs, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err)
+		for _, o := range objs {
+			require.NotEqual(t, "Namespace", o.GetObjectKind().GroupVersionKind().Kind, "no Namespace should be emitted when Ensure is false")
+		}
+	})
+}
+
+func Test_RegistryV1ManifestProvider_BoxcutterRuntimeGate(t *testing.T) {
+	t.Run("rejects empty spec.namespace when the BoxcutterRuntime feature gate is disabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer:               registryv1.Renderer,
+			IsNamespaceManagementEnabled: false,
+		}
+		bundleFS := newAllNamespacesBundleFS(t)
+		ext := &ocv1.ClusterExtension{}
+
+		_, err := provider.Get(bundleFS, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "spec.namespace is required unless the BoxcutterRuntime feature gate is enabled")
+		require.ErrorIs(t, err, reconcile.TerminalError(nil), "namespace gate error should be terminal")
+	})
+
+	t.Run("allows empty spec.namespace and renders a managed Namespace when the BoxcutterRuntime feature gate is enabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer:               registryv1.Renderer,
+			IsNamespaceManagementEnabled: true,
+		}
+		bundleFS := newAllNamespacesBundleFS(t)
+		ext := &ocv1.ClusterExtension{}
+
+		objs, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err)
+		require.Contains(t, collectKinds(objs), "Namespace")
+	})
+
+	t.Run("ignores the BoxcutterRuntime feature gate when spec.namespace is set", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer:               registryv1.Renderer,
+			IsNamespaceManagementEnabled: false,
+		}
+		bundleFS := newAllNamespacesBundleFS(t)
+		ext := &ocv1.ClusterExtension{Spec: ocv1.ClusterExtensionSpec{Namespace: "install-namespace"}}
+
+		objs, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err)
+		require.NotContains(t, collectKinds(objs), "Namespace")
+	})
+}
+
+// newAllNamespacesBundleFS returns a minimal registry+v1 bundle FS that supports the
+// AllNamespaces install mode and includes a single Service resource named "test-service".
+func newAllNamespacesBundleFS(t *testing.T) fs.FS {
+	t.Helper()
+	return bundlefs.Builder().WithPackageName("test").
+		WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
+		WithBundleResource("service.yaml", &corev1.Service{
+			TypeMeta:   metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String(), Kind: "Service"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test-service"},
+		}).Build()
+}
+
+func collectKinds(objs []client.Object) []string {
+	kinds := make([]string, 0, len(objs))
+	for _, o := range objs {
+		kinds = append(kinds, o.GetObjectKind().GroupVersionKind().Kind)
+	}
+	return kinds
 }
 
 func Test_RegistryV1ManifestProvider_APIServiceSupport(t *testing.T) {

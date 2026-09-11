@@ -685,6 +685,10 @@ crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
 	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/ \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
 	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME);
+	# crd-ref-docs renders doc-comment text verbatim, including internal <opcon:...> generator
+	# directives; strip them from the published reference (the per-channel contracts remain in prose).
+	sed -E 's#</?opcon:[^>]*>##g' $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME) > $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME).tmp
+	mv $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME).tmp $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME)
 
 VENVDIR := $(abspath docs/.venv)
 
