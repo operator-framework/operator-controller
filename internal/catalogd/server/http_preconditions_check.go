@@ -8,10 +8,13 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"net/textproto"
 	"strings"
 	"time"
+
+	"k8s.io/klog/v2"
 )
 
 type condResult int
@@ -20,6 +23,7 @@ const (
 	condNone condResult = iota
 	condTrue
 	condFalse
+	condError // an error response has already been written
 )
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
@@ -44,8 +48,11 @@ func checkPreconditions(w http.ResponseWriter, r *http.Request, modtime time.Tim
 			return true
 		}
 	case condNone:
-		if checkIfModifiedSince(r, w, modtime) == condFalse {
+		switch checkIfModifiedSince(r, w, modtime) {
+		case condFalse:
 			writeNotModified(w)
+			return true
+		case condError:
 			return true
 		}
 	}
@@ -59,8 +66,9 @@ func checkIfModifiedSince(r *http.Request, w http.ResponseWriter, modtime time.T
 	}
 	t, err := parseTime(ims)
 	if err != nil {
-		httpError(w, err)
-		return condNone
+		klog.ErrorS(err, "HTTP error parsing If-Modified-Since header", "code", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)), http.StatusInternalServerError)
+		return condError
 	}
 	// The Last-Modified header truncates sub-second precision so
 	// the modtime needs to be truncated too.

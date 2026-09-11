@@ -306,7 +306,7 @@ func TestLocalDirServerHandler(t *testing.T) {
 			URLPath:            "/catalogs/test-catalog.jsonl",
 		},
 		{
-			name:               "Server returns 404 when non-existent catalog is queried",
+			name:               "Server returns 404 when non-existent catalog is queried (leader)",
 			expectedStatusCode: http.StatusNotFound,
 			expectedContent:    "404 Not Found",
 			URLPath:            "/catalogs/non-existent-catalog/api/v1/all",
@@ -339,6 +339,54 @@ func TestLocalDirServerHandler(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 		})
 	}
+}
+
+func TestLocalDirServerHandler_NonLeader(t *testing.T) {
+	store := NewLocalDirV1(t.TempDir(), &url.URL{Path: urlPrefix}, MetasHandlerDisabled, GraphQLQueriesDisabled)
+	// Mark this pod as a non-leader so that missing content returns 503.
+	store.IsLeader = func() bool { return false }
+	// Do NOT store any catalog data — the non-leader has an empty cache.
+
+	testServer := httptest.NewServer(store.StorageServerHandler())
+	defer testServer.Close()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/catalogs/some-catalog/api/v1/all", testServer.URL), nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	// Non-leader should return 503 with Retry-After instead of 404.
+	require.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+	assert.Equal(t, "1", resp.Header.Get("Retry-After"))
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, "catalog content not yet available", strings.TrimSpace(string(body)))
+	require.NoError(t, resp.Body.Close())
+}
+
+func TestLocalDirServerHandler_StandaloneMode(t *testing.T) {
+	// Standalone mode: IsLeader is nil (leader election disabled).
+	// The handler should default to leader behavior and return 404
+	// for nonexistent catalogs, not 503.
+	store := NewLocalDirV1(t.TempDir(), &url.URL{Path: urlPrefix}, MetasHandlerDisabled, GraphQLQueriesDisabled)
+	// Do NOT set store.IsLeader — leave it nil to simulate standalone mode.
+
+	testServer := httptest.NewServer(store.StorageServerHandler())
+	defer testServer.Close()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/catalogs/non-existent-catalog/api/v1/all", testServer.URL), nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	// Standalone (no leader election) should return 404 for nonexistent catalogs.
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, "404 Not Found", strings.TrimSpace(string(body)))
+	require.NoError(t, resp.Body.Close())
 }
 
 // Tests to verify the behavior of the metas endpoint, as described in
