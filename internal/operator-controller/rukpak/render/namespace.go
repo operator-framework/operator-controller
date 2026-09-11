@@ -27,6 +27,15 @@ const (
 
 var dns1123LabelRegexp = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 
+// ResolveInstallNamespace returns the name of the system-managed namespace Render will create for
+// a bundle when the ClusterExtension does not specify one. Callers that need this name without
+// rendering — e.g. to detect that a bundle would move an already-installed extension — should use
+// this so their answer stays consistent with what Render emits.
+func ResolveInstallNamespace(rv1 *bundle.RegistryV1) (string, error) {
+	name, _, err := resolveSystemManagedNamespace(rv1)
+	return name, err
+}
+
 // resolveSystemManagedNamespace derives the name of the namespace OLM should
 // create and manage for a bundle, using the precedence:
 //
@@ -92,15 +101,19 @@ func validateNamespaceName(name string) error {
 
 // defaultInstallNamespace derives a deterministic, DNS1123-label-valid namespace name for a
 // package when the bundle does not suggest one. It normalizes disallowed characters (e.g. dots)
-// and enforces the namespace length limit. When the normalized name must be truncated, a short
-// hash of the original package name is appended to preserve deterministic collision resistance.
+// and enforces the namespace length limit. Whenever the package name has to be altered to fit —
+// by normalization or truncation — a short hash of the original name is appended, so packages
+// that would otherwise reduce to the same label keep distinct namespaces.
 func defaultInstallNamespace(packageName string) string {
 	const suffix = "system"
 
 	base := sanitizeDNS1123Label(packageName)
 
-	// Fast path: an already-valid, short base keeps the historical "<package>-system" name.
-	if base != "" && len(base)+1+len(suffix) <= maxNamespaceNameLength {
+	// Fast path: a package name that is already a valid, short label keeps the historical
+	// "<packageName>-system" name. Names that sanitization had to alter take the hashed path
+	// instead, so packages that normalize to the same label (e.g. "foo.bar" and "foo-bar")
+	// do not both claim one namespace.
+	if base != "" && base == packageName && len(base)+1+len(suffix) <= maxNamespaceNameLength {
 		return base + "-" + suffix
 	}
 

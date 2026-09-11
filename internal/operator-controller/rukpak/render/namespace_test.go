@@ -293,6 +293,9 @@ func TestDefaultInstallNamespace(t *testing.T) {
 		name        string
 		packageName string
 		want        string // exact expected name; empty means only assert validity
+		// wantPrefix asserts the stable prefix of a hashed name, for package names that
+		// sanitization had to alter and whose hash suffix cannot be written out here.
+		wantPrefix string
 	}{
 		{
 			name:        "valid short name keeps <package>-system",
@@ -300,14 +303,14 @@ func TestDefaultInstallNamespace(t *testing.T) {
 			want:        "argocd-operator-system",
 		},
 		{
-			name:        "dotted package name is normalized",
+			name:        "dotted package name is normalized and hashed",
 			packageName: "my.operator",
-			want:        "my-operator-system",
+			wantPrefix:  "my-operator-",
 		},
 		{
-			name:        "uppercase and underscores are normalized",
+			name:        "uppercase and underscores are normalized and hashed",
 			packageName: "My_Operator",
-			want:        "my-operator-system",
+			wantPrefix:  "my-operator-",
 		},
 		{
 			name:        "overlong package name is truncated to a valid label",
@@ -334,6 +337,11 @@ func TestDefaultInstallNamespace(t *testing.T) {
 			if tt.want != "" {
 				require.Equal(t, tt.want, got)
 			}
+			if tt.wantPrefix != "" {
+				require.True(t, strings.HasPrefix(got, tt.wantPrefix), "got %q, want prefix %q", got, tt.wantPrefix)
+				require.NotEqual(t, tt.wantPrefix+"system", got,
+					"a normalized name must not take the plain <package>-system form, which belongs to the package spelled that way")
+			}
 		})
 	}
 
@@ -343,5 +351,16 @@ func TestDefaultInstallNamespace(t *testing.T) {
 		require.NoError(t, validateNamespaceName(a))
 		require.NoError(t, validateNamespaceName(b))
 		require.NotEqual(t, a, b)
+	})
+
+	t.Run("names that normalize to the same label do not collide", func(t *testing.T) {
+		// "foo.bar" sanitizes to "foo-bar", which is itself a valid package name. Both are
+		// installable at once, so they must not claim the same namespace.
+		dotted := defaultInstallNamespace("foo.bar")
+		hyphenated := defaultInstallNamespace("foo-bar")
+		require.NoError(t, validateNamespaceName(dotted))
+		require.NoError(t, validateNamespaceName(hyphenated))
+		require.NotEqual(t, dotted, hyphenated)
+		require.Equal(t, "foo-bar-system", hyphenated, "an already-valid package name keeps the plain form")
 	})
 }
