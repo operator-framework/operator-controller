@@ -837,7 +837,6 @@ spec:
                   source is required and selects the installation source of content for this ClusterExtension.
                   Set the sourceType field to perform the selection.
 
-                  Catalog is currently the only implemented sourceType.
                   Setting sourceType to "Catalog" requires the catalog field to also be defined.
 
                   Below is a minimal example of a source definition (in yaml):
@@ -1086,17 +1085,41 @@ spec:
                     required:
                     - packageName
                     type: object
+                  ociImage:
+                    description: |-
+                      ociImage configures a bundle image to install directly.
+
+                      They do not provide catalog dependency resolution or upgrade safety.
+                    minProperties: 1
+                    properties:
+                      ref:
+                        description: ref is a Docker-style image reference with a
+                          tag or digest.
+                        maxLength: 1000
+                        minLength: 1
+                        type: string
+                        x-kubernetes-validations:
+                        - message: must be a complete image reference with a valid
+                            repository and tag or digest
+                          rule: self.matches("^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?(:[0-9]+)?/[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*(:[A-Za-z0-9_][A-Za-z0-9_.-]{0,126}|@[A-Za-z][A-Za-z0-9+._-]*:[0-9A-Fa-f]{32,})$")
+                    required:
+                    - ref
+                    type: object
                   sourceType:
                     description: |-
                       sourceType is required and specifies the type of install source.
 
-                      The only allowed value is "Catalog".
+                      The allowed values are "Catalog" and "OCIImage".
+
+                      When set to "OCIImage", the bundle image is used directly. Direct sources do not perform
+                      dependency resolution and are only supported by the Boxcutter runtime.
 
                       When set to "Catalog", information for determining the appropriate bundle of content to install
                       is fetched from ClusterCatalog resources on the cluster.
                       When using the Catalog sourceType, the catalog field must also be set.
                     enum:
                     - Catalog
+                    - OCIImage
                     type: string
                 required:
                 - sourceType
