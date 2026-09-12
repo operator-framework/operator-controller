@@ -11,6 +11,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
@@ -34,6 +35,8 @@ func (p CertManagerCertificateProvider) InjectCABundle(obj client.Object, cfg re
 	case *admissionregistrationv1.MutatingWebhookConfiguration:
 		p.addCAInjectionAnnotation(obj, cfg.Namespace, cfg.CertName)
 	case *apiextensionsv1.CustomResourceDefinition:
+		p.addCAInjectionAnnotation(obj, cfg.Namespace, cfg.CertName)
+	case *apiregistrationv1.APIService:
 		p.addCAInjectionAnnotation(obj, cfg.Namespace, cfg.CertName)
 	}
 	return nil

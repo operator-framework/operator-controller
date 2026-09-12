@@ -1252,3 +1252,75 @@ func Test_CheckObjectSupport(t *testing.T) {
 		})
 	}
 }
+
+func Test_CheckAPIServiceDeploymentReferentialIntegrity(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *bundle.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name: "no owned APIServices — no errors",
+			bundle: &bundle.RegistryV1{
+				CSV: csv.Builder().WithName("test-op.v1.0.0").Build(),
+			},
+		},
+		{
+			name: "empty deploymentName — error",
+			bundle: &bundle.RegistryV1{
+				CSV: csv.Builder().
+					WithName("test-op.v1.0.0").
+					WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+						Name:           "v1alpha1.mygroup.example.com",
+						Group:          "mygroup.example.com",
+						Version:        "v1alpha1",
+						Kind:           "MyKind",
+						DeploymentName: "",
+					}).
+					Build(),
+			},
+			expectedErrs: []error{
+				errors.New(`owned apiservice "v1alpha1.mygroup.example.com" has no deploymentName; a deployment is required to back the extension API server`),
+			},
+		},
+		{
+			name: "deploymentName not in install spec — error",
+			bundle: &bundle.RegistryV1{
+				CSV: csv.Builder().
+					WithName("test-op.v1.0.0").
+					WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+						Name:           "v1alpha1.mygroup.example.com",
+						Group:          "mygroup.example.com",
+						Version:        "v1alpha1",
+						Kind:           "MyKind",
+						DeploymentName: "missing-deployment",
+					}).
+					Build(),
+			},
+			expectedErrs: []error{
+				errors.New(`owned apiservice "v1alpha1.mygroup.example.com" references deployment "missing-deployment" which does not exist in the CSV install spec`),
+			},
+		},
+		{
+			name: "valid deploymentName — no errors",
+			bundle: &bundle.RegistryV1{
+				CSV: csv.Builder().
+					WithName("test-op.v1.0.0").
+					WithStrategyDeploymentSpecs(v1alpha1.StrategyDeploymentSpec{Name: "my-deployment"}).
+					WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+						Name:           "v1alpha1.mygroup.example.com",
+						Group:          "mygroup.example.com",
+						Version:        "v1alpha1",
+						Kind:           "MyKind",
+						DeploymentName: "my-deployment",
+					}).
+					Build(),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := validators.CheckAPIServiceDeploymentReferentialIntegrity(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
