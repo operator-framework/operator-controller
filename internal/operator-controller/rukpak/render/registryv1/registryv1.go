@@ -30,9 +30,7 @@ var BundleValidator = render.BundleValidator{
 	validators.CheckConversionWebhooksReferenceOwnedCRDs,
 	validators.CheckWebhookRules,
 	validators.CheckObjectSupport,
-	// NOTE: CheckAPIServiceDeploymentReferentialIntegrity is implemented but NOT registered here.
-	// OLMv1 does not yet fully support APIService-based operators end-to-end; the implementation
-	// is retained as infrastructure for a future release.
+	validators.CheckAPIServiceDeploymentReferentialIntegrity,
 }
 
 // ResourceGenerators a slice of ResourceGenerators required to generate plain resource manifests for
@@ -50,8 +48,6 @@ var ResourceGenerators = []render.ResourceGenerator{
 	generators.BundleValidatingWebhookResourceGenerator,
 	generators.BundleMutatingWebhookResourceGenerator,
 	generators.BundleDeploymentServiceResourceGenerator,
-	// NOTE: BundleCSVAPIServiceGenerator is implemented but NOT registered here.
-	// OLMv1 does not yet fully support APIService-based operators end-to-end; the implementation
-	// is retained as infrastructure for a future release.
+	generators.BundleCSVAPIServiceGenerator,
 	generators.CertProviderResourceGenerator,
 }

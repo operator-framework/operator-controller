@@ -452,6 +452,9 @@ func BundleCSVAPIServiceGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 	generatedRBACForDeployment := sets.New[string]()
 	var objs []client.Object
 	for _, desc := range rv1.CSV.GetOwnedAPIServiceDescriptions() {
+		if desc.DeploymentName == "" {
+			return nil, fmt.Errorf("owned APIService %q has no deploymentName", desc.GetName())
+		}
 		certProvisioner := render.CertProvisionerFor(desc.DeploymentName, opts)
 
 		containerPort, err := resolveAPIServicePort(desc.ContainerPort)
@@ -491,7 +494,14 @@ func BundleCSVAPIServiceGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 		if !generatedRBACForDeployment.Has(desc.DeploymentName) {
 			generatedRBACForDeployment.Insert(desc.DeploymentName)
 
-			saName := saNameOrDefault(depSAName[desc.DeploymentName])
+			configuredSAName, ok := depSAName[desc.DeploymentName]
+			if !ok {
+				return nil, fmt.Errorf(
+					"owned APIService %q references deployment %q which does not exist in the CSV install spec",
+					desc.GetName(), desc.DeploymentName,
+				)
+			}
+			saName := saNameOrDefault(configuredSAName)
 			subject := rbacv1.Subject{
 				Kind:      "ServiceAccount",
 				Name:      saName,
@@ -550,7 +560,7 @@ func BundleDeploymentServiceResourceGenerator(rv1 *bundle.RegistryV1, opts rende
 	// GetOwnedAPIServiceDescriptions() deduplicates by group+version identity.
 	for _, desc := range rv1.CSV.GetOwnedAPIServiceDescriptions() {
 		if desc.DeploymentName == "" {
-			continue
+			return nil, fmt.Errorf("owned APIService %q has no deploymentName", desc.GetName())
 		}
 		port, err := resolveAPIServicePort(desc.ContainerPort)
 		if err != nil {
@@ -570,7 +580,7 @@ func BundleDeploymentServiceResourceGenerator(rv1 *bundle.RegistryV1, opts rende
 		for existing := range servicePortsByDeployment[desc.DeploymentName] {
 			if existing.Port == port && existing != apiSvcPort {
 				return nil, fmt.Errorf(
-					"deployment %q has a Service port conflict: APIService port %d conflicts with an existing webhook port configuration",
+					"deployment %q has a Service port conflict: APIService port %d conflicts with an existing webhook or APIService port configuration",
 					desc.DeploymentName, port,
 				)
 			}

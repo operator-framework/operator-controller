@@ -3834,6 +3834,7 @@ func Test_BundleCSVAPIServiceGenerator_Succeeds(t *testing.T) {
 	rv1 := &bundle.RegistryV1{
 		CSV: csv.Builder().
 			WithName("test-operator.v1.0.0").
+			WithStrategyDeploymentSpecs(v1alpha1.StrategyDeploymentSpec{Name: "test-deployment"}).
 			WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
 				Name:           "v1alpha1.mygroup.example.com",
 				Group:          "mygroup.example.com",
@@ -3895,6 +3896,7 @@ func Test_BundleCSVAPIServiceGenerator_DefaultPort(t *testing.T) {
 	rv1 := &bundle.RegistryV1{
 		CSV: csv.Builder().
 			WithName("test-operator.v1.0.0").
+			WithStrategyDeploymentSpecs(v1alpha1.StrategyDeploymentSpec{Name: "test-deployment"}).
 			WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
 				Name:           "v1.mygroup.example.com",
 				Group:          "mygroup.example.com",
@@ -3927,6 +3929,7 @@ func Test_BundleCSVAPIServiceGenerator_DeduplicatesByGroupVersion(t *testing.T) 
 	rv1 := &bundle.RegistryV1{
 		CSV: csv.Builder().
 			WithName("test-operator.v1.0.0").
+			WithStrategyDeploymentSpecs(v1alpha1.StrategyDeploymentSpec{Name: "test-deployment"}).
 			WithOwnedAPIServiceDescriptions(
 				v1alpha1.APIServiceDescription{
 					Name: "v1.mygroup.example.com", Group: "mygroup.example.com",
@@ -3956,6 +3959,7 @@ func Test_BundleCSVAPIServiceGenerator_DeduplicatesRBACPerDeployment(t *testing.
 	rv1 := &bundle.RegistryV1{
 		CSV: csv.Builder().
 			WithName("test-operator.v1.0.0").
+			WithStrategyDeploymentSpecs(v1alpha1.StrategyDeploymentSpec{Name: "shared-deployment"}).
 			WithOwnedAPIServiceDescriptions(
 				v1alpha1.APIServiceDescription{
 					Name: "v1.groupA.example.com", Group: "groupA.example.com",
@@ -4013,4 +4017,62 @@ func Test_BundleCSVAPIServiceGenerator_RejectsInvalidPort(t *testing.T) {
 			require.Contains(t, err.Error(), "outside the valid Kubernetes port range")
 		})
 	}
+}
+
+func Test_BundleCSVAPIServiceGenerator_RejectsEmptyDeploymentName(t *testing.T) {
+	rv1 := &bundle.RegistryV1{
+		CSV: csv.Builder().
+			WithName("test-operator.v1.0.0").
+			WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+				Name: "v1.mygroup.example.com", Group: "mygroup.example.com",
+				Version: "v1", Kind: "MyKind",
+			}).
+			Build(),
+	}
+
+	objs, err := generators.BundleCSVAPIServiceGenerator(rv1, render.Options{InstallNamespace: "test-ns"})
+	require.Error(t, err)
+	require.Nil(t, objs)
+	require.Contains(t, err.Error(), "has no deploymentName")
+}
+
+func Test_BundleCSVAPIServiceGenerator_RejectsUnknownDeploymentName(t *testing.T) {
+	rv1 := &bundle.RegistryV1{
+		CSV: csv.Builder().
+			WithName("test-operator.v1.0.0").
+			WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+				Name: "v1.mygroup.example.com", Group: "mygroup.example.com",
+				Version: "v1", Kind: "MyKind", DeploymentName: "missing-deployment",
+			}).
+			Build(),
+	}
+
+	objs, err := generators.BundleCSVAPIServiceGenerator(rv1, render.Options{InstallNamespace: "test-ns"})
+	require.Error(t, err)
+	require.Nil(t, objs)
+	require.Contains(t, err.Error(), "does not exist in the CSV install spec")
+}
+
+func Test_BundleDeploymentServiceResourceGenerator_RejectsEmptyAPIServiceDeploymentName(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	fakeProvider := mockrender.NewMockCertificateProvider(ctrl)
+	fakeProvider.EXPECT().InjectCABundle(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	rv1 := &bundle.RegistryV1{
+		CSV: csv.Builder().
+			WithName("test-operator.v1.0.0").
+			WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{
+				Name: "v1.mygroup.example.com", Group: "mygroup.example.com",
+				Version: "v1", Kind: "MyKind",
+			}).
+			Build(),
+	}
+
+	objs, err := generators.BundleDeploymentServiceResourceGenerator(rv1, render.Options{
+		InstallNamespace:    "test-ns",
+		CertificateProvider: fakeProvider,
+	})
+	require.Error(t, err)
+	require.Nil(t, objs)
+	require.Contains(t, err.Error(), "has no deploymentName")
 }
