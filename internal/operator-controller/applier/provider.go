@@ -69,6 +69,7 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 
 	opts := []render.Option{
 		render.WithCertificateProvider(r.CertificateProvider),
+		render.WithSelfManagedInstallNamespace(ext.Spec.Namespace),
 	}
 
 	// Always validate inline config when present so that disabled features produce
@@ -82,7 +83,7 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		}
 		opts = append(opts, configOpts...)
 	}
-	return r.BundleRenderer.Render(rv1, ext.Spec.Namespace, opts...)
+	return r.BundleRenderer.Render(rv1, opts...)
 }
 
 // extractBundleConfigOptions extracts and validates configuration options from a ClusterExtension.

@@ -38,6 +38,7 @@ var ResourceGenerators = []render.ResourceGenerator{
 	// NOTE: if you update this list, Test_ResourceGeneratorsHasAllGenerators will fail until
 	// you bring the same changes over to that test. This helps ensure all validation rules are executed
 	// while giving us the flexibility to test each generator individually
+	generators.BundleInstallNamespaceGenerator,
 	generators.BundleCSVServiceAccountGenerator,
 	generators.BundleCSVPermissionsGenerator,
 	generators.BundleCSVClusterPermissionsGenerator,
