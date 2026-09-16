@@ -29,11 +29,12 @@ type ManifestProvider interface {
 // RegistryV1ManifestProvider generates the manifests that should be installed for a registry+v1 bundle
 // given the user specified configuration given by the ClusterExtension API surface
 type RegistryV1ManifestProvider struct {
-	BundleRenderer              render.BundleRenderer
-	CertificateProvider         render.CertificateProvider
-	IsWebhookSupportEnabled     bool
-	IsSingleOwnNamespaceEnabled bool
-	IsDeploymentConfigEnabled   bool
+	BundleRenderer               render.BundleRenderer
+	CertificateProvider          render.CertificateProvider
+	IsWebhookSupportEnabled      bool
+	IsSingleOwnNamespaceEnabled  bool
+	IsDeploymentConfigEnabled    bool
+	IsNamespaceManagementEnabled bool
 }
 
 func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -67,9 +68,19 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		return nil, fmt.Errorf("unsupported bundle: bundle must support at least one of [AllNamespaces SingleNamespace OwnNamespace] install modes")
 	}
 
+	if ext.Spec.Namespace == "" && !r.IsNamespaceManagementEnabled {
+		return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("spec.namespace is required unless the BoxcutterRuntime feature gate is enabled"))
+	}
+
 	opts := []render.Option{
 		render.WithCertificateProvider(r.CertificateProvider),
-		render.WithSelfManagedInstallNamespace(ext.Spec.Namespace),
+	}
+
+	// When the user set spec.namespace, render into that caller-managed (already-existing)
+	// namespace and do not emit a Namespace object. Otherwise the renderer resolves the
+	// bundle's system-managed namespace and emits the Namespace object for it.
+	if ext.Spec.Namespace != "" {
+		opts = append(opts, render.WithSelfManagedInstallNamespace(ext.Spec.Namespace))
 	}
 
 	// Always validate inline config when present so that disabled features produce

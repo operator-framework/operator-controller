@@ -15,11 +15,14 @@ import (
 	"go.uber.org/mock/gomock"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -977,6 +980,98 @@ func TestValidateClusterExtension(t *testing.T) {
 			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 		})
 	}
+}
+
+func TestValidateInstallNamespace(t *testing.T) {
+	tests := []struct {
+		name                 string
+		specNamespace        string
+		namespaceObjects     []runtime.Object
+		expectError          bool
+		errorMessageIncludes string
+	}{
+		{
+			name:          "user-provided namespace exists",
+			specNamespace: "existing-ns",
+			namespaceObjects: []runtime.Object{
+				&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "existing-ns"}},
+			},
+		},
+		{
+			name:                 "user-provided namespace not found",
+			specNamespace:        "missing-ns",
+			expectError:          true,
+			errorMessageIncludes: `namespace "missing-ns" not found`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			fakeClient := fake.NewClientset(tt.namespaceObjects...)
+
+			cl := newClient(t)
+			reconciler := &controllers.ClusterExtensionReconciler{
+				Client: cl,
+				ReconcileSteps: controllers.ReconcileSteps{
+					controllers.HandleFinalizers(crfinalizer.NewFinalizers()),
+					controllers.ValidateInstallNamespace(fakeClient.CoreV1()),
+				},
+			}
+
+			extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+			clusterExtension := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+				Spec: ocv1.ClusterExtensionSpec{
+					Source: ocv1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog:    &ocv1.CatalogFilter{PackageName: "test-package"},
+					},
+					Namespace: tt.specNamespace,
+					ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // deprecated field used in test
+						Name: "test-sa",
+					},
+				},
+			}
+			require.NoError(t, cl.Create(ctx, clusterExtension))
+
+			res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+			require.Equal(t, ctrl.Result{}, res)
+			if !tt.expectError {
+				require.NoError(t, err)
+				require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+				return
+			}
+
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.errorMessageIncludes)
+
+			require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+			progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+			require.NotNil(t, progressingCond)
+			// A missing namespace is retryable (not terminal): the user can create it and
+			// the next reconcile succeeds, so Progressing stays True with Reason=Retrying.
+			require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
+			require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
+			require.Contains(t, progressingCond.Message, tt.errorMessageIncludes)
+			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+		})
+	}
+}
+
+// The CRD still requires a non-empty spec.namespace, so this case cannot be driven through the
+// API server. Call the step directly to cover the system-managed short-circuit.
+func TestValidateInstallNamespaceSkipsSystemManaged(t *testing.T) {
+	fakeClient := fake.NewClientset()
+	step := controllers.ValidateInstallNamespace(fakeClient.CoreV1())
+
+	res, err := step(context.Background(), nil, &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-extension"},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, res)
+	require.Empty(t, fakeClient.Actions(), "no namespace lookup should happen for a system-managed namespace")
 }
 
 func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {

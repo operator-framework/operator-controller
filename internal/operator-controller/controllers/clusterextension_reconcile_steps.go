@@ -21,8 +21,10 @@ import (
 	"errors"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/finalizer"
@@ -398,6 +400,35 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 		}
 
 		state.imageFS = imageFS
+		return nil, nil
+	}
+}
+
+// ValidateInstallNamespace verifies that a user-provided spec.namespace exists.
+//
+// A missing namespace is recoverable — the user can create it — so it is surfaced as a retryable
+// error rather than a terminal one: the next reconcile succeeds once the namespace exists.
+//
+// When spec.namespace is omitted the namespace is system-managed and the renderer creates it, so
+// there is nothing to check.
+func ValidateInstallNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc {
+	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
+		if ext.Spec.Namespace == "" {
+			return nil, nil
+		}
+
+		l := log.FromContext(ctx)
+		l.V(1).Info("validating user-provided namespace exists", "namespace", ext.Spec.Namespace)
+
+		_, err := nsClient.Namespaces().Get(ctx, ext.Spec.Namespace, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			nsErr := fmt.Errorf("namespace %q not found; spec.namespace must reference an existing namespace", ext.Spec.Namespace)
+			setStatusProgressing(ext, nsErr)
+			return nil, nsErr
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error checking namespace %q: %w", ext.Spec.Namespace, err)
+		}
 		return nil, nil
 	}
 }
