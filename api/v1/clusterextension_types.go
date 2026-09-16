@@ -50,7 +50,7 @@ const (
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
 	// namespace specifies a Kubernetes namespace.
-	// It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
+	// <opcon:standard:description>It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
 	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
 	// This namespace must exist.
 	//
@@ -59,12 +59,32 @@ type ClusterExtensionSpec struct {
 	// and be no longer than 63 characters.
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	// </opcon:standard:description>
+	// <opcon:experimental:description>
+	// It designates the default namespace where namespace-scoped resources for the extension
+	// are applied to.
+	//
+	// namespace is optional. When set, it must reference an existing namespace on the cluster.
+	// When omitted, operator-controller resolves and creates a managed namespace from the
+	// bundle's metadata. Whether namespace is set or omitted is fixed at creation time and
+	// cannot be changed afterwards.
+	//
+	// The namespace field follows the DNS label standard as defined in [RFC 1123].
+	// It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
+	// and be no longer than 63 characters.
+	//
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	// </opcon:experimental:description>
+	//
+	// <opcon:standard:validation:XValidation:rule="self == oldSelf",message="namespace is immutable">
+	// <opcon:standard:validation:XValidation:rule="self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">
+	// <opcon:experimental:validation:XValidation:rule="self == oldSelf",message="namespace is immutable">
+	// <opcon:experimental:validation:XValidation:rule="self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">
+	// <opcon:experimental:validation:Optional>
 	//
 	// +kubebuilder:validation:MaxLength:=63
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
 	// +required
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitzero"`
 
 	// serviceAccount is a deprecated field and is completely ignored.
 	// OLMv1 is a single-tenant system where users with ClusterExtension write access are
@@ -586,6 +606,8 @@ type ClusterExtension struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec is an optional field that defines the desired state of the ClusterExtension.
+	//
+	// <opcon:experimental:validation:XValidation:rule="has(oldSelf.namespace) == has(self.namespace)",message="namespace presence is immutable; it cannot be added or removed after creation">
 	// +optional
 	Spec ClusterExtensionSpec `json:"spec,omitempty"`
 
