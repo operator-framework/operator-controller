@@ -56,6 +56,21 @@ var certVolumeConfigs = []certVolumeConfig{
 	},
 }
 
+// BundleInstallNamespaceGenerator emits the install Namespace object for the system-managed
+// install namespace (the default), whose name, labels, and annotations are resolved during Render
+// setup. When the caller opted into a self-managed install namespace
+// (opts.SelfManagedInstallNamespace), that namespace is assumed to already exist and this is a no-op.
+func BundleInstallNamespaceGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+	if opts.SelfManagedInstallNamespace {
+		return nil, nil
+	}
+	obj, err := render.BuildNamespaceObject(opts.InstallNamespace, opts.InstallNamespaceLabels, opts.InstallNamespaceAnnotations)
+	if err != nil {
+		return nil, err
+	}
+	return []client.Object{obj}, nil
+}
+
 // BundleCSVDeploymentGenerator generates all deployments defined in rv1's cluster service version (CSV). The generated
 // resource aim to have parity with OLMv0 generated Deployment resources:
 // - olm.targetNamespaces annotation is set with the opts.TargetNamespace value

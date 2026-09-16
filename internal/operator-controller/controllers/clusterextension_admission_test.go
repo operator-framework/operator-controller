@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
@@ -286,7 +287,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 	}{
 		{"just alphanumeric", "justalphanumberic1", ""},
 		{"hyphen-separated", "hyphenated-name", ""},
-		{"no install namespace", "", regexMismatchError},
+		{"no install namespace (managed mode)", "", ""},
 		{"dot-separated", "dotted.name", regexMismatchError},
 		{"longest valid install namespace", strings.Repeat("x", 63), ""},
 		{"too long install namespace name", strings.Repeat("x", 64), tooLongError},
@@ -325,9 +326,143 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 	}
 }
 
-// TestClusterExtensionAdmissionServiceAccount validates the deprecated spec.serviceAccount field:
-// - CRD-level validation (format, length) still works
-// - ValidatingAdmissionPolicy emits a deprecation warning for valid non-empty values
+func TestClusterExtensionAdmissionNamespaceImmutability(t *testing.T) {
+	baseSpec := func(ns string) ocv1.ClusterExtensionSpec {
+		return ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "package",
+				},
+			},
+			Namespace: ns,
+			ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // deprecated field used in test
+				Name: "default",
+			},
+		}
+	}
+
+	testCases := []struct {
+		name        string
+		initialNS   string
+		updatedNS   string
+		expectErr   bool
+		errContains string
+	}{
+		{
+			name:      "set to same value - allowed",
+			initialNS: "my-ns",
+			updatedNS: "my-ns",
+			expectErr: false,
+		},
+		{
+			name:        "set to different value - rejected",
+			initialNS:   "my-ns",
+			updatedNS:   "other-ns",
+			expectErr:   true,
+			errContains: "namespace is immutable once set",
+		},
+		{
+			name:        "empty to set - rejected",
+			initialNS:   "",
+			updatedNS:   "my-ns",
+			expectErr:   true,
+			errContains: "namespace cannot be set after creation",
+		},
+		{
+			name:      "empty to empty - allowed",
+			initialNS: "",
+			updatedNS: "",
+			expectErr: false,
+		},
+		{
+			name:        "set to empty - rejected",
+			initialNS:   "my-ns",
+			updatedNS:   "",
+			expectErr:   true,
+			errContains: "namespace is immutable once set",
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			ctx := context.Background()
+
+			ext := buildClusterExtension(baseSpec(tc.initialNS))
+			require.NoError(t, cl.Create(ctx, ext))
+
+			ext.Spec.Namespace = tc.updatedNS
+			err := cl.Update(ctx, ext)
+			if !tc.expectErr {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errContains)
+			}
+		})
+	}
+}
+
+// TestClusterExtensionAdmissionNamespacePresenceImmutability covers the presence-lock that the
+// typed-client test above cannot reach: the typed client always serializes spec.namespace (its
+// json tag has no omitempty), so it can only exercise the empty-string representation. A client
+// that truly omits the field (here, unstructured) would otherwise bypass the field-scoped
+// transition rules, so a spec-level rule enforces that namespace presence cannot change.
+func TestClusterExtensionAdmissionNamespacePresenceImmutability(t *testing.T) {
+	newExt := func(withNamespace bool) *unstructured.Unstructured {
+		spec := map[string]any{
+			"source": map[string]any{
+				"sourceType": "Catalog",
+				"catalog": map[string]any{
+					"packageName": "package",
+				},
+			},
+		}
+		if withNamespace {
+			spec["namespace"] = "my-ns"
+		}
+		return &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": ocv1.GroupVersion.String(),
+			"kind":       "ClusterExtension",
+			"metadata":   map[string]any{"generateName": "test-extension-"},
+			"spec":       spec,
+		}}
+	}
+
+	t.Parallel()
+	t.Run("namespace cannot be added when omitted at creation", func(t *testing.T) {
+		t.Parallel()
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := newExt(false)
+		require.NoError(t, cl.Create(ctx, ext))
+
+		require.NoError(t, unstructured.SetNestedField(ext.Object, "my-ns", "spec", "namespace"))
+		err := cl.Update(ctx, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "namespace presence is immutable")
+	})
+
+	t.Run("namespace cannot be removed once set", func(t *testing.T) {
+		t.Parallel()
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := newExt(true)
+		require.NoError(t, cl.Create(ctx, ext))
+
+		unstructured.RemoveNestedField(ext.Object, "spec", "namespace")
+		err := cl.Update(ctx, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "namespace presence is immutable")
+	})
+}
+
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 	tooLongError := "spec.serviceAccount.name: Too long: may not be more than 253"
 	regexMismatchError := "name must be a valid DNS1123 subdomain"

@@ -66,6 +66,17 @@ type Options struct {
 	// DeploymentConfig contains optional customizations to apply to CSV deployments.
 	// If nil, no customizations are applied.
 	DeploymentConfig *config.DeploymentConfig
+
+	// SelfManagedInstallNamespace, when true, means the caller supplies InstallNamespace and
+	// manages that namespace itself: it is assumed to already exist and no Namespace object is
+	// rendered. When false (the default), the renderer resolves the bundle's system-managed
+	// namespace and emits a Namespace object for it (see WithSelfManagedInstallNamespace).
+	SelfManagedInstallNamespace bool
+	// InstallNamespaceLabels and InstallNamespaceAnnotations seed metadata (e.g. PSA) on the
+	// emitted Namespace object. They are defaulted from the bundle's suggested-namespace-template
+	// annotation during Render setup and only consulted when SelfManagedInstallNamespace is false.
+	InstallNamespaceLabels      map[string]string
+	InstallNamespaceAnnotations map[string]string
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -82,6 +93,9 @@ func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 	if o.UniqueNameGenerator == nil {
 		errs = append(errs, errors.New("unique name generator must be specified"))
 	}
+	if o.SelfManagedInstallNamespace && o.InstallNamespace == "" {
+		errs = append(errs, errors.New("self-managed install namespace requires a namespace name"))
+	}
 	if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
 		errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
 	}
@@ -89,6 +103,17 @@ func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 }
 
 type Option func(*Options)
+
+// WithSelfManagedInstallNamespace renders namespace-scoped resources into ns and treats it as
+// a caller-managed namespace: it is assumed to already exist and no Namespace object is emitted.
+// Without this option the renderer defaults to the bundle's system-managed namespace (resolved
+// from CSV annotations, else "<packageName>-system") and emits a Namespace object for it.
+func WithSelfManagedInstallNamespace(ns string) Option {
+	return func(o *Options) {
+		o.InstallNamespace = ns
+		o.SelfManagedInstallNamespace = true
+	}
+}
 
 // WithTargetNamespaces sets the target namespaces to be used when rendering the bundle
 // The value will only be used if len(namespaces) > 0. Otherwise, the default value for the bundle
@@ -126,31 +151,39 @@ type BundleRenderer struct {
 	ResourceGenerators []ResourceGenerator
 }
 
-func (r BundleRenderer) Render(rv1 bundle.RegistryV1, installNamespace string, opts ...Option) ([]client.Object, error) {
+func (r BundleRenderer) Render(rv1 bundle.RegistryV1, opts ...Option) ([]client.Object, error) {
 	// validate bundle
 	if err := r.BundleValidator.Validate(&rv1); err != nil {
 		return nil, err
 	}
 
-	// generate bundle objects
-	genOpts, errs := (&Options{
+	genOpts := (&Options{
 		// default options
-		InstallNamespace:    installNamespace,
 		TargetNamespaces:    defaultTargetNamespacesForBundle(&rv1),
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
 		CertificateProvider: nil,
-	}).apply(opts...).validate(&rv1)
+	}).apply(opts...)
 
-	if len(errs) > 0 {
+	// Unless the caller opted into a self-managed install namespace, resolve the bundle's
+	// system-managed namespace (and its Namespace template) from CSV metadata. The template
+	// seeds labels/annotations on the Namespace object that BundleInstallNamespaceGenerator emits.
+	if !genOpts.SelfManagedInstallNamespace {
+		name, template, err := resolveSystemManagedNamespace(&rv1)
+		if err != nil {
+			return nil, err
+		}
+		genOpts.InstallNamespace = name
+		if template != nil {
+			genOpts.InstallNamespaceLabels = template.Labels
+			genOpts.InstallNamespaceAnnotations = template.Annotations
+		}
+	}
+
+	if _, errs := genOpts.validate(&rv1); len(errs) > 0 {
 		return nil, fmt.Errorf("invalid option(s): %w", errors.Join(errs...))
 	}
 
-	objs, err := ResourceGenerators(r.ResourceGenerators).GenerateResources(&rv1, *genOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	return objs, nil
+	return ResourceGenerators(r.ResourceGenerators).GenerateResources(&rv1, *genOpts)
 }
 
 func DefaultUniqueNameGenerator(base string, o interface{}) string {

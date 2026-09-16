@@ -21,8 +21,10 @@ import (
 	"errors"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/finalizer"
@@ -32,6 +34,9 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
@@ -400,6 +405,89 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 		state.imageFS = imageFS
 		return nil, nil
 	}
+}
+
+// ValidateInstallNamespace validates the namespace an extension installs into.
+//
+// A user-provided spec.namespace must reference an existing namespace. A missing namespace is a
+// recoverable condition (the user can create it), so it is surfaced as a retryable error rather
+// than a terminal one: the next reconcile succeeds once the namespace exists.
+//
+// When spec.namespace is omitted the namespace is system-managed: the renderer resolves its name
+// from bundle metadata and emits the Namespace object. That name must not change once the
+// extension is installed, so upgrades are checked against the namespace already in use.
+func ValidateInstallNamespace(nsClient corev1client.NamespacesGetter) ReconcileStepFunc {
+	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
+		l := log.FromContext(ctx)
+
+		if ext.Spec.Namespace == "" {
+			return nil, validateSystemManagedNamespaceUnchanged(ctx, nsClient, state, ext)
+		}
+
+		l.V(1).Info("validating user-provided namespace exists", "namespace", ext.Spec.Namespace)
+		_, err := nsClient.Namespaces().Get(ctx, ext.Spec.Namespace, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			nsErr := fmt.Errorf("namespace %q not found; spec.namespace must reference an existing namespace", ext.Spec.Namespace)
+			setStatusProgressing(ext, nsErr)
+			return nil, nsErr
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error checking namespace %q: %w", ext.Spec.Namespace, err)
+		}
+		return nil, nil
+	}
+}
+
+// validateSystemManagedNamespaceUnchanged rejects a bundle that would move an installed extension
+// to a different system-managed namespace. The name is resolved from bundle metadata, which varies
+// between bundles, so an upgrade could otherwise silently relocate the installation — leaving the
+// original namespace to be deleted along with its contents when the old revision is archived.
+func validateSystemManagedNamespaceUnchanged(ctx context.Context, nsClient corev1client.NamespacesGetter, state *reconcileState, ext *ocv1.ClusterExtension) error {
+	// UnpackBundle clears imageFS when the resolved bundle is unchanged but its content could not
+	// be pulled. There is no new bundle to move the namespace, and nothing to resolve from.
+	if state.imageFS == nil {
+		return nil
+	}
+
+	// OLM labels every object it renders, so the namespace it manages for this extension is
+	// discoverable without recording it anywhere.
+	nsList, err := nsClient.Namespaces().List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s,%s=%s",
+			labels.OwnerKindKey, ocv1.ClusterExtensionKind,
+			labels.OwnerNameKey, ext.GetName()),
+	})
+	if err != nil {
+		return fmt.Errorf("error listing namespaces managed for %q: %w", ext.GetName(), err)
+	}
+	if len(nsList.Items) == 0 {
+		// No namespace is managed for this extension yet, so the renderer is free to resolve
+		// and create one. This is the first install, or the user removed the namespace.
+		return nil
+	}
+
+	rv1, err := source.FromFS(state.imageFS).GetBundle()
+	if err != nil {
+		return fmt.Errorf("error reading bundle: %w", err)
+	}
+	resolved, err := render.ResolveInstallNamespace(&rv1)
+	if err != nil {
+		nsErr := errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, err)
+		setStatusProgressing(ext, nsErr)
+		return nsErr
+	}
+	current := make([]string, 0, len(nsList.Items))
+	for _, ns := range nsList.Items {
+		if ns.Name == resolved {
+			return nil
+		}
+		current = append(current, ns.Name)
+	}
+
+	nsErr := errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf(
+		"bundle resolves to namespace %q, but this extension is installed in %v; the install namespace cannot change after installation",
+		resolved, current))
+	setStatusProgressing(ext, nsErr)
+	return nsErr
 }
 
 func ApplyBundle(a Applier) ReconcileStepFunc {
