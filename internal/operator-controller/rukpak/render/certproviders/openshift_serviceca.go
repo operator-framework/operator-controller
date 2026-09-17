@@ -5,6 +5,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
@@ -30,6 +31,8 @@ func (p OpenshiftServiceCaCertificateProvider) InjectCABundle(obj client.Object,
 		p.addInjectCABundleAnnotation(obj)
 	case *corev1.Service:
 		p.addServingCertSecretNameAnnotation(obj, cfg.CertName)
+	case *apiregistrationv1.APIService:
+		p.addInjectCABundleAnnotation(obj)
 	}
 	return nil
 }

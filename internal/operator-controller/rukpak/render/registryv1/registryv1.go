@@ -30,6 +30,7 @@ var BundleValidator = render.BundleValidator{
 	validators.CheckConversionWebhooksReferenceOwnedCRDs,
 	validators.CheckWebhookRules,
 	validators.CheckObjectSupport,
+	validators.CheckAPIServiceDeploymentReferentialIntegrity,
 }
 
 // ResourceGenerators a slice of ResourceGenerators required to generate plain resource manifests for
@@ -47,5 +48,6 @@ var ResourceGenerators = []render.ResourceGenerator{
 	generators.BundleValidatingWebhookResourceGenerator,
 	generators.BundleMutatingWebhookResourceGenerator,
 	generators.BundleDeploymentServiceResourceGenerator,
+	generators.BundleCSVAPIServiceGenerator,
 	generators.CertProviderResourceGenerator,
 }
