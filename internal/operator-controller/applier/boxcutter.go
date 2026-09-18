@@ -273,6 +273,11 @@ type boxcutterStorageMigratorClient interface {
 // Migrate creates a ClusterObjectSet from an existing Helm release if no revisions exist yet.
 // The migration is idempotent and skipped if revisions already exist or no Helm release is found.
 func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) error {
+	// Managed namespace mode (spec.namespace empty) means this is a new-style extension
+	// that never had a Helm release, so there's nothing to migrate.
+	if ext.Spec.Namespace == "" {
+		return nil
+	}
 	existingRevisionList := ocv1.ClusterObjectSetList{}
 	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingLabels{
 		labels.OwnerNameKey: ext.Name,
