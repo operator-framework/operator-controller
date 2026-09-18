@@ -128,8 +128,8 @@ spec:
                 x-kubernetes-validations:
                 - message: namespace must be a valid DNS1123 label
                   rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
-                - message: self == oldSelf
-                  rule: namespace is immutable
+                - message: namespace is immutable
+                  rule: self == oldSelf
               serviceAccount:
                 description: |-
                   serviceAccount is a reference to a ServiceAccount used to perform all interactions

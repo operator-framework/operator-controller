@@ -36,6 +36,8 @@ type ClusterExtensionApplyConfiguration struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*metav1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	// spec is an optional field that defines the desired state of the ClusterExtension.
+	//
+	// <opcon:experimental:validation:XValidation:rule="has(oldSelf.namespace) == has(self.namespace)",message="namespace presence is immutable; it cannot be added or removed after creation">
 	Spec *ClusterExtensionSpecApplyConfiguration `json:"spec,omitempty"`
 	// status is an optional field that defines the observed state of the ClusterExtension.
 	Status *ClusterExtensionStatusApplyConfiguration `json:"status,omitempty"`

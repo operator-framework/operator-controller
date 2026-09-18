@@ -41,6 +41,7 @@ type bundleConfig struct {
 	largeCRDFieldCount      int                        // if > 0, generate a CRD with this many fields
 	staticBundleDir         string                     // if set, read bundle from this directory (no parameterization)
 	clusterRegistryOverride string                     // if set, use this host in the FBC image ref instead of the default
+	csvAnnotations          map[string]string
 }
 
 // bundleSpec is the resolved bundle: version + file map ready for crane.Image().
@@ -109,6 +110,22 @@ func WithBundleProperty(propertyType, value string) BundleOption {
 	}
 }
 
+// WithCSVAnnotation adds an annotation to the bundle's CSV.
+func WithCSVAnnotation(key, value string) BundleOption {
+	return func(c *bundleConfig) {
+		if c.csvAnnotations == nil {
+			c.csvAnnotations = make(map[string]string)
+		}
+		c.csvAnnotations[key] = value
+	}
+}
+
+// WithNSTemplate adds a suggested namespace template annotation to the CSV with the specified PSA level.
+func WithNSTemplate(psaLevel string) BundleOption {
+	template := fmt.Sprintf(`{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"pod-security.kubernetes.io/enforce":"%s","pod-security.kubernetes.io/audit":"%s","pod-security.kubernetes.io/warn":"%s"}}}`, psaLevel, psaLevel, psaLevel)
+	return WithCSVAnnotation("operatorframework.io/suggested-namespace-template", template)
+}
+
 // BadImage produces a bundle with CRD and deployment but uses "wrong/image" as
 // the container image, causing ImagePullBackOff at runtime.
 func BadImage() BundleOption {
@@ -163,6 +180,10 @@ func buildBundle(scenarioID, packageName, version string, opts []BundleOption) (
 	csvBuilder := bundlecsv.Builder().
 		WithName(fmt.Sprintf("%s.v%s", packageName, version)).
 		WithInstallModeSupportFor(installModes...)
+
+	if len(cfg.csvAnnotations) > 0 {
+		csvBuilder = csvBuilder.WithAnnotations(cfg.csvAnnotations)
+	}
 
 	if cfg.hasCRD {
 		csvBuilder = csvBuilder.WithOwnedCRDs(v1alpha1.CRDDescription{
