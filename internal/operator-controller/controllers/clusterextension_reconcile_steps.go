@@ -30,6 +30,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -108,6 +109,35 @@ func ServiceAccountDeprecationWarning() ClusterExtensionValidator {
 	}
 }
 
+// DirectBundleRequiresBoxcutter rejects direct OCI image sources when the
+// Boxcutter runtime is unavailable. The Helm runtime has no direct-source
+// implementation and must never silently interpret the source as a catalog.
+func DirectBundleRequiresBoxcutter() ClusterExtensionValidator {
+	return func(_ context.Context, ext *ocv1.ClusterExtension) error {
+		if ext.Spec.Source.SourceType == ocv1.SourceTypeOCIImage && !features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+			return fmt.Errorf("sourceType %q requires the %s feature gate", ocv1.SourceTypeOCIImage, features.BoxcutterRuntime)
+		}
+		return nil
+	}
+}
+
+// ValidateDirectBundleSource validates the direct source fields that cannot be
+// expressed in the standard CRD because OCIImage is experimental-only.
+func ValidateDirectBundleSource() ClusterExtensionValidator {
+	return func(_ context.Context, ext *ocv1.ClusterExtension) error {
+		if ext.Spec.Source.SourceType != ocv1.SourceTypeOCIImage {
+			return nil
+		}
+		if ext.Spec.Source.OCIImage.Ref == "" {
+			return fmt.Errorf("sourceType %q requires ociImage.ref", ocv1.SourceTypeOCIImage)
+		}
+		if ext.Spec.Source.Catalog != nil {
+			return fmt.Errorf("sourceType %q forbids source.catalog", ocv1.SourceTypeOCIImage)
+		}
+		return nil
+	}
+}
+
 func RetrieveRevisionStates(r RevisionStatesGetter) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
@@ -137,16 +167,11 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 
 		// If already rolling out, use existing revision and set deprecation to Unknown (no catalog check)
 		if len(state.revisionStates.RollingOut) > 0 {
-			installedBundleName := ""
-			if state.revisionStates.Installed != nil {
-				installedBundleName = state.revisionStates.Installed.Name
-			}
-			SetDeprecationStatus(ext, installedBundleName, nil, false)
+			SetDeprecationStatus(ext, installedBundleName(state.revisionStates), nil, false)
 			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
 			return nil, nil
 		}
 
-		// Resolve a new bundle from the catalog
 		l.V(1).Info("resolving bundle")
 		var bm *ocv1.BundleMetadata
 		if state.revisionStates.Installed != nil {
@@ -156,10 +181,7 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 
 		// Get the installed bundle name for deprecation status.
 		// BundleDeprecated should reflect what's currently running, not what we're trying to install.
-		installedBundleName := ""
-		if state.revisionStates.Installed != nil {
-			installedBundleName = state.revisionStates.Installed.Name
-		}
+		installedBundleName := installedBundleName(state.revisionStates)
 
 		// Set deprecation status based on resolution results:
 		//  - If resolution succeeds: hasCatalogData=true, deprecation shows catalog data (nil=not deprecated)
@@ -175,11 +197,19 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		//   the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
 		//   all catalogs? This needs a follow-up discussion and PR.
 		hasCatalogData := err == nil || resolvedDeprecation != nil
+		if behavior, ok := r.(resolve.ResolverBehavior); ok {
+			hasCatalogData = behavior.HasCatalogData(ext)
+		}
 		state.resolvedDeprecation = resolvedDeprecation
 		state.hasCatalogData = hasCatalogData
 		SetDeprecationStatus(ext, installedBundleName, resolvedDeprecation, hasCatalogData)
 
 		if err != nil {
+			if behavior, ok := r.(resolve.ResolverBehavior); ok && !behavior.ShouldFallbackOnError(ext) {
+				setStatusProgressing(ext, err)
+				setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+				return nil, err
+			}
 			return handleResolutionError(ctx, c, state, ext, err)
 		}
 
@@ -196,6 +226,13 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		}
 		return nil, nil
 	}
+}
+
+func installedBundleName(states *RevisionStates) string {
+	if states != nil && states.Installed != nil {
+		return states.Installed.Name
+	}
+	return ""
 }
 
 // handleResolutionError handles the case when bundle resolution fails.

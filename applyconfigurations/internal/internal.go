@@ -381,6 +381,12 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: ref
       type:
         scalar: string
+- name: com.github.operator-framework.operator-controller.api.v1.OCIImageSource
+  map:
+    fields:
+    - name: ref
+      type:
+        scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.ObjectSelector
   map:
     fields:
@@ -477,6 +483,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: catalog
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.CatalogFilter
+    - name: ociImage
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.OCIImageSource
     - name: sourceType
       type:
         scalar: string
