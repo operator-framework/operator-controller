@@ -179,6 +179,13 @@ func (s *LocalDirV1) storeAtomicSwap(ctx context.Context, catalog string, fsys f
 		return "", err
 	}
 
+	if err := syncDir(catalogDir); err != nil {
+		return "", fmt.Errorf("error syncing catalog directory: %w", err)
+	}
+	if err := syncDir(s.RootDir); err != nil {
+		return "", fmt.Errorf("error syncing storage root directory: %w", err)
+	}
+
 	return catalogDir, nil
 }
 
@@ -281,7 +288,7 @@ func storeCatalogData(catalogDir string, metas <-chan *declcfg.Meta) error {
 			return err
 		}
 	}
-	return nil
+	return f.Sync()
 }
 
 func storeIndexData(catalogDir string, metas <-chan *declcfg.Meta) error {
@@ -295,7 +302,19 @@ func storeIndexData(catalogDir string, metas <-chan *declcfg.Meta) error {
 
 	enc := json.NewEncoder(f)
 	enc.SetEscapeHTML(false)
-	return enc.Encode(idx)
+	if err := enc.Encode(idx); err != nil {
+		return err
+	}
+	return f.Sync()
+}
+
+func syncDir(dir string) error {
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	return d.Sync()
 }
 
 func discoverAndStoreSchema(catalogDir string, metas <-chan *declcfg.Meta) error {
