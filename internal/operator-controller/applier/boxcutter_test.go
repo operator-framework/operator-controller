@@ -683,6 +683,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 							labels.BundleNameKey:               "test-package.v1.0.0",
 							labels.BundleVersionKey:            "1.0.0",
 							labels.BundleReferenceKey:          "registry.example/test-package@sha256:123",
+							labels.BundleReleaseKey:            "42",
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{Revision: 1},
@@ -1130,6 +1131,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					labels.BundleNameKey:      "test-package.v1.0.0",
 					labels.BundleVersionKey:   "1.0.0",
 					labels.BundleReferenceKey: "registry.example/test-package@sha256:123",
+					labels.BundleReleaseKey:   "42",
 				}
 			}
 			completed, status, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations)

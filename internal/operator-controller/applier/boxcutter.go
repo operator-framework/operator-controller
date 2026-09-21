@@ -585,6 +585,8 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	return true, "", nil
 }
 
+// migratedSubscriptionRevision finds a successful migration-created initial
+// revision whose resolved bundle metadata matches the desired revision.
 func migratedSubscriptionRevision(revisions []ocv1.ClusterObjectSet, desiredAnnotations map[string]string) *ocv1.ClusterObjectSet {
 	for i := range revisions {
 		revision := &revisions[i]
@@ -608,6 +610,8 @@ func migratedSubscriptionRevision(revisions []ocv1.ClusterObjectSet, desiredAnno
 	return nil
 }
 
+// adoptRevision gives the ClusterExtension controller ownership of a matching
+// migration-created revision without rendering a duplicate revision.
 func (bc *Boxcutter) adoptRevision(ctx context.Context, ext *ocv1.ClusterExtension, revision *ocv1.ClusterObjectSet) error {
 	for _, ref := range revision.OwnerReferences {
 		if ref.Controller != nil && *ref.Controller && ref.UID != ext.UID {
