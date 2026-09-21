@@ -179,6 +179,8 @@ func (s *LocalDirV1) storeAtomicSwap(ctx context.Context, catalog string, fsys f
 		return "", err
 	}
 
+	// catalog.jsonl and index.json are fsync'd when written; syncing catalogDir and RootDir
+	// persists directory metadata for the RemoveAll/Rename swap (file fsync alone does not).
 	if err := syncDir(catalogDir); err != nil {
 		return "", fmt.Errorf("error syncing catalog directory: %w", err)
 	}
