@@ -34,10 +34,10 @@ func CheckForUnexpectedFieldChange(a, b metav1.Object) bool {
 	bVal := reflect.ValueOf(b)
 
 	// Handle pointer types
-	if aVal.Kind() == reflect.Ptr {
+	if aVal.Kind() == reflect.Ptr { //nolint:govet // inline warning
 		aVal = aVal.Elem()
 	}
-	if bVal.Kind() == reflect.Ptr {
+	if bVal.Kind() == reflect.Ptr { //nolint:govet // inline warning
 		bVal = bVal.Elem()
 	}
 

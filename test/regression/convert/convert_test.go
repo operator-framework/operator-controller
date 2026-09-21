@@ -74,7 +74,7 @@ func compareDirs(expectedRootPath, generatedRootPath string) error {
 		}
 		actualPath := filepath.Join(generatedRootPath, relPath)
 
-		expectedBytes, err := os.ReadFile(expectedPath)
+		expectedBytes, err := os.ReadFile(expectedPath) //nolint:gosec // test file path
 		if err != nil {
 			return fmt.Errorf("failed to read expected file: %s", expectedPath)
 		}

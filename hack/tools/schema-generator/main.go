@@ -113,13 +113,13 @@ func main() {
 
 	// Ensure output directory exists
 	dir := filepath.Dir(outputFile)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil { //nolint:gosec // called with predetermined paths
 		fmt.Fprintf(os.Stderr, "Error creating output directory: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Write to file
-	if err := os.WriteFile(outputFile, data, 0600); err != nil {
+	if err := os.WriteFile(outputFile, data, 0600); err != nil { //nolint:gosec // called with predetermined paths
 		fmt.Fprintf(os.Stderr, "Error writing schema file: %v\n", err)
 		os.Exit(1)
 	}
@@ -133,7 +133,7 @@ func fetchOpenAPISpec(url string) (*OpenAPISpec, error) {
 		Timeout: 30 * time.Second,
 	}
 
-	resp, err := client.Get(url)
+	resp, err := client.Get(url) //nolint:gosec // called with predetermined url
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch spec: %w", err)
 	}
