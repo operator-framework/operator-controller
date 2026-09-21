@@ -40,7 +40,10 @@ package mock
 //go:generate mockgen -destination=config/mock_schemaprovider.go -package=config github.com/operator-framework/operator-controller/internal/operator-controller/config SchemaProvider
 
 // Internal interfaces — operator-controller controllers
-//go:generate mockgen -destination=controllers/mock_controllers.go -package=controllers github.com/operator-framework/operator-controller/internal/operator-controller/controllers CatalogCache,CatalogCachePopulator,RevisionStatesGetter,Applier,RevisionEngine,RevisionEngineFactory
+//go:generate mockgen -destination=controllers/mocks_operator_controller.go -package=controllers github.com/operator-framework/operator-controller/internal/operator-controller/controllers CatalogCache,CatalogCachePopulator,RevisionStatesGetter,Applier
+
+// Internal interfaces — cluster-object-controller controllers
+//go:generate mockgen -destination=controllers/mocks_object_controller.go -package=controllers github.com/operator-framework/operator-controller/internal/object-controller/controllers RevisionEngine,RevisionEngineFactory
 
 // Internal interfaces — rukpak render
 //go:generate mockgen -destination=render/mock_certprovider.go -package=render github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render CertificateProvider
