@@ -69,6 +69,10 @@ type ClusterExtensionSpec struct {
 	// bundle's metadata. Whether namespace is set or omitted is fixed at creation time and
 	// cannot be changed afterwards.
 	//
+	// Keep the namespace resolved by bundle metadata stable across bundle upgrades. A change
+	// to that metadata can cause a later revision to use a different managed namespace. When
+	// the previous revision is archived, its namespace is deleted with all of its contents.
+	//
 	// The namespace field follows the DNS label standard as defined in [RFC 1123].
 	// It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
 	// and be no longer than 63 characters.

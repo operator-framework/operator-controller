@@ -57,6 +57,8 @@ If both annotations are present, `suggested-namespace-template` takes priority.
 - Use a descriptive, unique namespace name that includes your package name to avoid collisions.
 - Do not assume the namespace name will be exactly what you suggest as cluster admins can override it by setting `spec.namespace`.
 - The namespace name from the template is used only when `spec.namespace` is omitted. When set, the admin's choice takes precedence and no namespace object is created.
+- **Do not change the resolved namespace name in a bundle upgrade.** In managed mode, the namespace is owned by the bundle revision. If a later bundle resolves to a different name, archival of the previous revision deletes its previous namespace and all content in it, including content not managed by OLM. Keep the template's `metadata.name`, the `suggested-namespace` value, and the fallback package name stable across upgrades.
+- If an operator must move namespaces, document and perform it as an explicit migration. Do not use a changed namespace annotation as the migration mechanism.
 
 ## Consistency across bundle formats
 

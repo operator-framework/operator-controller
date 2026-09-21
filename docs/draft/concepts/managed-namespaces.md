@@ -24,6 +24,28 @@ For registry+v1 bundles in managed mode, the namespace name is resolved from CSV
 2. `operatorframework.io/suggested-namespace`: a plain string with the preferred name
 3. `<packageName>-system`: convention fallback
 
+## Namespace stability across upgrades
+
+The resolved namespace name is part of a bundle revision's rendered object set. Keep the
+metadata that resolves that name stable across all bundle upgrades for an installed package.
+
+Changing a bundle from one resolved managed namespace to another is currently unsafe. The
+new revision creates and uses the new namespace. Once it completes, operator-controller
+archives the previous revision and tears down the objects that it owns, including the
+previous managed namespace. Kubernetes then deletes all content in that namespace, including
+resources that were not created or managed by operator-controller.
+
+This can be triggered by changing `metadata.name` in
+`operatorframework.io/suggested-namespace-template`, changing
+`operatorframework.io/suggested-namespace`, or adding or removing either annotation such
+that the resolution priority selects a different name. It cannot be triggered by changing
+`spec.namespace`: the choice between managed and user-provided mode, and a user-provided
+namespace value, are immutable after creation.
+
+Until managed-namespace relocation has defined safe behavior, publish bundle upgrades that
+resolve to the same namespace. To move an operator to another namespace, treat it as a
+separate migration rather than changing the bundle's namespace metadata in place.
+
 ## What belongs in a managed namespace
 
 - The operator's own workloads (deployments, services, configmaps)
@@ -39,6 +61,10 @@ For registry+v1 bundles in managed mode, the namespace name is resolved from CSV
 ## Deletion behavior
 
 Deleting a ClusterExtension with a managed namespace **deletes the entire namespace and everything in it.** If you have created resources in the managed namespace that are not part of the operator, they will be lost.
+
+The same deletion behavior applies to the previous managed namespace when an upgrade changes
+the namespace resolved from bundle metadata. See [Namespace stability across
+upgrades](#namespace-stability-across-upgrades).
 
 If you need the namespace to persist beyond the operator's lifecycle, use `spec.namespace` to point at an existing namespace you manage yourself.
 
