@@ -51,4 +51,10 @@ const (
 	// that were created during migration from Helm releases. This label is used
 	// to distinguish migrated revisions from those created by normal Boxcutter operation.
 	MigratedFromHelmKey = "olm.operatorframework.io/migrated-from-helm"
+
+	// MigratedFromSubscriptionKey is the annotation placed on a revision created
+	// by the OLM v0-to-v1 migration tool. A matching revision 1 is adopted by a
+	// subsequently-created ClusterExtension instead of being replaced by its
+	// initial Boxcutter reconciliation.
+	MigratedFromSubscriptionKey = "olm.operatorframework.io/migrated-from-subscription"
 )

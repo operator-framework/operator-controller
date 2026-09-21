@@ -478,6 +478,17 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		return true, "", nil
 	}
 
+	// The migration tool creates a successful revision 1 before it creates the
+	// ClusterExtension. Do not render that same bundle into a second revision:
+	// claim the pre-existing revision and use it as the initial installed state.
+	// Comparing the resolved bundle metadata keeps normal upgrades intact.
+	if revision := migratedSubscriptionRevision(existingRevisions, revisionAnnotations); revision != nil {
+		if err := bc.adoptRevision(ctx, ext, revision); err != nil {
+			return false, "", fmt.Errorf("adopting migrated revision %s: %w", revision.Name, err)
+		}
+		return true, "", nil
+	}
+
 	// Generate desired revision
 	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
@@ -572,6 +583,46 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	}
 
 	return true, "", nil
+}
+
+func migratedSubscriptionRevision(revisions []ocv1.ClusterObjectSet, desiredAnnotations map[string]string) *ocv1.ClusterObjectSet {
+	for i := range revisions {
+		revision := &revisions[i]
+		if revision.Spec.Revision != 1 ||
+			revision.Annotations[labels.MigratedFromSubscriptionKey] == "" ||
+			!meta.IsStatusConditionTrue(revision.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded) {
+			continue
+		}
+
+		matchesBundle := true
+		for _, key := range []string{labels.PackageNameKey, labels.BundleNameKey, labels.BundleVersionKey, labels.BundleReferenceKey, labels.BundleReleaseKey} {
+			if revision.Annotations[key] != desiredAnnotations[key] {
+				matchesBundle = false
+				break
+			}
+		}
+		if matchesBundle {
+			return revision
+		}
+	}
+	return nil
+}
+
+func (bc *Boxcutter) adoptRevision(ctx context.Context, ext *ocv1.ClusterExtension, revision *ocv1.ClusterObjectSet) error {
+	for _, ref := range revision.OwnerReferences {
+		if ref.Controller != nil && *ref.Controller && ref.UID != ext.UID {
+			return fmt.Errorf("revision is already controlled by %s %q", ref.Kind, ref.Name)
+		}
+	}
+
+	for _, ref := range revision.OwnerReferences {
+		if ref.Controller != nil && *ref.Controller && ref.UID == ext.UID {
+			return nil
+		}
+	}
+
+	revision.OwnerReferences = append(revision.OwnerReferences, *metav1.NewControllerRef(ext, ocv1.SchemeGroupVersion.WithKind(ocv1.ClusterExtensionKind)))
+	return bc.Client.Update(ctx, revision)
 }
 
 // createExternalizedRevision creates a new COS with all objects externalized to Secrets.

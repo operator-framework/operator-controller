@@ -667,6 +667,42 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 		{
+			name: "adopts matching migration revision without creating a duplicate",
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				return mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+			},
+			existingObjs: []client.Object{
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "test-ext-1",
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+						Annotations: map[string]string{
+							labels.MigratedFromSubscriptionKey: "test-namespace/test-subscription",
+							labels.PackageNameKey:              "test-package",
+							labels.BundleNameKey:               "test-package.v1.0.0",
+							labels.BundleVersionKey:            "1.0.0",
+							labels.BundleReferenceKey:          "registry.example/test-package@sha256:123",
+						},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{Revision: 1},
+					Status: ocv1.ClusterObjectSetStatus{Conditions: []metav1.Condition{{
+						Type:   ocv1.ClusterObjectSetTypeSucceeded,
+						Status: metav1.ConditionTrue,
+					}}},
+				},
+			},
+			validate: func(t *testing.T, c client.Client) {
+				revList := &ocv1.ClusterObjectSetList{}
+				require.NoError(t, c.List(t.Context(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name}))
+				require.Len(t, revList.Items, 1)
+				assert.Equal(t, "test-ext-1", revList.Items[0].Name)
+				require.Len(t, revList.Items[0].OwnerReferences, 1)
+				assert.Equal(t, ext.Name, revList.Items[0].OwnerReferences[0].Name)
+				assert.Equal(t, ext.UID, revList.Items[0].OwnerReferences[0].UID)
+			},
+		},
+		{
 			name: "new revision created when objects in new revision are different",
 			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
 				ctrl := gomock.NewController(t)
@@ -1081,11 +1117,19 @@ func TestBoxcutter_Apply(t *testing.T) {
 
 			// Execute
 			revisionAnnotations := map[string]string{}
-			if tc.name == "annotation-only update (same phases, different annotations)" {
+			switch tc.name {
+			case "annotation-only update (same phases, different annotations)":
 				// For annotation-only update test, pass NEW annotations
 				revisionAnnotations = map[string]string{
 					labels.BundleVersionKey: "1.0.1",
 					labels.PackageNameKey:   "test-package",
+				}
+			case "adopts matching migration revision without creating a duplicate":
+				revisionAnnotations = map[string]string{
+					labels.PackageNameKey:     "test-package",
+					labels.BundleNameKey:      "test-package.v1.0.0",
+					labels.BundleVersionKey:   "1.0.0",
+					labels.BundleReferenceKey: "registry.example/test-package@sha256:123",
 				}
 			}
 			completed, status, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations)
