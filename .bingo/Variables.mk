@@ -47,17 +47,17 @@ $(CRD_REF_DOCS): $(BINGO_DIR)/crd-ref-docs.mod
 	@echo "(re)installing $(GOBIN)/crd-ref-docs-v0.3.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-ref-docs.mod -o=$(GOBIN)/crd-ref-docs-v0.3.0 "github.com/elastic/crd-ref-docs"
 
-GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.8.0
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.12.1
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/golangci-lint-v2.8.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v2.8.0 "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
+	@echo "(re)installing $(GOBIN)/golangci-lint-v2.12.1"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v2.12.1 "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 
-GORELEASER := $(GOBIN)/goreleaser-v2.11.2
+GORELEASER := $(GOBIN)/goreleaser-v2.18.1
 $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/goreleaser-v2.11.2"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v2.11.2 "github.com/goreleaser/goreleaser/v2"
+	@echo "(re)installing $(GOBIN)/goreleaser-v2.18.1"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v2.18.1 "github.com/goreleaser/goreleaser/v2"
 
 HELM := $(GOBIN)/helm-v3.18.4
 $(HELM): $(BINGO_DIR)/helm.mod

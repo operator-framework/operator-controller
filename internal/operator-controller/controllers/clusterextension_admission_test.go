@@ -371,7 +371,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 				},
 				Namespace: "default",
 				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck // testing deprecated field
-					Name: tc.serviceAccount,
+					Name: tc.serviceAccount, //nolint:staticcheck // remove with ServiceAccount field deprecation
 				},
 			}))
 			if tc.errMsg == "" {

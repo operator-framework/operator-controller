@@ -257,18 +257,18 @@ func TestClusterExtensionUpgradeShowsInstalledBundleDeprecation(t *testing.T) {
 			}
 			// Catalog has deprecation for v1.0.0 (installed), but v2.0.0 (resolved) is NOT deprecated
 			return &declcfg.Bundle{
-					Name:    resolvedBundleName,
-					Package: pkgName,
-					Image:   fmt.Sprintf("quay.io/example/%s@sha256:resolved200", pkgName),
-				}, &v, &declcfg.Deprecation{
-					Entries: []declcfg.DeprecationEntry{{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaBundle,
-							Name:   installedBundleName, // v1.0.0 is deprecated
-						},
-						Message: deprecationMessage,
-					}},
-				}, nil
+				Name:    resolvedBundleName,
+				Package: pkgName,
+				Image:   fmt.Sprintf("quay.io/example/%s@sha256:resolved200", pkgName),
+			}, &v, &declcfg.Deprecation{
+				Entries: []declcfg.DeprecationEntry{{
+					Reference: declcfg.PackageScopedReference{
+						Schema: declcfg.SchemaBundle,
+						Name:   installedBundleName, // v1.0.0 is deprecated
+					},
+					Message: deprecationMessage,
+				}},
+			}, nil
 		})
 		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
 			Installed: &controllers.RevisionMetadata{
@@ -356,18 +356,18 @@ func TestClusterExtensionUpgradeFromDeprecatedBundleClearsDeprecation(t *testing
 				Version: bsemver.MustParse("1.0.3"),
 			}
 			return &declcfg.Bundle{
-					Name:    resolvedBundleName,
-					Package: pkgName,
-					Image:   fmt.Sprintf("quay.io/example/%s@sha256:resolved103", pkgName),
-				}, &v, &declcfg.Deprecation{
-					Entries: []declcfg.DeprecationEntry{{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaBundle,
-							Name:   installedBundleName,
-						},
-						Message: deprecationMessage,
-					}},
-				}, nil
+				Name:    resolvedBundleName,
+				Package: pkgName,
+				Image:   fmt.Sprintf("quay.io/example/%s@sha256:resolved103", pkgName),
+			}, &v, &declcfg.Deprecation{
+				Entries: []declcfg.DeprecationEntry{{
+					Reference: declcfg.PackageScopedReference{
+						Schema: declcfg.SchemaBundle,
+						Name:   installedBundleName,
+					},
+					Message: deprecationMessage,
+				}},
+			}, nil
 		})
 		d.RevisionStatesGetter = newMockRevisionStatesGetter(gomock.NewController(t), &controllers.RevisionStates{
 			Installed: &controllers.RevisionMetadata{

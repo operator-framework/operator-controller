@@ -40,7 +40,7 @@ func startRecordingProxy(proxied chan<- string) *httptest.Server {
 		default:
 		}
 
-		dst, err := net.Dial("tcp", r.Host)
+		dst, err := net.Dial("tcp", r.Host) //nolint:gosec // test helper
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
 			return

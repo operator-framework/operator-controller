@@ -464,7 +464,7 @@ func readBundleDir(dir string) (map[string][]byte, error) {
 		if err != nil {
 			return err
 		}
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec // no symlinks in bundle for race condition/TOCTOU traversal risk
 		if err != nil {
 			return err
 		}

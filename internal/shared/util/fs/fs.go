@@ -75,9 +75,9 @@ func setModeRecursive(path string, fileMode os.FileMode, dirMode os.FileMode) er
 			// 2. if they resolve to other locations outside the root, we don't want to change their permissions
 			return nil
 		case os.ModeDir:
-			return os.Chmod(path, dirMode)
+			return os.Chmod(path, dirMode) //nolint:gosec
 		case 0: // regular file
-			return os.Chmod(path, fileMode)
+			return os.Chmod(path, fileMode) //nolint:gosec
 		default:
 			return fmt.Errorf("refusing to change ownership of file %q with type %v", path, typ.String())
 		}

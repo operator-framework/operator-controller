@@ -219,21 +219,21 @@ type resolutionError struct {
 func (rei resolutionError) Error() string {
 	var sb strings.Builder
 	if rei.InstalledBundle != nil {
-		sb.WriteString(fmt.Sprintf("error upgrading from currently installed version %q: ", rei.InstalledBundle.Version))
+		fmt.Fprintf(&sb, "error upgrading from currently installed version %q: ", rei.InstalledBundle.Version)
 	}
 
 	if len(rei.ResolvedBundles) > 1 {
-		sb.WriteString(fmt.Sprintf("found bundles for package %q ", rei.PackageName))
+		fmt.Fprintf(&sb, "found bundles for package %q ", rei.PackageName)
 	} else {
-		sb.WriteString(fmt.Sprintf("no bundles found for package %q ", rei.PackageName))
+		fmt.Fprintf(&sb, "no bundles found for package %q ", rei.PackageName)
 	}
 
 	if rei.Version != "" {
-		sb.WriteString(fmt.Sprintf("matching version %q ", rei.Version))
+		fmt.Fprintf(&sb, "matching version %q ", rei.Version)
 	}
 
 	if len(rei.Channels) > 0 {
-		sb.WriteString(fmt.Sprintf("in channels %v ", rei.Channels))
+		fmt.Fprintf(&sb, "in channels %v ", rei.Channels)
 	}
 
 	matchedCatalogs := make([]string, 0, len(rei.ResolvedBundles))
@@ -242,7 +242,7 @@ func (rei resolutionError) Error() string {
 	}
 	slices.Sort(matchedCatalogs) // sort for consistent error message
 	if len(matchedCatalogs) > 1 {
-		sb.WriteString(fmt.Sprintf("in multiple catalogs with the same priority %v ", matchedCatalogs))
+		fmt.Fprintf(&sb, "in multiple catalogs with the same priority %v ", matchedCatalogs)
 	}
 
 	return strings.TrimSpace(sb.String())

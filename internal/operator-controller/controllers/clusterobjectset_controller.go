@@ -195,14 +195,14 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	// Retry failing preflight checks with a flat 10s retry.
 	// TODO: report status, backoff?
 	if verr := rres.GetValidationError(); verr != nil {
-		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
+		l.Error(fmt.Errorf("%w", *verr), "preflight validation failed, retrying after 10s")
 		setRetryingConditions(l, cos, fmt.Sprintf("revision validation error: %s", verr), isDeadlineExceeded)
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
 	for i, pres := range rres.GetPhases() {
 		if verr := pres.GetValidationError(); verr != nil {
-			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", i)
+			l.Error(fmt.Errorf("%w", *verr), "phase preflight validation failed, retrying after 10s", "phase", i)
 			setRetryingConditions(l, cos, fmt.Sprintf("phase %d validation error: %s", i, verr), isDeadlineExceeded)
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}

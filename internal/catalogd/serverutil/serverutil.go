@@ -110,7 +110,7 @@ func (r *catalogServerRunnable) Start(ctx context.Context) error {
 	// Signal readiness before blocking on Serve so the readiness probe passes promptly.
 	close(r.ready)
 
-	go func() {
+	go func() { //nolint:gosec // allow shutdown context independent of request context
 		<-ctx.Done()
 		shutdownCtx := context.Background()
 		if r.shutdownTimeout > 0 {

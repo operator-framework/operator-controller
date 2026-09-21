@@ -115,7 +115,7 @@ func runGenerator(args ...string) {
 				continue
 			}
 
-			log.Printf("generating %s CRD for %v\n", channel, groupKind)
+			log.Printf("generating %s CRD for %v\n", channel, groupKind) //nolint:gosec // groupKind comes from trusted source
 
 			parser.NeedCRDFor(groupKind, nil)
 			crdRaw := parser.CustomResourceDefinitions[groupKind]
@@ -172,7 +172,7 @@ func runGenerator(args ...string) {
 			}
 
 			fileName := fmt.Sprintf("%s/%s/%s_%s.yaml", outputDir, channel, crdRaw.Spec.Group, crdRaw.Spec.Names.Plural)
-			err = os.WriteFile(fileName, out, 0o600)
+			err = os.WriteFile(fileName, out, 0o600) //nolint:gosec // path limited within config/crd directory
 			if err != nil {
 				log.Fatalf("failed to write CRD: %s", err)
 			}
