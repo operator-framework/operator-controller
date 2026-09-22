@@ -29,6 +29,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/object-controller/revision"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
 	mockmachinery "github.com/operator-framework/operator-controller/internal/testutil/mock/machinery"
@@ -1269,8 +1270,8 @@ func newMockTrackingCache(ctrl *gomock.Controller, cl client.Client, freeFn func
 
 // newNoopMockRevisionEngine creates a MockRevisionEngine with no expectations set.
 // Useful for tests where the engine is never called (e.g., error paths that fail before reaching the engine).
-func newNoopMockRevisionEngine(ctrl *gomock.Controller) *mockcontrollers.MockRevisionEngine {
-	return mockcontrollers.NewMockRevisionEngine(ctrl)
+func newNoopMockRevisionEngine(ctrl *gomock.Controller) *mockcontrollers.MockEngine {
+	return mockcontrollers.NewMockEngine(ctrl)
 }
 
 // newMockRevisionEngineWithReconcile creates a MockRevisionEngine with a Reconcile expectation.
@@ -1279,8 +1280,8 @@ func newMockRevisionEngineWithReconcile(
 	ctrl *gomock.Controller,
 	reconcileFn func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error),
 	teardownFn func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error),
-) *mockcontrollers.MockRevisionEngine {
-	m := mockcontrollers.NewMockRevisionEngine(ctrl)
+) *mockcontrollers.MockEngine {
+	m := mockcontrollers.NewMockEngine(ctrl)
 	m.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(reconcileFn).AnyTimes()
 	if teardownFn != nil {
 		m.EXPECT().Teardown(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(teardownFn).AnyTimes()
@@ -1292,12 +1293,12 @@ func newMockRevisionEngineWithReconcile(
 // that returns the given engine and error.
 func newMockRevisionEngineFactoryWithEngine(
 	ctrl *gomock.Controller,
-	engine controllers.RevisionEngine,
+	engine revision.Engine,
 	createErr error,
-) *mockcontrollers.MockRevisionEngineFactory {
-	m := mockcontrollers.NewMockRevisionEngineFactory(ctrl)
-	m.EXPECT().CreateRevisionEngine(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, rev *ocv1.ClusterObjectSet) (controllers.RevisionEngine, error) {
+) *mockcontrollers.MockEngineFactory {
+	m := mockcontrollers.NewMockEngineFactory(ctrl)
+	m.EXPECT().New(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, rev *ocv1.ClusterObjectSet) (revision.Engine, error) {
 			if createErr != nil {
 				return nil, createErr
 			}

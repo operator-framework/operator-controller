@@ -518,7 +518,7 @@ type ClusterObjectSetStatus struct {
 	// different content. Each entry covers all fully-resolved object
 	// manifests within a phase, making it source-agnostic.
 	//
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0",message="observedPhases is immutable"
+	// +kubebuilder:validation:XValidation:rule="oldSelf.size() == 0 || (self.size() == oldSelf.size() && oldSelf.all(o, self.exists(n, n.name == o.name)))",message="observedPhases: phases cannot be added or removed once set"
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=map
 	// +listMapKey=name
@@ -527,6 +527,7 @@ type ClusterObjectSetStatus struct {
 }
 
 // ObservedPhase records the observed content digest of a resolved phase.
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.completedAt) || (has(self.completedAt) && self.completedAt == oldSelf.completedAt)",message="completedAt is immutable once set"
 type ObservedPhase struct {
 	// name is the phase name matching a phase in spec.phases.
 	//
@@ -534,7 +535,14 @@ type ObservedPhase struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start and end with an alphanumeric character."
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
 	Name string `json:"name"`
+
+	// completedAt is the timestamp when this phase first became Complete.
+	// Set once and never cleared. Zero value means the phase has never been
+	// Complete.
+	// +optional
+	CompletedAt metav1.Time `json:"completedAt,omitzero"`
 
 	// digest is the digest of the phase's resolved object content
 	// at first successful resolution, in the format "<algorithm>:<hex>".
@@ -543,6 +551,7 @@ type ObservedPhase struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=256
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]+:[a-f0-9]+$')`,message="digest must be in the format '<algorithm>:<hex>'"
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="digest is immutable"
 	Digest string `json:"digest"`
 }
 

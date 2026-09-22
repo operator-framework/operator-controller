@@ -42,6 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/object-controller/revision"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -53,7 +54,7 @@ const (
 // as part of the boxcutter integration.
 type ClusterObjectSetReconciler struct {
 	Client                client.Client
-	RevisionEngineFactory RevisionEngineFactory
+	RevisionEngineFactory revision.EngineFactory
 	TrackingCache         trackingCache
 	Clock                 clock.Clock
 }
@@ -150,13 +151,13 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{}, nil
 	}
 
-	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cos)
+	revisionEngine, err := c.RevisionEngineFactory.New(ctx, cos)
 	if err != nil {
 		setRetryingConditions(l, cos, err.Error(), isDeadlineExceeded)
 		return ctrl.Result{}, fmt.Errorf("failed to create revision engine: %v", err)
 	}
 
-	revision := boxcutter.NewRevisionWithOwner(
+	bcRevision := boxcutter.NewRevisionWithOwner(
 		cos.Name,
 		cos.Spec.Revision,
 		phases,
@@ -169,20 +170,20 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			markAsAvailableUnknown(cos, ocv1.ClusterObjectSetReasonReconciling, err.Error())
 			return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 		}
-		return c.archive(ctx, revisionEngine, cos, revision)
+		return c.archive(ctx, revisionEngine, cos, bcRevision)
 	}
 
 	if err := c.ensureFinalizer(ctx, cos, clusterObjectSetTeardownFinalizer); err != nil {
 		return ctrl.Result{}, fmt.Errorf("error ensuring teardown finalizer: %v", err)
 	}
 
-	if err := c.establishWatch(ctx, cos, revision); err != nil {
+	if err := c.establishWatch(ctx, cos, bcRevision); err != nil {
 		werr := fmt.Errorf("establish watch: %v", err)
 		setRetryingConditions(l, cos, werr.Error(), isDeadlineExceeded)
 		return ctrl.Result{}, werr
 	}
 
-	rres, err := revisionEngine.Reconcile(ctx, revision, opts...)
+	rres, err := revisionEngine.Reconcile(ctx, bcRevision, opts...)
 	if err != nil {
 		if rres != nil {
 			// Log detailed reconcile reports only in debug mode (V(1)) to reduce verbosity.
@@ -198,6 +199,14 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
 		setRetryingConditions(l, cos, fmt.Sprintf("revision validation error: %s", verr), isDeadlineExceeded)
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+	}
+
+	// Set phase completedAt
+	now := metav1.NewTime(time.Now())
+	for i, pres := range rres.GetPhases() {
+		if pres.IsComplete() && cos.Status.ObservedPhases[i].CompletedAt.IsZero() {
+			cos.Status.ObservedPhases[i].CompletedAt = now
+		}
 	}
 
 	for i, pres := range rres.GetPhases() {
@@ -308,7 +317,7 @@ func (c *ClusterObjectSetReconciler) delete(ctx context.Context, cos *ocv1.Clust
 	return ctrl.Result{}, nil
 }
 
-func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine RevisionEngine, cos *ocv1.ClusterObjectSet, revision boxcutter.RevisionBuilder) (ctrl.Result, error) {
+func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine revision.Engine, cos *ocv1.ClusterObjectSet, revision boxcutter.RevisionBuilder) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 	tdres, err := revisionEngine.Teardown(ctx, revision)
 	if err != nil {
