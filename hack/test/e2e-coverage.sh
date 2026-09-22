@@ -10,6 +10,8 @@ OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME="operator-controller-controller-mana
 CATALOGD_NAMESPACE="olmv1-system"
 CATALOGD_MANAGER_DEPLOYMENT_NAME="catalogd-controller-manager"
 
+OBJECT_CONTROLLER_MANAGER_DEPLOYMENT_NAME="object-controller-controller-manager"
+
 COPY_POD_NAME="e2e-coverage-copy-pod"
 
 # Create a temporary directory for coverage
@@ -25,6 +27,11 @@ kubectl -n "$CATALOGD_NAMESPACE" scale deployment/"$CATALOGD_MANAGER_DEPLOYMENT_
 # Wait for manager pods to terminate so coverage data is flushed to the PVC
 kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" wait --for=delete pods -l control-plane="$OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME" --timeout=60s
 kubectl -n "$CATALOGD_NAMESPACE" wait --for=delete pods -l control-plane="$CATALOGD_MANAGER_DEPLOYMENT_NAME" --timeout=60s
+
+if kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" get deployment/"$OBJECT_CONTROLLER_MANAGER_DEPLOYMENT_NAME" >/dev/null 2>&1; then
+    kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" scale deployment/"$OBJECT_CONTROLLER_MANAGER_DEPLOYMENT_NAME" --replicas=0
+    kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" wait --for=delete pods -l control-plane="$OBJECT_CONTROLLER_MANAGER_DEPLOYMENT_NAME" --timeout=60s
+fi
 
 # Copy the coverage data from the temporary pod
 kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" cp "$COPY_POD_NAME":/e2e-coverage/ "$COVERAGE_DIR"
