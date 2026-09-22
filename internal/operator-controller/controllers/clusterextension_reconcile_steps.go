@@ -32,8 +32,8 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
