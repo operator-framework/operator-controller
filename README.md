@@ -15,10 +15,11 @@ controllers, and tooling that support the packaging, distribution, and lifecycli
 - provide secure, high-quality, and predictable user experiences centered around declarative GitOps concepts
 - give cluster admins the minimal necessary controls to build their desired cluster architectures and to have ultimate control
 
-OLM v1 consists of two different components:
+OLM v1 consists of the following components:
 
 * operator-controller
 * catalogd
+* object-controller (experimental): manages `ClusterObjectSet` resources independently of `ClusterExtension`
 
 For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](docs/project/olmv1_design_decisions.md).
 
