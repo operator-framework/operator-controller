@@ -23,7 +23,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
 func newSchemeWithCoreV1(t *testing.T) *apimachineryruntime.Scheme {
