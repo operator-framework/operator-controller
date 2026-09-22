@@ -691,6 +691,7 @@ crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
 	# per channel reads as self-contradictory. Remaining directives are stripped.
 	sed -E -e 's#<opcon:standard:description>#**Standard channel:** #g' \
 		-e 's#<opcon:experimental:description>#**Experimental channel:** #g' \
+		-e 's#<opcon:experimental>#**Experimental channel:** #g' \
 		-e 's#</?opcon:[^>]*>##g' \
 		$(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME) > $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME).tmp
 	mv $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME).tmp $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME)

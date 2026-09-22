@@ -274,7 +274,10 @@ type boxcutterStorageMigratorClient interface {
 // The migration is idempotent and skipped if revisions already exist or no Helm release is found.
 func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) error {
 	// Managed namespace mode (spec.namespace empty) means this is a new-style extension
-	// that never had a Helm release, so there's nothing to migrate.
+	// that never had a Helm release, so there is nothing to migrate. The previous CRD
+	// required a non-empty namespace, while the current CRD prevents an existing
+	// namespace from being removed. Consequently, an extension with an omitted namespace
+	// must have been created after managed namespace mode was introduced.
 	if ext.Spec.Namespace == "" {
 		return nil
 	}

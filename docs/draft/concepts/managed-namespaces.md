@@ -33,7 +33,11 @@ Changing a bundle from one resolved managed namespace to another is currently un
 new revision creates and uses the new namespace. Once it completes, operator-controller
 archives the previous revision and tears down the objects that it owns, including the
 previous managed namespace. Kubernetes then deletes all content in that namespace, including
-resources that were not created or managed by operator-controller.
+resources that were not created or managed by operator-controller. This happens without
+deleting the ClusterExtension itself.
+
+The teardown is limited to the old managed namespace. It does not delete cluster-scoped CRDs,
+which are carried forward by the new revision, or workloads outside that namespace.
 
 This can be triggered by changing `metadata.name` in
 `operatorframework.io/suggested-namespace-template`, changing
@@ -44,13 +48,14 @@ namespace value, are immutable after creation.
 
 Until managed-namespace relocation has defined safe behavior, publish bundle upgrades that
 resolve to the same namespace. To move an operator to another namespace, treat it as a
-separate migration rather than changing the bundle's namespace metadata in place.
+separate migration rather than changing the bundle's namespace metadata in place. Changing
+the bundle-derived namespace is a breaking change; bundle authors should publish it as a
+new major version.
 
 ## What belongs in a managed namespace
 
-- The operator's own workloads (deployments, services, configmaps)
-- The operator's RBAC resources (service accounts, roles, role bindings)
-- CRDs and webhooks installed by the operator
+- The operator's own workloads and accompanying namespaced resources (deployments, services, configmaps, and webhook servers)
+- The operator's namespaced RBAC resources (service accounts, roles, and role bindings)
 
 ## What does NOT belong in a managed namespace
 

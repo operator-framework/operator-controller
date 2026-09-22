@@ -39,8 +39,8 @@ Feature: Namespace PSA Management
   Scenario: User-provided namespace does not get PSA labels
     Given namespace "${TEST_NAMESPACE}" is available
     And a catalog "test" with packages:
-      | package | version | channel | replaces | contents                   |
-      | test    | 1.0.0   | stable  |          | CRD, Deployment, ConfigMap |
+      | package | version | channel | replaces | contents                                           |
+      | test    | 1.0.0   | stable  |          | CRD, Deployment, ConfigMap, NSTemplate(privileged) |
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
