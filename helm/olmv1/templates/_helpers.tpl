@@ -16,7 +16,9 @@ Create chart name and version as used by the chart label.
 Return the name of the active component for a prefix, but _only_ if one is enabled
 */}}
 {{- define "component.name.prefix" -}}
-{{- if and (.Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) -}}
+{{- if and (not .Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) (include "objectController.enabled" .) -}}
+object-controller-
+{{- else if and (.Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) -}}
 operator-controller-
 {{- else if and (not .Values.options.operatorController.enabled) (.Values.options.catalogd.enabled) -}}
 catalogd-
@@ -45,12 +47,32 @@ Insertion of additional rules for RBAC
 Returns "operator-controller", "catalogd" or "olmv1" depending on enabled components
 */}}
 {{- define "olmv1.label.name" -}}
-{{- if (and .Values.options.operatorController.enabled (not .Values.options.catalogd.enabled)) -}}
+{{- if and (not .Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) (include "objectController.enabled" .) -}}
+object-controller
+{{- else if (and .Values.options.operatorController.enabled (not .Values.options.catalogd.enabled)) -}}
 operator-controller
 {{- else if (and (not .Values.options.operatorController.enabled) .Values.options.catalogd.enabled) -}}
 catalogd
 {{- else -}}
 olmv1
+{{- end -}}
+{{- end -}}
+
+{{/*
+Default to a separate object-controller whenever operator-controller uses Boxcutter.
+An explicit enabled value also permits installing object-controller on its own.
+Return an empty string when disabled so the helper can be used in conditionals.
+*/}}
+{{- define "objectController.enabled" -}}
+{{- $enabled := .Values.options.objectController.enabled -}}
+{{- if eq (toJson $enabled) "null" -}}
+{{- $enabled = and .Values.options.operatorController.enabled (has "BoxcutterRuntime" .Values.options.operatorController.features.enabled) (not (has "BoxcutterRuntime" .Values.options.operatorController.features.disabled)) -}}
+{{- end -}}
+{{- if $enabled -}}
+{{- if ne .Values.options.featureSet "experimental" -}}
+{{- fail "objectController requires options.featureSet=experimental" -}}
+{{- end -}}
+true
 {{- end -}}
 {{- end -}}
 
