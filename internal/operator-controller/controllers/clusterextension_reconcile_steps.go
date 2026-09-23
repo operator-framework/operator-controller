@@ -422,7 +422,7 @@ func ValidateInstallNamespace(nsClient corev1client.NamespacesGetter) ReconcileS
 
 		_, err := nsClient.Namespaces().Get(ctx, ext.Spec.Namespace, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
-			nsErr := fmt.Errorf("namespace %q not found; spec.namespace must reference an existing namespace", ext.Spec.Namespace)
+			nsErr := fmt.Errorf("namespace %q not found; when set, spec.namespace must reference an existing namespace", ext.Spec.Namespace)
 			setStatusProgressing(ext, nsErr)
 			return nil, nsErr
 		}
