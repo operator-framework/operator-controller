@@ -408,6 +408,9 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.operator-framework.operator-controller.api.v1.ObservedPhase
   map:
     fields:
+    - name: completedAt
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
     - name: digest
       type:
         scalar: string
