@@ -10,11 +10,10 @@ metadata:
   annotations:
     {{- include "olmv1.annotations" . | nindent 4 }}
 spec:
-  {{- if .Values.options.objectController.podDisruptionBudget.minAvailable }}
-  minAvailable: {{ .Values.options.objectController.podDisruptionBudget.minAvailable }}
-  {{- end }}
-  {{- if .Values.options.objectController.podDisruptionBudget.maxUnavailable }}
+  {{- if ne (toJson .Values.options.objectController.podDisruptionBudget.maxUnavailable) "null" }}
   maxUnavailable: {{ .Values.options.objectController.podDisruptionBudget.maxUnavailable }}
+  {{- else if ne (toJson .Values.options.objectController.podDisruptionBudget.minAvailable) "null" }}
+  minAvailable: {{ .Values.options.objectController.podDisruptionBudget.minAvailable }}
   {{- end }}
   unhealthyPodEvictionPolicy: AlwaysAllow
   selector:

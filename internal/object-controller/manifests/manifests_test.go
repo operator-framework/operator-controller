@@ -10,8 +10,11 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
+	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/utils/ptr"
 )
 
 func TestObjectControllerManifests(t *testing.T) {
@@ -38,13 +41,7 @@ func TestObjectControllerManifests(t *testing.T) {
 		{name: "standard cannot enable experimental API", values: `options: {objectController: {enabled: true}}`, wantErr: "objectController requires options.featureSet=experimental"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			chart, err := loader.Load("../../../helm/olmv1")
-			require.NoError(t, err)
-			values, err := chartutil.ReadValues([]byte(tc.values))
-			require.NoError(t, err)
-			renderValues, err := chartutil.ToRenderValues(chart, values, chartutil.ReleaseOptions{Name: "olmv1"}, nil)
-			require.NoError(t, err)
-			rendered, err := engine.Render(chart, renderValues)
+			rendered, err := renderChart(t, tc.values)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)
 				return
@@ -95,4 +92,50 @@ func TestObjectControllerManifests(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestObjectControllerPodDisruptionBudget(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		values             string
+		wantMinAvailable   *intstr.IntOrString
+		wantMaxUnavailable *intstr.IntOrString
+		disabled           bool
+	}{
+		{name: "default minimum", values: `{}`, wantMinAvailable: ptr.To(intstr.FromInt32(1))},
+		{name: "maximum overrides default minimum", values: `{maxUnavailable: 1}`, wantMaxUnavailable: ptr.To(intstr.FromInt32(1))},
+		{name: "zero maximum", values: `{maxUnavailable: 0}`, wantMaxUnavailable: ptr.To(intstr.FromInt32(0))},
+		{name: "percentage maximum", values: `{maxUnavailable: "50%"}`, wantMaxUnavailable: ptr.To(intstr.FromString("50%"))},
+		{name: "zero minimum", values: `{minAvailable: 0}`, wantMinAvailable: ptr.To(intstr.FromInt32(0))},
+		{name: "percentage minimum", values: `{minAvailable: "50%"}`, wantMinAvailable: ptr.To(intstr.FromString("50%"))},
+		{name: "null maximum preserves minimum", values: `{maxUnavailable: null}`, wantMinAvailable: ptr.To(intstr.FromInt32(1))},
+		{name: "null minimum with maximum", values: `{minAvailable: null, maxUnavailable: 1}`, wantMaxUnavailable: ptr.To(intstr.FromInt32(1))},
+		{name: "disabled", values: `{enabled: false}`, disabled: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rendered, err := renderChart(t, `options: {featureSet: experimental, objectController: {enabled: true, podDisruptionBudget: `+tc.values+`}}`)
+			require.NoError(t, err)
+			content := rendered["olmv1/templates/poddisruptionbudget-olmv1-system-object-controller.yml"]
+			if tc.disabled {
+				require.Empty(t, strings.TrimSpace(content))
+				return
+			}
+			var budget policyv1.PodDisruptionBudget
+			require.NoError(t, yaml.NewYAMLOrJSONDecoder(strings.NewReader(content), 4096).Decode(&budget))
+			require.Equal(t, "object-controller-controller-manager", budget.Name)
+			require.Equal(t, tc.wantMinAvailable, budget.Spec.MinAvailable)
+			require.Equal(t, tc.wantMaxUnavailable, budget.Spec.MaxUnavailable)
+		})
+	}
+}
+
+func renderChart(t *testing.T, valuesYAML string) (map[string]string, error) {
+	t.Helper()
+	chart, err := loader.Load("../../../helm/olmv1")
+	require.NoError(t, err)
+	values, err := chartutil.ReadValues([]byte(valuesYAML))
+	require.NoError(t, err)
+	renderValues, err := chartutil.ToRenderValues(chart, values, chartutil.ReleaseOptions{Name: "olmv1"}, nil)
+	require.NoError(t, err)
+	return engine.Render(chart, renderValues)
 }

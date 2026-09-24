@@ -80,7 +80,7 @@ func newCommand() *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&cfg.metricsAddr, "metrics-bind-address", "", "The metrics endpoint address. Requires tls-cert and tls-key. (Default: ':8443')")
+	flags.StringVar(&cfg.metricsAddr, "metrics-bind-address", "", "The metrics endpoint address. Disabled without tls-cert and tls-key; defaults to ':8443' when both are supplied.")
 	flags.StringVar(&cfg.pprofAddr, "pprof-bind-address", "0", "The pprof endpoint address. An empty string or 0 disables pprof.")
 	flags.StringVar(&cfg.probeAddr, "health-probe-bind-address", ":8081", "The health probe endpoint address.")
 	flags.StringVar(&cfg.certFile, "tls-cert", "", "The certificate file for the metrics server. Requires tls-key.")

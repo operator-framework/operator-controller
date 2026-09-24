@@ -89,7 +89,9 @@ func TestStandaloneController(t *testing.T) {
 			t.Error("manager did not stop")
 		}
 	})
-	require.True(t, mgr.GetCache().WaitForCacheSync(ctx))
+	syncCtx, syncCancel := context.WithTimeout(ctx, 30*time.Second)
+	defer syncCancel()
+	require.True(t, mgr.GetCache().WaitForCacheSync(syncCtx), "manager cache did not synchronize")
 
 	for _, name := range []string{"inline", "secret-ref"} {
 		t.Run(name, func(t *testing.T) {
@@ -125,12 +127,30 @@ func TestStandaloneController(t *testing.T) {
 					return
 				}
 				assert.True(collect, meta.IsStatusConditionTrue(cos.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded), "%v", cos.Status.Conditions)
+				progressing := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+				if assert.NotNil(collect, progressing) {
+					assert.Equal(collect, "Revision 1 has rolled out.", progressing.Message)
+				}
 			}, time.Minute, 100*time.Millisecond)
 			cm := &corev1.ConfigMap{}
 			require.NoError(t, cl.Get(ctx, client.ObjectKey{Name: name, Namespace: ns.Name}, cm))
 			require.Equal(t, "world", cm.Data["hello"])
 			require.NotNil(t, metav1.GetControllerOf(cm))
 			require.Equal(t, cos.UID, metav1.GetControllerOf(cm).UID)
+
+			// Observe managed-object changes without updating the ClusterObjectSet.
+			originalUID := cm.UID
+			require.NoError(t, cl.Delete(ctx, cm))
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				if !assert.NoError(collect, cl.Get(ctx, client.ObjectKeyFromObject(cm), cm)) {
+					return
+				}
+				assert.NotEqual(collect, originalUID, cm.UID)
+				assert.Equal(collect, "world", cm.Data["hello"])
+				if assert.NotNil(collect, metav1.GetControllerOf(cm)) {
+					assert.Equal(collect, cos.UID, metav1.GetControllerOf(cm).UID)
+				}
+			}, time.Minute, 100*time.Millisecond)
 
 			// The controller releases its finalizer independently of ClusterExtension.
 			// The owner reference above lets Kubernetes garbage-collect the ConfigMap;
