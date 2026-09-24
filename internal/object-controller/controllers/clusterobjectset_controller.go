@@ -252,20 +252,11 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 		// Record the timestamp of the first time the revision was observed to be
 		// ready. This is set once and never changes for subsequent reconciliations.
+		// It also serves as the signal that the revision has completed its rollout,
+		// which the ClusterExtension controller uses to determine the installed revision.
 		if cos.Status.CompletedAt.IsZero() {
 			cos.Status.CompletedAt = metav1.NewTime(c.Clock.Now())
 		}
-
-		// We'll probably only want to remove this once we are done updating the ClusterExtension conditions
-		// as its one of the interfaces between the revision and the extension. If we still have the Succeeded for now
-		// that's fine.
-		meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterObjectSetTypeSucceeded,
-			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonSucceeded,
-			Message:            "Revision succeeded rolling out.",
-			ObservedGeneration: cos.Generation,
-		})
 	} else {
 		var probeFailureMsgs []string
 		for _, pres := range rres.GetPhases() {

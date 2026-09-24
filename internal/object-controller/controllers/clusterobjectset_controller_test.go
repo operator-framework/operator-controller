@@ -398,7 +398,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name: "set Available:True:ProbesSucceeded and Succeeded:True:Succeeded conditions on successful revision rollout",
+			name: "set Available:True:ProbesSucceeded condition and completedAt on successful revision rollout",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
 			}),
@@ -428,12 +428,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				require.Equal(t, "Revision 1.0.0 has rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision succeeded rolling out.", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
+				require.False(t, rev.Status.CompletedAt.IsZero(), "completedAt should be set on successful rollout")
 			},
 		},
 		{
@@ -1137,12 +1132,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Reason:             ocv1.ReasonSucceeded,
 					ObservedGeneration: rev1.Generation,
 				})
-				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeSucceeded,
-					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonSucceeded,
-					ObservedGeneration: rev1.Generation,
-				})
+				rev1.Status.CompletedAt = metav1.Now()
 				return []client.Object{rev1, ext}
 			},
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{

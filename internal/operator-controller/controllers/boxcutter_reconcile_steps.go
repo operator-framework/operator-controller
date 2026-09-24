@@ -76,7 +76,9 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 			rm.Release = &releaseValue
 		}
 
-		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded) {
+		// A revision is considered installed once it has been observed ready at
+		// least once, recorded by status.completedAt.
+		if !rev.Status.CompletedAt.IsZero() {
 			rs.Installed = rm
 		} else {
 			rs.RollingOut = append(rs.RollingOut, rm)

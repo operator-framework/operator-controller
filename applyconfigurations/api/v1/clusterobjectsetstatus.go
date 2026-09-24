@@ -47,9 +47,6 @@ type ClusterObjectSetStatusApplyConfiguration struct {
 	// - When status is Unknown and reason is Reconciling, the ClusterObjectSet has encountered an error that prevented it from observing the probes.
 	// - When status is Unknown and reason is Archived, the ClusterObjectSet has been archived and its objects have been torn down.
 	// - When status is Unknown and reason is Migrated, the ClusterObjectSet was migrated from an existing release and object status probe results have not yet been observed.
-	//
-	// The Succeeded condition represents whether the revision has successfully completed its rollout:
-	// - When status is True and reason is Succeeded, the ClusterObjectSet has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// observedPhases records the content hashes of resolved phases
 	// at first successful reconciliation. This is used to detect if
