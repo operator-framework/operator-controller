@@ -4,6 +4,22 @@ before:
     - go mod tidy
     - go mod download
 builds:
+  - id: object-controller
+    main: ./cmd/object-controller/
+    binary: object-controller
+    asmflags: "{{ .Env.GO_BUILD_ASMFLAGS }}"
+    gcflags: "{{ .Env.GO_BUILD_GCFLAGS }}"
+    ldflags: "{{ .Env.GO_BUILD_LDFLAGS }}"
+    tags:
+      - "{{ .Env.GO_BUILD_TAGS }}"
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - ppc64le
+      - s390x
   - id: operator-controller
     main: ./cmd/operator-controller/
     binary: operator-controller
@@ -37,6 +53,42 @@ builds:
       - ppc64le
       - s390x
 dockers:
+  - image_templates:
+      - "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+    dockerfile: Dockerfile.object-controller
+    goos: linux
+    goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--provenance=false"
+  - image_templates:
+      - "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+    dockerfile: Dockerfile.object-controller
+    goos: linux
+    goarch: arm64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--provenance=false"
+  - image_templates:
+      - "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+    dockerfile: Dockerfile.object-controller
+    goos: linux
+    goarch: ppc64le
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/ppc64le"
+      - "--provenance=false"
+  - image_templates:
+      - "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+    dockerfile: Dockerfile.object-controller
+    goos: linux
+    goarch: s390x
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/s390x"
+      - "--provenance=false"
   - image_templates:
       - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
     dockerfile: Dockerfile.operator-controller
@@ -110,6 +162,12 @@ dockers:
       - "--platform=linux/s390x"
       - "--provenance=false"
 docker_manifests:
+  - name_template: "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+    image_templates:
+      - "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.OBJECT_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
   - name_template: "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
     image_templates:
       - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"

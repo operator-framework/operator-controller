@@ -50,7 +50,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 	k8sutil "github.com/operator-framework/operator-controller/internal/shared/util/k8s"
 )

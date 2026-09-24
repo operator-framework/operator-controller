@@ -11,7 +11,7 @@ CR="olm.operatorframework.io_clusterobjectsets.yaml"
 
 # order for modules and crds must match
 # each item in crds must be unique, and should be associated with a module
-modules=("operator-controller" "catalogd" "operator-controller")
+modules=("operator-controller" "catalogd" "object-controller")
 crds=("${CE}" "${CC}" "${CR}")
 
 # Channels must much those in the generator
