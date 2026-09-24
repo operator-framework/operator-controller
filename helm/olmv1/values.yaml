@@ -1,9 +1,18 @@
 # Default values for OLMv1.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-
 # List of components to include
 options:
+  objectController:
+    # null follows operatorController's BoxcutterRuntime gate. Set true to deploy independently.
+    enabled: null
+    deployment:
+      image: quay.io/operator-framework/object-controller:devel
+      replicas: 1
+      extraArguments: []
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
   operatorController:
     enabled: true
     deployment:
@@ -49,15 +58,13 @@ options:
       version: v4.20
   # This can be one of: standard or experimental
   featureSet: standard
-
 # The set of namespaces
 namespaces:
   olmv1:
     name: olmv1-system
   certManager:
     name: cert-manager
-
-# Common deployment values for operator-controller and catalogd
+# Common deployment values for all controllers
 deployments:
   templateSpec:
     affinity:
