@@ -486,6 +486,12 @@ const (
 )
 
 // ClusterObjectSetStatus defines the observed state of a ClusterObjectSet.
+//
+// The completedAt removal guard lives here at the parent level because a
+// field-level transition rule is skipped when the field is absent from an
+// update, which would otherwise allow the timestamp to be cleared and re-set.
+//
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.completedAt) || has(self.completedAt)",message="completedAt cannot be removed once set"
 type ClusterObjectSetStatus struct {
 	// conditions is an optional list of status conditions describing the state of the
 	// ClusterObjectSet.
@@ -524,6 +530,14 @@ type ClusterObjectSetStatus struct {
 	// +listMapKey=name
 	// +optional
 	ObservedPhases []ObservedPhase `json:"observedPhases,omitempty"`
+
+	// completedAt is the timestamp at which the revision was first observed to be
+	// ready, meaning it had successfully rolled out and all of its objects passed
+	// their probes. It is set once and is immutable thereafter.
+	//
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable"
+	// +optional
+	CompletedAt metav1.Time `json:"completedAt,omitempty,omitzero"`
 }
 
 // ObservedPhase records the observed content digest of a resolved phase.

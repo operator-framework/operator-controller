@@ -511,6 +511,98 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 	}
 }
 
+func Test_ClusterObjectSetReconciler_Reconcile_CompletedAt(t *testing.T) {
+	testScheme := newScheme(t)
+
+	firstReady := metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
+	laterReady := metav1.NewTime(time.Date(2023, 6, 15, 12, 0, 0, 0, time.UTC))
+
+	for _, tc := range []struct {
+		name           string
+		revisionResult machinery.RevisionResult
+		clock          clock.Clock
+		existingObjs   func() []client.Object
+		validate       func(*testing.T, *ocv1.ClusterObjectSet)
+	}{
+		{
+			name: "sets completedAt to the current time on first successful rollout",
+			revisionResult: newMockRevisionResult(gomock.NewController(t), revisionResultConfig{
+				isComplete: true,
+			}),
+			clock: clocktesting.NewFakeClock(firstReady.Time),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				return []client.Object{ext, rev}
+			},
+			validate: func(t *testing.T, rev *ocv1.ClusterObjectSet) {
+				require.False(t, rev.Status.CompletedAt.IsZero())
+				require.True(t, firstReady.Equal(&rev.Status.CompletedAt))
+			},
+		},
+		{
+			name: "does not overwrite completedAt on a subsequent successful rollout",
+			revisionResult: newMockRevisionResult(gomock.NewController(t), revisionResultConfig{
+				isComplete: true,
+			}),
+			clock: clocktesting.NewFakeClock(laterReady.Time),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				rev.Status.CompletedAt = firstReady
+				return []client.Object{ext, rev}
+			},
+			validate: func(t *testing.T, rev *ocv1.ClusterObjectSet) {
+				require.True(t, firstReady.Equal(&rev.Status.CompletedAt))
+			},
+		},
+		{
+			name: "does not set completedAt while the revision is still rolling out",
+			revisionResult: newMockRevisionResult(gomock.NewController(t), revisionResultConfig{
+				isComplete: false,
+			}),
+			clock: clocktesting.NewFakeClock(firstReady.Time),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				return []client.Object{ext, rev}
+			},
+			validate: func(t *testing.T, rev *ocv1.ClusterObjectSet) {
+				require.True(t, rev.Status.CompletedAt.IsZero())
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+
+			testClient := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+				WithObjects(tc.existingObjs()...).
+				Build()
+
+			mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+				func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+					return tc.revisionResult, nil
+				}, nil,
+			)
+			_, err := (&controllers.ClusterObjectSetReconciler{
+				Client:                testClient,
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
+				Clock:                 tc.clock,
+			}).Reconcile(t.Context(), ctrl.Request{
+				NamespacedName: types.NamespacedName{Name: clusterObjectSetName},
+			})
+			require.NoError(t, err)
+
+			rev := &ocv1.ClusterObjectSet{}
+			require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, rev))
+			tc.validate(t, rev)
+		})
+	}
+}
+
 func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testing.T) {
 	const (
 		clusterExtensionName = "test-ext"
