@@ -1,0 +1,7 @@
+# Build the binary with make build-linux before building this image.
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /
+COPY object-controller object-controller
+USER 65532:65532
+
+ENTRYPOINT ["/object-controller"]
