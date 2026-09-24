@@ -251,6 +251,8 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 		// Record the timestamp of the first time the revision was observed to be
 		// ready. This is set once and never changes for subsequent reconciliations.
+		// It also serves as the signal that the revision has completed its rollout,
+		// which the ClusterExtension controller uses to determine the installed revision.
 		if cos.Status.CompletedAt.IsZero() {
 			cos.Status.CompletedAt = metav1.NewTime(c.Clock.Now())
 		}
