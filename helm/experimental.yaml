@@ -1,11 +1,13 @@
 # experimental values for OLMv1.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-
 # List of enabled experimental features for operator-controller
 # Use with {{- if has "FeatureGate" .Values.options.operatorController.features.enabled }}
 # to pull in resources or additions
 options:
+  objectController:
+    deployment:
+      replicas: 2
   operatorController:
     deployment:
       replicas: 2
@@ -18,9 +20,9 @@ options:
         - WebhookProviderCertManager
       disabled:
         - WebhookProviderOpenshiftServiceCA
-# List of enabled experimental features for catalogd
-# Use with {{- if has "FeatureGate" .Values.options.catalogd.features.enabled }}
-# to pull in resources or additions
+        # List of enabled experimental features for catalogd
+        # Use with {{- if has "FeatureGate" .Values.options.catalogd.features.enabled }}
+        # to pull in resources or additions
   catalogd:
     deployment:
       replicas: 2
@@ -29,5 +31,5 @@ options:
         - APIV1MetasHandler
         - GraphQLCatalogQueries
       disabled: []
-# This can be one of: standard or experimental
+      # This can be one of: standard or experimental
   featureSet: experimental

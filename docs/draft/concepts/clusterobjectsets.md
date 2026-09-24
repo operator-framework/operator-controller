@@ -18,6 +18,49 @@ Each ClusterObjectSet has:
 
 ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, the operator-controller uses ClusterObjectSets as the mechanism to deploy and upgrade ClusterExtensions.
 
+### Controller deployment
+
+The experimental `object-controller` runs in its own Deployment with its own service
+account and leader-election lease. It watches ClusterObjectSets and the objects they
+manage; it does not require ClusterExtension or ClusterCatalog resources or controllers.
+The operator-controller continues to resolve and unpack bundles, create ClusterObjectSets,
+and observe their status when `BoxcutterRuntime` is enabled.
+
+The Helm chart automatically enables object-controller alongside operator-controller
+when `BoxcutterRuntime` is enabled. To deploy it independently, first build an image
+and make it available to your cluster (push it to a registry, or load it into your
+local cluster). Set the image reference below, then render and apply the manifests:
+
+```sh
+helm template object-controller helm/olmv1 \
+  --set options.featureSet=experimental \
+  --set options.objectController.enabled=true \
+  --set options.operatorController.enabled=false \
+  --set options.catalogd.enabled=false \
+  --set-string options.objectController.deployment.image='<your-built-image>' \
+  > object-controller.yaml
+kubectl apply -f object-controller.yaml
+kubectl -n olmv1-system rollout status deployment/object-controller-controller-manager --timeout=180s
+```
+
+Set `options.objectController.deployment.image` to the built image when using a local
+or downstream image. `make go-build-local` builds `bin/object-controller`;
+`make docker-build` builds its image alongside the existing controller images.
+`OBJECT_CONTROLLER_IMAGE_REPO` controls its build and release repository.
+
+Object-controller reads immutable referenced Secrets directly from the API server in
+the namespace specified by each reference. Metrics require a TLS certificate and key;
+the chart configures these through cert-manager or the OpenShift service CA when enabled.
+The minimal standalone example above enables neither certificate provider, so metrics
+are disabled. Health and readiness probes remain enabled.
+The default service account has cluster-admin privileges because ClusterObjectSets can
+manage arbitrary Kubernetes resources, matching the existing experimental runtime.
+
+For downstream builds enabling `BoxcutterRuntime`, package the new binary and configure
+its image in addition to the operator-controller image. It is possible to package both
+binaries in one image while running them in separate Deployments. Standard installations
+and default Helm installations without `BoxcutterRuntime` do not enable object-controller.
+
 ## Why ClusterObjectSets?
 
 ClusterObjectSets solve several problems that arise when managing sets of related Kubernetes resources:
@@ -382,6 +425,9 @@ kubectl get clusterobjectsets -l olm.operatorframework.io/owner-name=my-extensio
 
 # View full details for a specific revision
 kubectl get clusterobjectset <name> -o yaml
+
+# Inspect reconciliation in the independent controller
+kubectl -n olmv1-system logs deployment/object-controller-controller-manager
 ```
 
 Example output:

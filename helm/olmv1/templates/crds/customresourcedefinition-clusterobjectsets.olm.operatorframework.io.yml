@@ -1,11 +1,3 @@
-{{- if .Values.options.operatorController.enabled }}
-{{- if (eq .Values.options.featureSet "standard") }}
-{{- /* Add when GA: tpl (.Files.Get "base/operator-controller/crd/standard/olm.operatorframework.io_clusterobjectsetss.yaml") . */}}
-{{- else if (eq .Values.options.featureSet "experimental") }}
-{{- if has "BoxcutterRuntime" .Values.options.operatorController.features.enabled }}
-{{ tpl (.Files.Get "base/operator-controller/crd/experimental/olm.operatorframework.io_clusterobjectsets.yaml") . }}
-{{- end }}
-{{- else }}
-{{- fail "options.featureSet must be set to one of: {standard,experimental}" }}
-{{- end }}
+{{- if include "objectController.enabled" . }}
+{{ tpl (.Files.Get "base/object-controller/crd/experimental/olm.operatorframework.io_clusterobjectsets.yaml") . }}
 {{- end }}

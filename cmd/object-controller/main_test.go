@@ -64,7 +64,7 @@ func TestVersionWithoutCluster(t *testing.T) {
 func TestStandaloneController(t *testing.T) {
 	ctrl.SetLogger(testr.New(t))
 	testEnv := test.NewEnv()
-	testEnv.CRDDirectoryPaths = []string{"../../helm/olmv1/base/operator-controller/crd/experimental/olm.operatorframework.io_clusterobjectsets.yaml"}
+	testEnv.CRDDirectoryPaths = []string{"../../helm/olmv1/base/object-controller/crd/experimental"}
 	restConfig, err := testEnv.Start()
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, test.StopWithRetry(testEnv, time.Minute, time.Second)) })
