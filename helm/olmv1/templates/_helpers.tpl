@@ -61,12 +61,17 @@ olmv1
 {{/*
 Default to a separate object-controller whenever operator-controller uses Boxcutter.
 An explicit enabled value also permits installing object-controller on its own.
+Disabling it while Boxcutter is active would leave ClusterObjectSets without a controller.
 Return an empty string when disabled so the helper can be used in conditionals.
 */}}
 {{- define "objectController.enabled" -}}
+{{- $boxcutterEnabled := and .Values.options.operatorController.enabled (has "BoxcutterRuntime" .Values.options.operatorController.features.enabled) (not (has "BoxcutterRuntime" .Values.options.operatorController.features.disabled)) -}}
+{{- if and $boxcutterEnabled (eq (toJson .Values.options.objectController.enabled) "false") -}}
+{{- fail "options.objectController.enabled=false is incompatible with enabled BoxcutterRuntime" -}}
+{{- end -}}
 {{- $enabled := .Values.options.objectController.enabled -}}
 {{- if eq (toJson $enabled) "null" -}}
-{{- $enabled = and .Values.options.operatorController.enabled (has "BoxcutterRuntime" .Values.options.operatorController.features.enabled) (not (has "BoxcutterRuntime" .Values.options.operatorController.features.disabled)) -}}
+{{- $enabled = $boxcutterEnabled -}}
 {{- end -}}
 {{- if $enabled -}}
 {{- if ne .Values.options.featureSet "experimental" -}}
