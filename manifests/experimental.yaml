@@ -62,6 +62,31 @@ spec:
     - Ingress
     - Egress
 ---
+# Source: olmv1/templates/networkpolicy/networkpolicy-olmv1-system-object-controller-controller-manager.yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-controller-manager
+  namespace: olmv1-system
+spec:
+  egress:
+    - {}
+  ingress:
+    - ports:
+        - port: 8443
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      control-plane: object-controller-controller-manager
+  policyTypes:
+    - Ingress
+    - Egress
+---
 # Source: olmv1/templates/networkpolicy/networkpolicy-olmv1-system-operator-controller-controller-manager.yml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -105,6 +130,24 @@ spec:
     matchLabels:
       control-plane: catalogd-controller-manager
 ---
+# Source: olmv1/templates/poddisruptionbudget-olmv1-system-object-controller.yml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: object-controller-controller-manager
+  namespace: olmv1-system
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+spec:
+  minAvailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
+  selector:
+    matchLabels:
+      control-plane: object-controller-controller-manager
+---
 # Source: olmv1/templates/poddisruptionbudget-olmv1-system-operator-controller.yml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -122,6 +165,18 @@ spec:
   selector:
     matchLabels:
       control-plane: operator-controller-controller-manager
+---
+# Source: olmv1/templates/serviceaccount-olmv1-system-common-controller-manager.yml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-controller-manager
+  namespace: olmv1-system
 ---
 # Source: olmv1/templates/serviceaccount-olmv1-system-common-controller-manager.yml
 apiVersion: v1
@@ -1320,7 +1375,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
     olm.operatorframework.io/generator: experimental
   name: clusterobjectsets.olm.operatorframework.io
 spec:
@@ -2033,6 +2088,22 @@ metadata:
   annotations:
     olm.operatorframework.io/feature-set: experimental
   labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-metrics-reader
+rules:
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+---
+# Source: olmv1/templates/rbac/clusterrole-common-metrics-reader.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
   name: catalogd-metrics-reader
@@ -2057,6 +2128,30 @@ rules:
       - /metrics
     verbs:
       - get
+---
+# Source: olmv1/templates/rbac/clusterrole-common-proxy-role.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-proxy-role
+rules:
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
 ---
 # Source: olmv1/templates/rbac/clusterrole-common-proxy-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -2152,6 +2247,25 @@ metadata:
   annotations:
     olm.operatorframework.io/feature-set: experimental
   labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: object-controller-proxy-role
+subjects:
+  - kind: ServiceAccount
+    name: object-controller-controller-manager
+    namespace: olmv1-system
+---
+# Source: olmv1/templates/rbac/clusterrolebinding-common-proxy-rolebinding.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
   name: catalogd-proxy-rolebinding
@@ -2181,6 +2295,25 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: operator-controller-controller-manager
+    namespace: olmv1-system
+---
+# Source: olmv1/templates/rbac/clusterrolebinding-object-controller-manager-rolebinding.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-cluster-admin-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: object-controller-controller-manager
     namespace: olmv1-system
 ---
 # Source: olmv1/templates/rbac/clusterrolebinding-operator-controller-manager-rolebinding.yml
@@ -2223,6 +2356,38 @@ rules:
       - get
       - list
       - watch
+---
+# Source: olmv1/templates/rbac/role-olmv1-system-common-leader-election-role.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-leader-election-role
+  namespace: olmv1-system
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
 ---
 # Source: olmv1/templates/rbac/role-olmv1-system-common-leader-election-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -2321,6 +2486,26 @@ rules:
       - get
       - list
       - watch
+---
+# Source: olmv1/templates/rbac/rolebinding-olmv1-system-common-leader-election-rolebinding.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-leader-election-rolebinding
+  namespace: olmv1-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: object-controller-leader-election-role
+subjects:
+  - kind: ServiceAccount
+    name: object-controller-controller-manager
+    namespace: olmv1-system
 ---
 # Source: olmv1/templates/rbac/rolebinding-olmv1-system-common-leader-election-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -2429,6 +2614,26 @@ spec:
       targetPort: 7443
   selector:
     app.kubernetes.io/name: catalogd
+---
+# Source: olmv1/templates/service-olmv1-system-object-controller-service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-service
+  namespace: olmv1-system
+spec:
+  ports:
+    - name: metrics
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
+  selector:
+    app.kubernetes.io/name: object-controller
 ---
 # Source: olmv1/templates/service-olmv1-system-operator-controller-service.yml
 apiVersion: v1
@@ -2553,6 +2758,119 @@ spec:
                 path: olm-ca.crt
             optional: false
             secretName: catalogd-service-cert-git-version
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+                      - arm64
+                      - ppc64le
+                      - s390x
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      nodeSelector:
+        kubernetes.io/os: linux
+        node-role.kubernetes.io/control-plane: ""
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 10
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 120
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 120
+---
+# Source: olmv1/templates/deployment-olmv1-system-object-controller-controller-manager.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kubectl.kubernetes.io/default-logs-container: manager
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: object-controller
+    app.kubernetes.io/part-of: olm
+  name: object-controller-controller-manager
+  namespace: olmv1-system
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      control-plane: object-controller-controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+        olm.operatorframework.io/feature-set: experimental
+      labels:
+        app.kubernetes.io/name: object-controller
+        control-plane: object-controller-controller-manager
+        app.kubernetes.io/part-of: olm
+    spec:
+      containers:
+        - name: manager
+          command:
+            - /object-controller
+          args:
+            - --health-probe-bind-address=:8081
+            - --leader-elect
+            - --metrics-bind-address=:8443
+            - --tls-cert=/var/certs/tls.crt
+            - --tls-key=/var/certs/tls.key
+          image: "quay.io/operator-framework/object-controller:devel"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+          volumeMounts:
+            - name: object-controller-certs
+              mountPath: /var/certs
+              readOnly: true
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          terminationMessagePolicy: FallbackToLogsOnError
+      serviceAccountName: object-controller-controller-manager
+      volumes:
+        - name: object-controller-certs
+          secret:
+            secretName: object-controller-cert
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -2787,6 +3105,31 @@ spec:
     rotationPolicy: Always
     size: 256
   secretName: catalogd-service-cert-git-version
+---
+# Source: olmv1/templates/cert-manager/certificate-olmv1-system-object-controller-cert.yml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app.kubernetes.io/name: olmv1
+    app.kubernetes.io/part-of: olm
+  name: object-controller-cert
+  namespace: olmv1-system
+spec:
+  dnsNames:
+    - object-controller-service.olmv1-system.svc
+    - object-controller-service.olmv1-system.svc.cluster.local
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: olmv1-ca
+  privateKey:
+    algorithm: ECDSA
+    rotationPolicy: Always
+    size: 256
+  secretName: object-controller-cert
 ---
 # Source: olmv1/templates/cert-manager/certificate-olmv1-system-operator-controller-cert.yml
 apiVersion: cert-manager.io/v1
