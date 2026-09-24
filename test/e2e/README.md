@@ -2,6 +2,36 @@
 
 This directory contains end-to-end (e2e) tests, written using the [Godog](https://github.com/cucumber/godog) framework.
 
+### Independent object-controller suite
+
+`features/revision.feature` is the direct ClusterObjectSet suite, selected by
+`@ObjectController`. Its API steps live in `steps/object_controller_steps.go` and
+use shared resource helpers. ClusterExtension integration scenarios remain in
+the other feature files. The existing experimental test run includes both groups;
+`make e2e/revision` still selects the direct ClusterObjectSet scenarios.
+
+On a disposable cluster with only object-controller and the ClusterObjectSet CRD
+installed, run the existing nine scenarios independently:
+
+```sh
+cd test/e2e
+KUBECONFIG=/path/to/standalone.kubeconfig \
+  go test -tags containers_image_openpgp -count=1 -v . -timeout=20m \
+  -args --e2e.object-controller-only --godog.tags=@ObjectController \
+  --godog.concurrency=1 features/revision.feature
+```
+
+The standalone flag requires ClusterExtension and ClusterCatalog APIs to be
+absent. Missing or unavailable object-controller fails readiness rather than
+skipping the explicitly requested suite. A successful run executes all nine
+scenarios with zero skipped or undefined scenarios. Run serially because some
+scenarios change the progress-deadline CRD validation.
+
+In the general suite, standard installations skip this group. Experimental
+Boxcutter installations run it, and fail if their required object-controller is
+missing. Discovery uses the object-controller Deployment and its namespace;
+standalone execution does not depend on an operator-controller feature gate.
+
 ## Overview
 
 ### What is Godog/BDD/Cucumber?

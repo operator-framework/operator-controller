@@ -29,9 +29,13 @@ var (
 		if err != nil {
 			return err
 		}
-		olm, _, err := detectOLMDeployments()
+		deployments, err := detectOLMDeployments()
 		if err != nil {
 			return err
+		}
+		olm := deployments["operator-controller"]
+		if olm == nil {
+			return fmt.Errorf("operator-controller deployment not found after installation")
 		}
 		olmNamespace = olm.Namespace
 		return nil

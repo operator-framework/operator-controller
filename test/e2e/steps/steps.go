@@ -35,7 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 	k8sresource "k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -112,7 +111,6 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension is applied(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterExtension version is updated to "([^"]+)"$`, ClusterExtensionVersionUpdate)
 	sc.Step(`^(?i)ClusterExtension is updated(?:\s+.*)?$`, ResourceIsApplied)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" lifecycle is set to "([^"]+)"$`, ClusterObjectSetLifecycleUpdate)
 	sc.Step(`^(?i)ClusterExtension is available$`, ClusterExtensionIsAvailable)
 	sc.Step(`^(?i)ClusterExtension is rolled out$`, ClusterExtensionIsRolledOut)
 	sc.Step(`^(?i)ClusterExtension resources are created and labeled$`, ClusterExtensionResourcesCreatedAndAreLabeled)
@@ -124,14 +122,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterExtensionReportsConditionWithMessageFragment)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutReason)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectSetReportsConditionWithoutMsg)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterObjectSetReportsConditionWithMsg)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterObjectSetReportsConditionWithMessageFragment)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
-	sc.Step(`^(?i)ClusterObjectSet is applied(?:\s+.*)?$`, ResourceIsApplied)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reconciliation is triggered$`, TriggerClusterObjectSetReconciliation)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has observed phase "([^"]+)" with a non-empty digest$`, ClusterObjectSetHasObservedPhase)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is archived$`, ClusterObjectSetIsArchived)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterObjectSetHasLabelWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects are not found or not owned by the revision$`, ClusterObjectSetObjectsNotFoundOrNotOwned)
@@ -595,23 +586,6 @@ func ClusterExtensionVersionUpdate(ctx context.Context, version string) error {
 	return err
 }
 
-// ClusterObjectSetLifecycleUpdate patches the ClusterObjectSet's lifecycleState to the specified value.
-func ClusterObjectSetLifecycleUpdate(ctx context.Context, cosName, lifecycle string) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
-	patch := map[string]any{
-		"spec": map[string]any{
-			"lifecycleState": lifecycle,
-		},
-	}
-	pb, err := json.Marshal(patch)
-	if err != nil {
-		return err
-	}
-	_, err = k8sClient(ctx, "patch", "clusterobjectset", cosName, "--type", "merge", "-p", string(pb))
-	return err
-}
-
 // ResourceIsApplied applies the provided YAML resource to the cluster and in case of ClusterExtension or ClusterObjectSet it captures
 // its name in the test context so that it can be referred to in later steps with ${NAME} or ${COS_NAME}, respectively
 func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error {
@@ -924,58 +898,6 @@ func ClusterExtensionReportsActiveRevisions(ctx context.Context, rawRevisionName
 		return activeRevisionsNames.Equal(expectedRevisionNames)
 	})
 	return nil
-}
-
-// ClusterObjectSetReportsConditionWithoutMsg waits for the named ClusterObjectSet to have a condition
-// matching type, status, and reason. Polls with timeout.
-func ClusterObjectSetReportsConditionWithoutMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, nil)
-}
-
-// ClusterObjectSetReportsConditionWithMsg waits for the named ClusterObjectSet to have a condition
-// matching type, status, reason, and message. Polls with timeout.
-func ClusterObjectSetReportsConditionWithMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageComparison(ctx, msg))
-}
-
-// ClusterObjectSetReportsConditionWithMessageFragment waits for the named ClusterObjectSet to have a condition
-// matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
-func ClusterObjectSetReportsConditionWithMessageFragment(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
-}
-
-// TriggerClusterObjectSetReconciliation annotates the named ClusterObjectSet
-// to trigger a new reconciliation cycle.
-func TriggerClusterObjectSetReconciliation(ctx context.Context, cosName string) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
-	_, err := k8sClient(ctx, "annotate", "clusterobjectset", cosName, "--overwrite",
-		fmt.Sprintf("e2e-trigger=%d", time.Now().UnixNano()))
-	return err
-}
-
-// ClusterObjectSetHasObservedPhase waits for the named ClusterObjectSet to have
-// an observedPhases entry matching the given phase name with a non-empty digest. Polls with timeout.
-func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName string) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
-	phaseName = substituteScenarioVars(phaseName, sc)
-
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o",
-			fmt.Sprintf(`jsonpath={.status.observedPhases[?(@.name=="%s")].digest}`, phaseName))
-		if err != nil {
-			return false
-		}
-		return strings.TrimSpace(out) != ""
-	})
-	return nil
-}
-
-// ClusterObjectSetIsArchived waits for the named ClusterObjectSet to have Progressing=False
-// with reason Archived. Polls with timeout.
-func ClusterObjectSetIsArchived(ctx context.Context, revisionName string) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Progressing", "False", ptr.To("Archived"), nil)
 }
 
 // ClusterObjectSetHasAnnotationWithValue waits for the named ClusterObjectSet to have the specified
@@ -1548,10 +1470,11 @@ func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount st
 }
 
 // ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace creates a ServiceAccount and applies standard RBAC permissions.
-// The RBAC template is selected based on the service account and BoxcutterRuntime feature gate: <service-account>-<helm|boxcutter>-rbac-template.yaml
+// Direct ClusterObjectSet scenarios use boxcutter RBAC independently of the
+// operator-controller feature gate. Extension scenarios select their enabled runtime.
 func ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace(ctx context.Context, serviceAccount string) error {
 	kernel := "helm"
-	if enabled, found := featureGates[features.BoxcutterRuntime]; found && enabled {
+	if featureGates[features.BoxcutterRuntime] || scenarioCtx(ctx).featureName == "revision" {
 		kernel = "boxcutter"
 	}
 	rbacTemplate := fmt.Sprintf("%s-%s-rbac-template.yaml", serviceAccount, kernel)
