@@ -8,10 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -526,5 +528,48 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
 		require.NoError(t, err)
 		assert.Equal(t, int32(1), secretGetCount.Load(), "secret should be fetched only once despite multiple references")
+	})
+}
+
+func Test_setReady(t *testing.T) {
+	cos := &ocv1.ClusterObjectSet{}
+	cos.Generation = 7
+
+	changed := setReady(cos, metav1.ConditionTrue, ocv1.ClusterObjectSetReasonReady, "all done")
+	require.True(t, changed)
+
+	got := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	require.NotNil(t, got)
+	require.Equal(t, metav1.ConditionTrue, got.Status)
+	require.Equal(t, ocv1.ClusterObjectSetReasonReady, got.Reason)
+	require.Equal(t, "all done", got.Message)
+	require.Equal(t, int64(7), got.ObservedGeneration)
+	// Ready is the only condition.
+	require.Len(t, cos.Status.Conditions, 1)
+}
+
+func Test_setReadyProgressing(t *testing.T) {
+	l := logr.Discard()
+	t.Run("passes through when deadline not exceeded", func(t *testing.T) {
+		cos := &ocv1.ClusterObjectSet{}
+		setReadyProgressing(l, cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonIncomplete, "rolling out", false)
+		got := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+		require.NotNil(t, got)
+		require.Equal(t, metav1.ConditionFalse, got.Status)
+		require.Equal(t, ocv1.ClusterObjectSetReasonIncomplete, got.Reason)
+		require.Equal(t, "rolling out", got.Message)
+		require.Equal(t, cos.Generation, got.ObservedGeneration)
+	})
+	t.Run("overrides to ProgressDeadlineExceeded when deadline exceeded", func(t *testing.T) {
+		cos := &ocv1.ClusterObjectSet{}
+		cos.Generation = 5
+		cos.Spec.ProgressDeadlineMinutes = 10
+		setReadyProgressing(l, cos, metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonReconcileError, "boom", true)
+		got := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+		require.NotNil(t, got)
+		require.Equal(t, metav1.ConditionFalse, got.Status)
+		require.Equal(t, ocv1.ClusterObjectSetReasonProgressDeadlineExceeded, got.Reason)
+		require.Equal(t, "Revision has not rolled out for 10 minute(s). Last status: boom", got.Message)
+		require.Equal(t, int64(5), got.ObservedGeneration)
 	})
 }
