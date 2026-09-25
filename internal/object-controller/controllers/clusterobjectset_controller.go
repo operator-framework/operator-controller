@@ -42,15 +42,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
 const (
 	clusterObjectSetTeardownFinalizer = "olm.operatorframework.io/teardown"
 )
 
-// ClusterObjectSetReconciler actions individual snapshots of ClusterExtensions,
-// as part of the boxcutter integration.
+// ClusterObjectSetReconciler manages the Kubernetes objects in a ClusterObjectSet.
 type ClusterObjectSetReconciler struct {
 	Client                client.Client
 	RevisionEngineFactory RevisionEngineFactory
@@ -418,14 +417,14 @@ func (c *ClusterObjectSetReconciler) removeFinalizer(ctx context.Context, obj cl
 	return nil
 }
 
-// listSiblingRevisions returns all active revisions belonging to the same ClusterExtension, excluding the current one.
+// listSiblingRevisions returns all active revisions belonging to the same owner, excluding the current one.
 // This includes both lower and higher revision numbers, enabling boxcutter to properly classify
 // sibling owners and avoid reporting false collisions during revision handover.
 func (c *ClusterObjectSetReconciler) listSiblingRevisions(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
 	return c.listOtherActiveRevisions(ctx, cos, func(*ocv1.ClusterObjectSet) bool { return true })
 }
 
-// listPreviousRevisions returns active revisions belonging to the same ClusterExtension with lower revision numbers.
+// listPreviousRevisions returns active revisions belonging to the same owner with lower revision numbers.
 func (c *ClusterObjectSetReconciler) listPreviousRevisions(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
 	return c.listOtherActiveRevisions(ctx, cos, func(r *ocv1.ClusterObjectSet) bool {
 		return r.Spec.Revision < cos.Spec.Revision
