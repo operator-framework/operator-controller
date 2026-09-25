@@ -60,7 +60,7 @@ Feature: Install ClusterObjectSet
       """
 
     Then resource "persistentvolumeclaim/test-pvc" is installed
-    And ClusterObjectSet "${COS_NAME}" reports Available as False with Reason ProbeFailure and Message:
+    And ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason Incomplete and Message:
     """
       Object PersistentVolumeClaim.v1 ${TEST_NAMESPACE}/test-pvc: value at key "status.phase" != "Bound"; expected: "Bound" got: "Pending"
     """
@@ -147,8 +147,7 @@ Feature: Install ClusterObjectSet
         revision: 1
       """
 
-    Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
-    And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason Ready
     And resource "persistentvolume/test-pv" is installed
     And resource "persistentvolumeclaim/test-pvc" is installed
     And resource "configmap/test-configmap" is installed
@@ -205,7 +204,7 @@ Feature: Install ClusterObjectSet
       """
 
     Then resource "configmap/test-configmap-1" is installed
-    And ClusterObjectSet "${COS_NAME}" reports Available as False with Reason ProbeFailure and Message:
+    And ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason Incomplete and Message:
     """
       Object ConfigMap.v1 ${TEST_NAMESPACE}/test-configmap-1: value at key "data.foo" != "bar"; expected: "bar" got: "foo"
     """
@@ -323,8 +322,7 @@ Feature: Install ClusterObjectSet
     And resource "serviceaccount/test-serviceaccount" is installed
     And resource "pod/test-pod" is installed
     And resource "configmap/test-configmap-3" is installed
-    And ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
-    And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason Ready
 
   Scenario: User can install a ClusterObjectSet with objects stored in Secrets
     Given namespace "${TEST_NAMESPACE}" is available
@@ -420,8 +418,7 @@ Feature: Install ClusterObjectSet
               key: deployment
         revision: 1
       """
-    Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
-    And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason Ready
     And resource "configmap/test-configmap-ref" is installed
     And resource "deployment/test-httpd" is installed
     And ClusterObjectSet "${COS_NAME}" has observed phase "resources" with a non-empty digest
@@ -468,7 +465,7 @@ Feature: Install ClusterObjectSet
               key: configmap
         revision: 1
       """
-    Then ClusterObjectSet "${COS_NAME}" reports Progressing as False with Reason Blocked and Message:
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason Blocked and Message:
     """
       the following secrets are not immutable (referenced secrets must have immutable set to true): ${TEST_NAMESPACE}/${COS_NAME}-mutable-secret
     """
@@ -516,8 +513,7 @@ Feature: Install ClusterObjectSet
               key: configmap
         revision: 1
       """
-    Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
-    And ClusterObjectSet "${COS_NAME}" reports Available as True with Reason ProbesSucceeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason Ready
     And ClusterObjectSet "${COS_NAME}" has observed phase "resources" with a non-empty digest
     # Delete the immutable Secret and recreate with different content
     When resource "secret/${COS_NAME}-change-secret" is removed
@@ -545,7 +541,7 @@ Feature: Install ClusterObjectSet
           }
       """
     And ClusterObjectSet "${COS_NAME}" reconciliation is triggered
-    Then ClusterObjectSet "${COS_NAME}" reports Progressing as False with Reason Blocked and Message includes:
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason Blocked and Message includes:
     """
       resolved content of 1 phase(s) has changed: phase "resources"
     """
@@ -575,7 +571,7 @@ Feature: Install ClusterObjectSet
           }
       """
     And ClusterObjectSet "${COS_NAME}" reconciliation is triggered
-    Then ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason Ready
 
 
   @ProgressDeadline
@@ -637,7 +633,7 @@ Feature: Install ClusterObjectSet
       """
     Then resource "configmap/test-configmap" is installed
     And resource "deployment/test-deployment" is installed
-    And ClusterObjectSet "${COS_NAME}" reports Progressing as False with Reason ProgressDeadlineExceeded
+    And ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ProgressDeadlineExceeded
     When ClusterObjectSet "${COS_NAME}" lifecycle is set to "Archived"
     Then ClusterObjectSet "${COS_NAME}" is archived
     And resource "configmap/test-configmap" is eventually not found
@@ -706,5 +702,5 @@ Feature: Install ClusterObjectSet
                           type: RuntimeDefault
         revision: 1
       """
-    Then ClusterObjectSet "${COS_NAME}" reports Progressing as False with Reason ProgressDeadlineExceeded
-    And ClusterObjectSet "${COS_NAME}" reports Progressing as True with Reason Succeeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ProgressDeadlineExceeded
+    And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason Ready
