@@ -729,6 +729,30 @@ func markAsArchived(cos *ocv1.ClusterObjectSet) bool {
 	return markAsAvailableUnknown(cos, ocv1.ClusterObjectSetReasonArchived, msg) || updated
 }
 
+// setReady writes the single Ready condition on the ClusterObjectSet.
+func setReady(cos *ocv1.ClusterObjectSet, status metav1.ConditionStatus, reason, message string) bool {
+	return meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterObjectSetTypeReady,
+		Status:             status,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cos.Generation,
+	})
+}
+
+// setReadyProgressing writes a not-yet-Ready state that is subject to the
+// progress deadline. When the deadline is exceeded it overrides the given
+// (status, reason) with False/ProgressDeadlineExceeded. Callers that must take
+// precedence over the deadline (Blocked, Archived) call setReady directly.
+func setReadyProgressing(l logr.Logger, cos *ocv1.ClusterObjectSet, status metav1.ConditionStatus, reason, message string, isDeadlineExceeded bool) bool {
+	if isDeadlineExceeded {
+		l.V(1).Info("progress deadline exceeded", "priorReason", reason)
+		return setReady(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonProgressDeadlineExceeded,
+			fmt.Sprintf("Revision has not rolled out for %d minute(s). Last status: %s", cos.Spec.ProgressDeadlineMinutes, message))
+	}
+	return setReady(cos, status, reason, message)
+}
+
 // computePhaseDigest computes a deterministic SHA-256 digest of a phase's
 // resolved content (name + objects) before any controller mutations.
 // JSON serialization of unstructured objects produces a canonical encoding
