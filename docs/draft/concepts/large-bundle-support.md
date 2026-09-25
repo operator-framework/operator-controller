@@ -150,7 +150,7 @@ Recommended conventions:
 2. **Immutability**: Secrets must set `immutable: true`. The reconciler verifies
    that all referenced Secrets have `immutable: true` set before proceeding.
    Mutable referenced Secrets are rejected and reconciliation is blocked with
-   `Progressing=False, Reason=Blocked`. Additionally, the reconciler records
+   `Ready=False, Reason=Blocked`. Additionally, the reconciler records
    content hashes of the resolved phases on first successful reconciliation
    and blocks reconciliation if the content changes (e.g., if a Secret is
    deleted and recreated with the same name but different data).
@@ -397,7 +397,7 @@ referenced Secrets have `immutable: true` set. After successfully building
 the phases (resolving all refs), the reconciler computes a per-phase content
 digest and compares it against the digests recorded in `.status.observedPhases`
 (if present). If any phase's content has changed, reconciliation is blocked
-with `Progressing=False, Reason=Blocked`. On first successful build, phase
+with `Ready=False, Reason=Blocked`. On first successful build, phase
 content digests are persisted to status for future comparisons.
 
 When processing a COS phase:

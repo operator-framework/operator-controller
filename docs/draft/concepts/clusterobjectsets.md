@@ -153,35 +153,19 @@ For a detailed design discussion, see [Large Bundle Support](large-bundle-suppor
 
 ## Status conditions
 
-ClusterObjectSets report three conditions that describe their current state:
+The `ClusterObjectSet` exposes a single `Ready` status condition:
 
-### Progressing
-
-Indicates whether the revision is actively rolling out.
-
-| Status | Reason | Meaning |
-| --- | --- | --- |
-| True | `RollingOut` | Actively making progress |
-| True | `Retrying` | Encountered a retryable error |
-| True | `Succeeded` | Reached the desired state |
-| False | `Blocked` | Error requiring manual intervention |
-| False | `Archived` | No longer actively reconciled |
-
-### Available
-
-Indicates whether all objects have been successfully rolled out and pass readiness probes.
-
-| Status | Reason | Meaning |
-| --- | --- | --- |
-| True | `ProbesSucceeded` | All objects pass readiness probes |
-| False | `ProbeFailure` | One or more probes failing |
-| Unknown | `Reconciling` | Error prevented probe observation |
-| Unknown | `Archived` | Objects torn down after archival |
-| Unknown | `Migrated` | Migrated from existing release; probes not yet observed |
-
-### Succeeded
-
-A terminal condition set once the rollout completes. It persists even if the revision later becomes unavailable, marking that this version was successfully deployed at least once.
+| Status  | Reason                   | When                                                    |
+| ------- | ------------------------ | ------------------------------------------------------- |
+| True    | Ready                    | All phases are complete                                 |
+| False   | Incomplete               | One or more phases are not yet complete                 |
+| False   | Blocked                  | Reconciliation requires manual intervention            |
+| False   | Invalid                  | A preflight validation error was encountered            |
+| False   | Archived                 | Teardown is in progress or complete                     |
+| False   | ProgressDeadlineExceeded | The revision did not complete within the deadline       |
+| Unknown | ReconcileError           | Reconciliation returned an error                        |
+| Unknown | TeardownError            | Teardown returned an error                              |
+| Unknown | InternalError            | An internal controller error occurred                   |
 
 ## How operator-controller uses ClusterObjectSets
 
