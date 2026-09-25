@@ -74,16 +74,20 @@ func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 //
 // Returns Failed when:
 //   - No rolling revisions exist (nothing to install)
-//   - The latest rolling revision has Reason: Retrying (indicates an error occurred)
+//   - The latest rolling revision has Ready=Unknown (ReconcileError/TeardownError/InternalError)
+//   - The latest rolling revision has Ready=False with reason != Incomplete (Invalid/Blocked/ProgressDeadlineExceeded/Archived)
 //
 // Returns Absent when:
-//   - Rolling revisions exist with the latest having Reason: RollingOut (healthy phased rollout in progress)
+//   - The latest rolling revision has Ready=False/Incomplete (healthy phased rollout in progress)
+//   - The latest rolling revision has Ready=True
+//   - Ready condition is absent
 //
 // Rationale:
 //   - Failed: Semantically indicates an error prevented installation
 //   - Absent: Semantically indicates "not there yet" (neutral state, e.g., during healthy rollout)
-//   - Retrying reason indicates an error (config validation, apply failure, etc.)
-//   - RollingOut reason indicates healthy progress (not an error)
+//   - Ready=Unknown indicates an error (ReconcileError/TeardownError/InternalError)
+//   - Ready=False with non-Incomplete reason indicates error/terminal states
+//   - Ready=False/Incomplete or Ready=True indicates healthy progress (not an error)
 //   - Only the LATEST revision matters - old errors superseded by newer healthy revisions should not cause Failed
 //
 // Note: rollingRevisions are sorted in ascending order by Spec.Revision (oldest to newest),
@@ -92,20 +96,24 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	if len(rollingRevisions) == 0 {
 		return ocv1.ReasonFailed
 	}
-
-	// Check if the LATEST rolling revision indicates an error (Retrying reason)
-	// Latest revision is the last element in the array (sorted ascending by Spec.Revision)
-	latestRevision := rollingRevisions[len(rollingRevisions)-1]
-	progressingCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeProgressing)
-	if progressingCond != nil && progressingCond.Reason == string(ocv1.ClusterObjectSetReasonRetrying) {
-		// Retrying indicates an error occurred (config, apply, validation, etc.)
-		// Use Failed for semantic correctness: installation failed due to error
-		return ocv1.ReasonFailed
+	// Only the LATEST rolling revision matters (sorted ascending by Spec.Revision).
+	latest := rollingRevisions[len(rollingRevisions)-1]
+	ready := apimeta.FindStatusCondition(latest.Conditions, ocv1.ClusterObjectSetTypeReady)
+	if ready == nil {
+		return ocv1.ReasonAbsent
 	}
-
-	// No error detected in latest revision - it's progressing healthily (RollingOut) or no conditions set
-	// Use Absent for neutral "not installed yet" state
-	return ocv1.ReasonAbsent
+	switch {
+	case ready.Status == metav1.ConditionUnknown:
+		// ReconcileError / TeardownError / InternalError all indicate an error.
+		return ocv1.ReasonFailed
+	case ready.Status == metav1.ConditionFalse &&
+		ready.Reason != ocv1.ClusterObjectSetReasonIncomplete:
+		// Invalid, Blocked, ProgressDeadlineExceeded, Archived are error/terminal states.
+		return ocv1.ReasonFailed
+	default:
+		// Incomplete (healthy rollout) or True → not an error yet.
+		return ocv1.ReasonAbsent
+	}
 }
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
