@@ -651,13 +651,14 @@ func setReady(cos *ocv1.ClusterObjectSet, status metav1.ConditionStatus, reason,
 // progress deadline. When the deadline is exceeded it overrides the given
 // (status, reason) with False/ProgressDeadlineExceeded. Callers that must take
 // precedence over the deadline (Blocked, Archived) call setReady directly.
-func setReadyProgressing(l logr.Logger, cos *ocv1.ClusterObjectSet, status metav1.ConditionStatus, reason, message string, isDeadlineExceeded bool) bool {
+func setReadyProgressing(l logr.Logger, cos *ocv1.ClusterObjectSet, status metav1.ConditionStatus, reason, message string, isDeadlineExceeded bool) {
 	if isDeadlineExceeded {
 		l.V(1).Info("progress deadline exceeded", "priorReason", reason)
-		return setReady(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonProgressDeadlineExceeded,
+		setReady(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonProgressDeadlineExceeded,
 			fmt.Sprintf("Revision has not rolled out for %d minute(s). Last status: %s", cos.Spec.ProgressDeadlineMinutes, message))
+		return
 	}
-	return setReady(cos, status, reason, message)
+	setReady(cos, status, reason, message)
 }
 
 // computePhaseDigest computes a deterministic SHA-256 digest of a phase's
