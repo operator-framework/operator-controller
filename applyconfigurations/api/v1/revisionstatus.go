@@ -28,8 +28,8 @@ import (
 type RevisionStatusApplyConfiguration struct {
 	// name of the ClusterObjectSet resource
 	Name *string `json:"name,omitempty"`
-	// conditions optionally expose Progressing and Available condition of the revision,
-	// in case when it is not yet marked as successfully installed (completedAt is not set).
+	// conditions optionally exposes the Ready condition of the revision, in case
+	// when it is not yet marked as successfully installed (completedAt is not set).
 	// Given that a ClusterExtension should remain available during upgrades, an observer may use these conditions
 	// to get more insights about reasons for its current state.
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
