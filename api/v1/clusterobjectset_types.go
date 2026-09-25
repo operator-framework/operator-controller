@@ -26,17 +26,18 @@ const (
 	ClusterObjectSetKind = "ClusterObjectSet"
 
 	// Condition Types
-	ClusterObjectSetTypeAvailable   = "Available"
-	ClusterObjectSetTypeProgressing = "Progressing"
-	ClusterObjectSetTypeSucceeded   = "Succeeded"
+	ClusterObjectSetTypeReady = "Ready"
 
-	// Condition Reasons
-	ClusterObjectSetReasonArchived        = "Archived"
-	ClusterObjectSetReasonBlocked         = "Blocked"
-	ClusterObjectSetReasonProbeFailure    = "ProbeFailure"
-	ClusterObjectSetReasonProbesSucceeded = "ProbesSucceeded"
-	ClusterObjectSetReasonReconciling     = "Reconciling"
-	ClusterObjectSetReasonRetrying        = "Retrying"
+	// Ready condition Reasons
+	ClusterObjectSetReasonReady                    = "Ready"
+	ClusterObjectSetReasonIncomplete               = "Incomplete"
+	ClusterObjectSetReasonBlocked                  = "Blocked"
+	ClusterObjectSetReasonInvalid                  = "Invalid"
+	ClusterObjectSetReasonArchived                 = "Archived"
+	ClusterObjectSetReasonProgressDeadlineExceeded = "ProgressDeadlineExceeded"
+	ClusterObjectSetReasonReconcileError           = "ReconcileError"
+	ClusterObjectSetReasonTeardownError            = "TeardownError"
+	ClusterObjectSetReasonInternalError            = "InternalError"
 )
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
@@ -486,26 +487,28 @@ const (
 )
 
 // ClusterObjectSetStatus defines the observed state of a ClusterObjectSet.
+//
+// The completedAt removal guard lives here at the parent level because a
+// field-level transition rule is skipped when the field is absent from an
+// update, which would otherwise allow the timestamp to be cleared and re-set.
+//
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.completedAt) || has(self.completedAt)",message="completedAt cannot be removed once set"
 type ClusterObjectSetStatus struct {
 	// conditions is an optional list of status conditions describing the state of the
 	// ClusterObjectSet.
 	//
-	// The Progressing condition represents whether the revision is actively rolling out:
-	//   - When status is True and reason is RollingOut, the ClusterObjectSet rollout is actively making progress and is in transition.
-	//   - When status is True and reason is Retrying, the ClusterObjectSet has encountered an error that could be resolved on subsequent reconciliation attempts.
-	//   - When status is True and reason is Succeeded, the ClusterObjectSet has reached the desired state.
-	//   - When status is False and reason is Blocked, the ClusterObjectSet has encountered an error that requires manual intervention for recovery.
-	//   - When status is False and reason is Archived, the ClusterObjectSet is archived and not being actively reconciled.
-	//
-	// The Available condition represents whether the revision has been successfully rolled out and is available:
-	//   - When status is True and reason is ProbesSucceeded, the ClusterObjectSet has been successfully rolled out and all objects pass their readiness probes.
-	//   - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes during rollout.
-	//   - When status is Unknown and reason is Reconciling, the ClusterObjectSet has encountered an error that prevented it from observing the probes.
-	//   - When status is Unknown and reason is Archived, the ClusterObjectSet has been archived and its objects have been torn down.
-	//   - When status is Unknown and reason is Migrated, the ClusterObjectSet was migrated from an existing release and object status probe results have not yet been observed.
-	//
-	// The Succeeded condition represents whether the revision has successfully completed its rollout:
-	//   - When status is True and reason is Succeeded, the ClusterObjectSet has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
+	// The Ready condition represents whether the revision has fully rolled out:
+	//   - True / Ready: all phases are complete and all objects pass their probes.
+	//   - False / Incomplete: one or more phases are not yet complete.
+	//   - False / Blocked: reconciliation requires manual intervention (e.g. a mutable
+	//     referenced Secret, resolved-content drift, or an object ownership collision).
+	//   - False / Invalid: a preflight validation error was encountered.
+	//   - False / Archived: the revision is archived; teardown is in progress or complete.
+	//   - False / ProgressDeadlineExceeded: the revision did not complete within
+	//     spec.progressDeadlineMinutes.
+	//   - Unknown / ReconcileError: reconciliation returned an error.
+	//   - Unknown / TeardownError: teardown returned an error.
+	//   - Unknown / InternalError: an internal controller error occurred.
 	//
 	// +listType=map
 	// +listMapKey=type
@@ -524,6 +527,14 @@ type ClusterObjectSetStatus struct {
 	// +listMapKey=name
 	// +optional
 	ObservedPhases []ObservedPhase `json:"observedPhases,omitempty"`
+
+	// completedAt is the timestamp at which the revision was first observed to be
+	// ready, meaning it had successfully rolled out and all of its objects passed
+	// their probes. It is set once and is immutable thereafter.
+	//
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable"
+	// +optional
+	CompletedAt metav1.Time `json:"completedAt,omitempty,omitzero"`
 }
 
 // ObservedPhase records the observed content digest of a resolved phase.
@@ -551,8 +562,9 @@ type ObservedPhase struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
-// +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
+// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=='Ready')].status`
+// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.conditions[?(@.type=='Ready')].reason`
+// +kubebuilder:printcolumn:name="Completed",type=string,JSONPath=`.status.completedAt`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterObjectSet represents an immutable snapshot of Kubernetes objects

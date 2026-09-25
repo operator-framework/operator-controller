@@ -519,8 +519,8 @@ type BundleMetadata struct {
 type RevisionStatus struct {
 	// name of the ClusterObjectSet resource
 	Name string `json:"name"`
-	// conditions optionally expose Progressing and Available condition of the revision,
-	// in case when it is not yet marked as successfully installed (condition Succeeded is not set to True).
+	// conditions optionally exposes the Ready condition of the revision, in case
+	// when it is not yet marked as successfully installed (completedAt is not set).
 	// Given that a ClusterExtension should remain available during upgrades, an observer may use these conditions
 	// to get more insights about reasons for its current state.
 	//

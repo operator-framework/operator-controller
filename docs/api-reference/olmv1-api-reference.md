@@ -561,7 +561,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `name` _string_ | name of the ClusterObjectSet resource |  |  |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions optionally expose Progressing and Available condition of the revision,<br />in case when it is not yet marked as successfully installed (condition Succeeded is not set to True).<br />Given that a ClusterExtension should remain available during upgrades, an observer may use these conditions<br />to get more insights about reasons for its current state. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions optionally exposes the Ready condition of the revision, in case<br />when it is not yet marked as successfully installed (completedAt is not set).<br />Given that a ClusterExtension should remain available during upgrades, an observer may use these conditions<br />to get more insights about reasons for its current state. |  | Optional: \{\} <br /> |
 
 
 #### SelectorType
