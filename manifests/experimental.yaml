@@ -1333,11 +1333,14 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.conditions[?(@.type=='Available')].status
-      name: Available
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
       type: string
-    - jsonPath: .status.conditions[?(@.type=='Progressing')].status
-      name: Progressing
+    - jsonPath: .status.conditions[?(@.type=='Ready')].reason
+      name: Reason
+      type: string
+    - jsonPath: .status.completedAt
+      name: Completed
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -1874,19 +1877,18 @@ spec:
                   conditions is an optional list of status conditions describing the state of the
                   ClusterObjectSet.
 
-                  The Progressing condition represents whether the revision is actively rolling out:
-                    - When status is True and reason is RollingOut, the ClusterObjectSet rollout is actively making progress and is in transition.
-                    - When status is True and reason is Retrying, the ClusterObjectSet has encountered an error that could be resolved on subsequent reconciliation attempts.
-                    - When status is True and reason is Succeeded, the ClusterObjectSet has reached the desired state.
-                    - When status is False and reason is Blocked, the ClusterObjectSet has encountered an error that requires manual intervention for recovery.
-                    - When status is False and reason is Archived, the ClusterObjectSet is archived and not being actively reconciled.
-
-                  The Available condition represents whether the revision has been successfully rolled out and is available:
-                    - When status is True and reason is ProbesSucceeded, the ClusterObjectSet has been successfully rolled out and all objects pass their readiness probes.
-                    - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes during rollout.
-                    - When status is Unknown and reason is Reconciling, the ClusterObjectSet has encountered an error that prevented it from observing the probes.
-                    - When status is Unknown and reason is Archived, the ClusterObjectSet has been archived and its objects have been torn down.
-                    - When status is Unknown and reason is Migrated, the ClusterObjectSet was migrated from an existing release and object status probe results have not yet been observed.
+                  The Ready condition represents whether the revision has fully rolled out:
+                    - True / Ready: all phases are complete and all objects pass their probes.
+                    - False / Incomplete: one or more phases are not yet complete.
+                    - False / Blocked: reconciliation requires manual intervention (e.g. a mutable
+                      referenced Secret, resolved-content drift, or an object ownership collision).
+                    - False / Invalid: a preflight validation error was encountered.
+                    - False / Archived: the revision is archived; teardown is in progress or complete.
+                    - False / ProgressDeadlineExceeded: the revision did not complete within
+                      spec.progressDeadlineMinutes.
+                    - Unknown / ReconcileError: reconciliation returned an error.
+                    - Unknown / TeardownError: teardown returned an error.
+                    - Unknown / InternalError: an internal controller error occurred.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
