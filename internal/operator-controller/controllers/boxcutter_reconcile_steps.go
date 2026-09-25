@@ -25,6 +25,7 @@ import (
 	"slices"
 
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -102,6 +103,45 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 	}
 }
 
+const ceAvailableConditionType = "Available"
+
+// ceProgressingFromReady maps a revision's Ready condition reason onto the
+// ClusterExtension's Progressing (status, reason).
+func ceProgressingFromReady(ready metav1.Condition) (metav1.ConditionStatus, string) {
+	switch ready.Reason {
+	case ocv1.ClusterObjectSetReasonReady:
+		return metav1.ConditionTrue, ocv1.ReasonSucceeded
+	case ocv1.ClusterObjectSetReasonIncomplete:
+		return metav1.ConditionTrue, ocv1.ReasonRollingOut
+	case ocv1.ClusterObjectSetReasonProgressDeadlineExceeded:
+		return metav1.ConditionFalse, ocv1.ReasonProgressDeadlineExceeded
+	case ocv1.ClusterObjectSetReasonBlocked:
+		return metav1.ConditionFalse, ocv1.ReasonBlocked
+	case ocv1.ClusterObjectSetReasonInvalid:
+		return metav1.ConditionFalse, ocv1.ReasonInvalidConfiguration
+	default: // ReconcileError, TeardownError, InternalError
+		return metav1.ConditionTrue, ocv1.ReasonRetrying
+	}
+}
+
+// ceConditionsFromReady returns the ClusterExtension Available (Ready retyped)
+// and Progressing (derived) conditions for a revision's Ready condition.
+func ceConditionsFromReady(ready metav1.Condition, generation int64) (available, progressing metav1.Condition) {
+	available = ready
+	available.Type = ceAvailableConditionType
+	available.ObservedGeneration = generation
+
+	ps, pr := ceProgressingFromReady(ready)
+	progressing = metav1.Condition{
+		Type:               ocv1.TypeProgressing,
+		Status:             ps,
+		Reason:             pr,
+		Message:            ready.Message,
+		ObservedGeneration: generation,
+	}
+	return available, progressing
+}
+
 func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error)) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
@@ -135,32 +175,39 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 		}
 
 		ext.Status.ActiveRevisions = []ocv1.RevisionStatus{}
-		// Mirror Available/Progressing conditions from the installed revision
+		gen := ext.GetGeneration()
 		if i := state.revisionStates.Installed; i != nil {
-			for _, cndType := range []string{ocv1.ClusterObjectSetTypeAvailable, ocv1.ClusterObjectSetTypeProgressing} {
-				if cnd := apimeta.FindStatusCondition(i.Conditions, cndType); cnd != nil {
-					cnd.ObservedGeneration = ext.GetGeneration()
-					apimeta.SetStatusCondition(&ext.Status.Conditions, *cnd)
+			if ready := apimeta.FindStatusCondition(i.Conditions, ocv1.ClusterObjectSetTypeReady); ready != nil {
+				rs := ocv1.RevisionStatus{Name: i.RevisionName}
+				r := *ready
+				r.ObservedGeneration = gen
+				apimeta.SetStatusCondition(&rs.Conditions, r)
+
+				avail, prog := ceConditionsFromReady(*ready, gen)
+				apimeta.SetStatusCondition(&ext.Status.Conditions, avail)
+				if ready.Reason != ocv1.ClusterObjectSetReasonArchived {
+					apimeta.SetStatusCondition(&ext.Status.Conditions, prog)
 				}
+
+				ext.Status.Install = &ocv1.ClusterExtensionInstallStatus{Bundle: i.BundleMetadata}
+				ext.Status.ActiveRevisions = []ocv1.RevisionStatus{rs}
+			} else {
+				ext.Status.Install = &ocv1.ClusterExtensionInstallStatus{Bundle: i.BundleMetadata}
+				ext.Status.ActiveRevisions = []ocv1.RevisionStatus{{Name: i.RevisionName}}
 			}
-			ext.Status.Install = &ocv1.ClusterExtensionInstallStatus{
-				Bundle: i.BundleMetadata,
-			}
-			ext.Status.ActiveRevisions = []ocv1.RevisionStatus{{Name: i.RevisionName}}
 		}
-		for idx, r := range state.revisionStates.RollingOut {
-			rs := ocv1.RevisionStatus{Name: r.RevisionName}
-			for _, cndType := range []string{ocv1.ClusterObjectSetTypeAvailable, ocv1.ClusterObjectSetTypeProgressing} {
-				if cnd := apimeta.FindStatusCondition(r.Conditions, cndType); cnd != nil {
-					cnd.ObservedGeneration = ext.GetGeneration()
-					apimeta.SetStatusCondition(&rs.Conditions, *cnd)
-				}
-			}
-			// Mirror Progressing condition from the latest active revision
-			if idx == len(state.revisionStates.RollingOut)-1 {
-				if pcnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeProgressing); pcnd != nil {
-					pcnd.ObservedGeneration = ext.GetGeneration()
-					apimeta.SetStatusCondition(&ext.Status.Conditions, *pcnd)
+		for idx, rr := range state.revisionStates.RollingOut {
+			rs := ocv1.RevisionStatus{Name: rr.RevisionName}
+			if ready := apimeta.FindStatusCondition(rr.Conditions, ocv1.ClusterObjectSetTypeReady); ready != nil {
+				r := *ready
+				r.ObservedGeneration = gen
+				apimeta.SetStatusCondition(&rs.Conditions, r)
+				// The latest rolling revision drives the ClusterExtension Progressing condition.
+				if idx == len(state.revisionStates.RollingOut)-1 {
+					_, prog := ceConditionsFromReady(*ready, gen)
+					if ready.Reason != ocv1.ClusterObjectSetReasonArchived {
+						apimeta.SetStatusCondition(&ext.Status.Conditions, prog)
+					}
 				}
 			}
 			ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, rs)
