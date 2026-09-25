@@ -398,7 +398,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name: "set Available:True:ProbesSucceeded and Succeeded:True:Succeeded conditions on successful revision rollout",
+			name: "set Available:True:ProbesSucceeded condition and completedAt on successful revision rollout",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
 			}),
@@ -428,12 +428,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				require.Equal(t, "Revision 1.0.0 has rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision succeeded rolling out.", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
+				require.False(t, rev.Status.CompletedAt.IsZero(), "completedAt should be set on successful rollout")
 			},
 		},
 		{
@@ -507,6 +502,98 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 
 			// validate test case
 			tc.validate(t, testClient)
+		})
+	}
+}
+
+func Test_ClusterObjectSetReconciler_Reconcile_CompletedAt(t *testing.T) {
+	testScheme := newScheme(t)
+
+	firstReady := metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
+	laterReady := metav1.NewTime(time.Date(2023, 6, 15, 12, 0, 0, 0, time.UTC))
+
+	for _, tc := range []struct {
+		name           string
+		revisionResult machinery.RevisionResult
+		clock          clock.Clock
+		existingObjs   func() []client.Object
+		validate       func(*testing.T, *ocv1.ClusterObjectSet)
+	}{
+		{
+			name: "sets completedAt to the current time on first successful rollout",
+			revisionResult: newMockRevisionResult(gomock.NewController(t), revisionResultConfig{
+				isComplete: true,
+			}),
+			clock: clocktesting.NewFakeClock(firstReady.Time),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				return []client.Object{ext, rev}
+			},
+			validate: func(t *testing.T, rev *ocv1.ClusterObjectSet) {
+				require.False(t, rev.Status.CompletedAt.IsZero())
+				require.True(t, firstReady.Equal(&rev.Status.CompletedAt))
+			},
+		},
+		{
+			name: "does not overwrite completedAt on a subsequent successful rollout",
+			revisionResult: newMockRevisionResult(gomock.NewController(t), revisionResultConfig{
+				isComplete: true,
+			}),
+			clock: clocktesting.NewFakeClock(laterReady.Time),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				rev.Status.CompletedAt = firstReady
+				return []client.Object{ext, rev}
+			},
+			validate: func(t *testing.T, rev *ocv1.ClusterObjectSet) {
+				require.True(t, firstReady.Equal(&rev.Status.CompletedAt))
+			},
+		},
+		{
+			name: "does not set completedAt while the revision is still rolling out",
+			revisionResult: newMockRevisionResult(gomock.NewController(t), revisionResultConfig{
+				isComplete: false,
+			}),
+			clock: clocktesting.NewFakeClock(firstReady.Time),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				return []client.Object{ext, rev}
+			},
+			validate: func(t *testing.T, rev *ocv1.ClusterObjectSet) {
+				require.True(t, rev.Status.CompletedAt.IsZero())
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+
+			testClient := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+				WithObjects(tc.existingObjs()...).
+				Build()
+
+			mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+				func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+					return tc.revisionResult, nil
+				}, nil,
+			)
+			_, err := (&controllers.ClusterObjectSetReconciler{
+				Client:                testClient,
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
+				Clock:                 tc.clock,
+			}).Reconcile(t.Context(), ctrl.Request{
+				NamespacedName: types.NamespacedName{Name: clusterObjectSetName},
+			})
+			require.NoError(t, err)
+
+			rev := &ocv1.ClusterObjectSet{}
+			require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, rev))
+			tc.validate(t, rev)
 		})
 	}
 }
@@ -1045,12 +1132,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Reason:             ocv1.ReasonSucceeded,
 					ObservedGeneration: rev1.Generation,
 				})
-				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeSucceeded,
-					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonSucceeded,
-					ObservedGeneration: rev1.Generation,
-				})
+				rev1.Status.CompletedAt = metav1.Now()
 				return []client.Object{rev1, ext}
 			},
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{

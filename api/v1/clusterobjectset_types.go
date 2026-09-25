@@ -28,7 +28,6 @@ const (
 	// Condition Types
 	ClusterObjectSetTypeAvailable   = "Available"
 	ClusterObjectSetTypeProgressing = "Progressing"
-	ClusterObjectSetTypeSucceeded   = "Succeeded"
 
 	// Condition Reasons
 	ClusterObjectSetReasonArchived        = "Archived"
@@ -486,6 +485,12 @@ const (
 )
 
 // ClusterObjectSetStatus defines the observed state of a ClusterObjectSet.
+//
+// The completedAt removal guard lives here at the parent level because a
+// field-level transition rule is skipped when the field is absent from an
+// update, which would otherwise allow the timestamp to be cleared and re-set.
+//
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.completedAt) || has(self.completedAt)",message="completedAt cannot be removed once set"
 type ClusterObjectSetStatus struct {
 	// conditions is an optional list of status conditions describing the state of the
 	// ClusterObjectSet.
@@ -504,9 +509,6 @@ type ClusterObjectSetStatus struct {
 	//   - When status is Unknown and reason is Archived, the ClusterObjectSet has been archived and its objects have been torn down.
 	//   - When status is Unknown and reason is Migrated, the ClusterObjectSet was migrated from an existing release and object status probe results have not yet been observed.
 	//
-	// The Succeeded condition represents whether the revision has successfully completed its rollout:
-	//   - When status is True and reason is Succeeded, the ClusterObjectSet has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
-	//
 	// +listType=map
 	// +listMapKey=type
 	// +optional
@@ -524,6 +526,14 @@ type ClusterObjectSetStatus struct {
 	// +listMapKey=name
 	// +optional
 	ObservedPhases []ObservedPhase `json:"observedPhases,omitempty"`
+
+	// completedAt is the timestamp at which the revision was first observed to be
+	// ready, meaning it had successfully rolled out and all of its objects passed
+	// their probes. It is set once and is immutable thereafter.
+	//
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable"
+	// +optional
+	CompletedAt metav1.Time `json:"completedAt,omitempty,omitzero"`
 }
 
 // ObservedPhase records the observed content digest of a resolved phase.

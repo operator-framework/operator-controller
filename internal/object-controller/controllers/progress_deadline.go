@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -78,17 +77,16 @@ func (r *deadlineAwareRateLimiter) NumRequeues(item ctrl.Request) int {
 // expires. A negative duration means the deadline has already passed.
 //
 // It derives the deadline from spec and metadata only, with one exception:
-// it checks the Succeeded status condition so that a revision recovering
-// from drift is not penalised by the original deadline.
+// it checks status.completedAt so that a revision recovering from drift is not
+// penalised by the original deadline.
 //
-// Succeeded is a latch: there is no way to deduce from current cluster state
-// alone that a COS succeeded in the past. If Succeeded is removed or set to
-// False, this function will return a deadline and the reconciler will set
-// ProgressDeadlineExceeded even though the revision previously succeeded.
+// completedAt is a latch: there is no way to deduce from current cluster state
+// alone that a COS became ready in the past. It is set once and never cleared,
+// so once observed ready a revision is never subject to the deadline again.
 //
 // Returns (0, false) when there is no active deadline:
 //   - progressDeadlineMinutes is 0
-//   - the revision has already succeeded
+//   - the revision has already been observed ready (completedAt set)
 //   - the revision is archived (deadline is irrelevant)
 //   - the revision is being deleted
 func durationUntilDeadline(clk clock.Clock, cos *ocv1.ClusterObjectSet) (time.Duration, bool) {
@@ -96,7 +94,9 @@ func durationUntilDeadline(clk clock.Clock, cos *ocv1.ClusterObjectSet) (time.Du
 	if pd <= 0 {
 		return 0, false
 	}
-	if meta.IsStatusConditionTrue(cos.Status.Conditions, ocv1.ClusterObjectSetTypeSucceeded) {
+	// Once the revision has been observed ready (completedAt set), the deadline
+	// no longer applies.
+	if !cos.Status.CompletedAt.IsZero() {
 		return 0, false
 	}
 	if cos.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {

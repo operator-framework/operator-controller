@@ -3,7 +3,9 @@ package v1
 import (
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -178,4 +180,59 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestClusterObjectSetCompletedAtImmutable(t *testing.T) {
+	c := newClient(t)
+
+	cos := &ClusterObjectSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "cos-completedat-immutable"},
+		Spec: ClusterObjectSetSpec{
+			Revision:            1,
+			CollisionProtection: CollisionProtectionPrevent,
+			LifecycleState:      ClusterObjectSetLifecycleStateActive,
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), cos))
+
+	firstReady := metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
+	laterReady := metav1.NewTime(time.Date(2023, 6, 15, 12, 0, 0, 0, time.UTC))
+
+	// completedAt may be set once, from empty.
+	cos.Status.CompletedAt = firstReady
+	require.NoError(t, c.Status().Update(t.Context(), cos))
+
+	// Re-applying the same value must be allowed.
+	cos.Status.CompletedAt = firstReady
+	require.NoError(t, c.Status().Update(t.Context(), cos))
+
+	// Changing the value once set must be rejected.
+	cos.Status.CompletedAt = laterReady
+	err := c.Status().Update(t.Context(), cos)
+	require.True(t, errors.IsInvalid(err), "expected update to fail as invalid, but got: %v", err)
+}
+
+func TestClusterObjectSetCompletedAtCannotBeRemoved(t *testing.T) {
+	c := newClient(t)
+
+	cos := &ClusterObjectSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "cos-completedat-noremove"},
+		Spec: ClusterObjectSetSpec{
+			Revision:            1,
+			CollisionProtection: CollisionProtectionPrevent,
+			LifecycleState:      ClusterObjectSetLifecycleStateActive,
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), cos))
+
+	// Set completedAt once.
+	cos.Status.CompletedAt = metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
+	require.NoError(t, c.Status().Update(t.Context(), cos))
+
+	// Removing completedAt once set must be rejected. The field-level transition
+	// rule is skipped when the field is absent from the update, so a parent-level
+	// rule must reject its removal.
+	cos.Status.CompletedAt = metav1.Time{}
+	err := c.Status().Update(t.Context(), cos)
+	require.True(t, errors.IsInvalid(err), "expected removal to fail as invalid, but got: %v", err)
 }

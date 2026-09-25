@@ -75,6 +75,10 @@ func (c *ClusterObjectSetReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	l := log.FromContext(ctx).WithName("cluster-extension-revision")
 	ctx = log.IntoContext(ctx, l)
 
+	if c.Clock == nil {
+		c.Clock = clock.RealClock{}
+	}
+
 	existingRev := &ocv1.ClusterObjectSet{}
 	if err := c.Client.Get(ctx, req.NamespacedName, existingRev); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -246,16 +250,13 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		markAsProgressing(l, cos, ocv1.ReasonSucceeded, fmt.Sprintf("Revision %s has rolled out.", revVersion), isDeadlineExceeded)
 		markAsAvailable(cos, ocv1.ClusterObjectSetReasonProbesSucceeded, "Objects are available and pass all probes.")
 
-		// We'll probably only want to remove this once we are done updating the ClusterExtension conditions
-		// as its one of the interfaces between the revision and the extension. If we still have the Succeeded for now
-		// that's fine.
-		meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterObjectSetTypeSucceeded,
-			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonSucceeded,
-			Message:            "Revision succeeded rolling out.",
-			ObservedGeneration: cos.Generation,
-		})
+		// Record the timestamp of the first time the revision was observed to be
+		// ready. This is set once and never changes for subsequent reconciliations.
+		// It also serves as the signal that the revision has completed its rollout,
+		// which the ClusterExtension controller uses to determine the installed revision.
+		if cos.Status.CompletedAt.IsZero() {
+			cos.Status.CompletedAt = metav1.NewTime(c.Clock.Now())
+		}
 	} else {
 		var probeFailureMsgs []string
 		for _, pres := range rres.GetPhases() {

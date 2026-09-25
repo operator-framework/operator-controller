@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
     olm.operatorframework.io/generator: experimental
   name: clusterobjectsets.olm.operatorframework.io
 spec:
@@ -542,6 +542,16 @@ spec:
             description: status is optional and defines the observed state of the
               ClusterObjectSet.
             properties:
+              completedAt:
+                description: |-
+                  completedAt is the timestamp at which the revision was first observed to be
+                  ready, meaning it had successfully rolled out and all of its objects passed
+                  their probes. It is set once and is immutable thereafter.
+                format: date-time
+                type: string
+                x-kubernetes-validations:
+                - message: completedAt is immutable
+                  rule: self == oldSelf || oldSelf == null
               conditions:
                 description: |-
                   conditions is an optional list of status conditions describing the state of the
@@ -560,9 +570,6 @@ spec:
                     - When status is Unknown and reason is Reconciling, the ClusterObjectSet has encountered an error that prevented it from observing the probes.
                     - When status is Unknown and reason is Archived, the ClusterObjectSet has been archived and its objects have been torn down.
                     - When status is Unknown and reason is Migrated, the ClusterObjectSet was migrated from an existing release and object status probe results have not yet been observed.
-
-                  The Succeeded condition represents whether the revision has successfully completed its rollout:
-                    - When status is True and reason is Succeeded, the ClusterObjectSet has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -665,6 +672,9 @@ spec:
                 - message: observedPhases is immutable
                   rule: self == oldSelf || oldSelf.size() == 0
             type: object
+            x-kubernetes-validations:
+            - message: completedAt cannot be removed once set
+              rule: '!has(oldSelf.completedAt) || has(self.completedAt)'
         type: object
     served: true
     storage: true
