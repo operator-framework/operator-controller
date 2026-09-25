@@ -26,9 +26,7 @@ const (
 	ClusterObjectSetKind = "ClusterObjectSet"
 
 	// Condition Types
-	ClusterObjectSetTypeAvailable   = "Available"   // Deprecated: removed in Task 6, kept temporarily for compilation
-	ClusterObjectSetTypeProgressing = "Progressing" // Deprecated: removed in Task 6, kept temporarily for compilation
-	ClusterObjectSetTypeReady       = "Ready"
+	ClusterObjectSetTypeReady = "Ready"
 
 	// Ready condition Reasons
 	ClusterObjectSetReasonReady                    = "Ready"
@@ -40,12 +38,6 @@ const (
 	ClusterObjectSetReasonReconcileError           = "ReconcileError"
 	ClusterObjectSetReasonTeardownError            = "TeardownError"
 	ClusterObjectSetReasonInternalError            = "InternalError"
-
-	// Deprecated reasons (removed in Task 6, kept temporarily for compilation)
-	ClusterObjectSetReasonProbeFailure    = "ProbeFailure"
-	ClusterObjectSetReasonProbesSucceeded = "ProbesSucceeded"
-	ClusterObjectSetReasonReconciling     = "Reconciling"
-	ClusterObjectSetReasonRetrying        = "Retrying"
 )
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.

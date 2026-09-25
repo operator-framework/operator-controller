@@ -197,9 +197,9 @@ func TestApplyBundleWithBoxcutter_HandoverMultipleActiveRevisions(t *testing.T) 
 				},
 				Conditions: []metav1.Condition{
 					{
-						Type:   ocv1.ClusterObjectSetTypeReady,
-						Status: metav1.ConditionTrue,
-						Reason: ocv1.ClusterObjectSetReasonReady,
+						Type:    ocv1.ClusterObjectSetTypeReady,
+						Status:  metav1.ConditionTrue,
+						Reason:  ocv1.ClusterObjectSetReasonReady,
 						Message: "installed revision ready",
 					},
 				},
@@ -209,9 +209,9 @@ func TestApplyBundleWithBoxcutter_HandoverMultipleActiveRevisions(t *testing.T) 
 					RevisionName: "ce-2",
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.ClusterObjectSetTypeReady,
-							Status: metav1.ConditionFalse,
-							Reason: ocv1.ClusterObjectSetReasonIncomplete,
+							Type:    ocv1.ClusterObjectSetTypeReady,
+							Status:  metav1.ConditionFalse,
+							Reason:  ocv1.ClusterObjectSetReasonIncomplete,
 							Message: "rolling out revision incomplete",
 						},
 					},
@@ -252,7 +252,7 @@ func TestApplyBundleWithBoxcutter_HandoverMultipleActiveRevisions(t *testing.T) 
 
 	// Each active revision mirrors its own single Ready condition.
 	require.Len(t, ext.Status.ActiveRevisions, 2)
-	
+
 	// Installed revision
 	installedRS := ext.Status.ActiveRevisions[0]
 	require.Equal(t, "ce-1", installedRS.Name)
@@ -262,7 +262,7 @@ func TestApplyBundleWithBoxcutter_HandoverMultipleActiveRevisions(t *testing.T) 
 	require.Equal(t, metav1.ConditionTrue, installedReady.Status)
 	require.Equal(t, ocv1.ClusterObjectSetReasonReady, installedReady.Reason)
 	require.Equal(t, int64(2), installedReady.ObservedGeneration)
-	
+
 	// Rolling out revision
 	rollingRS := ext.Status.ActiveRevisions[1]
 	require.Equal(t, "ce-2", rollingRS.Name)
