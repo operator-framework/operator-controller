@@ -107,6 +107,11 @@ const ceAvailableConditionType = "Available"
 
 // ceProgressingFromReady maps a revision's Ready condition reason onto the
 // ClusterExtension's Progressing (status, reason).
+//
+// The Archived reason has no meaningful Progressing mapping: callers must not
+// apply the returned value when ready.Reason is ClusterObjectSetReasonArchived
+// (an archived revision leaves the ClusterExtension's Progressing condition
+// untouched). It therefore falls through to the default here.
 func ceProgressingFromReady(ready metav1.Condition) (metav1.ConditionStatus, string) {
 	switch ready.Reason {
 	case ocv1.ClusterObjectSetReasonReady:
@@ -126,13 +131,13 @@ func ceProgressingFromReady(ready metav1.Condition) (metav1.ConditionStatus, str
 
 // ceConditionsFromReady returns the ClusterExtension Available (Ready retyped)
 // and Progressing (derived) conditions for a revision's Ready condition.
-func ceConditionsFromReady(ready metav1.Condition, generation int64) (available, progressing metav1.Condition) {
-	available = ready
+func ceConditionsFromReady(ready metav1.Condition, generation int64) (metav1.Condition, metav1.Condition) {
+	available := ready
 	available.Type = ceAvailableConditionType
 	available.ObservedGeneration = generation
 
 	ps, pr := ceProgressingFromReady(ready)
-	progressing = metav1.Condition{
+	progressing := metav1.Condition{
 		Type:               ocv1.TypeProgressing,
 		Status:             ps,
 		Reason:             pr,
