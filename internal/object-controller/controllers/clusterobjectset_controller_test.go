@@ -46,6 +46,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		existingObjs            func() []client.Object
 		revisionResult          machinery.RevisionResult
 		revisionReconcileErr    error
+		factoryErr              error
 		validate                func(*testing.T, client.Client)
 	}{
 		{
@@ -67,7 +68,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name:                    "Available condition is not updated on error if its not already set",
+			name:                    "Available condition is set to False/Reconciling on error when not previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
@@ -83,11 +84,15 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				}, rev)
 				require.NoError(t, err)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
-				require.Nil(t, cond)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, "some error", cond.Message)
+				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name:                    "Available condition is updated to Unknown on error if its been already set",
+			name:                    "Available condition is set to False/Reconciling on error when previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
@@ -111,10 +116,34 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				require.NoError(t, err)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Equal(t, "some error", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
+			},
+		},
+		{
+			// A revision whose FIRST reconcile fails at engine creation (factory error)
+			// must set Available=False/Reconciling even though Available did not previously exist.
+			name:                    "Available condition is set to False/Reconciling on factory error when not previously set",
+			reconcilingRevisionName: clusterObjectSetName,
+			factoryErr:              errors.New("failed to create revision engine"),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				return []client.Object{ext, rev1}
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterObjectSet{}
+				err := c.Get(t.Context(), client.ObjectKey{
+					Name: clusterObjectSetName,
+				}, rev)
+				require.NoError(t, err)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Nil(t, meta.FindStatusCondition(rev.Status.Conditions, "Progressing"))
 			},
 		},
 		{
@@ -317,30 +346,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name:                    "set Progressing:True:Retrying when there's an error reconciling the revision",
-			revisionReconcileErr:    errors.New("some error"),
-			reconcilingRevisionName: clusterObjectSetName,
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtension()
-				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
-				return []client.Object{ext, rev1}
-			},
-			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterObjectSet{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterObjectSetName,
-				}, rev)
-				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
-				require.Equal(t, "some error", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
-			},
-		},
-		{
-			name: "set Progressing:True:RollingOut condition while revision is transitioning",
+			name: "set Available:False:RollingOut condition while revision is transitioning",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: true,
 			}),
@@ -356,44 +362,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cond.Reason)
 				require.Equal(t, "Revision 1 is rolling out.", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
-			},
-		},
-		{
-			name: "set Progressing:True:Succeeded once transition rollout is finished",
-			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
-				inTransition: false,
-				isComplete:   true,
-			}),
-			reconcilingRevisionName: clusterObjectSetName,
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtension()
-				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
-				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.TypeProgressing,
-					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonRollingOut,
-					Message:            "Revision 1 is rolling out.",
-					ObservedGeneration: 1,
-				})
-				return []client.Object{ext, rev1}
-			},
-			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterObjectSet{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterObjectSetName,
-				}, rev)
-				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision 1 has rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
@@ -419,13 +392,6 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonProbesSucceeded, cond.Reason)
 				require.Equal(t, "Objects are available and pass all probes.", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
-
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision 1 has rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
 				require.False(t, rev.Status.CompletedAt.IsZero(), "completedAt should be set on successful rollout")
@@ -484,7 +450,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			)
 			result, err := (&controllers.ClusterObjectSetReconciler{
 				Client:                testClient,
-				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, tc.factoryErr),
 				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
@@ -494,10 +460,14 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 
 			// reconcile cluster extension revision
 			require.Equal(t, ctrl.Result{}, result)
-			if tc.revisionReconcileErr == nil {
+			wantErr := tc.revisionReconcileErr
+			if tc.factoryErr != nil {
+				wantErr = tc.factoryErr
+			}
+			if wantErr == nil {
 				require.NoError(t, err)
 			} else {
-				require.Contains(t, err.Error(), tc.revisionReconcileErr.Error())
+				require.Contains(t, err.Error(), wantErr.Error())
 			}
 
 			// validate test case
@@ -759,7 +729,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Available:Unknown:Reconciling when tracking cache free fails during deletion",
+			name:           "set Available:False:Reconciling when tracking cache free fails during deletion",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -782,7 +752,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				require.NoError(t, err)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Contains(t, cond.Message, "tracking cache free failed")
 			},
@@ -791,7 +761,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Available:Archived:Unknown and Progressing:False:Archived conditions when a revision is archived",
+			name:           "set Available:False:Archived condition when a revision is archived",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -817,13 +787,6 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				require.NoError(t, err)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionUnknown, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonArchived, cond.Reason)
-				require.Equal(t, "revision is archived", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
-
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
-				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonArchived, cond.Reason)
 				require.Equal(t, "revision is archived", cond.Message)
@@ -831,7 +794,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Progressing:True:Retrying and requeue when archived revision archival is incomplete",
+			name:           "set Available:False:Reconciling and requeue when archived revision archival is incomplete",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -856,10 +819,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Equal(t, "removing revision resources that are not owned by another revision", cond.Message)
 
 				// Finalizer should still be present
@@ -890,10 +853,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Contains(t, cond.Message, "teardown failed: connection refused")
 
 				// Finalizer should still be present
@@ -923,10 +886,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Contains(t, cond.Message, "token getter failed")
 
 				// Finalizer should still be present
@@ -945,13 +908,6 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
 					Type:               ocv1.ClusterObjectSetTypeAvailable,
-					Status:             metav1.ConditionUnknown,
-					Reason:             ocv1.ClusterObjectSetReasonArchived,
-					Message:            "revision is archived",
-					ObservedGeneration: rev1.Generation,
-				})
-				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeProgressing,
 					Status:             metav1.ConditionFalse,
 					Reason:             ocv1.ClusterObjectSetReasonArchived,
 					Message:            "revision is archived",
@@ -1037,7 +993,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 		clock           clock.Clock
 	}{
 		{
-			name: "progressing set to false when progress deadline is exceeded",
+			name: "available set to false/ProgressDeadlineExceeded when progress deadline is exceeded",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -1056,9 +1012,68 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.Equal(t, metav1.ConditionFalse, cnd.Status)
 				require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cnd.Reason)
+			},
+		},
+		{
+			// A rolling revision with failing probes AND an exceeded progress deadline must
+			// set Available=False/ProgressDeadlineExceeded (deadline wins over ProbeFailure).
+			name: "available set to false/ProgressDeadlineExceeded when deadline is exceeded during probe failure (deadline wins over ProbeFailure)",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				rev1.Spec.ProgressDeadlineMinutes = 1
+				rev1.CreationTimestamp = metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
+				return []client.Object{rev1, ext}
+			},
+			// 61sec elapsed since the creation of the revision
+			clock: clocktesting.NewFakeClock(time.Date(2022, 1, 1, 0, 1, 1, 0, time.UTC)),
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
+				inTransition: false,
+				isComplete:   false,
+				phases: []machinery.PhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
+						name:       "somephase",
+						isComplete: false,
+						objects: []machinery.ObjectResult{
+							newMockObjectResult(mockCtrl, objectResultConfig{
+								object: func() client.Object {
+									obj := &corev1.Service{
+										ObjectMeta: metav1.ObjectMeta{
+											Name:      "my-service",
+											Namespace: "my-namespace",
+										},
+									}
+									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
+									return obj
+								}(),
+								probes: machinerytypes.ProbeResultContainer{
+									boxcutter.ProgressProbeType: {
+										Status:   machinerytypes.ProbeStatusFalse,
+										Messages: []string{"probe failed"},
+									},
+								},
+							}),
+						},
+					}),
+				},
+			}),
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterObjectSet{}
+				err := c.Get(t.Context(), client.ObjectKey{
+					Name: clusterObjectSetName,
+				}, rev)
+				require.NoError(t, err)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				require.NotNil(t, cnd)
+				require.Equal(t, metav1.ConditionFalse, cnd.Status)
+				require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cnd.Reason)
+				// The deadline "last status" must be the generic rolling-out summary, not the
+				// per-object probe detail, so the reconstructed ClusterExtension Progressing
+				// message matches what the removed COS Progressing condition historically carried.
+				require.Equal(t, "Revision has not rolled out for 1 minute(s). Last status: Revision 1 is rolling out.", cnd.Message)
 			},
 		},
 		{
@@ -1081,20 +1096,20 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
-				require.Equal(t, metav1.ConditionTrue, cnd.Status)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				require.Equal(t, metav1.ConditionFalse, cnd.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
 			},
 		},
 		{
-			name: "recovery from ProgressDeadlineExceeded to Succeeded when revision completes",
+			name: "recovery from ProgressDeadlineExceeded to ProbesSucceeded when revision completes",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				rev1.Spec.ProgressDeadlineMinutes = 1
 				rev1.CreationTimestamp = metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeProgressing,
+					Type:               ocv1.ClusterObjectSetTypeAvailable,
 					Status:             metav1.ConditionFalse,
 					Reason:             ocv1.ReasonProgressDeadlineExceeded,
 					Message:            "Revision has not rolled out for 1 minute(s). Last status: Revision 1 is rolling out.",
@@ -1112,11 +1127,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cnd)
 				require.Equal(t, metav1.ConditionTrue, cnd.Status)
-				require.Equal(t, ocv1.ReasonSucceeded, cnd.Reason)
-				require.Equal(t, "Revision 1 has rolled out.", cnd.Message)
+				require.Equal(t, ocv1.ClusterObjectSetReasonProbesSucceeded, cnd.Reason)
+				require.Equal(t, "Objects are available and pass all probes.", cnd.Message)
 			},
 		},
 		{
@@ -1127,9 +1142,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				rev1.Spec.ProgressDeadlineMinutes = 1
 				rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-2 * time.Minute))
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeProgressing,
+					Type:               ocv1.ClusterObjectSetTypeAvailable,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonSucceeded,
+					Reason:             ocv1.ClusterObjectSetReasonProbesSucceeded,
 					ObservedGeneration: rev1.Generation,
 				})
 				rev1.Status.CompletedAt = metav1.Now()
@@ -1144,8 +1159,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
-				require.Equal(t, metav1.ConditionTrue, cnd.Status)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				require.Equal(t, metav1.ConditionFalse, cnd.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
 			},
 		},
@@ -1608,10 +1623,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 
 				rev := &ocv1.ClusterObjectSet{}
 				require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: tc.reconcilingRevisionName}, rev))
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonRetrying, cond.Reason)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
 				require.Contains(t, cond.Message, "revision object collisions")
 			} else {
 				require.Equal(t, ctrl.Result{}, result)

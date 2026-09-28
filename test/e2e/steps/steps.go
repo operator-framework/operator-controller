@@ -972,10 +972,10 @@ func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName st
 	return nil
 }
 
-// ClusterObjectSetIsArchived waits for the named ClusterObjectSet to have Progressing=False
+// ClusterObjectSetIsArchived waits for the named ClusterObjectSet to have Available=False
 // with reason Archived. Polls with timeout.
 func ClusterObjectSetIsArchived(ctx context.Context, revisionName string) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Progressing", "False", ptr.To("Archived"), nil)
+	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Available", "False", ptr.To("Archived"), nil)
 }
 
 // ClusterObjectSetHasAnnotationWithValue waits for the named ClusterObjectSet to have the specified

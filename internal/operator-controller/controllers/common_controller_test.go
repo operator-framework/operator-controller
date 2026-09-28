@@ -317,7 +317,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
-			name: "rolling revision with error (Retrying) - uses Failed",
+			name: "rolling revision with error (Reconciling) - uses Failed",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -325,9 +325,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-1",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterObjectSetTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterObjectSetReasonRetrying,
+								Type:    ocv1.ClusterObjectSetTypeAvailable,
+								Status:  metav1.ConditionUnknown,
+								Reason:  ocv1.ClusterObjectSetReasonReconciling,
 								Message: "some error occurred",
 							},
 						},
@@ -341,7 +341,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
-			name: "multiple rolling revisions with one Retrying - uses Failed",
+			name: "multiple rolling revisions with one Reconciling - uses Failed",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -349,8 +349,8 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-1",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterObjectSetTypeProgressing,
-								Status:  metav1.ConditionTrue,
+								Type:    ocv1.ClusterObjectSetTypeAvailable,
+								Status:  metav1.ConditionFalse,
 								Reason:  ocv1.ReasonRollingOut,
 								Message: "Revision is rolling out",
 							},
@@ -360,9 +360,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-2",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterObjectSetTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterObjectSetReasonRetrying,
+								Type:    ocv1.ClusterObjectSetTypeAvailable,
+								Status:  metav1.ConditionUnknown,
+								Reason:  ocv1.ClusterObjectSetReasonReconciling,
 								Message: "validation error occurred",
 							},
 						},
@@ -384,8 +384,8 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-1",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterObjectSetTypeProgressing,
-								Status:  metav1.ConditionTrue,
+								Type:    ocv1.ClusterObjectSetTypeAvailable,
+								Status:  metav1.ConditionFalse,
 								Reason:  ocv1.ReasonRollingOut,
 								Message: "Revision is rolling out",
 							},
@@ -400,7 +400,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
-			name: "old revision with Retrying superseded by latest healthy - uses Absent",
+			name: "old revision with Reconciling superseded by latest healthy - uses Absent",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -408,9 +408,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-1",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterObjectSetTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterObjectSetReasonRetrying,
+								Type:    ocv1.ClusterObjectSetTypeAvailable,
+								Status:  metav1.ConditionUnknown,
+								Reason:  ocv1.ClusterObjectSetReasonReconciling,
 								Message: "old error that was superseded",
 							},
 						},
@@ -419,8 +419,8 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 						RevisionName: "rev-2",
 						Conditions: []metav1.Condition{
 							{
-								Type:    ocv1.ClusterObjectSetTypeProgressing,
-								Status:  metav1.ConditionTrue,
+								Type:    ocv1.ClusterObjectSetTypeAvailable,
+								Status:  metav1.ConditionFalse,
 								Reason:  ocv1.ReasonRollingOut,
 								Message: "Latest revision is rolling out healthy",
 							},
@@ -451,6 +451,100 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			require.NotNil(t, cond)
 			require.Equal(t, tt.expectedInstalledCond.Status, cond.Status)
 			require.Equal(t, tt.expectedInstalledCond.Reason, cond.Reason)
+		})
+	}
+}
+
+func TestDetermineFailureReason(t *testing.T) {
+	availCond := func(status metav1.ConditionStatus, reason string) []metav1.Condition {
+		return []metav1.Condition{{Type: ocv1.ClusterObjectSetTypeAvailable, Status: status, Reason: reason}}
+	}
+	for _, tc := range []struct {
+		name     string
+		rolling  []*RevisionMetadata
+		expected string
+	}{
+		{name: "no rolling revisions -> Failed", rolling: nil, expected: ocv1.ReasonFailed},
+		{
+			name:     "latest reconciling -> Failed",
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonReconciling)}},
+			expected: ocv1.ReasonFailed,
+		},
+		{
+			name:     "latest rolling out -> Absent",
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ReasonRollingOut)}},
+			expected: ocv1.ReasonAbsent,
+		},
+		{
+			name:     "latest blocked -> Absent (Blocked is terminal, handled elsewhere)",
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonBlocked)}},
+			expected: ocv1.ReasonAbsent,
+		},
+		{
+			name: "only the latest revision matters",
+			rolling: []*RevisionMetadata{
+				{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonReconciling)},
+				{Conditions: availCond(metav1.ConditionFalse, ocv1.ReasonRollingOut)},
+			},
+			expected: ocv1.ReasonAbsent,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, determineFailureReason(tc.rolling))
+		})
+	}
+}
+
+func TestProgressingFromAvailable(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		available *metav1.Condition
+		completed bool
+		expected  metav1.Condition
+	}{
+		{
+			name:      "completed revision maps to Succeeded",
+			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeAvailable, Status: metav1.ConditionTrue, Reason: ocv1.ClusterObjectSetReasonProbesSucceeded, Message: "ok"},
+			completed: true,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonSucceeded, Message: "Desired state reached"},
+		},
+		{
+			name:      "nil available on rolling revision defaults to RollingOut",
+			available: nil,
+			completed: false,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "Revision is rolling out."},
+		},
+		{
+			name:      "probe failure maps to RollingOut",
+			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeAvailable, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonProbeFailure, Message: "probe failed"},
+			completed: false,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "probe failed"},
+		},
+		{
+			name:      "reconciling maps to Retrying",
+			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeAvailable, Status: metav1.ConditionUnknown, Reason: ocv1.ClusterObjectSetReasonReconciling, Message: "boom"},
+			completed: false,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "boom"},
+		},
+		{
+			name:      "blocked maps to Blocked",
+			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeAvailable, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonBlocked, Message: "manual fix needed"},
+			completed: false,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionFalse, Reason: ocv1.ReasonBlocked, Message: "manual fix needed"},
+		},
+		{
+			name:      "deadline exceeded maps to ProgressDeadlineExceeded",
+			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeAvailable, Status: metav1.ConditionFalse, Reason: ocv1.ReasonProgressDeadlineExceeded, Message: "too slow"},
+			completed: false,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionFalse, Reason: ocv1.ReasonProgressDeadlineExceeded, Message: "too slow"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := progressingFromAvailable(tc.available, tc.completed)
+			require.Equal(t, tc.expected.Type, got.Type)
+			require.Equal(t, tc.expected.Status, got.Status)
+			require.Equal(t, tc.expected.Reason, got.Reason)
+			require.Equal(t, tc.expected.Message, got.Message)
 		})
 	}
 }
