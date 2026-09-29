@@ -60,10 +60,14 @@ spec:
             {{- if .Values.options.certManager.enabled }}
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
+            - --webhook-tls-cert=/var/certs/tls.crt
+            - --webhook-tls-key=/var/certs/tls.key
             - --pull-cas-dir=/var/ca-certs
             {{- else if .Values.options.openshift.enabled }}
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
+            - --webhook-tls-cert=/var/webhook-certs/tls.crt
+            - --webhook-tls-key=/var/webhook-certs/tls.key
             - --v=${LOG_VERBOSITY}
             - --global-pull-secret=openshift-config/pull-secret
             {{- end }}
@@ -131,6 +135,8 @@ spec:
             {{- else if .Values.options.openshift.enabled }}
             - mountPath: /var/certs
               name: catalogserver-certs
+            - mountPath: /var/webhook-certs
+              name: catalogd-webhook-certs
             - mountPath: /var/ca-certs
               name: ca-certs
               readOnly: true
@@ -182,6 +188,15 @@ spec:
                 path: tls.key
             optional: false
             secretName: catalogserver-cert
+        - name: catalogd-webhook-certs
+          secret:
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+            optional: false
+            secretName: catalogd-webhook-service-cert
         - name: ca-certs
           projected:
             sources:

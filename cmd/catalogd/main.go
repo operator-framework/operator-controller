@@ -92,6 +92,8 @@ type config struct {
 	gcInterval           time.Duration
 	certFile             string
 	keyFile              string
+	webhookCertFile      string
+	webhookKeyFile       string
 	webhookPort          int
 	pullCasDir           string
 	globalPullSecret     string
@@ -133,6 +135,8 @@ func init() {
 	flags.DurationVar(&cfg.gcInterval, "gc-interval", 12*time.Hour, "Garbage collection interval")
 	flags.StringVar(&cfg.certFile, "tls-cert", "", "Certificate file for TLS")
 	flags.StringVar(&cfg.keyFile, "tls-key", "", "Key file for TLS")
+	flags.StringVar(&cfg.webhookCertFile, "webhook-tls-cert", "", "Certificate file for the webhook server TLS (defaults to tls-cert)")
+	flags.StringVar(&cfg.webhookKeyFile, "webhook-tls-key", "", "Key file for the webhook server TLS (defaults to tls-key)")
 	flags.IntVar(&cfg.webhookPort, "webhook-server-port", 9443, "Webhook server port")
 	flags.StringVar(&cfg.pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to image registries.")
 	flags.StringVar(&cfg.globalPullSecret, "global-pull-secret", "", "Global pull secret (<namespace>/<name>)")
@@ -164,6 +168,16 @@ func validateConfig(cfg *config) error {
 		setupLog.Error(err, "missing TLS configuration",
 			"certFile", cfg.certFile, "keyFile", cfg.keyFile)
 		return err
+	}
+	if (cfg.webhookCertFile != "" && cfg.webhookKeyFile == "") || (cfg.webhookCertFile == "" && cfg.webhookKeyFile != "") {
+		err := fmt.Errorf("webhook-tls-cert and webhook-tls-key flags must be used together")
+		setupLog.Error(err, "missing webhook TLS configuration",
+			"webhookCertFile", cfg.webhookCertFile, "webhookKeyFile", cfg.webhookKeyFile)
+		return err
+	}
+	if cfg.webhookCertFile == "" && cfg.webhookKeyFile == "" {
+		cfg.webhookCertFile = cfg.certFile
+		cfg.webhookKeyFile = cfg.keyFile
 	}
 
 	if cfg.metricsAddr != "" && cfg.certFile == "" && cfg.keyFile == "" {
@@ -208,6 +222,14 @@ func run(ctx context.Context) error {
 		setupLog.Error(err, "failed to initialize certificate watcher")
 		return err
 	}
+	webhookCW := cw
+	if cfg.webhookCertFile != cfg.certFile || cfg.webhookKeyFile != cfg.keyFile {
+		webhookCW, err = certwatcher.New(cfg.webhookCertFile, cfg.webhookKeyFile)
+		if err != nil {
+			setupLog.Error(err, "failed to initialize webhook certificate watcher")
+			return err
+		}
+	}
 
 	tlsOpts := func(config *tls.Config) {
 		config.GetCertificate = cw.GetCertificate
@@ -217,6 +239,10 @@ func run(ctx context.Context) error {
 		// - HTTP/2 Rapid Reset (GHSA-4374-p667-p6c8)
 		// While CVE fixes exist, they remain insufficient; disabling HTTP/2 helps reduce risks.
 		// For details, see: https://github.com/kubernetes/kubernetes/issues/121197
+		config.NextProtos = []string{"http/1.1"}
+	}
+	webhookTLSOpts := func(config *tls.Config) {
+		config.GetCertificate = webhookCW.GetCertificate
 		config.NextProtos = []string{"http/1.1"}
 	}
 	tlsProfile, err := tlsprofiles.GetTLSConfigFunc()
@@ -229,7 +255,7 @@ func run(ctx context.Context) error {
 	webhookServer := crwebhook.NewServer(crwebhook.Options{
 		Port: cfg.webhookPort,
 		TLSOpts: []func(*tls.Config){
-			tlsOpts,
+			webhookTLSOpts,
 			tlsProfile,
 		},
 	})
@@ -301,6 +327,13 @@ func run(ctx context.Context) error {
 	if err != nil {
 		setupLog.Error(err, "unable to add certificate watcher to manager")
 		return err
+	}
+	if webhookCW != cw {
+		err = mgr.Add(webhookCW)
+		if err != nil {
+			setupLog.Error(err, "unable to add webhook certificate watcher to manager")
+			return err
+		}
 	}
 
 	// This watches the pullCasDir and the SSL_CERT_DIR, and SSL_CERT_FILE for changes

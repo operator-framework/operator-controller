@@ -1588,10 +1588,6 @@ spec:
       port: 443
       protocol: TCP
       targetPort: 8443
-    - name: webhook
-      port: 9443
-      protocol: TCP
-      targetPort: 9443
     - name: metrics
       port: 7443
       protocol: TCP
@@ -1599,6 +1595,26 @@ spec:
   selector:
     app.kubernetes.io/name: catalogd
     olm.operatorframework.io/catalogd-leader: "true"
+---
+# Source: olmv1/templates/service-olmv1-system-catalogd-webhook-service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
+  labels:
+    app.kubernetes.io/name: catalogd
+    app.kubernetes.io/part-of: olm
+  name: catalogd-webhook-service
+  namespace: olmv1-system
+spec:
+  ports:
+    - name: webhook
+      port: 9443
+      protocol: TCP
+      targetPort: 9443
+  selector:
+    app.kubernetes.io/name: catalogd
 ---
 # Source: olmv1/templates/service-olmv1-system-operator-controller-service.yml
 apiVersion: v1
@@ -1661,6 +1677,8 @@ spec:
             - --feature-gates=APIV1MetasHandler=false
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
+            - --webhook-tls-cert=/var/certs/tls.crt
+            - --webhook-tls-key=/var/certs/tls.key
             - --pull-cas-dir=/var/ca-certs
           command:
             - ./catalogd
@@ -1956,6 +1974,8 @@ spec:
     - localhost
     - catalogd-service.olmv1-system.svc
     - catalogd-service.olmv1-system.svc.cluster.local
+    - catalogd-webhook-service.olmv1-system.svc
+    - catalogd-webhook-service.olmv1-system.svc.cluster.local
   issuerRef:
     group: cert-manager.io
     kind: ClusterIssuer
@@ -2035,7 +2055,7 @@ webhooks:
       - v1
     clientConfig:
       service:
-        name: catalogd-service
+        name: catalogd-webhook-service
         namespace: olmv1-system
         path: /mutate-olm-operatorframework-io-v1-clustercatalog
         port: 9443

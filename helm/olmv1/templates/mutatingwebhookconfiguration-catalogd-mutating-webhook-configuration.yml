@@ -19,7 +19,7 @@ webhooks:
       - v1
     clientConfig:
       service:
-        name: catalogd-service
+        name: catalogd-webhook-service
         namespace: {{ .Values.namespaces.olmv1.name }}
         path: /mutate-olm-operatorframework-io-v1-clustercatalog
         port: 9443

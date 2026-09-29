@@ -14,6 +14,8 @@ spec:
     - localhost
     - catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc
     - catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc.cluster.local
+    - catalogd-webhook-service.{{ .Values.namespaces.olmv1.name }}.svc
+    - catalogd-webhook-service.{{ .Values.namespaces.olmv1.name }}.svc.cluster.local
   issuerRef:
     group: cert-manager.io
     kind: ClusterIssuer
