@@ -257,6 +257,9 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 	if err != nil {
 		unpackErr := fmt.Errorf("source catalog content: %w", err)
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), unpackErr)
+		if !r.Storage.ContentExists(catalog.Name) {
+			updateStatusNotServing(&catalog.Status, catalog.GetGeneration())
+		}
 		return ctrl.Result{}, unpackErr
 	}
 
@@ -266,6 +269,9 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 	if err := r.Storage.Store(ctx, catalog.Name, fsys); err != nil {
 		storageErr := fmt.Errorf("error storing fbc: %v", err)
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), storageErr)
+		if !r.Storage.ContentExists(catalog.Name) {
+			updateStatusNotServing(&catalog.Status, catalog.GetGeneration())
+		}
 		return ctrl.Result{}, storageErr
 	}
 	baseURL := r.Storage.BaseURL(catalog.Name)

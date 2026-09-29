@@ -27,6 +27,10 @@ import (
 )
 
 func newMockStore(ctrl *gomock.Controller, shouldError bool) *mockstorage.MockInstance {
+	return newMockStoreWithContent(ctrl, shouldError, true)
+}
+
+func newMockStoreWithContent(ctrl *gomock.Controller, shouldError, contentExists bool) *mockstorage.MockInstance {
 	m := mockstorage.NewMockInstance(ctrl)
 	if shouldError {
 		m.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("mockstore store error")).AnyTimes()
@@ -36,8 +40,69 @@ func newMockStore(ctrl *gomock.Controller, shouldError bool) *mockstorage.MockIn
 		m.EXPECT().Delete(gomock.Any()).Return(nil).AnyTimes()
 	}
 	m.EXPECT().BaseURL(gomock.Any()).Return("URL").AnyTimes()
-	m.EXPECT().ContentExists(gomock.Any()).Return(true).AnyTimes()
+	m.EXPECT().ContentExists(gomock.Any()).Return(contentExists).AnyTimes()
 	return m
+}
+
+func TestCatalogdControllerReconcileClearsServingWhenContentIsMissing(t *testing.T) {
+	ref := mustRef(t, "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+	for name, tc := range map[string]struct {
+		puller     imageutil.Puller
+		storeError bool
+	}{
+		"image pull fails": {
+			puller: &imageutil.FakePuller{Error: errors.New("mock pull error")},
+		},
+		"storage fails": {
+			puller:     &imageutil.FakePuller{ImageFS: &fstest.MapFS{}, Ref: ref},
+			storeError: true,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			catalog := &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Generation: 2,
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type:  ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{Ref: "my.org/someimage:latest"},
+					},
+				},
+				Status: ocv1.ClusterCatalogStatus{
+					URLs:         &ocv1.ClusterCatalogURLs{Base: "URL"},
+					LastUnpacked: ptr.To(metav1.Now()),
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Type:  ocv1.SourceTypeImage,
+						Image: &ocv1.ResolvedImageSource{Ref: ref.String()},
+					},
+					Conditions: []metav1.Condition{
+						{Type: ocv1.TypeServing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonAvailable},
+					},
+				},
+			}
+			reconciler := &ClusterCatalogReconciler{
+				ImagePuller:    tc.puller,
+				ImageCache:     &imageutil.FakeCache{},
+				Storage:        newMockStoreWithContent(mockCtrl, tc.storeError, false),
+				storedCatalogs: map[string]storedCatalogData{},
+			}
+			require.NoError(t, reconciler.setupFinalizers())
+
+			_, err := reconciler.reconcile(context.Background(), catalog)
+			require.Error(t, err)
+			require.Nil(t, catalog.Status.URLs)
+			require.Nil(t, catalog.Status.LastUnpacked)
+			require.Nil(t, catalog.Status.ResolvedSource)
+			serving := meta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeServing)
+			require.NotNil(t, serving)
+			assert.Equal(t, metav1.ConditionFalse, serving.Status)
+			assert.Equal(t, ocv1.ReasonUnavailable, serving.Reason)
+		})
+	}
 }
 
 func TestCatalogdControllerReconcile(t *testing.T) {
