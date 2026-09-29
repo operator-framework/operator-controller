@@ -151,9 +151,8 @@ func catalogPortForwardAlive(addr string) bool {
 }
 
 // resetCatalogPortForward tears down the cached port-forward so the next
-// call to ensureCatalogPortForward establishes a fresh connection.  With
-// CatalogdHA, non-leader pods return 404 (empty local cache); resetting
-// lets the next retry potentially reach the leader pod.
+// call to ensureCatalogPortForward establishes a fresh connection. This also
+// recovers a connection interrupted while catalogd elects a new leader.
 func resetCatalogPortForward(ctx context.Context) {
 	sc := scenarioCtx(ctx)
 	if sc.catalogCleanup != nil {
@@ -168,7 +167,8 @@ func catalogCurlJq(ctx context.Context, catalogName, jqFilter string) (string, e
 	if err != nil {
 		return "", err
 	}
-	// pipefail: propagate curl exit code through the pipe (e.g. HTTP 404 from a non-leader catalogd pod).
+	// pipefail: propagate curl exit code through the pipe so connection or HTTP errors
+	// do not reach jq as non-JSON input.
 	// -sS: silent but show errors on stderr.  -k: skip TLS verification for the port-forward.
 	// --compressed: request gzip and stream-decompress (catalogd uses gzhttp); saves network for the large operatorhubio catalog.
 	// --fail: exit 22 on HTTP errors so non-JSON error bodies don't reach jq.

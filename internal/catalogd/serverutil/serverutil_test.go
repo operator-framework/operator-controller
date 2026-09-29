@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"io"
 	"math/big"
 	"net"
@@ -23,7 +24,13 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	mockstorage "github.com/operator-framework/operator-controller/internal/testutil/mock/storage"
 )
 
@@ -259,4 +266,84 @@ func TestCatalogServerTLSOptsCertSourceRequired(t *testing.T) {
 
 	err := r.Start(ctx)
 	require.ErrorContains(t, err, "TLSOpts must configure a certificate source")
+}
+
+func TestCatalogdLeaderLabelerSetLeaderLabel(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, corev1.AddToScheme(scheme))
+	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name:      "catalogd-0",
+		Namespace: "olmv1-system",
+		Labels:    map[string]string{"app.kubernetes.io/name": "catalogd"},
+	}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pod).Build()
+	r := &catalogdLeaderLabeler{
+		client: c,
+		pod:    types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace},
+	}
+
+	require.NoError(t, r.setLeaderLabel(context.Background(), true))
+	require.NoError(t, c.Get(context.Background(), r.pod, pod))
+	require.Equal(t, "true", pod.Labels[catalogdLeaderLabel])
+
+	require.NoError(t, r.setLeaderLabel(context.Background(), false))
+	require.NoError(t, c.Get(context.Background(), r.pod, pod))
+	_, found := pod.Labels[catalogdLeaderLabel]
+	require.False(t, found)
+}
+
+func TestCatalogdLeaderLabelerCatalogContentAvailable(t *testing.T) {
+	tests := []struct {
+		name            string
+		contentExists   bool
+		expectedReady   bool
+		servingCatalogs int
+	}{
+		{
+			name:            "all advertised catalogs are present",
+			contentExists:   true,
+			expectedReady:   true,
+			servingCatalogs: 1,
+		},
+		{
+			name:            "advertised catalog is missing",
+			contentExists:   false,
+			expectedReady:   false,
+			servingCatalogs: 1,
+		},
+		{
+			name:          "no catalog is advertised",
+			expectedReady: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			store := mockstorage.NewMockInstance(mockCtrl)
+
+			objects := make([]runtime.Object, 0, tt.servingCatalogs)
+			for i := range tt.servingCatalogs {
+				name := fmt.Sprintf("catalog-%d", i)
+				store.EXPECT().ContentExists(name).Return(tt.contentExists)
+				objects = append(objects, &ocv1.ClusterCatalog{
+					ObjectMeta: metav1.ObjectMeta{Name: name},
+					Status: ocv1.ClusterCatalogStatus{Conditions: []metav1.Condition{{
+						Type:   ocv1.TypeServing,
+						Status: metav1.ConditionTrue,
+					}}},
+				})
+			}
+
+			scheme := runtime.NewScheme()
+			require.NoError(t, ocv1.AddToScheme(scheme))
+			r := &catalogdLeaderLabeler{
+				client:  fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build(),
+				storage: store,
+			}
+			ready, err := r.catalogContentAvailable(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedReady, ready)
+		})
+	}
 }

@@ -393,6 +393,8 @@ func run(ctx context.Context) error {
 		CertFile:     cfg.certFile,
 		KeyFile:      cfg.keyFile,
 		LocalStorage: localStorage,
+		PodName:      os.Getenv("POD_NAME"),
+		PodNamespace: os.Getenv("POD_NAMESPACE"),
 		TLSOpts:      []func(*tls.Config){tlsOpts, tlsProfile},
 	}
 

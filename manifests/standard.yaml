@@ -1386,6 +1386,12 @@ rules:
       - get
       - list
       - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - patch
 ---
 # Source: olmv1/templates/rbac/role-olmv1-system-common-leader-election-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1592,6 +1598,7 @@ spec:
       targetPort: 7443
   selector:
     app.kubernetes.io/name: catalogd
+    olm.operatorframework.io/catalogd-leader: "true"
 ---
 # Source: olmv1/templates/service-olmv1-system-operator-controller-service.yml
 apiVersion: v1
@@ -1657,6 +1664,15 @@ spec:
             - --pull-cas-dir=/var/ca-certs
           command:
             - ./catalogd
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           image: "quay.io/operator-framework/catalogd:devel"
           name: manager
           livenessProbe:

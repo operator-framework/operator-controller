@@ -28,4 +28,5 @@ spec:
       targetPort: 7443
   selector:
     app.kubernetes.io/name: catalogd
+    olm.operatorframework.io/catalogd-leader: "true"
 {{- end }}

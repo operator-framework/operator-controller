@@ -76,8 +76,15 @@ spec:
             {{- end }}
           command:
             - ./catalogd
-          {{- if or .Values.options.e2e.enabled .Values.options.openshift.enabled }}
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           {{- if .Values.options.e2e.enabled }}
             - name: GOCOVERDIR
               value: /e2e-coverage
@@ -85,7 +92,6 @@ spec:
           {{- if .Values.options.openshift.enabled }}
             - name: SSL_CERT_DIR
               value: /var/ca-certs
-          {{- end }}
           {{- end }}
           image: "{{ .Values.options.catalogd.deployment.image }}"
           name: manager
