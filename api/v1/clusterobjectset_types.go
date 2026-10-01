@@ -41,6 +41,16 @@ const (
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
 type ClusterObjectSetSpec struct {
+	// group identifies the ClusterExtension whose revisions belong together.
+	// All revisions for the same ClusterExtension must use its name as their group.
+	//
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=52
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z]([a-z0-9-]*[a-z0-9])?$')`,message="group must start with a lowercase letter, contain only lowercase letters, digits or hyphens, and end with a letter or digit"
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="group is immutable"
+	Group string `json:"group,omitempty"`
+
 	// lifecycleState specifies the lifecycle state of the ClusterObjectSet.
 	//
 	// When set to "Active", the revision is actively managed and reconciled.
@@ -551,6 +561,7 @@ type ObservedPhase struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Group",type=string,JSONPath=`.spec.group`
 // +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
 // +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
@@ -570,8 +581,8 @@ type ClusterObjectSet struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec defines the desired state of the ClusterObjectSet.
-	// +optional
-	Spec ClusterObjectSetSpec `json:"spec,omitempty"`
+	// +required
+	Spec ClusterObjectSetSpec `json:"spec,omitzero"`
 
 	// status is optional and defines the observed state of the ClusterObjectSet.
 	// +optional
