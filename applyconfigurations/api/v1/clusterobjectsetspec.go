@@ -27,6 +27,11 @@ import (
 //
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
 type ClusterObjectSetSpecApplyConfiguration struct {
+	// group is a required, immutable identifier that links related revisions together.
+	// All revisions sharing the same group form an ordered sequence, regardless of owner references.
+	// The value must be 1 to 52 characters long, start with a lowercase letter,
+	// contain only lowercase letters, digits or hyphens, and end with a letter or digit.
+	Group *string `json:"group,omitempty"`
 	// lifecycleState specifies the lifecycle state of the ClusterObjectSet.
 	//
 	// When set to "Active", the revision is actively managed and reconciled.
@@ -40,11 +45,11 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	// moving from one revision to another. The old revision will not be set to "Archived" until the
 	// new revision has been completely rolled out.
 	LifecycleState *apiv1.ClusterObjectSetLifecycleState `json:"lifecycleState,omitempty"`
-	// revision is a required, immutable sequence number representing a specific revision
-	// of the parent ClusterExtension.
+	// revision is a required, immutable sequence number identifying a specific
+	// ClusterObjectSet within a sequence of related revisions.
 	//
 	// The revision field must be a positive integer.
-	// Each ClusterObjectSet belonging to the same parent ClusterExtension must have a unique revision number.
+	// Each ClusterObjectSet in the same revision sequence must have a unique revision number.
 	// The revision number must always be the previous revision number plus one, or 1 for the first revision.
 	Revision *int64 `json:"revision,omitempty"`
 	// phases is an optional, immutable list of phases that group objects to be applied together.
@@ -100,6 +105,14 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 // apply.
 func ClusterObjectSetSpec() *ClusterObjectSetSpecApplyConfiguration {
 	return &ClusterObjectSetSpecApplyConfiguration{}
+}
+
+// WithGroup sets the Group field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Group field is set to the value of the last call.
+func (b *ClusterObjectSetSpecApplyConfiguration) WithGroup(value string) *ClusterObjectSetSpecApplyConfiguration {
+	b.Group = &value
+	return b
 }
 
 // WithLifecycleState sets the LifecycleState field in the declarative configuration to the given value
