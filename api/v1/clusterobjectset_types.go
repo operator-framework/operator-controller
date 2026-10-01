@@ -26,7 +26,7 @@ const (
 	ClusterObjectSetKind = "ClusterObjectSet"
 
 	// Condition Types
-	ClusterObjectSetTypeAvailable = "Available"
+	ClusterObjectSetTypeReady = "Ready"
 
 	// Condition Reasons
 	ClusterObjectSetReasonArchived        = "Archived"
@@ -494,13 +494,13 @@ type ClusterObjectSetStatus struct {
 	// conditions is an optional list of status conditions describing the state of the
 	// ClusterObjectSet.
 	//
-	// The Available condition represents the state of the revision.
+	// The Ready condition represents the state of the revision.
 	// True means all objects are at the desired state; False means one or more
 	// objects are not at the desired state; Unknown is the initial state, before
 	// the first reconciliation has evaluated the revision.
 	//   - True with reason ProbesSucceeded: the revision has rolled out and all objects pass their readiness probes.
 	//   - False with reason ProbeFailure: one or more objects are failing their readiness probes during rollout.
-	//   - False with reason RollingOut: the revision is actively rolling out and has not yet become available.
+	//   - False with reason RollingOut: the revision is actively rolling out and has not yet become ready.
 	//   - False with reason Blocked: the revision has encountered an error that requires manual intervention for recovery.
 	//   - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
 	//   - False with reason Reconciling: the revision encountered an error that prevented it from observing the probes.
@@ -560,7 +560,7 @@ type ObservedPhase struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
+// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=='Ready')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterObjectSet represents an immutable snapshot of Kubernetes objects

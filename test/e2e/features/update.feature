@@ -315,7 +315,7 @@ Feature: Update ClusterExtension
     And ClusterExtension is rolled out
     And ClusterExtension is available
     And ClusterExtension reports "${NAME}-2" as active revision
-    And ClusterObjectSet "${NAME}-2" reports Available as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${NAME}-2" reports Ready as True with Reason ProbesSucceeded
     And ClusterObjectSet "${NAME}-1" is archived
     And ClusterObjectSet "${NAME}-1" phase objects are not found or not owned by the revision
 
@@ -343,7 +343,7 @@ Feature: Update ClusterExtension
     And ClusterExtension is available
     When ClusterExtension version is updated to "1.0.2"
     Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
-    And ClusterObjectSet "${NAME}-2" reports Available as False with Reason ProbeFailure
+    And ClusterObjectSet "${NAME}-2" reports Ready as False with Reason ProbeFailure
 
   Scenario: Clearing deprecated serviceAccount field is reconciled without warnings
     Given ClusterExtension is applied
