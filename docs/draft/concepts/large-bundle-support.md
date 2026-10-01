@@ -207,6 +207,7 @@ kind: ClusterObjectSet
 metadata:
   name: my-extension-1
 spec:
+  group: my-extension
   revision: 1
   lifecycleState: Active
   collisionProtection: Prevent
@@ -298,6 +299,7 @@ kind: ClusterObjectSet
 metadata:
   name: my-extension-1
 spec:
+  group: my-extension
   revision: 1
   lifecycleState: Active
   collisionProtection: Prevent
