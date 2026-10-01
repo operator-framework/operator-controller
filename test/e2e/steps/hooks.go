@@ -56,6 +56,7 @@ type scenarioContext struct {
 	leaderPods           map[string]string // component name -> leader pod name
 	deploymentRestores   []deploymentRestore
 	extensionObjects     []client.Object
+	revisionSecrets      []resource
 	proxy                *recordingProxy
 	catalogAddr          string
 	catalogCleanup       func()
