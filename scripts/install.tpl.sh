@@ -127,6 +127,16 @@ curl -L -s "${olmv1_manifest}" | sed "s/olmv1-system/${olmv1_namespace}/g" | kub
 kubectl_wait_rollout "${olmv1_namespace}" "deployment/catalogd-controller-manager" "60s"
 kubectl_wait "${olmv1_namespace}" "deployment/catalogd-controller-manager" "60s"
 kubectl_wait "${olmv1_namespace}" "deployment/operator-controller-controller-manager" "60s"
+if object_controller_lookup=$(kubectl get deployment/object-controller-controller-manager --namespace="${olmv1_namespace}" -o name 2>&1); then
+    kubectl_wait_rollout "${olmv1_namespace}" "deployment/object-controller-controller-manager" "60s"
+    kubectl_wait "${olmv1_namespace}" "deployment/object-controller-controller-manager" "60s"
+else
+    object_controller_lookup_status=$?
+    if [[ "${object_controller_lookup}" != *'Error from server (NotFound): deployments.apps "object-controller-controller-manager" not found'* ]]; then
+        printf '%s\n' "${object_controller_lookup}" >&2
+        exit "${object_controller_lookup_status}"
+    fi
+fi
 
 if [[ "${install_default_catalogs}" != "false" ]]; then
     kubectl apply -f "${default_catalogs_manifest}"
