@@ -301,6 +301,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: collisionProtection
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.CollisionProtection
+    - name: group
+      type:
+        scalar: string
     - name: lifecycleState
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSetLifecycleState

@@ -1333,6 +1333,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.group
+      name: Group
+      type: string
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: Ready
       type: string
@@ -1386,6 +1389,20 @@ spec:
                 type: string
                 x-kubernetes-validations:
                 - message: collisionProtection is immutable
+                  rule: self == oldSelf
+              group:
+                description: |-
+                  group identifies the ClusterExtension whose revisions belong together.
+                  All revisions for the same ClusterExtension must use its name as their group.
+                maxLength: 52
+                minLength: 1
+                type: string
+                x-kubernetes-validations:
+                - message: group must start with a lowercase letter, contain only
+                    lowercase letters, digits or hyphens, and end with a letter or
+                    digit
+                  rule: self.matches('^[a-z]([a-z0-9-]*[a-z0-9])?$')
+                - message: group is immutable
                   rule: self == oldSelf
               lifecycleState:
                 description: |-
@@ -1849,6 +1866,7 @@ spec:
                   rule: self == oldSelf
             required:
             - collisionProtection
+            - group
             - lifecycleState
             - revision
             type: object
@@ -1989,6 +2007,8 @@ spec:
             x-kubernetes-validations:
             - message: completedAt cannot be removed once set
               rule: '!has(oldSelf.completedAt) || has(self.completedAt)'
+        required:
+        - spec
         type: object
     served: true
     storage: true
