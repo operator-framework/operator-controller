@@ -24,6 +24,11 @@ CATD_IMAGE_REPO := $(IMAGE_REGISTRY)/catalogd
 endif
 export CATD_IMAGE_REPO
 
+ifeq ($(origin OBJECT_CONTROLLER_IMAGE_REPO), undefined)
+OBJECT_CONTROLLER_IMAGE_REPO := $(IMAGE_REGISTRY)/object-controller
+endif
+export OBJECT_CONTROLLER_IMAGE_REPO
+
 ifeq ($(origin IMAGE_TAG), undefined)
 IMAGE_TAG := devel
 endif
@@ -31,6 +36,7 @@ export IMAGE_TAG
 
 OPCON_IMG := $(OPCON_IMAGE_REPO):$(IMAGE_TAG)
 CATD_IMG := $(CATD_IMAGE_REPO):$(IMAGE_TAG)
+OBJECT_CONTROLLER_IMG := $(OBJECT_CONTROLLER_IMAGE_REPO):$(IMAGE_TAG)
 
 # Extract Kubernetes client-go version used to set the version to the PSA labels, for ENVTEST and KIND
 ifeq ($(origin K8S_VERSION), undefined)
@@ -351,6 +357,7 @@ kind-cluster-%: $(KIND) #EXHELP Create a kind cluster named after the stem (%).
 kind-load-%: kind-cluster-% docker-build
 	$(KIND) load docker-image $(OPCON_IMG) --name $*
 	$(KIND) load docker-image $(CATD_IMG) --name $*
+	$(KIND) load docker-image $(OBJECT_CONTROLLER_IMG) --name $*
 
 .PHONY: kind-deploy-%
 kind-deploy-%: kind-load-% manifests
@@ -605,7 +612,7 @@ export GO_BUILD_LDFLAGS := -s -w \
     -X '$(VERSION_PATH).version=$(VERSION)' \
     -X '$(VERSION_PATH).gitCommit=$(GIT_COMMIT)' \
 
-BINARIES=operator-controller catalogd
+BINARIES=operator-controller catalogd object-controller
 
 .PHONY: $(BINARIES)
 $(BINARIES):
@@ -644,9 +651,10 @@ FLUENTBIT_NAMESPACE := fluent-bit
 FLUENTBIT_CHART_VERSION := 0.57.9
 
 .PHONY: docker-build
-docker-build: build-linux #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
+docker-build: build-linux #EXHELP Build controller images with GOOS=linux and local GOARCH.
 	$(CONTAINER_RUNTIME) build -t $(OPCON_IMG) -f Dockerfile.operator-controller ./bin/linux
 	$(CONTAINER_RUNTIME) build -t $(CATD_IMG) -f Dockerfile.catalogd ./bin/linux
+	$(CONTAINER_RUNTIME) build -t $(OBJECT_CONTROLLER_IMG) -f Dockerfile.object-controller ./bin/linux
 
 #SECTION Release
 ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)
@@ -661,7 +669,7 @@ export GORELEASER_ARGS
 
 .PHONY: release
 release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
-	OPCON_IMAGE_REPO=$(OPCON_IMAGE_REPO) CATD_IMAGE_REPO=$(CATD_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
+	OPCON_IMAGE_REPO=$(OPCON_IMAGE_REPO) CATD_IMAGE_REPO=$(CATD_IMAGE_REPO) OBJECT_CONTROLLER_IMAGE_REPO=$(OBJECT_CONTROLLER_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
 quickstart: export STANDARD_MANIFEST_URL := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(STANDARD_RELEASE_MANIFEST))"
