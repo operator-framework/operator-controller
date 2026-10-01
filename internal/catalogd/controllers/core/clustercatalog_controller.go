@@ -25,11 +25,13 @@ import (
 	"time"
 
 	"go.podman.io/image/v5/docker/reference"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,8 +58,9 @@ const (
 type ClusterCatalogReconciler struct {
 	client.Client
 
-	ImageCache  imageutil.Cache
-	ImagePuller imageutil.Puller
+	ImageCache    imageutil.Cache
+	ImagePuller   imageutil.Puller
+	EventRecorder events.EventRecorder
 
 	Storage storage.Instance
 
@@ -255,6 +258,18 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 
 	fsys, canonicalRef, unpackTime, err := r.ImagePuller.Pull(ctx, catalog.Name, catalog.Spec.Source.Image.Ref, r.ImageCache)
 	if err != nil {
+		var rollbackErr *imageutil.CatalogRollbackError
+		if errors.As(err, &rollbackErr) {
+			if r.EventRecorder != nil {
+				r.EventRecorder.Eventf(catalog, nil, corev1.EventTypeWarning, "CatalogRollbackPrevented", "CatalogRollbackPrevented", "%s", rollbackErr)
+			}
+			lastSuccessfulPoll := time.Now()
+			r.storedCatalogsMu.Lock()
+			storedCatalog.lastSuccessfulPoll = lastSuccessfulPoll
+			r.storedCatalogs[catalog.Name] = storedCatalog
+			r.storedCatalogsMu.Unlock()
+			return nextPollResult(lastSuccessfulPoll, catalog), nil
+		}
 		unpackErr := fmt.Errorf("source catalog content: %w", err)
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), unpackErr)
 		return ctrl.Result{}, unpackErr
@@ -350,10 +365,8 @@ func updateStatusProgressing(status *ocv1.ClusterCatalogStatus, generation int64
 
 func updateStatusServing(status *ocv1.ClusterCatalogStatus, ref reference.Canonical, modTime time.Time, baseURL string, generation int64) {
 	status.ResolvedSource = &ocv1.ResolvedCatalogSource{
-		Type: ocv1.SourceTypeImage,
-		Image: &ocv1.ResolvedImageSource{
-			Ref: ref.String(),
-		},
+		Type:  ocv1.SourceTypeImage,
+		Image: &ocv1.ResolvedImageSource{Ref: ref.String()},
 	}
 	status.URLs = &ocv1.ClusterCatalogURLs{
 		Base: baseURL,
@@ -398,6 +411,13 @@ func updateStatusProgressingUserSpecifiedUnavailable(status *ocv1.ClusterCatalog
 
 func updateStatusNotServing(status *ocv1.ClusterCatalogStatus, generation int64) {
 	status.ResolvedSource = nil
+	updateStatusNotServingWithResolvedSource(status, generation)
+}
+
+// updateStatusNotServingWithResolvedSource marks content unavailable while retaining the last accepted
+// source. In particular, this preserves a catalog publication version so a rejected rollback cannot
+// become acceptable on the next reconcile merely because served content is missing.
+func updateStatusNotServingWithResolvedSource(status *ocv1.ClusterCatalogStatus, generation int64) {
 	status.URLs = nil
 	status.LastUnpacked = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{

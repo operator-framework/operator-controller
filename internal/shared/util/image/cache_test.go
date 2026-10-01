@@ -29,11 +29,12 @@ func TestDiskCacheFetch(t *testing.T) {
 	myRef := mustParseCanonical(t, "my.registry.io/ns/repo@sha256:5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
 
 	testCases := []struct {
-		name    string
-		ownerID string
-		ref     reference.Canonical
-		setup   func(*testing.T, *diskCache)
-		expect  func(*testing.T, *diskCache, fs.FS, time.Time, error)
+		name                string
+		ownerID             string
+		ref                 reference.Canonical
+		storeCatalogCreated bool
+		setup               func(*testing.T, *diskCache)
+		expect              func(*testing.T, *diskCache, fs.FS, time.Time, error)
 	}{
 		{
 			name:    "all zero-values when owner does not exist",
@@ -128,11 +129,26 @@ func TestDiskCacheFetch(t *testing.T) {
 				assert.NoError(t, err)
 			},
 		},
+		{
+			name:                "catalog without creation metadata is removed for repull",
+			ownerID:             myOwner,
+			ref:                 myRef,
+			storeCatalogCreated: true,
+			setup: func(t *testing.T, cache *diskCache) {
+				require.NoError(t, os.MkdirAll(cache.unpackPath(myOwner, myRef.Digest()), 0700))
+			},
+			expect: func(t *testing.T, cache *diskCache, fsys fs.FS, modTime time.Time, err error) {
+				require.NoError(t, err)
+				assert.Nil(t, fsys)
+				assert.Zero(t, modTime)
+				assert.NoDirExists(t, cache.unpackPath(myOwner, myRef.Digest()))
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			dc := &diskCache{basePath: t.TempDir()}
+			dc := &diskCache{basePath: t.TempDir(), storeCatalogCreated: tc.storeCatalogCreated}
 			if tc.setup != nil {
 				tc.setup(t, dc)
 			}
@@ -583,6 +599,77 @@ func TestDiskCacheGarbageCollection(t *testing.T) {
 			require.NoError(t, fsutil.SetWritableRecursive(dc.basePath))
 		})
 	}
+}
+
+func TestDiskCacheCatalogRollbackProtection(t *testing.T) {
+	const ownerID = "catalog"
+	first := mustParseCanonical(t, "my.registry.io/ns/repo@sha256:5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
+	older := mustParseCanonical(t, "my.registry.io/ns/repo@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+	dc := &diskCache{
+		basePath: t.TempDir(),
+		filterFunc: func(context.Context, reference.Named, ocispecv1.Image) (archive.Filter, error) {
+			return forceOwnershipRWX(), nil
+		},
+		storeCatalogCreated: true,
+	}
+	taggedRef, err := reference.WithTag(reference.TrimNamed(first), "latest")
+	require.NoError(t, err)
+	oldTime := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	newTime := oldTime.Add(time.Hour)
+	store := func(ref reference.Canonical, created *time.Time) {
+		_, _, err := dc.Store(context.Background(), ownerID, taggedRef, ref, ocispecv1.Image{Created: created}, layerFSIterator())
+		require.NoError(t, err)
+	}
+	store(first, &newTime)
+	require.NoError(t, dc.ValidateCatalog(context.Background(), ownerID, "repo:latest", first))
+	require.NoError(t, dc.AcceptCatalog(context.Background(), ownerID, "repo:latest", first))
+
+	store(older, &oldTime)
+	require.ErrorContains(t, dc.ValidateCatalog(context.Background(), ownerID, "repo:latest", older), "not newer")
+	require.NoError(t, dc.ValidateCatalog(context.Background(), ownerID, "repo:other", older))
+	require.NoError(t, dc.AcceptCatalog(context.Background(), ownerID, "repo:other", older))
+
+	newer := oldTime.Add(2 * time.Hour)
+	store(first, &newer)
+	require.NoError(t, dc.ValidateCatalog(context.Background(), ownerID, "repo:other", first))
+	require.NoError(t, dc.AcceptCatalog(context.Background(), ownerID, "repo:other", first))
+	store(older, nil)
+	require.NoError(t, dc.AcceptCatalog(context.Background(), ownerID, "repo:other", older))
+
+	state, found, err := dc.loadCatalogRollbackState(ownerID)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, older.Digest().String(), state.digest)
+	assert.Equal(t, newer, state.created)
+
+	store(older, nil)
+	require.NoError(t, dc.ValidateCatalog(context.Background(), ownerID, "repo:latest", older))
+	require.NoError(t, dc.AcceptCatalog(context.Background(), ownerID, "repo:latest", older))
+
+	state, found, err = dc.loadCatalogRollbackState(ownerID)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, older.Digest().String(), state.digest)
+	assert.Zero(t, state.created)
+}
+
+func TestDiskCacheGarbageCollectionKeepsCatalogRollbackMetadata(t *testing.T) {
+	const ownerID = "catalog"
+	keep := mustParseCanonical(t, "my.registry.io/ns/repo@sha256:5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
+	other := mustParseCanonical(t, "my.registry.io/ns/repo@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+	dc := &diskCache{basePath: t.TempDir()}
+	require.NoError(t, os.MkdirAll(dc.unpackPath(ownerID, keep.Digest()), 0700))
+	require.NoError(t, os.MkdirAll(dc.unpackPath(ownerID, other.Digest()), 0700))
+	require.NoError(t, os.WriteFile(dc.catalogCreatedPath(ownerID, keep.Digest()), []byte("2026-01-01T00:00:00Z"), 0600))
+	require.NoError(t, os.WriteFile(dc.catalogCreatedPath(ownerID, other.Digest()), []byte("2026-01-01T00:00:00Z"), 0600))
+	require.NoError(t, os.WriteFile(dc.catalogRollbackStatePath(ownerID), []byte("repo:latest\n"+keep.Digest().String()+"\n2026-01-01T00:00:00Z"), 0600))
+
+	require.NoError(t, dc.GarbageCollect(context.Background(), ownerID, keep))
+	assert.DirExists(t, dc.unpackPath(ownerID, keep.Digest()))
+	assert.FileExists(t, dc.catalogCreatedPath(ownerID, keep.Digest()))
+	assert.FileExists(t, dc.catalogRollbackStatePath(ownerID))
+	assert.NoDirExists(t, dc.unpackPath(ownerID, other.Digest()))
+	assert.NoFileExists(t, dc.catalogCreatedPath(ownerID, other.Digest()))
 }
 
 func mustParseCanonical(t *testing.T, s string) reference.Canonical {

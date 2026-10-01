@@ -262,6 +262,42 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 	}
 }
 
+func TestContainersImagePuller_CatalogRollbackProtection(t *testing.T) {
+	const ownerID = "catalog"
+	myTagRef, myCanonicalRef, shutdown := setupRegistry(t)
+	defer shutdown()
+
+	puller := ContainersImagePuller{SourceCtxFunc: buildSourceContextFunc(t, myTagRef), CatalogRollbackProtectionEnabled: true}
+	for name, tc := range map[string]struct {
+		cache   Cache
+		wantErr string
+	}{
+		"validates cached catalog": {
+			cache: FakeCatalogRollbackCache{FakeCache: FakeCache{FetchFS: fstest.MapFS{testFileName: &fstest.MapFile{Data: []byte(testFileContents)}}}},
+		},
+		"fails when cache does not protect rollback": {
+			cache:   FakeCache{FetchFS: fstest.MapFS{}},
+			wantErr: "catalog cache does not provide rollback protection",
+		},
+		"propagates rollback validation error": {
+			cache:   FakeCatalogRollbackCache{FakeCache: FakeCache{FetchFS: fstest.MapFS{}}, ValidateError: errors.New("catalog rollback error")},
+			wantErr: "catalog rollback error",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fsys, canonicalRef, _, err := puller.Pull(context.Background(), ownerID, myTagRef.String(), tc.cache)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				assert.Nil(t, fsys)
+				assert.Nil(t, canonicalRef)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, myCanonicalRef.String(), canonicalRef.String())
+		})
+	}
+}
+
 func setupRegistry(t *testing.T) (reference.NamedTagged, reference.Canonical, func()) {
 	server := httptest.NewServer(registry.New())
 	serverURL, err := url.Parse(server.URL)

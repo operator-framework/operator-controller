@@ -30,6 +30,8 @@ func (ms *FakePuller) Pull(_ context.Context, _, _ string, _ Cache) (fs.FS, refe
 
 var _ Cache = (*FakeCache)(nil)
 
+var _ CatalogRollbackProtector = (*FakeCatalogRollbackCache)(nil)
+
 type FakeCache struct {
 	FetchFS      fs.FS
 	FetchModTime time.Time
@@ -58,4 +60,19 @@ func (m FakeCache) Delete(_ context.Context, _ string) error {
 
 func (m FakeCache) GarbageCollect(_ context.Context, _ string, _ reference.Canonical) error {
 	return m.GarbageCollectError
+}
+
+// FakeCatalogRollbackCache is a FakeCache that records rollback checks.
+type FakeCatalogRollbackCache struct {
+	FakeCache
+	ValidateError error
+	AcceptError   error
+}
+
+func (m FakeCatalogRollbackCache) ValidateCatalog(_ context.Context, _, _ string, _ reference.Canonical) error {
+	return m.ValidateError
+}
+
+func (m FakeCatalogRollbackCache) AcceptCatalog(_ context.Context, _, _ string, _ reference.Canonical) error {
+	return m.AcceptError
 }
