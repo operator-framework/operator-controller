@@ -100,6 +100,9 @@ type ClusterExtensionSpec struct {
 	// Set the sourceType field to perform the selection.
 	//
 	// Setting sourceType to "Catalog" requires the catalog field to also be defined.
+	// <opcon:experimental:description>
+	// Setting sourceType to "OCIImage" requires the ociImage field to also be defined.
+	// </opcon:experimental:description>
 	//
 	// Below is a minimal example of a source definition (in yaml):
 	//
@@ -149,13 +152,13 @@ const (
 // SourceConfig is a discriminated union which selects the installation source.
 //
 // +union
-// +kubebuilder:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'Catalog' ? self.catalog.size() != 0 : self.catalog.size() == 0",message="catalog is required when sourceType is Catalog, and forbidden otherwise"
-// <opcon:experimental:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'OCIImage' ? self.ociImage.size() != 0 : self.ociImage.size() == 0",message="ociImage is required when sourceType is OCIImage, and forbidden otherwise">
+// +kubebuilder:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'Catalog' ? has(self.catalog) : !has(self.catalog)",message="catalog is required when sourceType is Catalog, and forbidden otherwise"
+// <opcon:experimental:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'OCIImage' ? has(self.ociImage) : !has(self.ociImage)",message="ociImage is required when sourceType is OCIImage, and forbidden otherwise">
 type SourceConfig struct {
 	// sourceType is required and specifies the type of install source.
 	//
 	// <opcon:standard:description>
-	// The allowed value is "Catalog".
+	// The only allowed value is "Catalog".
 	//
 	// When set to "Catalog", information for determining the appropriate bundle of content to install
 	// is fetched from ClusterCatalog resources on the cluster.

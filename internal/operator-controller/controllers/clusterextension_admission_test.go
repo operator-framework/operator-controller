@@ -105,6 +105,34 @@ func TestClusterExtensionOCIImageSourceConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "valid tagged image with IPv4 registry host",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "192.0.2.1/example/operator:latest"},
+			},
+		},
+		{
+			name: "valid tagged image with IPv4 registry host and port",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "192.0.2.1:5000/example/operator:latest"},
+			},
+		},
+		{
+			name: "valid digested image with IPv4 registry host",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "192.0.2.1/example/operator@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+			},
+		},
+		{
+			name: "valid digested image with IPv4 registry host and port",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "192.0.2.1:5000/example/operator@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+			},
+		},
+		{
 			name: "uppercase repository segment",
 			source: ocv1.SourceConfig{
 				SourceType: ocv1.SourceTypeOCIImage,
