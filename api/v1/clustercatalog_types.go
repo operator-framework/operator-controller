@@ -265,6 +265,13 @@ type ResolvedImageSource struct {
 	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find(':.*$').substring(1).size() >= 32 : true",message="digest is not valid. the encoded string must be at least 32 characters"
 	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find(':.*$').matches(':[0-9A-Fa-f]*$') : true",message="digest is not valid. the encoded string must only contain hex characters (A-F, a-f, 0-9)"
 	Ref string `json:"ref"`
+	// catalogVersion is the monotonic version assigned to the catalog publication by the image publisher.
+	// It is read from the OCI image config label "olm.operatorframework.io/catalog-version".
+	// Older images without this label have no version. After a version is recorded, a different digest must have a
+	// greater version before its content can replace the currently served catalog.
+	// +kubebuilder:validation:Minimum:=1
+	// +optional
+	CatalogVersion int64 `json:"catalogVersion,omitempty"`
 }
 
 // ImageSource enables users to define the information required for sourcing a Catalog from an OCI image

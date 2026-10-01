@@ -31,10 +31,33 @@ type Puller interface {
 	Pull(context.Context, string, string, Cache) (fs.FS, reference.Canonical, time.Time, error)
 }
 
+// CatalogPuller returns the catalog publication version stored in the OCI image config.
+type CatalogPuller interface {
+	PullCatalog(context.Context, string, string, Cache) (fs.FS, reference.Canonical, time.Time, int64, error)
+}
+
 var insecurePolicy = []byte(`{"default":[{"type":"insecureAcceptAnything"}]}`)
 
 type ContainersImagePuller struct {
 	SourceCtxFunc func(context.Context) (*types.SystemContext, error)
+}
+
+var _ CatalogPuller = (*ContainersImagePuller)(nil)
+
+func (p *ContainersImagePuller) PullCatalog(ctx context.Context, ownerID string, ref string, cache Cache) (fs.FS, reference.Canonical, time.Time, int64, error) {
+	fsys, canonicalRef, modTime, err := p.Pull(ctx, ownerID, ref, cache)
+	if err != nil {
+		return nil, nil, time.Time{}, 0, err
+	}
+	metadataCache, ok := cache.(CatalogVersionCache)
+	if !ok {
+		return nil, nil, time.Time{}, 0, fmt.Errorf("catalog cache does not provide image publication metadata")
+	}
+	catalogVersion, err := metadataCache.CatalogVersion(ctx, ownerID, canonicalRef)
+	if err != nil {
+		return nil, nil, time.Time{}, 0, err
+	}
+	return fsys, canonicalRef, modTime, catalogVersion, nil
 }
 
 func (p *ContainersImagePuller) Pull(ctx context.Context, ownerID string, ref string, cache Cache) (fs.FS, reference.Canonical, time.Time, error) {

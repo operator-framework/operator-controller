@@ -449,6 +449,9 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.operator-framework.operator-controller.api.v1.ResolvedImageSource
   map:
     fields:
+    - name: catalogVersion
+      type:
+        scalar: numeric
     - name: ref
       type:
         scalar: string

@@ -73,6 +73,7 @@ type ClusterCatalogReconciler struct {
 
 type storedCatalogData struct {
 	ref                reference.Canonical
+	catalogVersion     int64
 	lastUnpack         time.Time
 	lastSuccessfulPoll time.Time
 	observedGeneration int64
@@ -253,11 +254,59 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 		return ctrl.Result{}, err
 	}
 
-	fsys, canonicalRef, unpackTime, err := r.ImagePuller.Pull(ctx, catalog.Name, catalog.Spec.Source.Image.Ref, r.ImageCache)
+	catalogPuller, ok := r.ImagePuller.(imageutil.CatalogPuller)
+	if !ok {
+		err := fmt.Errorf("catalog image puller does not provide publication metadata")
+		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), err)
+		return ctrl.Result{}, err
+	}
+	fsys, canonicalRef, unpackTime, catalogVersion, err := catalogPuller.PullCatalog(ctx, catalog.Name, catalog.Spec.Source.Image.Ref, r.ImageCache)
 	if err != nil {
 		unpackErr := fmt.Errorf("source catalog content: %w", err)
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), unpackErr)
 		return ctrl.Result{}, unpackErr
+	}
+
+	currentImage := (*ocv1.ResolvedImageSource)(nil)
+	if catalog.Status.ResolvedSource != nil {
+		currentImage = catalog.Status.ResolvedSource.Image
+	}
+	sameDigest := false
+	if currentImage != nil {
+		currentRef, err := reference.Parse(currentImage.Ref)
+		if err != nil {
+			statusErr := fmt.Errorf("invalid currently resolved catalog image reference %q: %w", currentImage.Ref, err)
+			updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), statusErr)
+			return ctrl.Result{}, statusErr
+		}
+		currentCanonicalRef, ok := currentRef.(reference.Canonical)
+		if !ok {
+			statusErr := fmt.Errorf("currently resolved catalog image reference %q is not digest-based", currentImage.Ref)
+			updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), statusErr)
+			return ctrl.Result{}, statusErr
+		}
+		sameDigest = canonicalRef.Digest() == currentCanonicalRef.Digest()
+	}
+	if currentImage != nil &&
+		!sameDigest &&
+		currentImage.CatalogVersion > 0 &&
+		catalogVersion <= currentImage.CatalogVersion {
+		rollbackErr := fmt.Errorf(
+			"rejecting catalog image %s with catalog version %d: currently served image %s has version %d; a different digest must have a greater catalog version",
+			canonicalRef,
+			catalogVersion,
+			currentImage.Ref,
+			currentImage.CatalogVersion,
+		)
+		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), rollbackErr)
+		if !r.Storage.ContentExists(catalog.Name) {
+			updateStatusNotServingWithResolvedSource(&catalog.Status, catalog.GetGeneration())
+		}
+		return ctrl.Result{}, rollbackErr
+	}
+	if sameDigest && currentImage.CatalogVersion > catalogVersion {
+		// Preserve the accepted version for the same immutable image if older cache data lacks the metadata sidecar.
+		catalogVersion = currentImage.CatalogVersion
 	}
 
 	// TODO: We should check to see if the unpacked result has the same content
@@ -271,12 +320,13 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 	baseURL := r.Storage.BaseURL(catalog.Name)
 
 	updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), nil)
-	updateStatusServing(&catalog.Status, canonicalRef, unpackTime, baseURL, catalog.GetGeneration())
+	updateStatusServing(&catalog.Status, canonicalRef, catalogVersion, unpackTime, baseURL, catalog.GetGeneration())
 
 	lastSuccessfulPoll := time.Now()
 	r.storedCatalogsMu.Lock()
 	r.storedCatalogs[catalog.Name] = storedCatalogData{
 		ref:                canonicalRef,
+		catalogVersion:     catalogVersion,
 		lastUnpack:         unpackTime,
 		lastSuccessfulPoll: lastSuccessfulPoll,
 		observedGeneration: catalog.GetGeneration(),
@@ -295,7 +345,7 @@ func (r *ClusterCatalogReconciler) getCurrentState(catalog *ocv1.ClusterCatalog)
 	// Set expected status based on what we see in the stored catalog
 	clearUnknownConditions(expectedStatus)
 	if hasStoredCatalog && r.Storage.ContentExists(catalog.Name) {
-		updateStatusServing(expectedStatus, storedCatalog.ref, storedCatalog.lastUnpack, r.Storage.BaseURL(catalog.Name), storedCatalog.observedGeneration)
+		updateStatusServing(expectedStatus, storedCatalog.ref, storedCatalog.catalogVersion, storedCatalog.lastUnpack, r.Storage.BaseURL(catalog.Name), storedCatalog.observedGeneration)
 		updateStatusProgressing(expectedStatus, storedCatalog.observedGeneration, nil)
 	}
 
@@ -348,11 +398,12 @@ func updateStatusProgressing(status *ocv1.ClusterCatalogStatus, generation int64
 	meta.SetStatusCondition(&status.Conditions, progressingCond)
 }
 
-func updateStatusServing(status *ocv1.ClusterCatalogStatus, ref reference.Canonical, modTime time.Time, baseURL string, generation int64) {
+func updateStatusServing(status *ocv1.ClusterCatalogStatus, ref reference.Canonical, catalogVersion int64, modTime time.Time, baseURL string, generation int64) {
 	status.ResolvedSource = &ocv1.ResolvedCatalogSource{
 		Type: ocv1.SourceTypeImage,
 		Image: &ocv1.ResolvedImageSource{
-			Ref: ref.String(),
+			Ref:            ref.String(),
+			CatalogVersion: catalogVersion,
 		},
 	}
 	status.URLs = &ocv1.ClusterCatalogURLs{
@@ -398,6 +449,13 @@ func updateStatusProgressingUserSpecifiedUnavailable(status *ocv1.ClusterCatalog
 
 func updateStatusNotServing(status *ocv1.ClusterCatalogStatus, generation int64) {
 	status.ResolvedSource = nil
+	updateStatusNotServingWithResolvedSource(status, generation)
+}
+
+// updateStatusNotServingWithResolvedSource marks content unavailable while retaining the last accepted
+// source. In particular, this preserves a catalog publication version so a rejected rollback cannot
+// become acceptable on the next reconcile merely because served content is missing.
+func updateStatusNotServingWithResolvedSource(status *ocv1.ClusterCatalogStatus, generation int64) {
 	status.URLs = nil
 	status.LastUnpacked = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
