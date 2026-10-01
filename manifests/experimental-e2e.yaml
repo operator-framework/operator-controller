@@ -1351,7 +1351,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
     olm.operatorframework.io/generator: experimental
   name: clusterobjectsets.olm.operatorframework.io
 spec:
@@ -1364,6 +1364,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.group
+      name: Group
+      type: string
     - jsonPath: .status.conditions[?(@.type=='Available')].status
       name: Available
       type: string
@@ -1420,6 +1423,20 @@ spec:
                 type: string
                 x-kubernetes-validations:
                 - message: collisionProtection is immutable
+                  rule: self == oldSelf
+              group:
+                description: |-
+                  group identifies the ClusterExtension whose revisions belong together.
+                  All revisions for the same ClusterExtension must use its name as their group.
+                maxLength: 52
+                minLength: 1
+                type: string
+                x-kubernetes-validations:
+                - message: group must start with a lowercase letter, contain only
+                    lowercase letters, digits or hyphens, and end with a letter or
+                    digit
+                  rule: self.matches('^[a-z]([a-z0-9-]*[a-z0-9])?$')
+                - message: group is immutable
                   rule: self == oldSelf
               lifecycleState:
                 description: |-
@@ -1883,6 +1900,7 @@ spec:
                   rule: self == oldSelf
             required:
             - collisionProtection
+            - group
             - lifecycleState
             - revision
             type: object
@@ -2013,6 +2031,8 @@ spec:
                 - message: observedPhases is immutable
                   rule: self == oldSelf || oldSelf.size() == 0
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
