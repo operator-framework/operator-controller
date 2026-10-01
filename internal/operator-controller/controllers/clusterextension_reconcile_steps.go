@@ -189,9 +189,6 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		//   the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
 		//   all catalogs? This needs a follow-up discussion and PR.
 		hasCatalogData := err == nil || resolvedDeprecation != nil
-		if behavior, ok := r.(resolve.ResolverBehavior); ok {
-			hasCatalogData = behavior.HasCatalogData(ext)
-		}
 		state.resolvedDeprecation = resolvedDeprecation
 		state.hasCatalogData = hasCatalogData
 		SetDeprecationStatus(ext, installedBundleName, resolvedDeprecation, hasCatalogData)

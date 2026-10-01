@@ -16,7 +16,6 @@ type Resolver interface {
 // ResolverBehavior describes source-specific reconciliation behavior that
 // cannot be inferred from a resolved bundle alone.
 type ResolverBehavior interface {
-	HasCatalogData(*ocv1.ClusterExtension) bool
 	ShouldFallbackOnError(*ocv1.ClusterExtension) bool
 }
 
@@ -41,11 +40,6 @@ func (m MultiResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, 
 		return nil, nil, nil, fmt.Errorf("no resolver for source type %q", ext.Spec.Source.SourceType)
 	}
 	return resolver.Resolve(ctx, ext, installedBundle)
-}
-
-// HasCatalogData reports whether the selected source can provide catalog metadata.
-func (m MultiResolver) HasCatalogData(ext *ocv1.ClusterExtension) bool {
-	return ext.Spec.Source.SourceType == ocv1.SourceTypeCatalog
 }
 
 // ShouldFallbackOnError reports whether catalog fallback behavior is valid for the source.

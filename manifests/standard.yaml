@@ -1002,7 +1002,7 @@ spec:
                     description: |-
                       sourceType is required and specifies the type of install source.
 
-                      The allowed value is "Catalog".
+                      The only allowed value is "Catalog".
 
                       When set to "Catalog", information for determining the appropriate bundle of content to install
                       is fetched from ClusterCatalog resources on the cluster.
@@ -1017,7 +1017,7 @@ spec:
                 - message: catalog is required when sourceType is Catalog, and forbidden
                     otherwise
                   rule: 'has(self.sourceType) && self.sourceType == ''Catalog'' ?
-                    self.catalog.size() != 0 : self.catalog.size() == 0'
+                    has(self.catalog) : !has(self.catalog)'
             required:
             - namespace
             - source
