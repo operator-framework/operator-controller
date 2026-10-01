@@ -436,7 +436,7 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			},
 		}
 
-		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos, newReferencedSecretReader(testClient))
 		require.NoError(t, err)
 	})
 
@@ -466,7 +466,7 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			},
 		}
 
-		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos, newReferencedSecretReader(testClient))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not immutable")
 	})
@@ -489,7 +489,7 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			},
 		}
 
-		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos, newReferencedSecretReader(testClient))
 		require.NoError(t, err)
 	})
 
@@ -523,7 +523,7 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			},
 		}
 
-		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos, newReferencedSecretReader(testClient))
 		require.NoError(t, err)
 		assert.Equal(t, int32(1), secretGetCount.Load(), "secret should be fetched only once despite multiple references")
 	})
