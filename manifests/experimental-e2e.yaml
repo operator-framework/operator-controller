@@ -844,6 +844,8 @@ spec:
 
                   Setting sourceType to "Catalog" requires the catalog field to also be defined.
 
+                  Setting sourceType to "OCIImage" requires the ociImage field to also be defined.
+
                   Below is a minimal example of a source definition (in yaml):
 
                   source:
@@ -1201,7 +1203,7 @@ spec:
                 - message: catalog is required when sourceType is Catalog, and forbidden
                     otherwise
                   rule: 'has(self.sourceType) && self.sourceType == ''Catalog'' ?
-                    self.catalog.size() != 0 : self.catalog.size() == 0'
+                    has(self.catalog) : !has(self.catalog)'
             required:
             - source
             type: object
