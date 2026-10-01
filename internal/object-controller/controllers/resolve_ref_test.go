@@ -23,6 +23,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
@@ -68,6 +69,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
+		WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -131,6 +133,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
+		WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -165,6 +168,7 @@ func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
+		WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 		WithObjects(cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -206,6 +210,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
+		WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -247,6 +252,7 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
+		WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -275,6 +281,7 @@ func newRefTestCOS(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterObjectSet
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
+			Group:               "ref-test",
 			LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
 			Revision:            1,
 			CollisionProtection: ocv1.CollisionProtectionPrevent,

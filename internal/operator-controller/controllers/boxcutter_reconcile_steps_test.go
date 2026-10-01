@@ -1,73 +1,92 @@
-/*
-Copyright 2026.
+//go:build !standard
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-package controllers
+package controllers_test
 
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
-func TestBoxcutterRevisionStatesGetter_ClassifiesByCompletedAt(t *testing.T) {
-	sch := apimachineryruntime.NewScheme()
-	require.NoError(t, ocv1.AddToScheme(sch))
-
-	const extName = "test-ext"
-
-	newRevision := func(name string, revision int64, completed bool) *ocv1.ClusterObjectSet {
+func TestBoxcutterRevisionStatesGetter_GroupIndex(t *testing.T) {
+	scheme := newScheme(t)
+	cl, err := client.New(config, client.Options{Scheme: scheme})
+	require.NoError(t, err)
+	group := "cache-group"
+	for _, tc := range []struct {
+		name      string
+		group     string
+		revision  int64
+		archived  bool
+		succeeded bool
+	}{
+		{name: "cache-installed", group: group, revision: 1, succeeded: true},
+		{name: "cache-rolling", group: group, revision: 2},
+		{name: "cache-archived", group: group, revision: 3, archived: true, succeeded: true},
+		{name: "cache-other-group", group: "other-group", revision: 99, succeeded: true},
+	} {
 		cos := &ocv1.ClusterObjectSet{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   name,
-				Labels: map[string]string{labels.OwnerNameKey: extName},
+			ObjectMeta: metav1.ObjectMeta{Name: tc.name},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Group: tc.group, Revision: tc.revision,
+				LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
+				CollisionProtection: ocv1.CollisionProtectionPrevent,
 			},
-			Spec: ocv1.ClusterObjectSetSpec{Revision: revision},
 		}
-		if completed {
+		if tc.group != group {
+			cos.Labels = map[string]string{labels.OwnerNameKey: group}
+		}
+		if tc.archived {
+			cos.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
+		}
+		require.NoError(t, cl.Create(t.Context(), cos))
+		t.Cleanup(func() { require.NoError(t, client.IgnoreNotFound(cl.Delete(context.Background(), cos))) })
+		if tc.succeeded {
 			cos.Status.CompletedAt = metav1.Now()
+			require.NoError(t, cl.Status().Update(t.Context(), cos))
 		}
-		return cos
 	}
 
-	completed := newRevision("test-ext-1", 1, true)
-	rollingOut := newRevision("test-ext-2", 2, false)
-
-	cl := fake.NewClientBuilder().
-		WithScheme(sch).
-		WithObjects(completed, rollingOut).
-		Build()
-
-	getter := &BoxcutterRevisionStatesGetter{Reader: cl}
-	states, err := getter.GetRevisionStates(context.Background(), &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extName},
-	})
+	managerCache, err := cache.New(config, cache.Options{Scheme: scheme})
 	require.NoError(t, err)
-
-	// A revision with completedAt set is Installed.
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	require.NoError(t, managerCache.IndexField(ctx, &ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup))
+	done := make(chan error, 1)
+	go func() { done <- managerCache.Start(ctx) }()
+	t.Cleanup(func() {
+		cancel()
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("manager cache did not stop")
+		}
+	})
+	require.True(t, managerCache.WaitForCacheSync(ctx))
+	cachedClient, err := client.New(config, client.Options{Scheme: scheme, Cache: &client.CacheOptions{Reader: managerCache}})
+	require.NoError(t, err)
+	getter := controllers.BoxcutterRevisionStatesGetter{Reader: cachedClient}
+	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: group}}
+	states, err := getter.GetRevisionStates(ctx, ext)
+	require.NoError(t, err)
 	require.NotNil(t, states.Installed)
-	require.Equal(t, "test-ext-1", states.Installed.RevisionName)
-
-	// A revision without completedAt is still RollingOut.
+	require.Equal(t, "cache-installed", states.Installed.RevisionName)
 	require.Len(t, states.RollingOut, 1)
-	require.Equal(t, "test-ext-2", states.RollingOut[0].RevisionName)
+	require.Equal(t, "cache-rolling", states.RollingOut[0].RevisionName)
+
+	require.NoError(t, cl.Delete(ctx, &ocv1.ClusterObjectSet{ObjectMeta: metav1.ObjectMeta{Name: "cache-rolling"}}))
+	require.Eventually(t, func() bool {
+		states, err := getter.GetRevisionStates(ctx, ext)
+		return err == nil && len(states.RollingOut) == 0
+	}, 5*time.Second, 10*time.Millisecond)
 }

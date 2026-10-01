@@ -33,6 +33,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
+	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
 )
@@ -236,6 +237,7 @@ func (r *SimpleRevisionGenerator) buildClusterObjectSet(
 	phases := PhaseSort(objects)
 
 	spec := ocv1ac.ClusterObjectSetSpec().
+		WithGroup(ext.Name).
 		WithLifecycleState(ocv1.ClusterObjectSetLifecycleStateActive).
 		WithPhases(phases...).
 		WithProgressionProbes(defaultProgressionProbes...)
@@ -281,9 +283,7 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		return nil
 	}
 	existingRevisionList := ocv1.ClusterObjectSetList{}
-	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingLabels{
-		labels.OwnerNameKey: ext.Name,
-	}); err != nil {
+	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingFields{clusterobjectset.GroupField: ext.Name}); err != nil {
 		return fmt.Errorf("listing ClusterObjectSets before attempting migration: %w", err)
 	}
 	if len(existingRevisionList.Items) != 0 {
@@ -647,9 +647,7 @@ func (bc *Boxcutter) garbageCollectOldRevisions(ctx context.Context, revisionLis
 // getExistingRevisions returns the list of ClusterObjectSets for a ClusterExtension with name extName in revision order (oldest to newest)
 func (bc *Boxcutter) getExistingRevisions(ctx context.Context, extName string) ([]ocv1.ClusterObjectSet, error) {
 	existingRevisionList := &ocv1.ClusterObjectSetList{}
-	if err := bc.Client.List(ctx, existingRevisionList, client.MatchingLabels{
-		labels.OwnerNameKey: extName,
-	}); err != nil {
+	if err := bc.Client.List(ctx, existingRevisionList, client.MatchingFields{clusterobjectset.GroupField: extName}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
 	slices.SortFunc(existingRevisionList.Items, func(a, b ocv1.ClusterObjectSet) int {

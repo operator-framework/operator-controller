@@ -30,6 +30,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
+	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	bundlecsv "github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
@@ -103,6 +104,7 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 			labels.OwnerNameKey: "test-123",
 		}).
 		WithSpec(ocv1ac.ClusterObjectSetSpec().
+			WithGroup(ext.Name).
 			WithLifecycleState(ocv1.ClusterObjectSetLifecycleStateActive).
 			WithCollisionProtection(ocv1.CollisionProtectionNone).
 			WithRevision(1).
@@ -148,6 +150,7 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 	assert.Equal(t, expected.Labels, rev.Labels)
 	assert.Equal(t, expected.Annotations, rev.Annotations)
 	assert.Equal(t, expected.Spec.LifecycleState, rev.Spec.LifecycleState)
+	assert.Equal(t, expected.Spec.Group, rev.Spec.Group)
 	assert.Equal(t, expected.Spec.CollisionProtection, rev.Spec.CollisionProtection)
 	assert.Equal(t, expected.Spec.Revision, rev.Spec.Revision)
 	assert.Equal(t, expected.Spec.Phases, rev.Spec.Phases)
@@ -205,6 +208,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("by checking the olm.operatorframework.io/owner-name and owner-kind labels are set")
+	require.Equal(t, ptr.To(ext.Name), rev.Spec.Group)
 	require.Equal(t, map[string]string{
 		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 		labels.OwnerNameKey: "test-extension",
@@ -522,6 +526,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
+			Group:    ext.Name,
 			Revision: 1,
 			Phases: []ocv1.ClusterObjectSetPhase{
 				{
@@ -543,6 +548,9 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 	}
+
+	revisionWithoutOwnerLabel := defaultDesiredRevision.DeepCopy()
+	revisionWithoutOwnerLabel.Labels = nil
 
 	allowedRevisionValue := func(revNum int64) *interceptor.Funcs {
 		return &interceptor.Funcs{
@@ -584,6 +592,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 								labels.OwnerNameKey: ext.Name,
 							}).
 							WithSpec(ocv1ac.ClusterObjectSetSpec().
+								WithGroup(ext.Name).
 								WithPhases(
 									ocv1ac.ClusterObjectSetPhase().
 										WithName(string(applier.PhaseDeploy)).
@@ -607,7 +616,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterObjectSetList{}
-				err := c.List(t.Context(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
+				err := c.List(t.Context(), revList, client.MatchingFields{clusterobjectset.GroupField: ext.Name})
 				require.NoError(t, err)
 				require.Len(t, revList.Items, 1)
 
@@ -617,6 +626,10 @@ func TestBoxcutter_Apply(t *testing.T) {
 				assert.Len(t, rev.OwnerReferences, 1)
 				assert.Equal(t, ext.Name, rev.OwnerReferences[0].Name)
 				assert.Equal(t, ext.UID, rev.OwnerReferences[0].UID)
+				assert.Equal(t, ocv1.GroupVersion.String(), rev.OwnerReferences[0].APIVersion)
+				assert.Equal(t, ocv1.ClusterExtensionKind, rev.OwnerReferences[0].Kind)
+				assert.Equal(t, ptr.To(true), rev.OwnerReferences[0].Controller)
+				assert.Equal(t, ptr.To(true), rev.OwnerReferences[0].BlockOwnerDeletion)
 			},
 		},
 		{
@@ -632,6 +645,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 								labels.OwnerNameKey: ext.Name,
 							}).
 							WithSpec(ocv1ac.ClusterObjectSetSpec().
+								WithGroup(ext.Name).
 								WithPhases(
 									ocv1ac.ClusterObjectSetPhase().
 										WithName(string(applier.PhaseDeploy)).
@@ -654,11 +668,11 @@ func TestBoxcutter_Apply(t *testing.T) {
 				return m
 			},
 			existingObjs: []client.Object{
-				defaultDesiredRevision,
+				revisionWithoutOwnerLabel,
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterObjectSetList{}
-				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
+				err := c.List(context.Background(), revList, client.MatchingFields{clusterobjectset.GroupField: ext.Name})
 				require.NoError(t, err)
 				// No new revision should be created
 				require.Len(t, revList.Items, 1)
@@ -678,6 +692,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 								labels.OwnerNameKey: ext.Name,
 							}).
 							WithSpec(ocv1ac.ClusterObjectSetSpec().
+								WithGroup(ext.Name).
 								WithPhases(
 									ocv1ac.ClusterObjectSetPhase().
 										WithName(string(applier.PhaseDeploy)).
@@ -705,7 +720,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterObjectSetList{}
-				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
+				err := c.List(context.Background(), revList, client.MatchingFields{clusterobjectset.GroupField: ext.Name})
 				require.NoError(t, err)
 				require.Len(t, revList.Items, 2)
 
@@ -736,7 +751,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			validate: func(t *testing.T, c client.Client) {
 				// Ensure no revisions were created
 				revList := &ocv1.ClusterObjectSetList{}
-				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
+				err := c.List(context.Background(), revList, client.MatchingFields{clusterobjectset.GroupField: ext.Name})
 				require.NoError(t, err)
 				assert.Empty(t, revList.Items)
 			},
@@ -753,7 +768,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 							WithLabels(map[string]string{
 								labels.OwnerNameKey: ext.Name,
 							}).
-							WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
+							WithSpec(ocv1ac.ClusterObjectSetSpec().WithGroup(ext.Name)), nil
 					}).AnyTimes()
 				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
@@ -767,6 +782,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       1,
 					},
@@ -779,6 +795,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       2,
 					},
@@ -791,6 +808,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       3,
 					},
@@ -803,6 +821,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       4,
 					},
@@ -815,6 +834,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       5,
 					},
@@ -827,6 +847,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       6,
 					},
@@ -841,7 +862,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 
 				// Verify garbage collection: should only keep the limit + 1 (current) revisions
 				revList := &ocv1.ClusterObjectSetList{}
-				err = c.List(t.Context(), revList)
+				err = c.List(t.Context(), revList, client.MatchingFields{clusterobjectset.GroupField: ext.Name})
 				require.NoError(t, err)
 				// Should have ClusterObjectSetRetentionLimit (5) + current (1) = 6 revisions max
 				assert.LessOrEqual(t, len(revList.Items), applier.ClusterObjectSetRetentionLimit+1)
@@ -859,7 +880,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 							WithLabels(map[string]string{
 								labels.OwnerNameKey: ext.Name,
 							}).
-							WithSpec(ocv1ac.ClusterObjectSetSpec()), nil
+							WithSpec(ocv1ac.ClusterObjectSetSpec().WithGroup(ext.Name)), nil
 					}).AnyTimes()
 				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 				return m
@@ -873,6 +894,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       1,
 					},
@@ -885,6 +907,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group: ext.Name,
 						// index beyond the retention limit but active; should be preserved
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       2,
@@ -898,6 +921,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       3,
 					},
@@ -910,6 +934,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group: ext.Name,
 						// archived but should be preserved since it is within the limit
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 						Revision:       4,
@@ -923,6 +948,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       5,
 					},
@@ -935,6 +961,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       6,
 					},
@@ -947,6 +974,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
 						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 						Revision:       7,
 					},
@@ -982,6 +1010,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 								labels.OwnerNameKey: ext.Name,
 							}).
 							WithSpec(ocv1ac.ClusterObjectSetSpec().
+								WithGroup(ext.Name).
 								WithPhases(
 									ocv1ac.ClusterObjectSetPhase().
 										WithName(string(applier.PhaseDeploy)).
@@ -1017,6 +1046,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						},
 					},
 					Spec: ocv1.ClusterObjectSetSpec{
+						Group:    ext.Name,
 						Revision: 1,
 						Phases: []ocv1.ClusterObjectSetPhase{
 							{
@@ -1041,7 +1071,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterObjectSetList{}
-				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
+				err := c.List(context.Background(), revList, client.MatchingFields{clusterobjectset.GroupField: ext.Name})
 				require.NoError(t, err)
 				// Should still be only 1 revision (in-place update, not new revision)
 				require.Len(t, revList.Items, 1)
@@ -1061,7 +1091,18 @@ func TestBoxcutter_Apply(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup
-			cb := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(tc.existingObjs...)
+			cb := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+				WithObjects(tc.existingObjs...)
+			// A misleading owner label must not let another group's revisions
+			// affect numbering or retention for this extension.
+			cb.WithObjects(&ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "other-group-99", Labels: map[string]string{labels.OwnerNameKey: ext.Name}},
+				Spec: ocv1.ClusterObjectSetSpec{
+					Group: "other-group", Revision: 99, LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+				},
+			})
 			if tc.clientIterceptor != nil {
 				cb.WithInterceptorFuncs(*tc.clientIterceptor)
 			}
@@ -1109,6 +1150,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					tc.validate(t, fakeClient)
 				}
 			}
+			require.NoError(t, fakeClient.Get(t.Context(), client.ObjectKey{Name: "other-group-99"}, &ocv1.ClusterObjectSet{}))
 		})
 	}
 }
@@ -1120,7 +1162,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			WithLabels(map[string]string{
 				labels.OwnerNameKey: ext.Name,
 			}).
-			WithSpec(ocv1ac.ClusterObjectSetSpec())
+			WithSpec(ocv1ac.ClusterObjectSetSpec().WithGroup(ext.Name))
 	}
 
 	// newStorageMigratorGenerator creates a gomock ClusterObjectSetGenerator for storage migrator tests.
@@ -1135,12 +1177,45 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		return m
 	}
 
+	t.Run("looks up only the group regardless of owner labels", func(t *testing.T) {
+		testScheme := runtime.NewScheme()
+		require.NoError(t, ocv1.AddToScheme(testScheme))
+		ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "migration-group", UID: "migration-group-uid"}, Spec: ocv1.ClusterExtensionSpec{Namespace: "test-namespace"}}
+		other := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{Name: "other-group-1", Labels: map[string]string{labels.OwnerNameKey: ext.Name}},
+			Spec:       ocv1.ClusterObjectSetSpec{Group: "other-group", Revision: 1},
+		}
+		cl := fake.NewClientBuilder().WithScheme(testScheme).
+			WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+			WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+			WithObjects(other).Build()
+		sm := &applier.BoxcutterStorageMigrator{
+			RevisionGenerator: newStorageMigratorGenerator(t),
+			ActionClientGetter: newMockActionGetter(gomock.NewController(t), mockActionGetterConfig{
+				currentRel: &release.Release{Name: ext.Name, Info: &release.Info{Status: release.StatusDeployed}},
+			}),
+			Client: cl, Scheme: testScheme, FieldOwner: "test-owner",
+		}
+		require.NoError(t, sm.Migrate(t.Context(), ext, nil))
+		rev := &ocv1.ClusterObjectSet{}
+		require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: "test-revision"}, rev))
+		require.Equal(t, ext.Name, rev.Spec.Group)
+		delete(rev.Labels, labels.OwnerNameKey)
+		require.NoError(t, cl.Update(t.Context(), rev))
+		// The existing revision must short-circuit migration without Helm access.
+		sm.ActionClientGetter = nil
+		sm.RevisionGenerator = nil
+		require.NoError(t, sm.Migrate(t.Context(), ext, nil))
+		require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(other), other))
+		require.Empty(t, other.Status.Conditions)
+	})
+
 	t.Run("creates revision", func(t *testing.T) {
 		testScheme := runtime.NewScheme()
 		require.NoError(t, ocv1.AddToScheme(testScheme))
 
 		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test123", UID: "test123-uid"},
 			Spec:       ocv1.ClusterExtensionSpec{Namespace: "test-namespace"},
 		}
 		ctrl := gomock.NewController(t)
@@ -1164,12 +1239,25 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		}
 
 		mockClient.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil)
+			DoAndReturn(func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+				listOpts := (&client.ListOptions{}).ApplyOptions(opts)
+				require.Equal(t, clusterobjectset.GroupField+"="+ext.Name, listOpts.FieldSelector.String())
+				require.Nil(t, listOpts.LabelSelector)
+				return nil
+			})
 		mockClient.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
 				// Verify the migration marker label is set before apply
 				rev := obj.(*ocv1ac.ClusterObjectSetApplyConfiguration)
 				require.Equal(t, "true", rev.Labels[labels.MigratedFromHelmKey], "Migration marker label should be set")
+				require.Equal(t, ptr.To(ext.Name), rev.Spec.Group)
+				require.Len(t, rev.OwnerReferences, 1)
+				owner := rev.OwnerReferences[0]
+				require.Equal(t, ptr.To(ext.Name), owner.Name)
+				require.Equal(t, ptr.To(ext.UID), owner.UID)
+				require.Equal(t, ptr.To(ocv1.ClusterExtensionKind), owner.Kind)
+				require.Equal(t, ptr.To(true), owner.Controller)
+				require.Equal(t, ptr.To(true), owner.BlockOwnerDeletion)
 				return nil
 			})
 		mockClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).

@@ -3,12 +3,14 @@ package v1
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 )
 
 func TestClusterObjectSetImmutability(t *testing.T) {
@@ -20,6 +22,27 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		updateFunc func(*ClusterObjectSet)
 		allowed    bool
 	}{
+		"group is immutable": {
+			spec: ClusterObjectSetSpec{
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.Group = "another-group"
+			},
+		},
+		"unchanged group permits lifecycle update": {
+			spec: ClusterObjectSetSpec{
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateArchived
+			},
+			allowed: true,
+		},
 		"revision is immutable": {
 			spec: ClusterObjectSetSpec{
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
@@ -102,6 +125,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				},
 				Spec: tc.spec,
 			}
+			cos.Spec.Group = "test-group"
 			i = i + 1
 			require.NoError(t, c.Create(ctx, cos))
 			tc.updateFunc(cos)
@@ -351,6 +375,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				},
 				Spec: tc.spec,
 			}
+			cos.Spec.Group = "test-group"
 			i = i + 1
 			err := c.Create(ctx, cos)
 			if tc.valid && err != nil {
@@ -358,6 +383,59 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			}
 			if !tc.valid && !errors.IsInvalid(err) {
 				t.Fatal("expected create to fail due to invalid payload, but got:", err)
+			}
+		})
+	}
+}
+
+func TestClusterObjectSetGroupValidation(t *testing.T) {
+	c := newClient(t)
+	for _, tc := range []struct {
+		name     string
+		group    *string
+		omitSpec bool
+		valid    bool
+	}{
+		{name: "missing spec", omitSpec: true},
+		{name: "missing group"},
+		{name: "empty group", group: ptr.To("")},
+		{name: "one character", group: ptr.To("a"), valid: true},
+		{name: "lowercase hyphens and digits", group: ptr.To("my-group-1"), valid: true},
+		{name: "maximum length", group: ptr.To(strings.Repeat("a", 52)), valid: true},
+		{name: "over maximum length", group: ptr.To(strings.Repeat("a", 53))},
+		{name: "starts with digit", group: ptr.To("1group")},
+		{name: "starts with hyphen", group: ptr.To("-group")},
+		{name: "ends with hyphen", group: ptr.To("group-")},
+		{name: "uppercase", group: ptr.To("Group")},
+		{name: "underscore", group: ptr.To("my_group")},
+		{name: "dot", group: ptr.To("my.group")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cos := &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": GroupVersion.String(),
+				"kind":       ClusterObjectSetKind,
+				"metadata":   map[string]any{"generateName": "group-validation-"},
+			}}
+			if !tc.omitSpec {
+				spec := map[string]any{
+					"revision": int64(1), "lifecycleState": string(ClusterObjectSetLifecycleStateActive),
+					"collisionProtection": string(CollisionProtectionPrevent),
+				}
+				if tc.group != nil {
+					spec["group"] = *tc.group
+				}
+				cos.Object["spec"] = spec
+			}
+			err := c.Create(t.Context(), cos)
+			if tc.valid {
+				require.NoError(t, err)
+			} else {
+				require.True(t, errors.IsInvalid(err), "%v", err)
+				if tc.omitSpec {
+					require.ErrorContains(t, err, "spec: Required")
+				} else {
+					require.ErrorContains(t, err, "spec.group")
+				}
 			}
 		})
 	}

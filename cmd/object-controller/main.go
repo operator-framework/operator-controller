@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"fmt"
@@ -44,6 +45,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/object-controller/scheme"
+	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	cacheutil "github.com/operator-framework/operator-controller/internal/shared/util/cache"
 	"github.com/operator-framework/operator-controller/internal/shared/util/tlsprofiles"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
@@ -181,10 +183,13 @@ func newManager(cfg *config, restConfig *rest.Config) (manager.Manager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating discovery client: %w", err)
 	}
-	// Keep the field owner prefix unchanged so existing objects can be reconciled after migration.
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &ocv1.ClusterObjectSet{},
+		clusterobjectset.GroupField, clusterobjectset.ExtractGroup); err != nil {
+		return nil, fmt.Errorf("indexing ClusterObjectSet group: %w", err)
+	}
 	factory, err := controllers.NewDefaultRevisionEngineFactory(
 		mgr.GetScheme(), trackingCache, memory.NewMemCacheClient(discoveryClient),
-		mgr.GetRESTMapper(), "olm.operatorframework.io", mgr.GetConfig(),
+		mgr.GetRESTMapper(), mgr.GetConfig(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("creating revision engine factory: %w", err)

@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
@@ -85,7 +86,7 @@ func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
 			expectedRevs: []string{"rev-1"},
 		},
 		{
-			name: "should only include revisions matching owner label",
+			name: "should only include revisions in the same group",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtensionInternal()
 				ext2 := newTestClusterExtensionInternal()
@@ -94,7 +95,7 @@ func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
 
 				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
 				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
-				rev2.Labels[labels.OwnerNameKey] = "test-ext-2"
+				rev2.Spec.Group = "test-ext-2"
 				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext2, rev2, testScheme))
@@ -105,16 +106,18 @@ func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
 			expectedRevs: []string{"rev-1"},
 		},
 		{
-			name: "should return empty list when owner label missing",
+			name: "should include revisions when owner label is missing",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtensionInternal()
 				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
-				delete(rev1.Labels, labels.OwnerNameKey)
+				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
+				delete(rev2.Labels, labels.OwnerNameKey)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
-				return []client.Object{ext, rev1}
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
+				return []client.Object{ext, rev1, rev2}
 			},
 			currentRev:   "rev-1",
-			expectedRevs: []string{},
+			expectedRevs: []string{"rev-2"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -189,6 +192,7 @@ func callRevisionLister(
 	mockCtrl := gomock.NewController(t)
 	testClient := fake.NewClientBuilder().
 		WithScheme(testScheme).
+		WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 		WithObjects(existingObjs...).
 		Build()
 
@@ -245,6 +249,7 @@ func newTestClusterObjectSetInternal(t *testing.T, name string) *ocv1.ClusterObj
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
+			Group:    "test-ext",
 			Revision: revNum,
 			Phases: []ocv1.ClusterObjectSetPhase{
 				{
