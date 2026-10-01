@@ -26,6 +26,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
+	"github.com/operator-framework/operator-controller/test"
 )
 
 func newSchemeWithCoreV1(t *testing.T) *apimachineryruntime.Scheme {
@@ -68,8 +69,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 		Key:       "my-key",
 	})
 
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(testScheme).
+	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -131,8 +131,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 		Key:       "my-key",
 	})
 
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(testScheme).
+	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -165,8 +164,7 @@ func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 		Key:       "my-key",
 	})
 
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(testScheme).
+	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -206,8 +204,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 		Key:       "missing-key",
 	})
 
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(testScheme).
+	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -256,8 +253,7 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 		Key:       "my-key",
 	})
 
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(testScheme).
+	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -295,6 +291,7 @@ func newRefTestCOS(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterObjectSet
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
+			Group:               "ref-test",
 			LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
 			Revision:            1,
 			CollisionProtection: ocv1.CollisionProtectionPrevent,

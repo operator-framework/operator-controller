@@ -116,6 +116,7 @@ func TestStandaloneController(t *testing.T) {
 			cos := &ocv1.ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{Name: name},
 				Spec: ocv1.ClusterObjectSetSpec{
+					Group:          name,
 					LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive, Revision: 1,
 					CollisionProtection: ocv1.CollisionProtectionPrevent,
 					Phases:              []ocv1.ClusterObjectSetPhase{{Name: "deploy", Objects: []ocv1.ClusterObjectSetObject{obj}}},

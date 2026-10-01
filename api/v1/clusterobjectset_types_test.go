@@ -3,12 +3,14 @@ package v1
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 )
 
 func TestClusterObjectSetImmutability(t *testing.T) {
@@ -16,12 +18,51 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 	ctx := context.Background()
 	i := 0
 	for name, tc := range map[string]struct {
-		spec       ClusterObjectSetSpec
-		updateFunc func(*ClusterObjectSet)
-		allowed    bool
+		spec          ClusterObjectSetSpec
+		updateFunc    func(*ClusterObjectSet)
+		allowed       bool
+		expectedError string
 	}{
+		"group is immutable": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.Group = "another-group"
+			},
+			expectedError: "group is immutable",
+		},
+		"group cannot be cleared": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.Group = ""
+			},
+			expectedError: "spec.group: Required value",
+		},
+		"unchanged group permits lifecycle update": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.Group = "test-group"
+				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateArchived
+			},
+			allowed: true,
+		},
 		"revision is immutable": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -32,6 +73,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		},
 		"phases may be initially empty": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -49,6 +91,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		},
 		"phases may be initially unset": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -65,6 +108,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		},
 		"phases are immutable if not empty": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -86,6 +130,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		},
 		"spec collisionProtection is immutable": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -111,6 +156,9 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 			}
 			if !tc.allowed && !errors.IsInvalid(err) {
 				t.Fatal("expected update to fail due to invalid payload, but got:", err)
+			}
+			if tc.expectedError != "" {
+				require.ErrorContains(t, err, tc.expectedError)
 			}
 		})
 	}
@@ -351,6 +399,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				},
 				Spec: tc.spec,
 			}
+			cos.Spec.Group = "test-group"
 			i = i + 1
 			err := c.Create(ctx, cos)
 			if tc.valid && err != nil {
@@ -358,6 +407,65 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			}
 			if !tc.valid && !errors.IsInvalid(err) {
 				t.Fatal("expected create to fail due to invalid payload, but got:", err)
+			}
+		})
+	}
+}
+
+func TestClusterObjectSetSpecValidation(t *testing.T) {
+	c := newClient(t)
+	t.Run("missing spec", func(t *testing.T) {
+		cos := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": GroupVersion.String(),
+			"kind":       ClusterObjectSetKind,
+			"metadata":   map[string]any{"generateName": "spec-validation-"},
+		}}
+		err := c.Create(t.Context(), cos)
+		require.True(t, errors.IsInvalid(err), "%v", err)
+		require.ErrorContains(t, err, "spec: Required")
+	})
+}
+
+func TestClusterObjectSetGroupValidation(t *testing.T) {
+	c := newClient(t)
+	for _, tc := range []struct {
+		name  string
+		group *string
+		valid bool
+	}{
+		{name: "missing group", valid: false},
+		{name: "empty group", group: ptr.To(""), valid: false},
+		{name: "one character", group: ptr.To("a"), valid: true},
+		{name: "lowercase hyphens and digits", group: ptr.To("my-group-1"), valid: true},
+		{name: "maximum length", group: ptr.To(strings.Repeat("a", 52)), valid: true},
+		{name: "over maximum length", group: ptr.To(strings.Repeat("a", 53)), valid: false},
+		{name: "starts with digit", group: ptr.To("1group"), valid: false},
+		{name: "starts with hyphen", group: ptr.To("-group"), valid: false},
+		{name: "ends with hyphen", group: ptr.To("group-"), valid: false},
+		{name: "uppercase", group: ptr.To("Group"), valid: false},
+		{name: "underscore", group: ptr.To("my_group"), valid: false},
+		{name: "dot", group: ptr.To("my.group"), valid: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cos := &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": GroupVersion.String(),
+				"kind":       ClusterObjectSetKind,
+				"metadata":   map[string]any{"generateName": "group-validation-"},
+			}}
+			spec := map[string]any{
+				"revision": int64(1), "lifecycleState": string(ClusterObjectSetLifecycleStateActive),
+				"collisionProtection": string(CollisionProtectionPrevent),
+			}
+			if tc.group != nil {
+				spec["group"] = *tc.group
+			}
+			cos.Object["spec"] = spec
+			err := c.Create(t.Context(), cos)
+			if tc.valid {
+				require.NoError(t, err)
+			} else {
+				require.True(t, errors.IsInvalid(err), "%v", err)
+				require.ErrorContains(t, err, "spec.group")
 			}
 		})
 	}
