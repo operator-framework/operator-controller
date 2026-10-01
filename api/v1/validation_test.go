@@ -32,6 +32,7 @@ func TestValidate(t *testing.T) {
 		return s
 	}
 	defaultRevisionSpec := func(s *ClusterObjectSetSpec) *ClusterObjectSetSpec {
+		s.Group = "test-group"
 		s.Revision = 1
 		s.CollisionProtection = CollisionProtectionPrevent
 		return s

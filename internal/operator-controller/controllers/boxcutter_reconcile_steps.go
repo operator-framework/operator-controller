@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -43,9 +44,7 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 	//   only difference here is that it sorts in reverse order to start iterating with the most
 	//   recent revisions. We should consolidate to avoid code duplication.
 	existingRevisionList := &ocv1.ClusterObjectSetList{}
-	if err := d.Reader.List(ctx, existingRevisionList, client.MatchingLabels{
-		labels.OwnerNameKey: ext.Name,
-	}); err != nil {
+	if err := d.Reader.List(ctx, existingRevisionList, client.MatchingFields{clusterobjectset.GroupField: ext.Name}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
 	slices.SortFunc(existingRevisionList.Items, func(a, b ocv1.ClusterObjectSet) int {

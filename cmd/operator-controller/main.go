@@ -65,6 +65,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
@@ -423,6 +424,12 @@ func run() error {
 	}
 
 	cl := mgr.GetClient()
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		if err := mgr.GetFieldIndexer().IndexField(context.Background(), &ocv1.ClusterObjectSet{},
+			clusterobjectset.GroupField, clusterobjectset.ExtractGroup); err != nil {
+			return fmt.Errorf("indexing ClusterObjectSet group: %w", err)
+		}
+	}
 
 	catalogsCachePath := filepath.Join(cfg.cachePath, "catalogs")
 	if err := os.MkdirAll(catalogsCachePath, 0700); err != nil {
@@ -478,7 +485,7 @@ func run() error {
 
 	var ctrlBuilderOpts []controllers.ControllerBuilderOption
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterObjectSet{}))
+		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithClusterObjectSetWatch())
 	} else {
 		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithWatchesRawSource(
 			trackingCache.Source(
@@ -675,7 +682,6 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		c.trackingCache,
 		discoveryClient,
 		c.mgr.GetRESTMapper(),
-		fieldOwnerPrefix,
 		c.mgr.GetConfig(),
 	)
 	if err != nil {

@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
@@ -477,6 +478,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
+				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -599,6 +601,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
+				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(ext, rev1).
 				Build()
@@ -895,6 +898,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
+				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -1074,6 +1078,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
+				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -1142,6 +1147,7 @@ func newTestClusterObjectSet(t *testing.T, revisionName string, ext *ocv1.Cluste
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
+			Group:          ext.Name,
 			LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 			Revision:       revNum,
 			Phases: []ocv1.ClusterObjectSetPhase{
@@ -1501,6 +1507,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 			mockCtrl := gomock.NewController(t)
 			testClient := fake.NewClientBuilder().
 				WithScheme(testScheme).
+				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -1603,6 +1610,7 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 
 		testClient := fake.NewClientBuilder().
 			WithScheme(testScheme).
+			WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
 			WithObjects(ext, rev).
 			Build()
 

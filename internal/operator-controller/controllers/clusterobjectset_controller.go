@@ -42,6 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -436,15 +437,8 @@ func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
 	cos *ocv1.ClusterObjectSet,
 	predicate func(*ocv1.ClusterObjectSet) bool,
 ) ([]*ocv1.ClusterObjectSet, error) {
-	ownerLabel, ok := cos.Labels[labels.OwnerNameKey]
-	if !ok {
-		return nil, nil
-	}
-
 	revList := &ocv1.ClusterObjectSetList{}
-	if err := c.TrackingCache.List(ctx, revList, client.MatchingLabels{
-		labels.OwnerNameKey: ownerLabel,
-	}); err != nil {
+	if err := c.Client.List(ctx, revList, client.MatchingFields{clusterobjectset.GroupField: cos.Spec.Group}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
 

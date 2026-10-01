@@ -420,10 +420,20 @@ func collectDeprecationMessages(entries []declcfg.DeprecationEntry) []string {
 
 type ControllerBuilderOption func(builder *ctrl.Builder)
 
-func WithOwns(obj client.Object) ControllerBuilderOption {
+// WithClusterObjectSetWatch maps revision events to the ClusterExtension named by spec.group.
+func WithClusterObjectSetWatch() ControllerBuilderOption {
 	return func(builder *ctrl.Builder) {
-		builder.Owns(obj)
+		builder.Watches(&ocv1.ClusterObjectSet{},
+			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForClusterObjectSet))
 	}
+}
+
+func clusterExtensionRequestsForClusterObjectSet(_ context.Context, obj client.Object) []reconcile.Request {
+	cos, ok := obj.(*ocv1.ClusterObjectSet)
+	if !ok || cos.Spec.Group == "" {
+		return nil
+	}
+	return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: cos.Spec.Group}}}
 }
 
 func WithWatchesRawSource(src source.Source) ControllerBuilderOption {
