@@ -224,9 +224,9 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		}
 	}
 
-	revVersion := cos.GetAnnotations()[labels.BundleVersionKey]
+	revisionNumber := cos.Spec.Revision
 	if rres.InTransition() {
-		markAsProgressing(l, cos, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion), isDeadlineExceeded)
+		markAsProgressing(l, cos, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %d is rolling out.", revisionNumber), isDeadlineExceeded)
 	}
 
 	//nolint:nestif
@@ -246,7 +246,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			}
 		}
 
-		markAsProgressing(l, cos, ocv1.ReasonSucceeded, fmt.Sprintf("Revision %s has rolled out.", revVersion), isDeadlineExceeded)
+		markAsProgressing(l, cos, ocv1.ReasonSucceeded, fmt.Sprintf("Revision %d has rolled out.", revisionNumber), isDeadlineExceeded)
 		markAsAvailable(cos, ocv1.ClusterObjectSetReasonProbesSucceeded, "Objects are available and pass all probes.")
 
 		// Record the timestamp of the first time the revision was observed to be
@@ -286,9 +286,9 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		if len(probeFailureMsgs) > 0 {
 			markAsUnavailable(cos, ocv1.ClusterObjectSetReasonProbeFailure, strings.Join(probeFailureMsgs, "\n"))
 		} else {
-			markAsUnavailable(cos, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
+			markAsUnavailable(cos, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %d is rolling out.", revisionNumber))
 		}
-		markAsProgressing(l, cos, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion), isDeadlineExceeded)
+		markAsProgressing(l, cos, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %d is rolling out.", revisionNumber), isDeadlineExceeded)
 		if hasDeadline && !isDeadlineExceeded {
 			return ctrl.Result{RequeueAfter: remaining}, nil
 		}

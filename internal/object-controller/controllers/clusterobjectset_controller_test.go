@@ -98,7 +98,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Type:               ocv1.ClusterObjectSetTypeAvailable,
 					Status:             metav1.ConditionTrue,
 					Reason:             ocv1.ClusterObjectSetReasonProbesSucceeded,
-					Message:            "Revision 1.0.0 is rolled out.",
+					Message:            "Revision 1 is rolled out.",
 					ObservedGeneration: 1,
 				})
 				return []client.Object{ext, rev1}
@@ -136,7 +136,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cond.Reason)
-				require.Equal(t, "Revision 1.0.0 is rolling out.", cond.Message)
+				require.Equal(t, "Revision 1 is rolling out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
@@ -360,7 +360,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cond.Reason)
-				require.Equal(t, "Revision 1.0.0 is rolling out.", cond.Message)
+				require.Equal(t, "Revision 1 is rolling out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
@@ -378,7 +378,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Type:               ocv1.TypeProgressing,
 					Status:             metav1.ConditionTrue,
 					Reason:             ocv1.ReasonRollingOut,
-					Message:            "Revision 1.0.0 is rolling out.",
+					Message:            "Revision 1 is rolling out.",
 					ObservedGeneration: 1,
 				})
 				return []client.Object{ext, rev1}
@@ -393,7 +393,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
 				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision 1.0.0 has rolled out.", cond.Message)
+				require.Equal(t, "Revision 1 has rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
@@ -425,7 +425,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
 				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision 1.0.0 has rolled out.", cond.Message)
+				require.Equal(t, "Revision 1 has rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
 				require.False(t, rev.Status.CompletedAt.IsZero(), "completedAt should be set on successful rollout")
@@ -1097,7 +1097,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Type:               ocv1.ClusterObjectSetTypeProgressing,
 					Status:             metav1.ConditionFalse,
 					Reason:             ocv1.ReasonProgressDeadlineExceeded,
-					Message:            "Revision has not rolled out for 1 minute(s). Last status: Revision 1.0.0 is rolling out.",
+					Message:            "Revision has not rolled out for 1 minute(s). Last status: Revision 1 is rolling out.",
 					ObservedGeneration: rev1.Generation,
 				})
 				return []client.Object{rev1, ext}
@@ -1116,7 +1116,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				require.NotNil(t, cnd)
 				require.Equal(t, metav1.ConditionTrue, cnd.Status)
 				require.Equal(t, ocv1.ReasonSucceeded, cnd.Reason)
-				require.Equal(t, "Revision 1.0.0 has rolled out.", cnd.Message)
+				require.Equal(t, "Revision 1 has rolled out.", cnd.Message)
 			},
 		},
 		{

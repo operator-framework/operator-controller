@@ -373,7 +373,7 @@ Feature: Install ClusterExtension
     Then ClusterObjectSet "${NAME}-1" reports Progressing as False with Reason ProgressDeadlineExceeded
     And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded and Message:
       """
-      Revision has not rolled out for 1 minute(s). Last status: Revision 1.0.2 is rolling out.
+      Revision has not rolled out for 1 minute(s). Last status: Revision 1 is rolling out.
       """
     And ClusterExtension reports Progressing transition between 1 and 2 minutes since its creation
 
@@ -407,7 +407,7 @@ Feature: Install ClusterExtension
     Then ClusterObjectSet "${NAME}-1" reports Progressing as False with Reason ProgressDeadlineExceeded
     And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded and Message:
       """
-      Revision has not rolled out for 1 minute(s). Last status: Revision 1.0.3 is rolling out.
+      Revision has not rolled out for 1 minute(s). Last status: Revision 1 is rolling out.
       """
     And ClusterExtension reports Progressing transition between 1 and 2 minutes since its creation
 
