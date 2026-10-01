@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/alpha/property"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
@@ -65,41 +64,8 @@ func bundleFromFS(bundleFS fs.FS, image string) (*declcfg.Bundle, error) {
 		Image:   image,
 	}
 	propertiesJSON := registryBundle.CSV.Annotations[bundlesource.PropertyOLMProperties]
-	if propertiesJSON == "" {
-		return nil, fmt.Errorf("bundle %q has no %q package property", bundle.Name, bundlesource.PropertyOLMProperties)
-	}
 	if err := json.Unmarshal([]byte(propertiesJSON), &bundle.Properties); err != nil {
 		return nil, fmt.Errorf("failed to parse bundle properties: %w", err)
 	}
-	if err := validatePackageProperty(bundle.Properties, registryBundle.PackageName); err != nil {
-		return nil, err
-	}
 	return bundle, nil
-}
-
-func validatePackageProperty(properties []property.Property, expectedPackageName string) error {
-	var packageProperties []property.Property
-	for _, p := range properties {
-		if p.Type == property.TypePackage {
-			packageProperties = append(packageProperties, p)
-		}
-	}
-	if len(packageProperties) != 1 {
-		return fmt.Errorf("expected exactly one %q package property, found %d", property.TypePackage, len(packageProperties))
-	}
-
-	var packageData struct {
-		PackageName string `json:"packageName"`
-		Version     string `json:"version"`
-	}
-	if err := json.Unmarshal(packageProperties[0].Value, &packageData); err != nil {
-		return fmt.Errorf("failed to parse %q package property: %w", property.TypePackage, err)
-	}
-	if packageData.PackageName == "" || packageData.PackageName != expectedPackageName {
-		return fmt.Errorf("package property name %q does not match bundle package name %q", packageData.PackageName, expectedPackageName)
-	}
-	if packageData.Version == "" {
-		return fmt.Errorf("package property for %q has no version", expectedPackageName)
-	}
-	return nil
 }

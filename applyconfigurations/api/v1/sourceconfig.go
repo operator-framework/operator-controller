@@ -22,12 +22,12 @@ package v1
 //
 // SourceConfig is a discriminated union which selects the installation source.
 //
-// <opcon:experimental:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'OCIImage' ? self.ociImage.size() != 0 : self.ociImage.size() == 0",message="ociImage is required when sourceType is OCIImage, and forbidden otherwise">
+// <opcon:experimental:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'OCIImage' ? has(self.ociImage) : !has(self.ociImage)",message="ociImage is required when sourceType is OCIImage, and forbidden otherwise">
 type SourceConfigApplyConfiguration struct {
 	// sourceType is required and specifies the type of install source.
 	//
 	// <opcon:standard:description>
-	// The allowed value is "Catalog".
+	// The only allowed value is "Catalog".
 	//
 	// When set to "Catalog", information for determining the appropriate bundle of content to install
 	// is fetched from ClusterCatalog resources on the cluster.
