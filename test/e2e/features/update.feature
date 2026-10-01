@@ -310,6 +310,8 @@ Feature: Update ClusterExtension
       """
     And ClusterExtension is rolled out
     And ClusterExtension is available
+    And ClusterObjectSet "${NAME}-1" has group "${NAME}"
+    And ClusterObjectSet "${NAME}-1" phase objects use SSA manager "cos-group/${NAME}"
     When ClusterExtension version is updated to "1.2.0"
     Then bundle "${PACKAGE:test}.1.2.0" is installed in version "1.2.0"
     And ClusterExtension is rolled out
@@ -319,6 +321,8 @@ Feature: Update ClusterExtension
     And ClusterObjectSet "${NAME}-2" reports Available as True with Reason ProbesSucceeded
     And ClusterObjectSet "${NAME}-1" is archived
     And ClusterObjectSet "${NAME}-1" phase objects are not found or not owned by the revision
+    And ClusterObjectSet "${NAME}-2" has group "${NAME}"
+    And ClusterObjectSet "${NAME}-2" phase objects use SSA manager "cos-group/${NAME}"
 
   @BoxcutterRuntime
   Scenario: Report all active revisions on ClusterExtension
