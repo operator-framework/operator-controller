@@ -545,6 +545,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `ref` _string_ | ref contains the resolved image digest-based reference.<br />The digest format allows you to use other tooling to fetch the exact OCI manifests<br />that were used to extract the catalog contents. |  | MaxLength: 1000 <br />Required: \{\} <br /> |
+| `catalogVersion` _integer_ | catalogVersion is the monotonic version assigned to the catalog publication by the image publisher.<br />It is read from the OCI image config label "olm.operatorframework.io/catalog-version".<br />Older images without this label have no version. After a version is recorded, a different digest must have a<br />greater version before its content can replace the currently served catalog. |  | Minimum: 1 <br />Optional: \{\} <br /> |
 
 
 #### RevisionStatus

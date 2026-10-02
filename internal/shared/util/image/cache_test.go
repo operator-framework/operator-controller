@@ -585,6 +585,82 @@ func TestDiskCacheGarbageCollection(t *testing.T) {
 	}
 }
 
+func TestParseCatalogVersion(t *testing.T) {
+	for name, tc := range map[string]struct {
+		value   string
+		version int64
+		wantErr string
+	}{
+		"missing label is unversioned": {version: 0},
+		"positive integer":             {value: "42", version: 42},
+		"largest int64":                {value: "9223372036854775807", version: 9223372036854775807},
+		"zero is invalid":              {value: "0", wantErr: "positive integer"},
+		"negative is invalid":          {value: "-1", wantErr: "positive integer"},
+		"non-numeric is invalid":       {value: "one", wantErr: "positive integer"},
+		"overflow is invalid":          {value: "9223372036854775808", wantErr: "positive integer"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			version, err := parseCatalogVersion(tc.value)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.version, version)
+		})
+	}
+}
+
+func TestDiskCacheCatalogVersion(t *testing.T) {
+	const ownerID = "catalog"
+	ref := mustParseCanonical(t, "my.registry.io/ns/repo@sha256:5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
+	dc := &diskCache{
+		basePath: t.TempDir(),
+		filterFunc: func(context.Context, reference.Named, ocispecv1.Image) (archive.Filter, error) {
+			return forceOwnershipRWX(), nil
+		},
+		storeCatalogVersions: true,
+	}
+	taggedRef, err := reference.WithTag(reference.TrimNamed(ref), "latest")
+	require.NoError(t, err)
+
+	_, _, err = dc.Store(context.Background(), ownerID, taggedRef, ref, ocispecv1.Image{
+		Config: ocispecv1.ImageConfig{Labels: map[string]string{CatalogVersionLabel: "2"}},
+	}, layerFSIterator())
+	require.NoError(t, err)
+	version, err := dc.CatalogVersion(context.Background(), ownerID, ref)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), version)
+
+	// Reusing the digest for an unversioned image must not retain stale metadata.
+	_, _, err = dc.Store(context.Background(), ownerID, taggedRef, ref, ocispecv1.Image{}, layerFSIterator())
+	require.NoError(t, err)
+	version, err = dc.CatalogVersion(context.Background(), ownerID, ref)
+	require.NoError(t, err)
+	assert.Zero(t, version)
+
+	require.NoError(t, os.WriteFile(dc.catalogVersionPath(ownerID, ref.Digest()), []byte("invalid"), 0600))
+	_, err = dc.CatalogVersion(context.Background(), ownerID, ref)
+	require.ErrorContains(t, err, "invalid cached catalog version")
+}
+
+func TestDiskCacheGarbageCollectionKeepsCatalogVersion(t *testing.T) {
+	const ownerID = "catalog"
+	keep := mustParseCanonical(t, "my.registry.io/ns/repo@sha256:5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
+	other := mustParseCanonical(t, "my.registry.io/ns/repo@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+	dc := &diskCache{basePath: t.TempDir()}
+	require.NoError(t, os.MkdirAll(dc.unpackPath(ownerID, keep.Digest()), 0700))
+	require.NoError(t, os.MkdirAll(dc.unpackPath(ownerID, other.Digest()), 0700))
+	require.NoError(t, os.WriteFile(dc.catalogVersionPath(ownerID, keep.Digest()), []byte("2"), 0600))
+	require.NoError(t, os.WriteFile(dc.catalogVersionPath(ownerID, other.Digest()), []byte("1"), 0600))
+
+	require.NoError(t, dc.GarbageCollect(context.Background(), ownerID, keep))
+	assert.DirExists(t, dc.unpackPath(ownerID, keep.Digest()))
+	assert.FileExists(t, dc.catalogVersionPath(ownerID, keep.Digest()))
+	assert.NoDirExists(t, dc.unpackPath(ownerID, other.Digest()))
+	assert.NoFileExists(t, dc.catalogVersionPath(ownerID, other.Digest()))
+}
+
 func mustParseCanonical(t *testing.T, s string) reference.Canonical {
 	n, err := reference.ParseNamed(s)
 	require.NoError(t, err)

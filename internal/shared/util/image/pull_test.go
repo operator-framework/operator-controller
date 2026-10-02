@@ -262,6 +262,51 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 	}
 }
 
+func TestContainersImagePuller_PullCatalog(t *testing.T) {
+	const ownerID = "catalog"
+	myTagRef, myCanonicalRef, shutdown := setupRegistry(t)
+	defer shutdown()
+
+	puller := ContainersImagePuller{SourceCtxFunc: buildSourceContextFunc(t, myTagRef)}
+	for name, tc := range map[string]struct {
+		cache       Cache
+		wantVersion int64
+		wantErr     string
+	}{
+		"returns cached catalog version": {
+			cache: FakeCatalogVersionCache{
+				FakeCache: FakeCache{FetchFS: fstest.MapFS{testFileName: &fstest.MapFile{Data: []byte(testFileContents)}}},
+				Version:   2,
+			},
+			wantVersion: 2,
+		},
+		"fails when cache does not expose metadata": {
+			cache:   FakeCache{FetchFS: fstest.MapFS{}},
+			wantErr: "catalog cache does not provide image publication metadata",
+		},
+		"propagates metadata read error": {
+			cache: FakeCatalogVersionCache{
+				FakeCache:    FakeCache{FetchFS: fstest.MapFS{}},
+				VersionError: errors.New("catalog version read error"),
+			},
+			wantErr: "catalog version read error",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fsys, canonicalRef, _, version, err := puller.PullCatalog(context.Background(), ownerID, myTagRef.String(), tc.cache)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				assert.Nil(t, fsys)
+				assert.Nil(t, canonicalRef)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, myCanonicalRef.String(), canonicalRef.String())
+			assert.Equal(t, tc.wantVersion, version)
+		})
+	}
+}
+
 func setupRegistry(t *testing.T) (reference.NamedTagged, reference.Canonical, func()) {
 	server := httptest.NewServer(registry.New())
 	serverURL, err := url.Parse(server.URL)

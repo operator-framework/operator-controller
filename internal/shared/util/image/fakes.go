@@ -14,10 +14,11 @@ var _ Puller = (*FakePuller)(nil)
 
 // FakePuller is a test fake that returns preconfigured values for the Puller interface
 type FakePuller struct {
-	ImageFS fs.FS
-	Ref     reference.Canonical
-	ModTime time.Time
-	Error   error
+	ImageFS        fs.FS
+	Ref            reference.Canonical
+	ModTime        time.Time
+	CatalogVersion int64
+	Error          error
 }
 
 func (ms *FakePuller) Pull(_ context.Context, _, _ string, _ Cache) (fs.FS, reference.Canonical, time.Time, error) {
@@ -28,7 +29,14 @@ func (ms *FakePuller) Pull(_ context.Context, _, _ string, _ Cache) (fs.FS, refe
 	return ms.ImageFS, ms.Ref, ms.ModTime, nil
 }
 
+func (ms *FakePuller) PullCatalog(ctx context.Context, ownerID, ref string, cache Cache) (fs.FS, reference.Canonical, time.Time, int64, error) {
+	fsys, canonicalRef, modTime, err := ms.Pull(ctx, ownerID, ref, cache)
+	return fsys, canonicalRef, modTime, ms.CatalogVersion, err
+}
+
 var _ Cache = (*FakeCache)(nil)
+
+var _ CatalogVersionCache = (*FakeCatalogVersionCache)(nil)
 
 type FakeCache struct {
 	FetchFS      fs.FS
@@ -58,4 +66,15 @@ func (m FakeCache) Delete(_ context.Context, _ string) error {
 
 func (m FakeCache) GarbageCollect(_ context.Context, _ string, _ reference.Canonical) error {
 	return m.GarbageCollectError
+}
+
+// FakeCatalogVersionCache is a FakeCache that also returns catalog publication metadata.
+type FakeCatalogVersionCache struct {
+	FakeCache
+	Version      int64
+	VersionError error
+}
+
+func (m FakeCatalogVersionCache) CatalogVersion(_ context.Context, _ string, _ reference.Canonical) (int64, error) {
+	return m.Version, m.VersionError
 }

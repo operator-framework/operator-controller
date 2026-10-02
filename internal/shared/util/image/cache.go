@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/containerd/containerd/archive"
@@ -38,10 +39,37 @@ type Cache interface {
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
 
+// CatalogVersionLabel is the positive, monotonically increasing publication
+// number stored in a catalog image's OCI config labels.
+const CatalogVersionLabel = "olm.operatorframework.io/catalog-version"
+
+const catalogVersionFileSuffix = ".catalog-version"
+
+// CatalogVersionCache reads publication metadata persisted with cached catalog images.
+type CatalogVersionCache interface {
+	CatalogVersion(context.Context, string, reference.Canonical) (int64, error)
+}
+
+func catalogVersionFromImage(image ocispecv1.Image) (int64, error) {
+	return parseCatalogVersion(image.Config.Labels[CatalogVersionLabel])
+}
+
+func parseCatalogVersion(value string) (int64, error) {
+	if value == "" {
+		return 0, nil
+	}
+	version, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || version < 1 {
+		return 0, fmt.Errorf("catalog image label %q must contain a positive integer", CatalogVersionLabel)
+	}
+	return version, nil
+}
+
 func CatalogCache(basePath string) Cache {
 	return &diskCache{
-		basePath:   basePath,
-		filterFunc: filterForCatalogImage(),
+		basePath:             basePath,
+		filterFunc:           filterForCatalogImage(),
+		storeCatalogVersions: true,
 	}
 }
 
@@ -78,8 +106,9 @@ func filterForBundleImage() func(ctx context.Context, srcRef reference.Named, im
 }
 
 type diskCache struct {
-	basePath   string
-	filterFunc func(context.Context, reference.Named, ocispecv1.Image) (archive.Filter, error)
+	basePath             string
+	filterFunc           func(context.Context, reference.Named, ocispecv1.Image) (archive.Filter, error)
+	storeCatalogVersions bool
 }
 
 func (a *diskCache) Fetch(ctx context.Context, ownerID string, canonicalRef reference.Canonical) (fs.FS, time.Time, error) {
@@ -107,7 +136,35 @@ func (a *diskCache) unpackPath(ownerID string, digest digest.Digest) string {
 	return filepath.Join(a.ownerIDPath(ownerID), digest.String())
 }
 
+func (a *diskCache) catalogVersionPath(ownerID string, digest digest.Digest) string {
+	return filepath.Join(a.ownerIDPath(ownerID), digest.String()+catalogVersionFileSuffix)
+}
+
+func (a *diskCache) CatalogVersion(_ context.Context, ownerID string, canonicalRef reference.Canonical) (int64, error) {
+	data, err := os.ReadFile(a.catalogVersionPath(ownerID, canonicalRef.Digest()))
+	if errors.Is(err, os.ErrNotExist) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("error reading cached catalog version: %w", err)
+	}
+	version, err := strconv.ParseInt(string(data), 10, 64)
+	if err != nil || version < 1 {
+		return 0, fmt.Errorf("invalid cached catalog version for image %s", canonicalRef)
+	}
+	return version, nil
+}
+
 func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.Named, canonicalRef reference.Canonical, imgCfg ocispecv1.Image, layers iter.Seq[LayerData]) (fs.FS, time.Time, error) {
+	var catalogVersion int64
+	if a.storeCatalogVersions {
+		var err error
+		catalogVersion, err = catalogVersionFromImage(imgCfg)
+		if err != nil {
+			return nil, time.Time{}, err
+		}
+	}
+
 	var applyOpts []archive.ApplyOpt
 	if a.filterFunc != nil {
 		filter, err := a.filterFunc(ctx, srcRef, imgCfg)
@@ -145,7 +202,40 @@ func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.
 	if err != nil {
 		return nil, time.Time{}, fmt.Errorf("error getting mod time of unpack directory: %w", err)
 	}
+	if a.storeCatalogVersions {
+		versionPath := a.catalogVersionPath(ownerID, canonicalRef.Digest())
+		if catalogVersion == 0 {
+			if err := os.Remove(versionPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+				return nil, time.Time{}, errors.Join(
+					fmt.Errorf("error removing cached catalog version: %w", err),
+					fsutil.DeleteReadOnlyRecursive(dest),
+				)
+			}
+		} else if err := a.storeCatalogVersion(versionPath, catalogVersion); err != nil {
+			return nil, time.Time{}, errors.Join(err, fsutil.DeleteReadOnlyRecursive(dest))
+		}
+	}
 	return os.DirFS(dest), modTime, nil
+}
+
+func (a *diskCache) storeCatalogVersion(path string, version int64) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".catalog-version-")
+	if err != nil {
+		return fmt.Errorf("error creating cached catalog version file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	if _, err := fmt.Fprint(tmp, version); err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("error writing cached catalog version: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("error closing cached catalog version file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		return fmt.Errorf("error storing cached catalog version: %w", err)
+	}
+	return nil
 }
 
 func (a *diskCache) Delete(_ context.Context, ownerID string) error {
@@ -168,7 +258,7 @@ func (a *diskCache) GarbageCollect(_ context.Context, ownerID string, keep refer
 		if found {
 			foundKeep = true
 		}
-		return found
+		return found || entry.Name() == keep.Digest().String()+catalogVersionFileSuffix
 	})
 
 	for _, dirEntry := range dirEntries {

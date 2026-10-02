@@ -1132,6 +1132,138 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 	}
 }
 
+func TestCatalogVersionRollbackGuard(t *testing.T) {
+	oldRef := mustRef(t, "registry.example.com/catalog@sha256:a5d4f4467250074216eb1ba1c36e06a3ab797d81c431427fc2aca97ecaf4e9d8")
+	newRef := mustRef(t, "registry.example.com/catalog@sha256:f42337e7b85a46d83c94694638e2312e10ca16a03542399a65ba783c94a32b63")
+	sameDigestDifferentRepository := mustRef(t, "mirror.example.com/catalog@sha256:a5d4f4467250074216eb1ba1c36e06a3ab797d81c431427fc2aca97ecaf4e9d8")
+
+	newCatalog := func(current *ocv1.ResolvedImageSource) *ocv1.ClusterCatalog {
+		catalog := &ocv1.ClusterCatalog{
+			ObjectMeta: metav1.ObjectMeta{Name: "catalog", Finalizers: []string{fbcDeletionFinalizer}},
+			Spec: ocv1.ClusterCatalogSpec{Source: ocv1.CatalogSource{
+				Type:  ocv1.SourceTypeImage,
+				Image: &ocv1.ImageSource{Ref: "registry.example.com/catalog:latest"},
+			}},
+		}
+		if current != nil {
+			catalog.Status.ResolvedSource = &ocv1.ResolvedCatalogSource{Type: ocv1.SourceTypeImage, Image: current}
+		}
+		return catalog
+	}
+
+	for name, tc := range map[string]struct {
+		current        *ocv1.ResolvedImageSource
+		pulledRef      reference.Canonical
+		pulledVersion  int64
+		contentExists  bool
+		wantErr        string
+		wantRef        reference.Canonical
+		wantVersion    int64
+		wantNotServing bool
+		secondAttempt  bool
+	}{
+		"accepts first versioned catalog": {
+			pulledRef:     oldRef,
+			pulledVersion: 2,
+			contentExists: true,
+			wantRef:       oldRef,
+			wantVersion:   2,
+		},
+		"accepts higher version for a different digest": {
+			current:       &ocv1.ResolvedImageSource{Ref: oldRef.String(), CatalogVersion: 2},
+			pulledRef:     newRef,
+			pulledVersion: 3,
+			contentExists: true,
+			wantRef:       newRef,
+			wantVersion:   3,
+		},
+		"rejects equal version for a different digest": {
+			current:       &ocv1.ResolvedImageSource{Ref: oldRef.String(), CatalogVersion: 2},
+			pulledRef:     newRef,
+			pulledVersion: 2,
+			contentExists: true,
+			wantErr:       "different digest must have a greater catalog version",
+			wantRef:       oldRef,
+			wantVersion:   2,
+		},
+		"rejects lower version for a different digest": {
+			current:       &ocv1.ResolvedImageSource{Ref: oldRef.String(), CatalogVersion: 2},
+			pulledRef:     newRef,
+			pulledVersion: 1,
+			contentExists: true,
+			wantErr:       "different digest must have a greater catalog version",
+			wantRef:       oldRef,
+			wantVersion:   2,
+		},
+		"rejects unversioned catalog after a versioned catalog": {
+			current:       &ocv1.ResolvedImageSource{Ref: oldRef.String(), CatalogVersion: 2},
+			pulledRef:     newRef,
+			contentExists: true,
+			wantErr:       "catalog version 0",
+			wantRef:       oldRef,
+			wantVersion:   2,
+		},
+		"preserves version for the same digest from a different repository": {
+			current:       &ocv1.ResolvedImageSource{Ref: oldRef.String(), CatalogVersion: 2},
+			pulledRef:     sameDigestDifferentRepository,
+			contentExists: true,
+			wantRef:       sameDigestDifferentRepository,
+			wantVersion:   2,
+		},
+		"rejected catalog remains rejected when content is absent": {
+			current:        &ocv1.ResolvedImageSource{Ref: oldRef.String(), CatalogVersion: 2},
+			pulledRef:      newRef,
+			pulledVersion:  1,
+			contentExists:  false,
+			wantErr:        "different digest must have a greater catalog version",
+			wantRef:        oldRef,
+			wantVersion:    2,
+			wantNotServing: true,
+			secondAttempt:  true,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			store := mockstorage.NewMockInstance(mockCtrl)
+			store.EXPECT().ContentExists("catalog").Return(tc.contentExists).AnyTimes()
+			store.EXPECT().BaseURL("catalog").Return("URL").AnyTimes()
+			if tc.wantErr == "" {
+				store.EXPECT().Store(gomock.Any(), "catalog", gomock.Any()).Return(nil)
+			}
+			reconciler := &ClusterCatalogReconciler{
+				ImagePuller:    &imageutil.FakePuller{ImageFS: fstest.MapFS{}, Ref: tc.pulledRef, CatalogVersion: tc.pulledVersion},
+				ImageCache:     &imageutil.FakeCache{},
+				Storage:        store,
+				storedCatalogs: map[string]storedCatalogData{},
+			}
+			require.NoError(t, reconciler.setupFinalizers())
+			catalog := newCatalog(tc.current)
+
+			_, err := reconciler.reconcile(context.Background(), catalog)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.wantErr)
+			}
+			require.NotNil(t, catalog.Status.ResolvedSource)
+			require.NotNil(t, catalog.Status.ResolvedSource.Image)
+			assert.Equal(t, tc.wantRef.String(), catalog.Status.ResolvedSource.Image.Ref)
+			assert.Equal(t, tc.wantVersion, catalog.Status.ResolvedSource.Image.CatalogVersion)
+			if tc.wantNotServing {
+				assert.Nil(t, catalog.Status.URLs)
+				assert.Nil(t, catalog.Status.LastUnpacked)
+				assert.Equal(t, metav1.ConditionFalse, meta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeServing).Status)
+			}
+			if tc.secondAttempt {
+				_, err = reconciler.reconcile(context.Background(), catalog)
+				require.ErrorContains(t, err, tc.wantErr)
+				assert.Equal(t, tc.wantRef.String(), catalog.Status.ResolvedSource.Image.Ref)
+				assert.Equal(t, tc.wantVersion, catalog.Status.ResolvedSource.Image.CatalogVersion)
+			}
+		})
+	}
+}
+
 func mustRef(t *testing.T, ref string) reference.Canonical {
 	t.Helper()
 	p, err := reference.Parse(ref)
