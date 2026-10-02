@@ -77,9 +77,10 @@ func setActiveRevisionsFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 	}
 	for _, r := range revisionStates.RollingOut {
 		rs := ocv1.RevisionStatus{Name: r.RevisionName}
-		avail := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+		avail := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeReady)
 		if avail != nil {
 			a := *avail
+			a.Type = ocv1.TypeAvailable
 			a.ObservedGeneration = ext.GetGeneration()
 			apimeta.SetStatusCondition(&rs.Conditions, a)
 		}
@@ -90,9 +91,10 @@ func setActiveRevisionsFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 // setAvailableFromRevisionStates sets the Available status condition based on the given revision states
 func setAvailableFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *RevisionStates) {
 	if i := revisionStates.Installed; i != nil {
-		avail := apimeta.FindStatusCondition(i.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+		avail := apimeta.FindStatusCondition(i.Conditions, ocv1.ClusterObjectSetTypeReady)
 		if avail != nil {
 			a := *avail
+			a.Type = ocv1.TypeAvailable
 			a.ObservedGeneration = ext.GetGeneration()
 			apimeta.SetStatusCondition(&ext.Status.Conditions, a)
 		}
@@ -109,10 +111,10 @@ func setAvailableFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *
 func setProgressingFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *RevisionStates) {
 	if len(revisionStates.RollingOut) > 0 {
 		revisionMeta := revisionStates.RollingOut[len(revisionStates.RollingOut)-1]
-		avail := apimeta.FindStatusCondition(revisionMeta.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+		avail := apimeta.FindStatusCondition(revisionMeta.Conditions, ocv1.ClusterObjectSetTypeReady)
 		setProgressingFromAvailable(ext, avail, false)
 	} else if revisionStates.Installed != nil {
-		setProgressingFromAvailable(ext, apimeta.FindStatusCondition(revisionStates.Installed.Conditions, ocv1.ClusterObjectSetTypeAvailable), true)
+		setProgressingFromAvailable(ext, apimeta.FindStatusCondition(revisionStates.Installed.Conditions, ocv1.ClusterObjectSetTypeReady), true)
 	}
 }
 
@@ -149,7 +151,7 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	}
 	// Latest revision is the last element (sorted ascending by Spec.Revision).
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
-	availableCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+	availableCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeReady)
 	// Reconciling is the new home of the old Retrying signal: it indicates an error occurred.
 	if availableCond != nil && availableCond.Reason == ocv1.ClusterObjectSetReasonReconciling {
 		return ocv1.ReasonFailed

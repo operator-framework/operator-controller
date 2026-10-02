@@ -83,7 +83,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
@@ -100,7 +100,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeAvailable,
+					Type:               ocv1.ClusterObjectSetTypeReady,
 					Status:             metav1.ConditionTrue,
 					Reason:             ocv1.ClusterObjectSetReasonProbesSucceeded,
 					Message:            "Revision 1 is rolled out.",
@@ -114,7 +114,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
@@ -139,7 +139,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
@@ -161,7 +161,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cond.Reason)
@@ -249,7 +249,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonProbeFailure, cond.Reason)
@@ -337,7 +337,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonProbeFailure, cond.Reason)
@@ -362,7 +362,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cond.Reason)
@@ -387,7 +387,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonProbesSucceeded, cond.Reason)
@@ -750,7 +750,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
@@ -785,7 +785,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonArchived, cond.Reason)
@@ -819,7 +819,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
@@ -853,7 +853,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
@@ -886,7 +886,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
@@ -907,7 +907,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				}
 				rev1.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeAvailable,
+					Type:               ocv1.ClusterObjectSetTypeReady,
 					Status:             metav1.ConditionFalse,
 					Reason:             ocv1.ClusterObjectSetReasonArchived,
 					Message:            "revision is archived",
@@ -1012,7 +1012,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.Equal(t, metav1.ConditionFalse, cnd.Status)
 				require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cnd.Reason)
 			},
@@ -1066,7 +1066,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cnd)
 				require.Equal(t, metav1.ConditionFalse, cnd.Status)
 				require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cnd.Reason)
@@ -1096,7 +1096,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.Equal(t, metav1.ConditionFalse, cnd.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
 			},
@@ -1109,7 +1109,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				rev1.Spec.ProgressDeadlineMinutes = 1
 				rev1.CreationTimestamp = metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeAvailable,
+					Type:               ocv1.ClusterObjectSetTypeReady,
 					Status:             metav1.ConditionFalse,
 					Reason:             ocv1.ReasonProgressDeadlineExceeded,
 					Message:            "Revision has not rolled out for 1 minute(s). Last status: Revision 1 is rolling out.",
@@ -1127,7 +1127,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cnd)
 				require.Equal(t, metav1.ConditionTrue, cnd.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonProbesSucceeded, cnd.Reason)
@@ -1142,7 +1142,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				rev1.Spec.ProgressDeadlineMinutes = 1
 				rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-2 * time.Minute))
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterObjectSetTypeAvailable,
+					Type:               ocv1.ClusterObjectSetTypeReady,
 					Status:             metav1.ConditionTrue,
 					Reason:             ocv1.ClusterObjectSetReasonProbesSucceeded,
 					ObservedGeneration: rev1.Generation,
@@ -1159,7 +1159,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.Equal(t, metav1.ConditionFalse, cnd.Status)
 				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
 			},
@@ -1623,7 +1623,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 
 				rev := &ocv1.ClusterObjectSet{}
 				require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: tc.reconcilingRevisionName}, rev))
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)

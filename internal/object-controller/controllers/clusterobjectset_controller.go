@@ -662,7 +662,7 @@ func setAvailableWithDeadline(cos *ocv1.ClusterObjectSet, status metav1.Conditio
 		return
 	}
 	meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterObjectSetTypeAvailable,
+		Type:               ocv1.ClusterObjectSetTypeReady,
 		Status:             status,
 		Reason:             reason,
 		Message:            message,
@@ -676,7 +676,7 @@ func setRetryingConditions(cos *ocv1.ClusterObjectSet, message string, isDeadlin
 
 func markAsAvailable(cos *ocv1.ClusterObjectSet, reason, message string) bool {
 	return meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterObjectSetTypeAvailable,
+		Type:               ocv1.ClusterObjectSetTypeReady,
 		Status:             metav1.ConditionTrue,
 		Reason:             reason,
 		Message:            message,
@@ -686,7 +686,7 @@ func markAsAvailable(cos *ocv1.ClusterObjectSet, reason, message string) bool {
 
 func markAsUnavailable(cos *ocv1.ClusterObjectSet, reason, message string) bool {
 	return meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterObjectSetTypeAvailable,
+		Type:               ocv1.ClusterObjectSetTypeReady,
 		Status:             metav1.ConditionFalse,
 		Reason:             reason,
 		Message:            message,
