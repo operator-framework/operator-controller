@@ -23,6 +23,7 @@ import (
 	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -30,11 +31,13 @@ import (
 
 func TestApplyBundleWithBoxcutter(t *testing.T) {
 	type args struct {
-		activeRevisions []ocv1.RevisionStatus
-		revisionStates  *RevisionStates
+		activeRevisions   []ocv1.RevisionStatus
+		initialConditions []metav1.Condition
+		revisionStates    *RevisionStates
 	}
 	type want struct {
 		activeRevisions []ocv1.RevisionStatus
+		progressing     *metav1.Condition
 	}
 
 	for _, tc := range []struct {
@@ -108,6 +111,40 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "rolling revision without Available resets stale Progressing to RollingOut default",
+			args: args{
+				activeRevisions: []ocv1.RevisionStatus{
+					{Name: "ce-1"},
+				},
+				initialConditions: []metav1.Condition{
+					{
+						Type:    ocv1.TypeProgressing,
+						Status:  metav1.ConditionTrue,
+						Reason:  ocv1.ReasonSucceeded,
+						Message: "Desired state reached",
+					},
+				},
+				revisionStates: &RevisionStates{
+					RollingOut: []*RevisionMetadata{
+						// Freshly created revision that has not reconciled yet:
+						// it has no Available condition.
+						{RevisionName: "ce-1"},
+					},
+				},
+			},
+			want: want{
+				activeRevisions: []ocv1.RevisionStatus{
+					{Name: "ce-1"},
+				},
+				progressing: &metav1.Condition{
+					Type:    ocv1.TypeProgressing,
+					Status:  metav1.ConditionTrue,
+					Reason:  ocv1.ReasonRollingOut,
+					Message: "Revision is rolling out.",
+				},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
@@ -119,6 +156,7 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				},
 				Status: ocv1.ClusterExtensionStatus{
 					ActiveRevisions: tc.args.activeRevisions,
+					Conditions:      tc.args.initialConditions,
 				},
 			}
 
@@ -144,6 +182,14 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 			for i, expected := range tc.want.activeRevisions {
 				require.Equal(t, expected.Name, ext.Status.ActiveRevisions[i].Name,
 					"ActiveRevisions[%d].Name mismatch", i)
+			}
+
+			if tc.want.progressing != nil {
+				got := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+				require.NotNil(t, got, "Progressing condition not found")
+				require.Equal(t, tc.want.progressing.Status, got.Status, "Progressing.Status mismatch")
+				require.Equal(t, tc.want.progressing.Reason, got.Reason, "Progressing.Reason mismatch")
+				require.Equal(t, tc.want.progressing.Message, got.Message, "Progressing.Message mismatch")
 			}
 		})
 	}

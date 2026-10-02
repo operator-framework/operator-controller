@@ -132,10 +132,6 @@ func TestStandaloneController(t *testing.T) {
 					assert.Equal(collect, metav1.ConditionTrue, available.Status)
 					assert.Equal(collect, ocv1.ClusterObjectSetReasonProbesSucceeded, available.Reason)
 				}
-				progressing := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeProgressing)
-				if assert.NotNil(collect, progressing) {
-					assert.Equal(collect, ocv1.ReasonSucceeded, progressing.Reason)
-				}
 			}, time.Minute, 100*time.Millisecond)
 			cm := &corev1.ConfigMap{}
 			require.NoError(t, cl.Get(ctx, client.ObjectKey{Name: name, Namespace: ns.Name}, cm))

@@ -26,8 +26,7 @@ const (
 	ClusterObjectSetKind = "ClusterObjectSet"
 
 	// Condition Types
-	ClusterObjectSetTypeAvailable   = "Available"
-	ClusterObjectSetTypeProgressing = "Progressing"
+	ClusterObjectSetTypeAvailable = "Available"
 
 	// Condition Reasons
 	ClusterObjectSetReasonArchived        = "Archived"
@@ -495,19 +494,19 @@ type ClusterObjectSetStatus struct {
 	// conditions is an optional list of status conditions describing the state of the
 	// ClusterObjectSet.
 	//
-	// The Progressing condition represents whether the revision is actively rolling out:
-	//   - When status is True and reason is RollingOut, the ClusterObjectSet rollout is actively making progress and is in transition.
-	//   - When status is True and reason is Retrying, the ClusterObjectSet has encountered an error that could be resolved on subsequent reconciliation attempts.
-	//   - When status is True and reason is Succeeded, the ClusterObjectSet has reached the desired state.
-	//   - When status is False and reason is Blocked, the ClusterObjectSet has encountered an error that requires manual intervention for recovery.
-	//   - When status is False and reason is Archived, the ClusterObjectSet is archived and not being actively reconciled.
+	// The Available condition represents the state of the revision.
+	// True means all objects are at the desired state; False means one or more
+	// objects are not at the desired state; Unknown is the initial state, before
+	// the first reconciliation has evaluated the revision.
+	//   - True with reason ProbesSucceeded: the revision has rolled out and all objects pass their readiness probes.
+	//   - False with reason ProbeFailure: one or more objects are failing their readiness probes during rollout.
+	//   - False with reason RollingOut: the revision is actively rolling out and has not yet become available.
+	//   - False with reason Blocked: the revision has encountered an error that requires manual intervention for recovery.
+	//   - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
+	//   - False with reason Reconciling: the revision encountered an error that prevented it from observing the probes.
+	//   - False with reason Archived: the revision has been archived and its objects have been torn down.
 	//
-	// The Available condition represents whether the revision has been successfully rolled out and is available:
-	//   - When status is True and reason is ProbesSucceeded, the ClusterObjectSet has been successfully rolled out and all objects pass their readiness probes.
-	//   - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes during rollout.
-	//   - When status is Unknown and reason is Reconciling, the ClusterObjectSet has encountered an error that prevented it from observing the probes.
-	//   - When status is Unknown and reason is Archived, the ClusterObjectSet has been archived and its objects have been torn down.
-	//   - When status is Unknown and reason is Migrated, the ClusterObjectSet was migrated from an existing release and object status probe results have not yet been observed.
+	// Rollout completion is recorded separately by status.completedAt.
 	//
 	// +listType=map
 	// +listMapKey=type
@@ -562,7 +561,6 @@ type ObservedPhase struct {
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
-// +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterObjectSet represents an immutable snapshot of Kubernetes objects
