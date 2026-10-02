@@ -588,7 +588,7 @@ func buildFooClusterExtension(pkg string, channels []string, version string, upg
 			Namespace: "default",
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName:             pkg,
 					Version:                 version,
 					Channels:                channels,
@@ -704,7 +704,7 @@ func TestInvalidClusterExtensionCatalogMatchExpressions(t *testing.T) {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: "foo",
 					Selector: &metav1.LabelSelector{
 						MatchExpressions: []metav1.LabelSelectorRequirement{
@@ -736,7 +736,7 @@ func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: "foo",
 					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"": "value"},
@@ -762,7 +762,7 @@ func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: "foo",
 					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"name": "&value"},

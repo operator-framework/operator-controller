@@ -27,7 +27,7 @@ func TestValidate(t *testing.T) {
 		s.Namespace = "ns"
 		s.Source = SourceConfig{
 			SourceType: SourceTypeCatalog,
-			Catalog: &CatalogFilter{
+			Catalog: CatalogFilter{
 				PackageName: "test",
 			},
 		}

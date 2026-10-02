@@ -32,6 +32,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -110,6 +111,25 @@ func ServiceAccountDeprecationWarning() ClusterExtensionValidator {
 	}
 }
 
+// ValidateDirectBundle fails if the Boxcutter runtime is unavailable or if the configuration conflicts with direct bundle installation
+func ValidateDirectBundle() ClusterExtensionValidator {
+	return func(_ context.Context, ext *ocv1.ClusterExtension) error {
+		if ext.Spec.Source.SourceType != ocv1.SourceTypeOCIImage {
+			return nil
+		}
+		if ext.Spec.Source.SourceType == ocv1.SourceTypeOCIImage && !features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+			return fmt.Errorf("sourceType %q requires the %s feature gate", ocv1.SourceTypeOCIImage, features.BoxcutterRuntime)
+		}
+		if ext.Spec.Source.OCIImage.Ref == "" {
+			return fmt.Errorf("sourceType %q requires ociImage.ref", ocv1.SourceTypeOCIImage)
+		}
+		if ext.Spec.Source.Catalog.PackageName != "" {
+			return fmt.Errorf("sourceType %q forbids source.catalog", ocv1.SourceTypeOCIImage)
+		}
+		return nil
+	}
+}
+
 func RetrieveRevisionStates(r RevisionStatesGetter) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
@@ -139,16 +159,11 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 
 		// If already rolling out, use existing revision and set deprecation to Unknown (no catalog check)
 		if len(state.revisionStates.RollingOut) > 0 {
-			installedBundleName := ""
-			if state.revisionStates.Installed != nil {
-				installedBundleName = state.revisionStates.Installed.Name
-			}
-			SetDeprecationStatus(ext, installedBundleName, nil, false)
+			SetDeprecationStatus(ext, installedBundleName(state.revisionStates), nil, false)
 			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
 			return nil, nil
 		}
 
-		// Resolve a new bundle from the catalog
 		l.V(1).Info("resolving bundle")
 		var bm *ocv1.BundleMetadata
 		if state.revisionStates.Installed != nil {
@@ -158,10 +173,7 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 
 		// Get the installed bundle name for deprecation status.
 		// BundleDeprecated should reflect what's currently running, not what we're trying to install.
-		installedBundleName := ""
-		if state.revisionStates.Installed != nil {
-			installedBundleName = state.revisionStates.Installed.Name
-		}
+		installedBundleName := installedBundleName(state.revisionStates)
 
 		// Set deprecation status based on resolution results:
 		//  - If resolution succeeds: hasCatalogData=true, deprecation shows catalog data (nil=not deprecated)
@@ -177,11 +189,19 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		//   the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
 		//   all catalogs? This needs a follow-up discussion and PR.
 		hasCatalogData := err == nil || resolvedDeprecation != nil
+		if behavior, ok := r.(resolve.ResolverBehavior); ok {
+			hasCatalogData = behavior.HasCatalogData(ext)
+		}
 		state.resolvedDeprecation = resolvedDeprecation
 		state.hasCatalogData = hasCatalogData
 		SetDeprecationStatus(ext, installedBundleName, resolvedDeprecation, hasCatalogData)
 
 		if err != nil {
+			if behavior, ok := r.(resolve.ResolverBehavior); ok && !behavior.ShouldFallbackOnError(ext) {
+				setStatusProgressing(ext, err)
+				setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+				return nil, err
+			}
 			return handleResolutionError(ctx, c, state, ext, err)
 		}
 
@@ -198,6 +218,13 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 		}
 		return nil, nil
 	}
+}
+
+func installedBundleName(states *RevisionStates) string {
+	if states != nil && states.Installed != nil {
+		return states.Installed.Name
+	}
+	return ""
 }
 
 // handleResolutionError handles the case when bundle resolution fails.
@@ -227,7 +254,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 
 	// Check if the spec is requesting a specific version that differs from installed
 	specVersion := ""
-	if ext.Spec.Source.Catalog != nil {
+	if ext.Spec.Source.Catalog.PackageName != "" {
 		specVersion = ext.Spec.Source.Catalog.Version
 	}
 	installedVersion := state.revisionStates.Installed.Version
@@ -250,7 +277,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 	if catalogCheckErr != nil {
 		msg := fmt.Sprintf("failed to resolve bundle: %v", err)
 		var catalogName string
-		if ext.Spec.Source.Catalog != nil {
+		if ext.Spec.Source.Catalog.PackageName != "" {
 			catalogName = getCatalogNameFromSelector(ext.Spec.Source.Catalog.Selector)
 		}
 		l.Error(catalogCheckErr, "error checking if ClusterCatalogs exist, will retry resolution",
@@ -268,7 +295,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 		// Retry resolution instead of falling back
 		msg := fmt.Sprintf("failed to resolve bundle, retrying: %v", err)
 		var catalogName string
-		if ext.Spec.Source.Catalog != nil {
+		if ext.Spec.Source.Catalog.PackageName != "" {
 			catalogName = getCatalogNameFromSelector(ext.Spec.Source.Catalog.Selector)
 		}
 		l.Error(err, "resolution failed but matching ClusterCatalogs exist - retrying instead of falling back",
@@ -284,7 +311,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 	// The controller watches ClusterCatalog resources, so when ClusterCatalogs become available again,
 	// a reconcile will be triggered automatically, allowing the extension to upgrade.
 	var catalogName string
-	if ext.Spec.Source.Catalog != nil {
+	if ext.Spec.Source.Catalog.PackageName != "" {
 		catalogName = getCatalogNameFromSelector(ext.Spec.Source.Catalog.Selector)
 	}
 	l.Info("matching ClusterCatalogs unavailable or deleted - falling back to installed bundle to maintain workload",
@@ -313,7 +340,7 @@ func getCatalogNameFromSelector(selector *metav1.LabelSelector) string {
 // getPackageName safely extracts the package name from the extension spec.
 // Returns empty string if Catalog source is nil.
 func getPackageName(ext *ocv1.ClusterExtension) string {
-	if ext.Spec.Source.Catalog == nil {
+	if ext.Spec.Source.Catalog.PackageName == "" {
 		return ""
 	}
 	return ext.Spec.Source.Catalog.PackageName
@@ -327,7 +354,7 @@ func CheckCatalogsExist(ctx context.Context, c client.Client, ext *ocv1.ClusterE
 	var catalogList *ocv1.ClusterCatalogList
 	var listErr error
 
-	if ext.Spec.Source.Catalog == nil || ext.Spec.Source.Catalog.Selector == nil {
+	if ext.Spec.Source.Catalog.PackageName == "" || ext.Spec.Source.Catalog.Selector == nil {
 		// No selector means all ClusterCatalogs match - check if any ClusterCatalogs exist at all
 		catalogList = &ocv1.ClusterCatalogList{}
 		listErr = c.List(ctx, catalogList, client.Limit(1))

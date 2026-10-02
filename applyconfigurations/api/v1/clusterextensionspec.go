@@ -65,8 +65,10 @@ type ClusterExtensionSpecApplyConfiguration struct {
 	// source is required and selects the installation source of content for this ClusterExtension.
 	// Set the sourceType field to perform the selection.
 	//
-	// Catalog is currently the only implemented sourceType.
 	// Setting sourceType to "Catalog" requires the catalog field to also be defined.
+	// <opcon:experimental:description>
+	// Setting sourceType to "OCIImage" requires the ociImage field to also be defined.
+	// </opcon:experimental:description>
 	//
 	// Below is a minimal example of a source definition (in yaml):
 	//
