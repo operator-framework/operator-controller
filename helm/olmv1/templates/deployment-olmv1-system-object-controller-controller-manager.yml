@@ -1,0 +1,120 @@
+{{- if include "objectController.enabled" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kubectl.kubernetes.io/default-logs-container: manager
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: object-controller
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: object-controller-controller-manager
+  namespace: {{ .Values.namespaces.olmv1.name }}
+spec:
+  replicas: {{ .Values.options.objectController.deployment.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      control-plane: object-controller-controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+        {{- include "olmv1.annotations" . | nindent 8 }}
+        {{- if .Values.options.openshift.enabled }}
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
+        openshift.io/required-scc: privileged
+        {{- end }}
+      labels:
+        app.kubernetes.io/name: object-controller
+        control-plane: object-controller-controller-manager
+        {{- include "olmv1.labels" . | nindent 8 }}
+        {{- with .Values.options.objectController.deployment.podLabels }}
+        {{- toYamlPretty . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+        - name: manager
+          command:
+            - /object-controller
+          args:
+            - --health-probe-bind-address=:8081
+            {{- if not .Values.options.tilt.enabled }}
+            - --leader-elect
+            {{- end }}
+            {{- if .Values.options.profiling.enabled }}
+            - --pprof-bind-address=:6060
+            {{- end }}
+            {{- if or .Values.options.certManager.enabled .Values.options.openshift.enabled }}
+            - --metrics-bind-address=:8443
+            - --tls-cert=/var/certs/tls.crt
+            - --tls-key=/var/certs/tls.key
+            {{- end }}
+            {{- if .Values.options.openshift.enabled }}
+            - --v=${LOG_VERBOSITY}
+            {{- end }}
+            {{- if .Values.options.e2e.enabled }}
+            - --tls-profile=modern
+            {{- end }}
+            {{- range .Values.options.objectController.deployment.extraArguments }}
+            - {{ . }}
+            {{- end }}
+          image: "{{ .Values.options.objectController.deployment.image }}"
+          {{- if .Values.options.e2e.enabled }}
+          env:
+            - name: GOCOVERDIR
+              value: /e2e-coverage
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+          {{- if or .Values.options.certManager.enabled .Values.options.openshift.enabled .Values.options.e2e.enabled }}
+          volumeMounts:
+            {{- if or .Values.options.certManager.enabled .Values.options.openshift.enabled }}
+            - name: object-controller-certs
+              mountPath: /var/certs
+              readOnly: true
+            {{- end }}
+            {{- if .Values.options.e2e.enabled }}
+            - name: e2e-coverage-volume
+              mountPath: /e2e-coverage
+            {{- end }}
+          {{- end }}
+          {{- with .Values.deployments.containerSpec }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+      serviceAccountName: object-controller-controller-manager
+      {{- if or .Values.options.certManager.enabled .Values.options.openshift.enabled .Values.options.e2e.enabled }}
+      volumes:
+        {{- if or .Values.options.certManager.enabled .Values.options.openshift.enabled }}
+        - name: object-controller-certs
+          secret:
+            secretName: object-controller-cert
+        {{- end }}
+        {{- if .Values.options.e2e.enabled }}
+        - name: e2e-coverage-volume
+          persistentVolumeClaim:
+            claimName: e2e-coverage
+        {{- end }}
+      {{- end }}
+      {{- with .Values.deployments.templateSpec }}
+      {{- toYamlPretty . | nindent 6 }}
+      {{- end }}
+{{- end }}
