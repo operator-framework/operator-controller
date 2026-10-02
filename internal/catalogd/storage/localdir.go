@@ -121,7 +121,7 @@ func (s *LocalDirV1) storeAtomicSwap(ctx context.Context, catalog string, fsys f
 		return "", fmt.Errorf("error removing orphaned temp directories: %w", err)
 	}
 
-	tmpCatalogDir, err := os.MkdirTemp(s.RootDir, fmt.Sprintf(".%s-*", catalog))
+	tmpCatalogDir, err := os.MkdirTemp(s.RootDir, fmt.Sprintf(".%s_*", catalog))
 	if err != nil {
 		return "", err
 	}
@@ -194,7 +194,9 @@ func (s *LocalDirV1) storeAtomicSwap(ctx context.Context, catalog string, fsys f
 // removeOrphanedTempDirs removes temporary staging directories that were created by a
 // previous Store call for the given catalog but were not cleaned up because the process
 // was interrupted (e.g. killed by the OOM killer) before the deferred RemoveAll could run.
-// Temp dirs use the prefix ".{catalog}-" as created by os.MkdirTemp.
+// Temp dirs use the prefix ".{catalog}_" as created by os.MkdirTemp.
+// The underscore cannot occur in a Kubernetes catalog name, so one catalog's
+// prefix cannot match another catalog's temp dirs.
 // This method must be called while the write lock is held.
 func (s *LocalDirV1) removeOrphanedTempDirs(catalog string) error {
 	entries, err := os.ReadDir(s.RootDir)
@@ -204,7 +206,7 @@ func (s *LocalDirV1) removeOrphanedTempDirs(catalog string) error {
 	if err != nil {
 		return fmt.Errorf("error reading storage directory: %w", err)
 	}
-	prefix := fmt.Sprintf(".%s-", catalog)
+	prefix := fmt.Sprintf(".%s_", catalog)
 	for _, entry := range entries {
 		if strings.HasPrefix(entry.Name(), prefix) {
 			if err := os.RemoveAll(filepath.Join(s.RootDir, entry.Name())); err != nil {
