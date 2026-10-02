@@ -16,7 +16,9 @@ Create chart name and version as used by the chart label.
 Return the name of the active component for a prefix, but _only_ if one is enabled
 */}}
 {{- define "component.name.prefix" -}}
-{{- if and (.Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) -}}
+{{- if and (not .Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) (include "objectController.enabled" .) -}}
+object-controller-
+{{- else if and (.Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) -}}
 operator-controller-
 {{- else if and (not .Values.options.operatorController.enabled) (.Values.options.catalogd.enabled) -}}
 catalogd-
@@ -45,12 +47,26 @@ Insertion of additional rules for RBAC
 Returns "operator-controller", "catalogd" or "olmv1" depending on enabled components
 */}}
 {{- define "olmv1.label.name" -}}
-{{- if (and .Values.options.operatorController.enabled (not .Values.options.catalogd.enabled)) -}}
+{{- if and (not .Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) (include "objectController.enabled" .) -}}
+object-controller
+{{- else if (and .Values.options.operatorController.enabled (not .Values.options.catalogd.enabled)) -}}
 operator-controller
 {{- else if (and (not .Values.options.operatorController.enabled) .Values.options.catalogd.enabled) -}}
 catalogd
 {{- else -}}
 olmv1
+{{- end -}}
+{{- end -}}
+
+{{/*
+Prepare component resources without enabling a second ClusterObjectSet reconciler.
+The deployment and reconciliation handover will replace this activation guard.
+*/}}
+{{- define "objectController.enabled" -}}
+{{- if hasKey .Values.options "objectController" -}}
+{{- if .Values.options.objectController.enabled -}}
+{{- fail "object-controller deployment support requires the reconciliation cutover" -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
