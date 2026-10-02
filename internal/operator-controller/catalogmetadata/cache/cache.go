@@ -80,7 +80,7 @@ func (fsc *filesystemCache) writeFS(catalogName string, source io.Reader) (fs.FS
 		return nil, err
 	}
 
-	tmpDir, err := os.MkdirTemp(fsc.cachePath, fmt.Sprintf(".%s-", catalogName))
+	tmpDir, err := os.MkdirTemp(fsc.cachePath, fmt.Sprintf(".%s_", catalogName))
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporary directory to unpack catalog metadata: %v", err)
 	}
@@ -173,8 +173,10 @@ func (fsc *filesystemCache) cacheDir(catalogName string) string {
 
 // removeOrphanedTempDirs removes temporary staging directories left behind by a
 // previous writeFS call for the given catalog that was interrupted before the
-// rename (e.g. pod eviction or crash). Temp dirs use the prefix ".{catalogName}-"
-// as created by os.MkdirTemp. This method must be called while the write lock is held.
+// rename (e.g. a container crash). Temp dirs use the prefix ".{catalogName}_"
+// as created by os.MkdirTemp. The underscore cannot occur in a Kubernetes catalog
+// name, so one catalog's prefix cannot match another catalog's temp dirs.
+// This method must be called while the write lock is held.
 func (fsc *filesystemCache) removeOrphanedTempDirs(catalogName string) error {
 	entries, err := os.ReadDir(fsc.cachePath)
 	if os.IsNotExist(err) {
@@ -183,7 +185,7 @@ func (fsc *filesystemCache) removeOrphanedTempDirs(catalogName string) error {
 	if err != nil {
 		return fmt.Errorf("error reading cache directory: %w", err)
 	}
-	prefix := fmt.Sprintf(".%s-", catalogName)
+	prefix := fmt.Sprintf(".%s_", catalogName)
 	for _, entry := range entries {
 		if strings.HasPrefix(entry.Name(), prefix) {
 			if err := os.RemoveAll(filepath.Join(fsc.cachePath, entry.Name())); err != nil {
