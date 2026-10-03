@@ -53,6 +53,7 @@ type CatalogHandlers struct {
 	rootURL       *url.URL
 	enableMetas   MetasHandlerMode
 	enableGraphQL GraphQLQueriesMode
+	isLeader      func() bool
 }
 
 // Index provides methods for looking up catalog content by schema/package/name
@@ -72,14 +73,19 @@ type CatalogStore interface {
 	GetIndex(catalog string) (Index, error)
 }
 
-// NewCatalogHandlers creates a new HTTP handlers instance
-func NewCatalogHandlers(store CatalogStore, graphqlSvc service.GraphQLService, rootURL *url.URL, enableMetas MetasHandlerMode, enableGraphQL GraphQLQueriesMode) *CatalogHandlers {
+// NewCatalogHandlers creates a new HTTP handlers instance.
+// isLeader reports whether the current pod is the leader-elected instance.
+// When a catalog's content is not found (fs.ErrNotExist), the leader returns
+// 404 (the catalog genuinely does not exist) while a non-leader returns 503
+// with Retry-After (content may not have been synced to this replica yet).
+func NewCatalogHandlers(store CatalogStore, graphqlSvc service.GraphQLService, rootURL *url.URL, enableMetas MetasHandlerMode, enableGraphQL GraphQLQueriesMode, isLeader func() bool) *CatalogHandlers {
 	return &CatalogHandlers{
 		store:         store,
 		graphqlSvc:    graphqlSvc,
 		rootURL:       rootURL,
 		enableMetas:   enableMetas,
 		enableGraphQL: enableGraphQL,
+		isLeader:      isLeader,
 	}
 }
 
@@ -117,12 +123,12 @@ func (h *CatalogHandlers) Handler() http.Handler {
 func (h *CatalogHandlers) handleV1All(w http.ResponseWriter, r *http.Request) {
 	catalog := r.PathValue("catalog")
 	if err := isValidCatalogName(catalog); err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 	catalogFile, catalogStat, err := h.store.GetCatalogData(catalog)
 	if err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 	defer catalogFile.Close()
@@ -135,7 +141,7 @@ func (h *CatalogHandlers) handleV1All(w http.ResponseWriter, r *http.Request) {
 func (h *CatalogHandlers) handleV1Metas(w http.ResponseWriter, r *http.Request) {
 	catalog := r.PathValue("catalog")
 	if err := isValidCatalogName(catalog); err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 
@@ -148,13 +154,13 @@ func (h *CatalogHandlers) handleV1Metas(w http.ResponseWriter, r *http.Request) 
 
 	for param := range r.URL.Query() {
 		if !expectedParams[param] {
-			httpError(w, errInvalidParams)
+			h.httpError(w, errInvalidParams)
 			return
 		}
 	}
 	catalogFile, catalogStat, err := h.store.GetCatalogData(catalog)
 	if err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 	defer catalogFile.Close()
@@ -171,17 +177,17 @@ func (h *CatalogHandlers) handleV1Metas(w http.ResponseWriter, r *http.Request) 
 
 	if schema == "" && pkg == "" && name == "" {
 		// If no parameters are provided, return the entire catalog
-		serveJSONLines(w, r, catalogFile)
+		h.serveJSONLines(w, r, catalogFile)
 		return
 	}
 
 	idx, err := h.store.GetIndex(catalog)
 	if err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 	indexReader := idx.Get(catalogFile, schema, pkg, name)
-	serveJSONLines(w, r, indexReader)
+	h.serveJSONLines(w, r, indexReader)
 }
 
 // handleV1GraphQL handles GraphQL queries
@@ -197,7 +203,7 @@ func (h *CatalogHandlers) handleV1GraphQL(w http.ResponseWriter, r *http.Request
 
 	catalog := r.PathValue("catalog")
 	if err := isValidCatalogName(catalog); err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 
@@ -225,25 +231,38 @@ func (h *CatalogHandlers) handleV1GraphQL(w http.ResponseWriter, r *http.Request
 
 	result, err := h.graphqlSvc.ExecuteQuery(r.Context(), catalog, params.Query)
 	if err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(result); err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 }
 
-// httpError writes an HTTP error response based on the error type
-func httpError(w http.ResponseWriter, err error) {
+// httpError writes an HTTP error response based on the error type.
+// For fs.ErrNotExist, the response depends on leadership status:
+//   - Leader:     404 Not Found (the catalog genuinely does not exist)
+//   - Non-leader: 503 Service Unavailable + Retry-After: 1 (content may exist on the leader)
+func (h *CatalogHandlers) httpError(w http.ResponseWriter, err error) {
 	var code int
 	var message string
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
-		code = http.StatusNotFound
-		message = fmt.Sprintf("%d %s", code, http.StatusText(code))
+		if h.isLeader() {
+			// Leader has reconciled all catalogs; if content is still not
+			// found, the catalog genuinely does not exist.
+			code = http.StatusNotFound
+			message = fmt.Sprintf("%d %s", code, http.StatusText(code))
+		} else {
+			// Non-leader pods may not have synced content yet; tell the
+			// client to retry (potentially against the leader).
+			code = http.StatusServiceUnavailable
+			w.Header().Set("Retry-After", "1")
+			message = "catalog content not yet available"
+		}
 	case errors.Is(err, fs.ErrPermission):
 		code = http.StatusForbidden
 		message = fmt.Sprintf("%d %s", code, http.StatusText(code))
@@ -268,7 +287,7 @@ func httpError(w http.ResponseWriter, err error) {
 }
 
 // serveJSONLines writes JSON lines content to the response
-func serveJSONLines(w http.ResponseWriter, r *http.Request, rs io.Reader) {
+func (h *CatalogHandlers) serveJSONLines(w http.ResponseWriter, r *http.Request, rs io.Reader) {
 	w.Header().Add("Content-Type", "application/jsonl")
 	// Copy the content of the reader to the response writer only if it's a GET request
 	if r.Method == http.MethodHead {
@@ -276,7 +295,7 @@ func serveJSONLines(w http.ResponseWriter, r *http.Request, rs io.Reader) {
 	}
 	_, err := io.Copy(w, rs)
 	if err != nil {
-		httpError(w, err)
+		h.httpError(w, err)
 		return
 	}
 }
