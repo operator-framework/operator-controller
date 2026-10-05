@@ -112,7 +112,7 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 			},
 		},
 		{
-			name: "rolling revision without Available resets stale Progressing to RollingOut default",
+			name: "rolling revision without Ready resets stale Progressing to RollingOut default",
 			args: args{
 				activeRevisions: []ocv1.RevisionStatus{
 					{Name: "ce-1"},
@@ -128,7 +128,7 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				revisionStates: &RevisionStates{
 					RollingOut: []*RevisionMetadata{
 						// Freshly created revision that has not reconciled yet:
-						// it has no Available condition.
+						// it has no Ready condition.
 						{RevisionName: "ce-1"},
 					},
 				},

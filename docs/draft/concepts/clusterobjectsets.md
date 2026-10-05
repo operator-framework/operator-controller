@@ -167,7 +167,7 @@ Indicates whether the revision is actively rolling out.
 | False | `Blocked` | Error requiring manual intervention |
 | False | `Archived` | No longer actively reconciled |
 
-### Available
+### Ready
 
 Indicates whether all objects have been successfully rolled out and pass readiness probes.
 
@@ -387,7 +387,7 @@ kubectl get clusterobjectset <name> -o yaml
 Example output:
 
 ```
-NAME                   AVAILABLE   PROGRESSING   AGE
-my-extension-abc12     Unknown     False         2d
-my-extension-def34     True        True          1h
+NAME                   READY     AGE
+my-extension-abc12     Unknown   2d
+my-extension-def34     True      1h
 ```
