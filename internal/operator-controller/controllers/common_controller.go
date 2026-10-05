@@ -77,9 +77,9 @@ func setActiveRevisionsFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 	}
 	for _, r := range revisionStates.RollingOut {
 		rs := ocv1.RevisionStatus{Name: r.RevisionName}
-		avail := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeReady)
-		if avail != nil {
-			a := *avail
+		ready := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeReady)
+		if ready != nil {
+			a := *ready
 			a.Type = ocv1.TypeAvailable
 			a.ObservedGeneration = ext.GetGeneration()
 			apimeta.SetStatusCondition(&rs.Conditions, a)
@@ -91,9 +91,9 @@ func setActiveRevisionsFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 // setAvailableFromRevisionStates sets the Available status condition based on the given revision states
 func setAvailableFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *RevisionStates) {
 	if i := revisionStates.Installed; i != nil {
-		avail := apimeta.FindStatusCondition(i.Conditions, ocv1.ClusterObjectSetTypeReady)
-		if avail != nil {
-			a := *avail
+		ready := apimeta.FindStatusCondition(i.Conditions, ocv1.ClusterObjectSetTypeReady)
+		if ready != nil {
+			a := *ready
 			a.Type = ocv1.TypeAvailable
 			a.ObservedGeneration = ext.GetGeneration()
 			apimeta.SetStatusCondition(&ext.Status.Conditions, a)
@@ -102,26 +102,26 @@ func setAvailableFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *
 }
 
 // setProgressingFromRevisionStates sets the Progressing status condition based on the given revision states
-// The Progressing condition is derived from the Available condition of either:
+// The Progressing condition is derived from the Ready condition of either:
 // - the latest rolling out revision (when one exists); OR
 // - the installed revision
-// When the source revision has no Available condition yet (e.g. a freshly created revision that has
+// When the source revision has no Ready condition yet (e.g. a freshly created revision that has
 // not reconciled), a nil condition is passed so the helper applies the RollingOut default rather than
 // leaving Progressing stale.
 func setProgressingFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *RevisionStates) {
 	if len(revisionStates.RollingOut) > 0 {
 		revisionMeta := revisionStates.RollingOut[len(revisionStates.RollingOut)-1]
-		avail := apimeta.FindStatusCondition(revisionMeta.Conditions, ocv1.ClusterObjectSetTypeReady)
-		setProgressingFromAvailable(ext, avail, false)
+		readyCond := apimeta.FindStatusCondition(revisionMeta.Conditions, ocv1.ClusterObjectSetTypeReady)
+		setProgressingFromReady(ext, readyCond, false)
 	} else if revisionStates.Installed != nil {
-		setProgressingFromAvailable(ext, apimeta.FindStatusCondition(revisionStates.Installed.Conditions, ocv1.ClusterObjectSetTypeReady), true)
+		setProgressingFromReady(ext, apimeta.FindStatusCondition(revisionStates.Installed.Conditions, ocv1.ClusterObjectSetTypeReady), true)
 	}
 }
 
-// setProgressingFromAvailable derives the correct Progressing condition for the ClusterExtension from the given
-// revision Available condition, and whether the revision is complete or not
-func setProgressingFromAvailable(ext *ocv1.ClusterExtension, availableCond *metav1.Condition, isRevisionCompleted bool) {
-	prog := progressingFromAvailable(availableCond, isRevisionCompleted)
+// setProgressingFromReady derives the correct Progressing condition for the ClusterExtension from the given
+// revision Ready condition, and whether the revision is complete or not
+func setProgressingFromReady(ext *ocv1.ClusterExtension, readyCond *metav1.Condition, isRevisionCompleted bool) {
+	prog := progressingFromReady(readyCond, isRevisionCompleted)
 	prog.ObservedGeneration = ext.GetGeneration()
 	apimeta.SetStatusCondition(&ext.Status.Conditions, prog)
 }
@@ -131,16 +131,16 @@ func setProgressingFromAvailable(ext *ocv1.ClusterExtension, availableCond *meta
 //
 // Returns Failed when:
 //   - No rolling revisions exist (nothing to install)
-//   - The latest rolling revision has Available condition with Reason: Reconciling (indicates an error occurred)
+//   - The latest rolling revision has Ready condition with Reason: Reconciling (indicates an error occurred)
 //
 // Returns Absent when:
-//   - Rolling revisions exist with the latest not having Available=Reconciling (healthy phased rollout in progress)
+//   - Rolling revisions exist with the latest not having Ready=Reconciling (healthy phased rollout in progress)
 //
 // Rationale:
 //   - Failed: Semantically indicates an error prevented installation
 //   - Absent: Semantically indicates "not there yet" (neutral state, e.g., during healthy rollout)
-//   - Reconciling reason on Available indicates an error (config validation, apply failure, etc.)
-//   - Other Available reasons indicate healthy progress or terminal states handled elsewhere
+//   - Reconciling reason on Ready indicates an error (config validation, apply failure, etc.)
+//   - Other Ready reasons indicate healthy progress or terminal states handled elsewhere
 //   - Only the LATEST revision matters - old errors superseded by newer healthy revisions should not cause Failed
 //
 // Note: rollingRevisions are sorted in ascending order by Spec.Revision (oldest to newest),
@@ -151,9 +151,9 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	}
 	// Latest revision is the last element (sorted ascending by Spec.Revision).
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
-	availableCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeReady)
+	readyCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeReady)
 	// Reconciling is the new home of the old Retrying signal: it indicates an error occurred.
-	if availableCond != nil && availableCond.Reason == ocv1.ClusterObjectSetReasonReconciling {
+	if readyCond != nil && readyCond.Reason == ocv1.ClusterObjectSetReasonReconciling {
 		return ocv1.ReasonFailed
 	}
 
@@ -229,13 +229,13 @@ func setStatusProgressing(ext *ocv1.ClusterExtension, err error) {
 	SetStatusCondition(&ext.Status.Conditions, progressingCond)
 }
 
-// progressingFromAvailable reconstructs the ClusterExtension Progressing condition
-// for a single revision from that revision's ClusterObjectSet Available condition
+// progressingFromReady reconstructs the ClusterExtension Progressing condition
+// for a single revision from that revision's ClusterObjectSet Ready condition
 // and whether the revision has completed its rollout (status.completedAt set).
 //
 // This replaces the previous behavior of mirroring the ClusterObjectSet Progressing
 // condition, which no longer exists. ObservedGeneration is left unset; callers set it.
-func progressingFromAvailable(available *metav1.Condition, completed bool) metav1.Condition {
+func progressingFromReady(ready *metav1.Condition, completed bool) metav1.Condition {
 	cond := metav1.Condition{
 		Type:   ocv1.TypeProgressing,
 		Status: metav1.ConditionTrue,
@@ -245,13 +245,13 @@ func progressingFromAvailable(available *metav1.Condition, completed bool) metav
 		cond.Message = "Desired state reached"
 		return cond
 	}
-	if available == nil {
+	if ready == nil {
 		cond.Reason = ocv1.ReasonRollingOut
 		cond.Message = "Revision is rolling out."
 		return cond
 	}
-	cond.Message = available.Message
-	switch available.Reason {
+	cond.Message = ready.Message
+	switch ready.Reason {
 	case ocv1.ClusterObjectSetReasonBlocked:
 		cond.Status = metav1.ConditionFalse
 		cond.Reason = ocv1.ReasonBlocked

@@ -495,52 +495,52 @@ func TestDetermineFailureReason(t *testing.T) {
 	}
 }
 
-func TestProgressingFromAvailable(t *testing.T) {
+func TestProgressingFromReady(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
-		available *metav1.Condition
+		ready     *metav1.Condition
 		completed bool
 		expected  metav1.Condition
 	}{
 		{
 			name:      "completed revision maps to Succeeded",
-			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionTrue, Reason: ocv1.ClusterObjectSetReasonProbesSucceeded, Message: "ok"},
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionTrue, Reason: ocv1.ClusterObjectSetReasonProbesSucceeded, Message: "ok"},
 			completed: true,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonSucceeded, Message: "Desired state reached"},
 		},
 		{
-			name:      "nil available on rolling revision defaults to RollingOut",
-			available: nil,
+			name:      "nil ready on rolling revision defaults to RollingOut",
+			ready:     nil,
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "Revision is rolling out."},
 		},
 		{
 			name:      "probe failure maps to RollingOut",
-			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonProbeFailure, Message: "probe failed"},
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonProbeFailure, Message: "probe failed"},
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "probe failed"},
 		},
 		{
 			name:      "reconciling maps to Retrying",
-			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionUnknown, Reason: ocv1.ClusterObjectSetReasonReconciling, Message: "boom"},
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionUnknown, Reason: ocv1.ClusterObjectSetReasonReconciling, Message: "boom"},
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "boom"},
 		},
 		{
 			name:      "blocked maps to Blocked",
-			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonBlocked, Message: "manual fix needed"},
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonBlocked, Message: "manual fix needed"},
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionFalse, Reason: ocv1.ReasonBlocked, Message: "manual fix needed"},
 		},
 		{
 			name:      "deadline exceeded maps to ProgressDeadlineExceeded",
-			available: &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ReasonProgressDeadlineExceeded, Message: "too slow"},
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ReasonProgressDeadlineExceeded, Message: "too slow"},
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionFalse, Reason: ocv1.ReasonProgressDeadlineExceeded, Message: "too slow"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := progressingFromAvailable(tc.available, tc.completed)
+			got := progressingFromReady(tc.ready, tc.completed)
 			require.Equal(t, tc.expected.Type, got.Type)
 			require.Equal(t, tc.expected.Status, got.Status)
 			require.Equal(t, tc.expected.Reason, got.Reason)

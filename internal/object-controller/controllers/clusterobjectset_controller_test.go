@@ -68,7 +68,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name:                    "Available condition is set to False/Reconciling on error when not previously set",
+			name:                    "Ready condition is set to False/Reconciling on error when not previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
@@ -92,7 +92,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name:                    "Available condition is set to False/Reconciling on error when previously set",
+			name:                    "Ready condition is set to False/Reconciling on error when previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
@@ -124,8 +124,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		},
 		{
 			// A revision whose FIRST reconcile fails at engine creation (factory error)
-			// must set Available=False/Reconciling even though Available did not previously exist.
-			name:                    "Available condition is set to False/Reconciling on factory error when not previously set",
+			// must set Ready=False/Reconciling even though Ready did not previously exist.
+			name:                    "Ready condition is set to False/Reconciling on factory error when not previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			factoryErr:              errors.New("failed to create revision engine"),
 			existingObjs: func() []client.Object {
@@ -147,7 +147,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name:                    "set Available:False:RollingOut status condition during rollout when no probe failures are detected",
+			name:                    "set Ready:False:RollingOut status condition during rollout when no probe failures are detected",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
@@ -170,7 +170,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is in transition",
+			name:                    "set Ready:False:ProbeFailure condition when probe failures are detected and revision is in transition",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: true,
@@ -258,7 +258,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is not in transition",
+			name:                    "set Ready:False:ProbeFailure condition when probe failures are detected and revision is not in transition",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: false,
@@ -346,7 +346,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name: "set Available:False:RollingOut condition while revision is transitioning",
+			name: "set Ready:False:RollingOut condition while revision is transitioning",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				inTransition: true,
 			}),
@@ -371,7 +371,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name: "set Available:True:ProbesSucceeded condition and completedAt on successful revision rollout",
+			name: "set Ready:True:ProbesSucceeded condition and completedAt on successful revision rollout",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
 			}),
@@ -729,7 +729,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Available:False:Reconciling when tracking cache free fails during deletion",
+			name:           "set Ready:False:Reconciling when tracking cache free fails during deletion",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -761,7 +761,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Available:False:Archived condition when a revision is archived",
+			name:           "set Ready:False:Archived condition when a revision is archived",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -794,7 +794,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Available:False:Reconciling and requeue when archived revision archival is incomplete",
+			name:           "set Ready:False:Reconciling and requeue when archived revision archival is incomplete",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -993,7 +993,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 		clock           clock.Clock
 	}{
 		{
-			name: "available set to false/ProgressDeadlineExceeded when progress deadline is exceeded",
+			name: "Ready set to false/ProgressDeadlineExceeded when progress deadline is exceeded",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -1019,8 +1019,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 		},
 		{
 			// A rolling revision with failing probes AND an exceeded progress deadline must
-			// set Available=False/ProgressDeadlineExceeded (deadline wins over ProbeFailure).
-			name: "available set to false/ProgressDeadlineExceeded when deadline is exceeded during probe failure (deadline wins over ProbeFailure)",
+			// set Ready=False/ProgressDeadlineExceeded (deadline wins over ProbeFailure).
+			name: "Ready set to false/ProgressDeadlineExceeded when deadline is exceeded during probe failure (deadline wins over ProbeFailure)",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
