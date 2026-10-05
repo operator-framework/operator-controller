@@ -261,13 +261,16 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 				continue
 			}
 			for _, ores := range pres.GetObjects() {
+				if ores.IsPaused() && ores.Action() == machinery.ActionCreated {
+					// Skip probe checks of objects not yet created
+					continue
+				}
 				// we probably want an AvailabilityProbeType and run through all of them independently of whether
 				// the revision is complete or not
 				pr := ores.ProbeResults()[boxcutter.ProgressProbeType]
 				if pr.Status == machinerytypes.ProbeStatusTrue {
 					continue
 				}
-
 				obj := ores.Object()
 				gvk := obj.GetObjectKind().GroupVersionKind()
 				// I think these can be pretty large and verbose. We may want to
@@ -314,7 +317,7 @@ func (c *ClusterObjectSetReconciler) delete(ctx context.Context, cos *ocv1.Clust
 }
 
 func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine RevisionEngine, cos *ocv1.ClusterObjectSet, revision boxcutter.RevisionBuilder) (ctrl.Result, error) {
-	tdres, err := revisionEngine.Teardown(ctx, revision)
+	tdres, err := revisionEngine.Teardown(ctx, revision, machinerytypes.WithObserveAfterIncomplete{})
 	if err != nil {
 		err = fmt.Errorf("error archiving revision: %v", err)
 		setRetryingConditions(cos, err.Error(), false)
@@ -491,6 +494,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 		boxcutter.WithSiblingOwners(siblingObjs),
 		boxcutter.WithProbe(boxcutter.ProgressProbeType, progressionProbes),
 		boxcutter.WithAggregatePhaseReconcileErrors(),
+		boxcutter.WithObserveAfterIncomplete{},
 	}
 
 	phases := make([]boxcutter.Phase, 0, len(cos.Spec.Phases))
