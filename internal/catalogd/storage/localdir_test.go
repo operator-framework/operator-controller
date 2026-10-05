@@ -151,15 +151,19 @@ func TestLocalDirStorage(t *testing.T) {
 
 				// Simulate temp dirs left behind by a previous crashed Store run.
 				for _, orphan := range []string{
-					".test-catalog-1234567890",
-					".test-catalog-9876543210",
+					".test-catalog_1234567890",
+					".test-catalog_9876543210",
 				} {
 					if err := os.MkdirAll(filepath.Join(rootDir, orphan), 0700); err != nil {
 						t.Fatal(err)
 					}
 				}
 				// A dir for a different catalog must not be removed.
-				if err := os.MkdirAll(filepath.Join(rootDir, ".other-catalog-1111111111"), 0700); err != nil {
+				if err := os.MkdirAll(filepath.Join(rootDir, ".other-catalog_1111111111"), 0700); err != nil {
+					t.Fatal(err)
+				}
+				// A catalog whose name extends this one must retain its temp dir.
+				if err := os.MkdirAll(filepath.Join(rootDir, ".test-catalog-mirrored_1111111111"), 0700); err != nil {
 					t.Fatal(err)
 				}
 				return s, createTestFS(t)
@@ -182,7 +186,7 @@ func TestLocalDirStorage(t *testing.T) {
 				}
 
 				// Orphaned dirs for "test-catalog" must be gone.
-				for _, orphan := range []string{".test-catalog-1234567890", ".test-catalog-9876543210"} {
+				for _, orphan := range []string{".test-catalog_1234567890", ".test-catalog_9876543210"} {
 					for _, name := range names {
 						if name == orphan {
 							t.Errorf("expected orphaned temp dir %q to be removed, but it still exists", orphan)
@@ -195,16 +199,11 @@ func TestLocalDirStorage(t *testing.T) {
 					t.Error("catalog content should exist after store")
 				}
 
-				// The unrelated catalog temp dir must still be present.
-				found := false
-				for _, name := range names {
-					if name == ".other-catalog-1111111111" {
-						found = true
-						break
+				// Temp dirs for other catalogs must still be present.
+				for _, other := range []string{".other-catalog_1111111111", ".test-catalog-mirrored_1111111111"} {
+					if _, err := os.Stat(filepath.Join(s.RootDir, other)); err != nil {
+						t.Errorf("temp dir %q for a different catalog should not have been removed: %v", other, err)
 					}
-				}
-				if !found {
-					t.Error("temp dir for a different catalog should not have been removed")
 				}
 			},
 		},
