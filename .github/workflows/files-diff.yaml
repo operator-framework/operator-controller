@@ -2,8 +2,10 @@ name: file-diff
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
@@ -22,6 +24,7 @@ jobs:
 
       - name: Comment on PR if NetworkPolicy files changed
         if: steps.filter.outputs.networkpolicy == 'true'
+        continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v3.0.5
         with:
           header: networkpolicy-changes
@@ -39,11 +42,22 @@ jobs:
             - These changes are intentional and reviewed carefully
             - The OPA policies in `hack/conftest/policy/` are updated accordingly
             - The changes have been validated with `make lint-helm`
+            - After review, a maintainer can apply the `networkpolicy-override` label to allow this check to pass
 
             NetworkPolicy changes require careful review as they affect cluster security.
 
-      - name: Fail if NetworkPolicy files changed
+      - name: Check for NetworkPolicy override label
         if: steps.filter.outputs.networkpolicy == 'true'
         run: |
-          echo "::error::NetworkPolicy files have been modified. See PR comment for details."
-          exit 1
+          if gh api repos/$OWNER/$REPO/pulls/$PR --jq '.labels.[].name' | grep -q "${OVERRIDE_LABEL}"; then
+            echo "Found ${OVERRIDE_LABEL} label, overriding failed results."
+          else
+            echo "No ${OVERRIDE_LABEL} label found; NetworkPolicy changes require review."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          PR: ${{ github.event.pull_request.number }}
+          OVERRIDE_LABEL: "networkpolicy-override"
