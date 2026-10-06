@@ -1,6 +1,7 @@
 name: crd-diff
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 jobs:
   crd-diff:
     runs-on: ubuntu-latest

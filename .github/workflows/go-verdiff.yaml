@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
     - main
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 jobs:
   go-verdiff:
     runs-on: ubuntu-latest
