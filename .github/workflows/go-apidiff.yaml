@@ -2,6 +2,7 @@ name: go-apidiff
 on:
   merge_group:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 jobs:
   go-apidiff:
     runs-on: ubuntu-latest

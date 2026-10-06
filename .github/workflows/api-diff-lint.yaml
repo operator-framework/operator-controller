@@ -2,6 +2,7 @@ name: api-diff-lint
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 jobs:
   lint-api-diff:
@@ -38,4 +39,3 @@ jobs:
           REPO: ${{ github.event.repository.name }}
           PR: ${{ github.event.pull_request.number }}
           OVERRIDE_LABEL: "api-diff-lint-override"
-
