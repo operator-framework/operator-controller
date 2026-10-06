@@ -245,7 +245,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			}
 		}
 
-		markAsReady(cos, ocv1.ClusterObjectSetReasonProbesSucceeded, "Objects are available and pass all probes.")
+		markAsReady(cos, ocv1.ClusterObjectSetReasonAllObjectsReady, "All objects are at the desired state")
 
 		// Record the timestamp of the first time the revision was observed to be
 		// ready. This is set once and never changes for subsequent reconciliations.

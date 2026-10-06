@@ -147,7 +147,7 @@ Feature: Install ClusterObjectSet
         revision: 1
       """
 
-    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason ProbesSucceeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
     And resource "persistentvolume/test-pv" is installed
     And resource "persistentvolumeclaim/test-pvc" is installed
     And resource "configmap/test-configmap" is installed
@@ -322,7 +322,7 @@ Feature: Install ClusterObjectSet
     And resource "serviceaccount/test-serviceaccount" is installed
     And resource "pod/test-pod" is installed
     And resource "configmap/test-configmap-3" is installed
-    And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
 
   Scenario: User can install a ClusterObjectSet with objects stored in Secrets
     Given namespace "${TEST_NAMESPACE}" is available
@@ -418,7 +418,7 @@ Feature: Install ClusterObjectSet
               key: deployment
         revision: 1
       """
-    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason ProbesSucceeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
     And resource "configmap/test-configmap-ref" is installed
     And resource "deployment/test-httpd" is installed
     And ClusterObjectSet "${COS_NAME}" has observed phase "resources" with a non-empty digest
@@ -513,7 +513,7 @@ Feature: Install ClusterObjectSet
               key: configmap
         revision: 1
       """
-    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason ProbesSucceeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
     And ClusterObjectSet "${COS_NAME}" has observed phase "resources" with a non-empty digest
     # Delete the immutable Secret and recreate with different content
     When resource "secret/${COS_NAME}-change-secret" is removed
@@ -571,7 +571,7 @@ Feature: Install ClusterObjectSet
           }
       """
     And ClusterObjectSet "${COS_NAME}" reconciliation is triggered
-    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason ProbesSucceeded
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
 
 
   @ProgressDeadline
@@ -703,4 +703,4 @@ Feature: Install ClusterObjectSet
         revision: 1
       """
     Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ProgressDeadlineExceeded
-    And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady

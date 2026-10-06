@@ -504,7 +504,7 @@ func TestProgressingFromReady(t *testing.T) {
 	}{
 		{
 			name:      "completed revision maps to Succeeded",
-			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionTrue, Reason: ocv1.ClusterObjectSetReasonProbesSucceeded, Message: "ok"},
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionTrue, Reason: ocv1.ClusterObjectSetReasonAllObjectsReady, Message: "ok"},
 			completed: true,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonSucceeded, Message: "Desired state reached"},
 		},
@@ -558,22 +558,24 @@ func TestSetAvailableFromRevisionStates(t *testing.T) {
 		expectAvailable *metav1.Condition
 	}{
 		{
-			name: "installed revision with Ready=True is remapped to Available=True",
+			name: "installed revision with Ready=True is remapped to Available=True with a decoupled reason and message",
 			revisionStates: &RevisionStates{
 				Installed: &RevisionMetadata{
 					RevisionName: "rev-1",
 					Conditions: []metav1.Condition{{
 						Type:    ocv1.ClusterObjectSetTypeReady,
 						Status:  metav1.ConditionTrue,
-						Reason:  ocv1.ClusterObjectSetReasonProbesSucceeded,
-						Message: "Revision 1 is rolled out.",
+						Reason:  ocv1.ClusterObjectSetReasonAllObjectsReady,
+						Message: "All objects are at the desired state",
 					}},
 				},
 			},
+			// The ClusterExtension Available condition is deliberately decoupled from the
+			// ClusterObjectSet Ready condition's reason/message for the ready (True) state.
 			expectAvailable: &metav1.Condition{
 				Status:  metav1.ConditionTrue,
-				Reason:  ocv1.ClusterObjectSetReasonProbesSucceeded,
-				Message: "Revision 1 is rolled out.",
+				Reason:  ocv1.ReasonProbesSucceeded,
+				Message: "Objects are available and pass all probes.",
 			},
 		},
 		{

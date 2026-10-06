@@ -27,6 +27,9 @@ const (
 	// Installed reasons
 	ReasonAbsent = "Absent"
 
+	// Available reasons
+	ReasonProbesSucceeded = "ProbesSucceeded"
+
 	// Progressing reasons
 	ReasonRollingOut           = "RollingOut"
 	ReasonRetrying             = "Retrying"

@@ -43,4 +43,4 @@ Feature: Report status of the managed ClusterExtension workload
     And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ProbeFailure
     When deployment "test-operator-${SCENARIO_ID}" reports as ready
     Then ClusterExtension is available
-    And ClusterObjectSet "${NAME}-1" reports Ready as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${NAME}-1" reports Ready as True with Reason AllObjectsReady

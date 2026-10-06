@@ -315,7 +315,7 @@ Feature: Update ClusterExtension
     And ClusterExtension is rolled out
     And ClusterExtension is available
     And ClusterExtension reports "${NAME}-2" as active revision
-    And ClusterObjectSet "${NAME}-2" reports Ready as True with Reason ProbesSucceeded
+    And ClusterObjectSet "${NAME}-2" reports Ready as True with Reason AllObjectsReady
     And ClusterObjectSet "${NAME}-1" is archived
     And ClusterObjectSet "${NAME}-1" phase objects are not found or not owned by the revision
 
