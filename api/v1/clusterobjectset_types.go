@@ -33,8 +33,7 @@ const (
 	ClusterObjectSetReasonBlocked         = "Blocked"
 	ClusterObjectSetReasonProbeFailure    = "ProbeFailure"
 	ClusterObjectSetReasonProbesSucceeded = "ProbesSucceeded"
-	ClusterObjectSetReasonReconciling     = "Reconciling"
-	ClusterObjectSetReasonRetrying        = "Retrying"
+	ClusterObjectSetReasonRetryableError  = "RetryableError"
 )
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.

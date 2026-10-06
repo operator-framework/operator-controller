@@ -131,15 +131,15 @@ func setProgressingFromReady(ext *ocv1.ClusterExtension, readyCond *metav1.Condi
 //
 // Returns Failed when:
 //   - No rolling revisions exist (nothing to install)
-//   - The latest rolling revision has Ready condition with Reason: Reconciling (indicates an error occurred)
+//   - The latest rolling revision has Ready condition with Reason: RetryableError (indicates an error occurred)
 //
 // Returns Absent when:
-//   - Rolling revisions exist with the latest not having Ready=Reconciling (healthy phased rollout in progress)
+//   - Rolling revisions exist with the latest not having Ready=RetryableError (healthy phased rollout in progress)
 //
 // Rationale:
 //   - Failed: Semantically indicates an error prevented installation
 //   - Absent: Semantically indicates "not there yet" (neutral state, e.g., during healthy rollout)
-//   - Reconciling reason on Ready indicates an error (config validation, apply failure, etc.)
+//   - RetryableError reason on Ready indicates an error (config validation, apply failure, etc.)
 //   - Other Ready reasons indicate healthy progress or terminal states handled elsewhere
 //   - Only the LATEST revision matters - old errors superseded by newer healthy revisions should not cause Failed
 //
@@ -152,8 +152,8 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	// Latest revision is the last element (sorted ascending by Spec.Revision).
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
 	readyCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeReady)
-	// Reconciling is the new home of the old Retrying signal: it indicates an error occurred.
-	if readyCond != nil && readyCond.Reason == ocv1.ClusterObjectSetReasonReconciling {
+	// RetryableError on the Ready condition indicates a transient error occurred.
+	if readyCond != nil && readyCond.Reason == ocv1.ClusterObjectSetReasonRetryableError {
 		return ocv1.ReasonFailed
 	}
 
@@ -258,7 +258,7 @@ func progressingFromReady(ready *metav1.Condition, completed bool) metav1.Condit
 	case ocv1.ReasonProgressDeadlineExceeded:
 		cond.Status = metav1.ConditionFalse
 		cond.Reason = ocv1.ReasonProgressDeadlineExceeded
-	case ocv1.ClusterObjectSetReasonReconciling:
+	case ocv1.ClusterObjectSetReasonRetryableError:
 		cond.Reason = ocv1.ReasonRetrying
 	default:
 		// ProbeFailure, RollingOut, or ProbesSucceeded-but-not-yet-complete.

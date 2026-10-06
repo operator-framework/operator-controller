@@ -317,7 +317,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
-			name: "rolling revision with error (Reconciling) - uses Failed",
+			name: "rolling revision with error (RetryableError) - uses Failed",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -327,7 +327,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 							{
 								Type:    ocv1.ClusterObjectSetTypeReady,
 								Status:  metav1.ConditionUnknown,
-								Reason:  ocv1.ClusterObjectSetReasonReconciling,
+								Reason:  ocv1.ClusterObjectSetReasonRetryableError,
 								Message: "some error occurred",
 							},
 						},
@@ -341,7 +341,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
-			name: "multiple rolling revisions with one Reconciling - uses Failed",
+			name: "multiple rolling revisions with one RetryableError - uses Failed",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -362,7 +362,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 							{
 								Type:    ocv1.ClusterObjectSetTypeReady,
 								Status:  metav1.ConditionUnknown,
-								Reason:  ocv1.ClusterObjectSetReasonReconciling,
+								Reason:  ocv1.ClusterObjectSetReasonRetryableError,
 								Message: "validation error occurred",
 							},
 						},
@@ -400,7 +400,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
-			name: "old revision with Reconciling superseded by latest healthy - uses Absent",
+			name: "old revision with RetryableError superseded by latest healthy - uses Absent",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -410,7 +410,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 							{
 								Type:    ocv1.ClusterObjectSetTypeReady,
 								Status:  metav1.ConditionUnknown,
-								Reason:  ocv1.ClusterObjectSetReasonReconciling,
+								Reason:  ocv1.ClusterObjectSetReasonRetryableError,
 								Message: "old error that was superseded",
 							},
 						},
@@ -466,8 +466,8 @@ func TestDetermineFailureReason(t *testing.T) {
 	}{
 		{name: "no rolling revisions -> Failed", rolling: nil, expected: ocv1.ReasonFailed},
 		{
-			name:     "latest reconciling -> Failed",
-			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonReconciling)}},
+			name:     "latest retryable error -> Failed",
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonRetryableError)}},
 			expected: ocv1.ReasonFailed,
 		},
 		{
@@ -483,7 +483,7 @@ func TestDetermineFailureReason(t *testing.T) {
 		{
 			name: "only the latest revision matters",
 			rolling: []*RevisionMetadata{
-				{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonReconciling)},
+				{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonRetryableError)},
 				{Conditions: availCond(metav1.ConditionFalse, ocv1.ReasonRollingOut)},
 			},
 			expected: ocv1.ReasonAbsent,
@@ -521,8 +521,8 @@ func TestProgressingFromReady(t *testing.T) {
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "probe failed"},
 		},
 		{
-			name:      "reconciling maps to Retrying",
-			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionUnknown, Reason: ocv1.ClusterObjectSetReasonReconciling, Message: "boom"},
+			name:      "retryable error maps to Retrying",
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionUnknown, Reason: ocv1.ClusterObjectSetReasonRetryableError, Message: "boom"},
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "boom"},
 		},
