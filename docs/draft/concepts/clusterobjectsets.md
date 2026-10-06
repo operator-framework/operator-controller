@@ -175,7 +175,7 @@ Indicates whether all objects have been successfully rolled out and pass readine
 | --- | --- | --- |
 | True | `ProbesSucceeded` | All objects pass readiness probes |
 | False | `ProbeFailure` | One or more probes failing |
-| Unknown | `Reconciling` | Error prevented probe observation |
+| Unknown | `RetryableError` | Error prevented probe observation |
 | Unknown | `Archived` | Objects torn down after archival |
 | Unknown | `Migrated` | Migrated from existing release; probes not yet observed |
 

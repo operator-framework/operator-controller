@@ -68,7 +68,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name:                    "Ready condition is set to False/Reconciling on error when not previously set",
+			name:                    "Ready condition is set to False/RetryableError on error when not previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
@@ -86,13 +86,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
 				require.Equal(t, "some error", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name:                    "Ready condition is set to False/Reconciling on error when previously set",
+			name:                    "Ready condition is set to False/RetryableError on error when previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
@@ -117,15 +117,15 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
 				require.Equal(t, "some error", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
 			// A revision whose FIRST reconcile fails at engine creation (factory error)
-			// must set Ready=False/Reconciling even though Ready did not previously exist.
-			name:                    "Ready condition is set to False/Reconciling on factory error when not previously set",
+			// must set Ready=False/RetryableError even though Ready did not previously exist.
+			name:                    "Ready condition is set to False/RetryableError on factory error when not previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			factoryErr:              errors.New("failed to create revision engine"),
 			existingObjs: func() []client.Object {
@@ -142,7 +142,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
 				require.Nil(t, meta.FindStatusCondition(rev.Status.Conditions, "Progressing"))
 			},
 		},
@@ -729,7 +729,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Ready:False:Reconciling when tracking cache free fails during deletion",
+			name:           "set Ready:False:RetryableError when tracking cache free fails during deletion",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -753,7 +753,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
 				require.Contains(t, cond.Message, "tracking cache free failed")
 			},
 			revisionEngineTeardownFn: func(ctrl *gomock.Controller) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
@@ -794,7 +794,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Ready:False:Reconciling and requeue when archived revision archival is incomplete",
+			name:           "set Ready:False:RetryableError and requeue when archived revision archival is incomplete",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -822,7 +822,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
 				require.Equal(t, "removing revision resources that are not owned by another revision", cond.Message)
 
 				// Finalizer should still be present
@@ -856,7 +856,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
 				require.Contains(t, cond.Message, "teardown failed: connection refused")
 
 				// Finalizer should still be present
@@ -889,7 +889,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
 				require.Contains(t, cond.Message, "token getter failed")
 
 				// Finalizer should still be present
@@ -1626,7 +1626,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonReconciling, cond.Reason)
+				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
 				require.Contains(t, cond.Message, "revision object collisions")
 			} else {
 				require.Equal(t, ctrl.Result{}, result)
