@@ -175,6 +175,7 @@ Indicates whether all objects in the revision have been successfully rolled out 
 | --- | --- | --- |
 | True | `AllObjectsReady` | All objects are at the desired state |
 | False | `ProbeFailure` | One or more probes failing |
+| False | `ValidationFailure` | A pre-apply check failed (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content); requires manual intervention |
 | Unknown | `RetryableError` | Error prevented probe observation |
 | Unknown | `Archived` | Objects torn down after archival |
 | Unknown | `Migrated` | Migrated from existing release; probes not yet observed |

@@ -1878,9 +1878,9 @@ spec:
                     - True with reason AllObjectsReady: the revision has rolled out and all objects are at the desired state.
                     - False with reason ProbeFailure: one or more objects are failing their readiness probes during rollout.
                     - False with reason RollingOut: the revision is actively rolling out and has not yet become ready.
-                    - False with reason Blocked: the revision has encountered an error that requires manual intervention for recovery.
+                    - False with reason ValidationFailure: the revision failed a pre-apply check (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content) and requires manual intervention.
                     - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
-                    - False with reason Reconciling: the revision encountered an error that prevented it from observing the probes.
+                    - False with reason RetryableError: the revision encountered a transient error that may resolve on a subsequent reconciliation.
                     - False with reason Archived: the revision has been archived and its objects have been torn down.
 
                   Rollout completion is recorded separately by status.completedAt.

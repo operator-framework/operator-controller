@@ -25,6 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -681,6 +682,275 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 				RequeueAfter: 10 * time.Second,
 			}, result)
 			require.NoError(t, err)
+
+			// preflight validation failures surface as Ready=False/ValidationFailure.
+			updated := &ocv1.ClusterObjectSet{}
+			require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, updated))
+			cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+			require.NotNil(t, cond)
+			require.Equal(t, metav1.ConditionFalse, cond.Status)
+			require.Equal(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason)
+		})
+	}
+}
+
+func Test_ClusterObjectSetReconciler_Reconcile_VerifyReferencedSecrets(t *testing.T) {
+	const clusterObjectSetName = "test-ext-1"
+
+	testScheme := newScheme(t)
+	require.NoError(t, corev1.AddToScheme(testScheme))
+
+	secret := func(name string, immutable bool) *corev1.Secret {
+		imm := immutable
+		return &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "ns"},
+			Immutable:  &imm,
+		}
+	}
+
+	for _, tc := range []struct {
+		name string
+		// secrets seeded into the fake client.
+		secrets []client.Object
+		// failGet, when set, makes the Secret with this name return a transient read error.
+		failGet    string
+		wantErr    bool
+		wantReason string
+	}{
+		{
+			// A transient, non-NotFound read error is retryable, not a validation failure.
+			name:       "read error is retryable",
+			secrets:    []client.Object{secret("secret-b", true)},
+			failGet:    "secret-a",
+			wantErr:    true,
+			wantReason: ocv1.ClusterObjectSetReasonRetryableError,
+		},
+		{
+			name:       "mutable Secret is a validation failure",
+			secrets:    []client.Object{secret("secret-a", true), secret("secret-b", false)},
+			wantErr:    false,
+			wantReason: ocv1.ClusterObjectSetReasonValidationFailure,
+		},
+		{
+			// A confirmed mutable Secret takes precedence over a concurrent read error.
+			name:       "confirmed mutable Secret takes precedence over a read error",
+			secrets:    []client.Object{secret("secret-b", false)},
+			failGet:    "secret-a",
+			wantErr:    false,
+			wantReason: ocv1.ClusterObjectSetReasonValidationFailure,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+
+			ext := newTestClusterExtension()
+			rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+			// Reference two Secrets so verifyReferencedSecretsImmutable reads both.
+			rev1.Spec.Phases = []ocv1.ClusterObjectSetPhase{{
+				Name: "everything",
+				Objects: []ocv1.ClusterObjectSetObject{
+					{Ref: ocv1.ObjectSourceRef{Name: "secret-a", Namespace: "ns", Key: "configmap"}},
+					{Ref: ocv1.ObjectSourceRef{Name: "secret-b", Namespace: "ns", Key: "configmap"}},
+				},
+			}}
+
+			testClient := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+				WithObjects(append([]client.Object{ext, rev1}, tc.secrets...)...).
+				WithInterceptorFuncs(interceptor.Funcs{
+					Get: func(ctx context.Context, cl client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+						if _, ok := obj.(*corev1.Secret); ok && tc.failGet != "" && key.Name == tc.failGet {
+							return errors.New("etcdserver: request timed out")
+						}
+						return cl.Get(ctx, key, obj, opts...)
+					},
+				}).
+				Build()
+
+			result, err := (&controllers.ClusterObjectSetReconciler{
+				Client:                testClient,
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, newMockRevisionEngineWithReconcile(mockCtrl, nil, nil), nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
+			}).Reconcile(t.Context(), ctrl.Request{
+				NamespacedName: types.NamespacedName{Name: clusterObjectSetName},
+			})
+
+			if tc.wantErr {
+				// A read error is returned so controller-runtime requeues with backoff.
+				require.Error(t, err)
+				require.Equal(t, ctrl.Result{}, result)
+			} else {
+				// A confirmed mutable Secret is a validation failure that keeps retrying so the
+				// revision can recover once the immutable Secret is replaced.
+				require.NoError(t, err)
+				require.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, result)
+			}
+
+			updated := &ocv1.ClusterObjectSet{}
+			require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, updated))
+			cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+			require.NotNil(t, cond)
+			require.Equal(t, metav1.ConditionFalse, cond.Status)
+			require.Equal(t, tc.wantReason, cond.Reason)
+		})
+	}
+}
+
+func Test_ClusterObjectSetReconciler_Reconcile_ReferencedContentValidationRecovers(t *testing.T) {
+	const clusterObjectSetName = "test-ext-1"
+
+	testScheme := newScheme(t)
+	require.NoError(t, corev1.AddToScheme(testScheme))
+	mockCtrl := gomock.NewController(t)
+
+	ext := newTestClusterExtension()
+	rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+	rev1.Spec.Phases = []ocv1.ClusterObjectSetPhase{{
+		Name: "everything",
+		Objects: []ocv1.ClusterObjectSetObject{
+			{Ref: ocv1.ObjectSourceRef{Name: "manifest", Namespace: "ns", Key: "configmap"}},
+		},
+	}}
+
+	immutable := true
+	// Initial referenced Secret has malformed content.
+	badSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "manifest", Namespace: "ns"},
+		Immutable:  &immutable,
+		Data:       map[string][]byte{"configmap": []byte("not-json")},
+	}
+
+	testClient := fake.NewClientBuilder().
+		WithScheme(testScheme).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+		WithObjects(ext, rev1, badSecret).
+		Build()
+
+	engine := newMockRevisionEngineWithReconcile(mockCtrl,
+		func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			return newMockRevisionResult(mockCtrl, revisionResultConfig{isComplete: true}), nil
+		}, nil)
+	r := &controllers.ClusterObjectSetReconciler{
+		Client:                testClient,
+		RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, engine, nil),
+		TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
+	}
+	req := ctrl.Request{NamespacedName: types.NamespacedName{Name: clusterObjectSetName}}
+
+	// Malformed referenced content is a validation failure that keeps retrying so the
+	// revision can recover once the Secret is replaced.
+	result, err := r.Reconcile(t.Context(), req)
+	require.NoError(t, err)
+	require.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, result)
+
+	rev := &ocv1.ClusterObjectSet{}
+	require.NoError(t, testClient.Get(t.Context(), req.NamespacedName, rev))
+	cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason)
+	// No phase digest is recorded while the content is invalid, so recovery is unobstructed.
+	require.Empty(t, rev.Status.ObservedPhases)
+
+	// Replace the immutable Secret with corrected content (delete + recreate).
+	require.NoError(t, testClient.Delete(t.Context(), badSecret))
+	goodSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "manifest", Namespace: "ns"},
+		Immutable:  &immutable,
+		Data:       map[string][]byte{"configmap": []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"cm","namespace":"ns"}}`)},
+	}
+	require.NoError(t, testClient.Create(t.Context(), goodSecret))
+
+	// The revision recovers on the next reconcile, without any change to the ClusterObjectSet itself.
+	_, err = r.Reconcile(t.Context(), req)
+	require.NoError(t, err)
+	require.NoError(t, testClient.Get(t.Context(), req.NamespacedName, rev))
+	cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionTrue, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectSetReasonAllObjectsReady, cond.Reason)
+}
+
+func Test_ClusterObjectSetReconciler_Reconcile_BuildPhasesErrorClassification(t *testing.T) {
+	const clusterObjectSetName = "test-ext-1"
+
+	testScheme := newScheme(t)
+	require.NoError(t, corev1.AddToScheme(testScheme))
+
+	for _, tc := range []struct {
+		name string
+		// setupCOS mutates the base revision to provoke a specific buildBoxcutterPhases error.
+		setupCOS func(*ocv1.ClusterObjectSet)
+		// listFails makes the sibling-revision List return a transient error.
+		listFails  bool
+		wantErr    bool
+		wantReason string
+	}{
+		{
+			name: "invalid progression probe is a validation failure",
+			setupCOS: func(cos *ocv1.ClusterObjectSet) {
+				cos.Spec.ProgressionProbes = []ocv1.ProgressionProbe{{
+					Selector: ocv1.ObjectSelector{Type: "Bogus"},
+				}}
+			},
+			wantErr:    false,
+			wantReason: ocv1.ClusterObjectSetReasonValidationFailure,
+		},
+		{
+			name:       "sibling revision list error is retryable",
+			listFails:  true,
+			wantErr:    true,
+			wantReason: ocv1.ClusterObjectSetReasonRetryableError,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+
+			ext := newTestClusterExtension()
+			rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+			if tc.setupCOS != nil {
+				tc.setupCOS(rev1)
+			}
+
+			builder := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+				WithObjects(ext, rev1)
+			if tc.listFails {
+				builder = builder.WithInterceptorFuncs(interceptor.Funcs{
+					List: func(ctx context.Context, cl client.WithWatch, list client.ObjectList, opts ...client.ListOption) error {
+						if _, ok := list.(*ocv1.ClusterObjectSetList); ok {
+							return errors.New("etcdserver: request timed out")
+						}
+						return cl.List(ctx, list, opts...)
+					},
+				})
+			}
+			testClient := builder.Build()
+
+			result, err := (&controllers.ClusterObjectSetReconciler{
+				Client:                testClient,
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, newNoopMockRevisionEngine(mockCtrl), nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
+			}).Reconcile(t.Context(), ctrl.Request{
+				NamespacedName: types.NamespacedName{Name: clusterObjectSetName},
+			})
+
+			require.Equal(t, ctrl.Result{}, result)
+			if tc.wantErr {
+				// Transient errors are returned so controller-runtime requeues with backoff.
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			updated := &ocv1.ClusterObjectSet{}
+			require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, updated))
+			cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+			require.NotNil(t, cond)
+			require.Equal(t, metav1.ConditionFalse, cond.Status)
+			require.Equal(t, tc.wantReason, cond.Reason)
 		})
 	}
 }
