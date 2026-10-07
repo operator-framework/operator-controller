@@ -29,12 +29,12 @@ const (
 	ClusterObjectSetTypeReady = "Ready"
 
 	// Condition Reasons
-	ClusterObjectSetReasonArchived        = "Archived"
-	ClusterObjectSetReasonBlocked         = "Blocked"
-	ClusterObjectSetReasonProbeFailure    = "ProbeFailure"
-	ClusterObjectSetReasonObjectCollision = "ObjectCollision"
-	ClusterObjectSetReasonRetryableError  = "RetryableError"
-	ClusterObjectSetReasonAllObjectsReady = "AllObjectsReady"
+	ClusterObjectSetReasonArchived          = "Archived"
+	ClusterObjectSetReasonProbeFailure      = "ProbeFailure"
+	ClusterObjectSetReasonObjectCollision   = "ObjectCollision"
+	ClusterObjectSetReasonRetryableError    = "RetryableError"
+	ClusterObjectSetReasonValidationFailure = "ValidationFailure"
+	ClusterObjectSetReasonAllObjectsReady   = "AllObjectsReady"
 )
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
@@ -502,9 +502,9 @@ type ClusterObjectSetStatus struct {
 	//   - False with reason ProbeFailure: one or more objects are failing their readiness probes during rollout.
 	//   - False with reason RollingOut: the revision is actively rolling out and has not yet become ready.
 	//   - False with reason ObjectCollision: one or more objects are controlled by another owner, or are unowned while collision protection prevents adoption, so this revision cannot take ownership of them.
-	//   - False with reason Blocked: the revision has encountered an error that requires manual intervention for recovery.
+	//   - False with reason ValidationFailure: the revision failed a pre-apply check (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content) and requires manual intervention.
 	//   - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
-	//   - False with reason Reconciling: the revision encountered an error that prevented it from observing the probes.
+	//   - False with reason RetryableError: the revision encountered a transient error that may resolve on a subsequent reconciliation.
 	//   - False with reason Archived: the revision has been archived and its objects have been torn down.
 	//
 	// Rollout completion is recorded separately by status.completedAt.

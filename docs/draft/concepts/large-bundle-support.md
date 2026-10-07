@@ -149,10 +149,10 @@ Recommended conventions:
 
 2. **Immutability**: Secrets must set `immutable: true`. The reconciler verifies
    that all referenced Secrets have `immutable: true` set before proceeding.
-   Mutable referenced Secrets are rejected and reconciliation is blocked with
-   `Progressing=False, Reason=Blocked`. Additionally, the reconciler records
+   Mutable referenced Secrets are rejected and the ClusterObjectSet reports
+   `Ready=False, Reason=ValidationFailure`. Additionally, the reconciler records
    content hashes of the resolved phases on first successful reconciliation
-   and blocks reconciliation if the content changes (e.g., if a Secret is
+   and reports the same condition if the content changes (e.g., if a Secret is
    deleted and recreated with the same name but different data).
 
 3. **Owner references**: Referenced Secrets should carry an ownerReference to
@@ -396,8 +396,8 @@ Before resolving individual object refs, the reconciler verifies that all
 referenced Secrets have `immutable: true` set. After successfully building
 the phases (resolving all refs), the reconciler computes a per-phase content
 digest and compares it against the digests recorded in `.status.observedPhases`
-(if present). If any phase's content has changed, reconciliation is blocked
-with `Progressing=False, Reason=Blocked`. On first successful build, phase
+(if present). If any phase's content has changed, the ClusterObjectSet reports
+`Ready=False, Reason=ValidationFailure`. On first successful build, phase
 content digests are persisted to status for future comparisons.
 
 When processing a COS phase:
@@ -412,11 +412,19 @@ When processing a COS phase:
 
 Under normal operation, referenced Secrets are guaranteed to exist before the
 COS is created (see [Crash-safe creation sequence](#crash-safe-creation-sequence)).
-If a referenced Secret or key is not found — indicating an inconsistent state
-caused by external modification or a partially completed creation sequence —
-the reconciler returns a retryable error, allowing the controller to retry on
-subsequent reconciliation attempts. This handles transient issues such as
-informer cache lag after Secret creation.
+The reconciler distinguishes two failure modes:
+
+- A referenced **Secret that does not exist yet** — for example, informer cache lag
+  after creation, or a partially completed creation sequence — is treated as a
+  transient error. The ClusterObjectSet reports `Ready=False, Reason=RetryableError`
+  and the controller retries with backoff.
+- **Invalid referenced content** — a missing key, a malformed manifest, or content
+  that has changed since first rollout — is a validation failure. The ClusterObjectSet
+  reports `Ready=False, Reason=ValidationFailure`. Because referenced Secrets are not
+  watched and the `ref` is immutable, the reconciler retries this case periodically so
+  the revision recovers automatically once the referenced Secret is replaced with
+  corrected content. Referenced Secrets are immutable, so correcting the content means
+  deleting and recreating the Secret (it cannot be edited in place).
 
 Secrets are fetched using the typed client served from the informer cache.
 
