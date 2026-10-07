@@ -127,10 +127,10 @@ func TestStandaloneController(t *testing.T) {
 					return
 				}
 				assert.False(collect, cos.Status.CompletedAt.IsZero(), "completedAt should be set after rollout; conditions: %v", cos.Status.Conditions)
-				available := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
-				if assert.NotNil(collect, available) {
-					assert.Equal(collect, metav1.ConditionTrue, available.Status)
-					assert.Equal(collect, ocv1.ClusterObjectSetReasonProbesSucceeded, available.Reason)
+				ready := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				if assert.NotNil(collect, ready) {
+					assert.Equal(collect, metav1.ConditionTrue, ready.Status)
+					assert.Equal(collect, ocv1.ClusterObjectSetReasonAllObjectsReady, ready.Reason)
 				}
 			}, time.Minute, 100*time.Millisecond)
 			cm := &corev1.ConfigMap{}

@@ -69,6 +69,25 @@ func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", revisionStates.Installed.Image))
 }
 
+// availableTrueMessage is the message surfaced on the ClusterExtension Available condition when the
+// active revision is Ready. It is intentionally decoupled from the ClusterObjectSet Ready condition's
+// own message.
+const availableTrueMessage = "Objects are available and pass all probes."
+
+// availableFromReady maps a ClusterObjectSet Ready condition onto a ClusterExtension Available condition.
+// Non-ready states are surfaced as-is (only the Type is rewritten to Available). The ready (True) state is
+// re-emitted with a ClusterExtension-owned reason and message.
+func availableFromReady(ready metav1.Condition, generation int64) metav1.Condition {
+	a := ready
+	a.Type = ocv1.TypeAvailable
+	a.ObservedGeneration = generation
+	if a.Status == metav1.ConditionTrue {
+		a.Reason = ocv1.ReasonProbesSucceeded
+		a.Message = availableTrueMessage
+	}
+	return a
+}
+
 // setActiveRevisionsFromRevisionStates derives the active revisions for the ClusterExtension status
 func setActiveRevisionsFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *RevisionStates) {
 	ext.Status.ActiveRevisions = make([]ocv1.RevisionStatus, 0, 1+len(revisionStates.RollingOut))
@@ -79,10 +98,7 @@ func setActiveRevisionsFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 		rs := ocv1.RevisionStatus{Name: r.RevisionName}
 		ready := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeReady)
 		if ready != nil {
-			a := *ready
-			a.Type = ocv1.TypeAvailable
-			a.ObservedGeneration = ext.GetGeneration()
-			apimeta.SetStatusCondition(&rs.Conditions, a)
+			apimeta.SetStatusCondition(&rs.Conditions, availableFromReady(*ready, ext.GetGeneration()))
 		}
 		ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, rs)
 	}
@@ -93,10 +109,7 @@ func setAvailableFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *
 	if i := revisionStates.Installed; i != nil {
 		ready := apimeta.FindStatusCondition(i.Conditions, ocv1.ClusterObjectSetTypeReady)
 		if ready != nil {
-			a := *ready
-			a.Type = ocv1.TypeAvailable
-			a.ObservedGeneration = ext.GetGeneration()
-			apimeta.SetStatusCondition(&ext.Status.Conditions, a)
+			apimeta.SetStatusCondition(&ext.Status.Conditions, availableFromReady(*ready, ext.GetGeneration()))
 		}
 	}
 }
@@ -261,7 +274,7 @@ func progressingFromReady(ready *metav1.Condition, completed bool) metav1.Condit
 	case ocv1.ClusterObjectSetReasonRetryableError:
 		cond.Reason = ocv1.ReasonRetrying
 	default:
-		// ProbeFailure, RollingOut, or ProbesSucceeded-but-not-yet-complete.
+		// ProbeFailure, RollingOut, or AllObjectsReady-but-not-yet-complete.
 		cond.Reason = ocv1.ReasonRollingOut
 	}
 	return cond

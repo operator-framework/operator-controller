@@ -169,11 +169,11 @@ Indicates whether the revision is actively rolling out.
 
 ### Ready
 
-Indicates whether all objects have been successfully rolled out and pass readiness probes.
+Indicates whether all objects in the revision have been successfully rolled out and reached their desired state.
 
 | Status | Reason | Meaning |
 | --- | --- | --- |
-| True | `ProbesSucceeded` | All objects pass readiness probes |
+| True | `AllObjectsReady` | All objects are at the desired state |
 | False | `ProbeFailure` | One or more probes failing |
 | Unknown | `RetryableError` | Error prevented probe observation |
 | Unknown | `Archived` | Objects torn down after archival |

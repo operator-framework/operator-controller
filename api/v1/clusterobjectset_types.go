@@ -32,8 +32,8 @@ const (
 	ClusterObjectSetReasonArchived        = "Archived"
 	ClusterObjectSetReasonBlocked         = "Blocked"
 	ClusterObjectSetReasonProbeFailure    = "ProbeFailure"
-	ClusterObjectSetReasonProbesSucceeded = "ProbesSucceeded"
 	ClusterObjectSetReasonRetryableError  = "RetryableError"
+	ClusterObjectSetReasonAllObjectsReady = "AllObjectsReady"
 )
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
@@ -497,7 +497,7 @@ type ClusterObjectSetStatus struct {
 	// True means all objects are at the desired state; False means one or more
 	// objects are not at the desired state; Unknown is the initial state, before
 	// the first reconciliation has evaluated the revision.
-	//   - True with reason ProbesSucceeded: the revision has rolled out and all objects pass their readiness probes.
+	//   - True with reason AllObjectsReady: the revision has rolled out and all objects are at the desired state.
 	//   - False with reason ProbeFailure: one or more objects are failing their readiness probes during rollout.
 	//   - False with reason RollingOut: the revision is actively rolling out and has not yet become ready.
 	//   - False with reason Blocked: the revision has encountered an error that requires manual intervention for recovery.

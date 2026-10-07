@@ -102,7 +102,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
 					Type:               ocv1.ClusterObjectSetTypeReady,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ClusterObjectSetReasonProbesSucceeded,
+					Reason:             ocv1.ClusterObjectSetReasonAllObjectsReady,
 					Message:            "Revision 1 is rolled out.",
 					ObservedGeneration: 1,
 				})
@@ -371,7 +371,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name: "set Ready:True:ProbesSucceeded condition and completedAt on successful revision rollout",
+			name: "set Ready:True:AllObjectsReady condition and completedAt on successful revision rollout",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
 			}),
@@ -390,8 +390,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonProbesSucceeded, cond.Reason)
-				require.Equal(t, "Objects are available and pass all probes.", cond.Message)
+				require.Equal(t, ocv1.ClusterObjectSetReasonAllObjectsReady, cond.Reason)
+				require.Equal(t, "All objects are at the desired state", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
 				require.False(t, rev.Status.CompletedAt.IsZero(), "completedAt should be set on successful rollout")
@@ -1102,7 +1102,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 			},
 		},
 		{
-			name: "recovery from ProgressDeadlineExceeded to ProbesSucceeded when revision completes",
+			name: "recovery from ProgressDeadlineExceeded to AllObjectsReady when revision completes",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
@@ -1130,8 +1130,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cnd)
 				require.Equal(t, metav1.ConditionTrue, cnd.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonProbesSucceeded, cnd.Reason)
-				require.Equal(t, "Objects are available and pass all probes.", cnd.Message)
+				require.Equal(t, ocv1.ClusterObjectSetReasonAllObjectsReady, cnd.Reason)
+				require.Equal(t, "All objects are at the desired state", cnd.Message)
 			},
 		},
 		{
@@ -1144,7 +1144,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
 					Type:               ocv1.ClusterObjectSetTypeReady,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ClusterObjectSetReasonProbesSucceeded,
+					Reason:             ocv1.ClusterObjectSetReasonAllObjectsReady,
 					ObservedGeneration: rev1.Generation,
 				})
 				rev1.Status.CompletedAt = metav1.Now()
