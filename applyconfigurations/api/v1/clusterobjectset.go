@@ -29,12 +29,12 @@ import (
 // ClusterObjectSetApplyConfiguration represents a declarative configuration of the ClusterObjectSet type for use
 // with apply.
 //
-// ClusterObjectSet represents an immutable snapshot of Kubernetes objects
-// for a specific version of a ClusterExtension. Each revision contains objects
-// organized into phases that roll out sequentially. The same object can only be managed by a single revision
-// at a time. Ownership of objects is transitioned from one revision to the next as the extension is upgraded
-// or reconfigured. Once the latest revision has rolled out successfully, previous active revisions are archived for
-// posterity.
+// ClusterObjectSet represents an immutable snapshot of Kubernetes objects to
+// apply and manage on the cluster. Each revision contains objects organized into
+// phases that roll out sequentially. The same object can only be managed by a
+// single revision at a time. Ownership of objects is transitioned from one revision
+// to the next as new revisions are rolled out. Once the latest revision has rolled
+// out successfully, previous active revisions are archived for posterity.
 type ClusterObjectSetApplyConfiguration struct {
 	metav1.TypeMetaApplyConfiguration `json:",inline"`
 	// metadata is the standard object's metadata.

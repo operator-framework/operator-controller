@@ -341,6 +341,17 @@ type Sourcoser interface {
 	Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source
 }
 
+// SetupIndexes registers the cache indexes used to look up ClusterObjectSet revisions.
+func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
+	return indexer.IndexField(ctx, &ocv1.ClusterObjectSet{}, ".spec.group", func(obj client.Object) []string {
+		cos, ok := obj.(*ocv1.ClusterObjectSet)
+		if !ok || cos.Spec.Group == "" {
+			return nil
+		}
+		return []string{cos.Spec.Group}
+	})
+}
+
 func (c *ClusterObjectSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	c.Clock = clock.RealClock{}
 	return ctrl.NewControllerManagedBy(mgr).
@@ -424,14 +435,16 @@ func (c *ClusterObjectSetReconciler) removeFinalizer(ctx context.Context, obj cl
 	return nil
 }
 
-// listSiblingRevisions returns all active revisions belonging to the same owner, excluding the current one.
+// listSiblingRevisions returns active revisions in the same group with the same controller owner,
+// excluding the current one.
 // This includes both lower and higher revision numbers, enabling boxcutter to properly classify
 // sibling owners and avoid reporting false collisions during revision handover.
 func (c *ClusterObjectSetReconciler) listSiblingRevisions(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
 	return c.listOtherActiveRevisions(ctx, cos, func(*ocv1.ClusterObjectSet) bool { return true })
 }
 
-// listPreviousRevisions returns active revisions belonging to the same owner with lower revision numbers.
+// listPreviousRevisions returns active revisions in the same group with the same controller owner
+// and lower revision numbers.
 func (c *ClusterObjectSetReconciler) listPreviousRevisions(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
 	return c.listOtherActiveRevisions(ctx, cos, func(r *ocv1.ClusterObjectSet) bool {
 		return r.Spec.Revision < cos.Spec.Revision
@@ -443,22 +456,19 @@ func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
 	cos *ocv1.ClusterObjectSet,
 	predicate func(*ocv1.ClusterObjectSet) bool,
 ) ([]*ocv1.ClusterObjectSet, error) {
-	ownerLabel, ok := cos.Labels[labels.OwnerNameKey]
-	if !ok {
-		return nil, nil
-	}
-
 	revList := &ocv1.ClusterObjectSetList{}
-	if err := c.TrackingCache.List(ctx, revList, client.MatchingLabels{
-		labels.OwnerNameKey: ownerLabel,
-	}); err != nil {
+	if err := c.Client.List(ctx, revList, client.MatchingFields{".spec.group": cos.Spec.Group}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
 
+	ownerKey := controllerOwnerKeyOf(cos)
 	result := make([]*ocv1.ClusterObjectSet, 0, len(revList.Items))
 	for i := range revList.Items {
 		r := &revList.Items[i]
 		if r.Name == cos.Name {
+			continue
+		}
+		if controllerOwnerKeyOf(r) != ownerKey {
 			continue
 		}
 		if r.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived ||
@@ -472,6 +482,19 @@ func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
 	}
 
 	return result, nil
+}
+
+type controllerOwnerKey struct {
+	Kind string
+	Name string
+}
+
+func controllerOwnerKeyOf(cos *ocv1.ClusterObjectSet) controllerOwnerKey {
+	ref := metav1.GetControllerOf(cos)
+	if ref == nil {
+		return controllerOwnerKey{}
+	}
+	return controllerOwnerKey{Kind: ref.Kind, Name: ref.Name}
 }
 
 func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]boxcutter.Phase, []ocv1.ObservedPhase, []boxcutter.RevisionReconcileOption, error) {

@@ -37,23 +37,25 @@ type RevisionEngineFactory interface {
 
 // defaultRevisionEngineFactory creates boxcutter RevisionEngines.
 type defaultRevisionEngineFactory struct {
-	Scheme           *runtime.Scheme
-	TrackingCache    managedcache.TrackingCache
-	DiscoveryClient  discovery.CachedDiscoveryInterface
-	RESTMapper       meta.RESTMapper
-	FieldOwnerPrefix string
-	Client           client.Client
+	Scheme          *runtime.Scheme
+	TrackingCache   managedcache.TrackingCache
+	DiscoveryClient discovery.CachedDiscoveryInterface
+	RESTMapper      meta.RESTMapper
+	Client          client.Client
 }
 
 // CreateRevisionEngine constructs a boxcutter RevisionEngine for the given ClusterObjectSet.
 func (f *defaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, rev *ocv1.ClusterObjectSet) (RevisionEngine, error) {
+	fieldOwner := "cos-group/" + rev.Spec.Group
+	systemPrefix := ocv1.GroupVersion.Group
+	managedBy := ocv1.GroupVersion.Group
 	return machinery.NewRevisionEngine(
 		machinery.NewPhaseEngine(
 			machinery.NewObjectEngine(
 				f.Scheme, f.TrackingCache, f.Client,
-				machinery.NewComparator(f.DiscoveryClient, f.Scheme, f.FieldOwnerPrefix),
-				f.FieldOwnerPrefix, f.FieldOwnerPrefix,
-				f.FieldOwnerPrefix, // managedBy
+				machinery.NewComparator(f.DiscoveryClient, f.Scheme, fieldOwner),
+				fieldOwner, systemPrefix,
+				managedBy,
 				f.Client,
 			),
 			validation.NewClusterPhaseValidator(f.RESTMapper, f.Client),
@@ -68,7 +70,6 @@ func NewDefaultRevisionEngineFactory(
 	trackingCache managedcache.TrackingCache,
 	discoveryClient discovery.CachedDiscoveryInterface,
 	restMapper meta.RESTMapper,
-	fieldOwnerPrefix string,
 	baseConfig *rest.Config,
 ) (RevisionEngineFactory, error) {
 	if baseConfig == nil {
@@ -79,11 +80,10 @@ func NewDefaultRevisionEngineFactory(
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 	return &defaultRevisionEngineFactory{
-		Scheme:           scheme,
-		TrackingCache:    trackingCache,
-		DiscoveryClient:  discoveryClient,
-		RESTMapper:       restMapper,
-		FieldOwnerPrefix: fieldOwnerPrefix,
-		Client:           c,
+		Scheme:          scheme,
+		TrackingCache:   trackingCache,
+		DiscoveryClient: discoveryClient,
+		RESTMapper:      restMapper,
+		Client:          c,
 	}, nil
 }

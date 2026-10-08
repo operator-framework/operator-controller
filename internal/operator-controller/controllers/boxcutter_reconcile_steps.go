@@ -17,12 +17,10 @@ limitations under the License.
 package controllers
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"io/fs"
-	"slices"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,29 +28,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/revisions"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
+// TODO(COD): Read revision state from ClusterObjectDeployment status instead of
+// discovering COS revisions directly from ClusterExtension reconciliation.
 type BoxcutterRevisionStatesGetter struct {
 	Reader client.Reader
 }
 
 func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
-	// TODO: boxcutter applier has a nearly identical bit of code for listing and sorting revisions
-	//   only difference here is that it sorts in reverse order to start iterating with the most
-	//   recent revisions. We should consolidate to avoid code duplication.
-	existingRevisionList := &ocv1.ClusterObjectSetList{}
-	if err := d.Reader.List(ctx, existingRevisionList, client.MatchingLabels{
-		labels.OwnerNameKey: ext.Name,
-	}); err != nil {
+	existingRevisions, err := revisions.ListForClusterExtension(ctx, d.Reader, ext)
+	if err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
-	slices.SortFunc(existingRevisionList.Items, func(a, b ocv1.ClusterObjectSet) int {
-		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
-	})
 
 	rs := &RevisionStates{}
-	for _, rev := range existingRevisionList.Items {
+	for _, rev := range existingRevisions {
 		if rev.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {
 			continue
 		}

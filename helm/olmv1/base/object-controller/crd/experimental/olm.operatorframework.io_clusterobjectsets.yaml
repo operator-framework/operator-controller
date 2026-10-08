@@ -16,6 +16,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.group
+      name: Group
+      type: string
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: Ready
       type: string
@@ -26,12 +29,12 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          ClusterObjectSet represents an immutable snapshot of Kubernetes objects
-          for a specific version of a ClusterExtension. Each revision contains objects
-          organized into phases that roll out sequentially. The same object can only be managed by a single revision
-          at a time. Ownership of objects is transitioned from one revision to the next as the extension is upgraded
-          or reconfigured. Once the latest revision has rolled out successfully, previous active revisions are archived for
-          posterity.
+          ClusterObjectSet represents an immutable snapshot of Kubernetes objects to
+          apply and manage on the cluster. Each revision contains objects organized into
+          phases that roll out sequentially. The same object can only be managed by a
+          single revision at a time. Ownership of objects is transitioned from one revision
+          to the next as new revisions are rolled out. Once the latest revision has rolled
+          out successfully, previous active revisions are archived for posterity.
         properties:
           apiVersion:
             description: |-
@@ -69,6 +72,24 @@ spec:
                 type: string
                 x-kubernetes-validations:
                 - message: collisionProtection is immutable
+                  rule: self == oldSelf
+              group:
+                description: |-
+                  group is a required, immutable identifier that links related revisions together.
+                  Revisions sharing the same group and controller owner kind and name form an ordered sequence.
+                  Only owner references with controller set to true are considered.
+                  Revisions without a controller owner form a sequence with other such revisions in the same group.
+                  The value must be 1 to 52 characters long, start with a lowercase letter,
+                  contain only lowercase letters, digits or hyphens, and end with a letter or digit.
+                maxLength: 52
+                minLength: 1
+                type: string
+                x-kubernetes-validations:
+                - message: group must start with a lowercase letter, contain only
+                    lowercase letters, digits or hyphens, and end with a letter or
+                    digit
+                  rule: self.matches('^[a-z]([a-z0-9-]*[a-z0-9])?$')
+                - message: group is immutable
                   rule: self == oldSelf
               lifecycleState:
                 description: |-
@@ -518,11 +539,11 @@ spec:
                 x-kubernetes-list-type: atomic
               revision:
                 description: |-
-                  revision is a required, immutable sequence number representing a specific revision
-                  of the parent ClusterExtension.
+                  revision is a required, immutable sequence number identifying a specific
+                  ClusterObjectSet within a sequence of related revisions.
 
                   The revision field must be a positive integer.
-                  Each ClusterObjectSet belonging to the same parent ClusterExtension must have a unique revision number.
+                  Each ClusterObjectSet in the same revision sequence must have a unique revision number.
                   The revision number must always be the previous revision number plus one, or 1 for the first revision.
                 format: int64
                 minimum: 1
@@ -532,6 +553,7 @@ spec:
                   rule: self == oldSelf
             required:
             - collisionProtection
+            - group
             - lifecycleState
             - revision
             type: object
@@ -672,6 +694,8 @@ spec:
             x-kubernetes-validations:
             - message: completedAt cannot be removed once set
               rule: '!has(oldSelf.completedAt) || has(self.completedAt)'
+        required:
+        - spec
         type: object
     served: true
     storage: true

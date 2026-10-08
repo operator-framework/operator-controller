@@ -134,6 +134,10 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is archived$`, ClusterObjectSetIsArchived)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterObjectSetHasLabelWithValue)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has group "([^"]+)"$`, ClusterObjectSetHasGroup)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects use SSA manager "([^"]+)"$`, ClusterObjectSetObjectsUseSSAManager)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are remembered$`, RememberClusterObjectSetSecrets)
+	sc.Step(`^(?i)the remembered revision secrets are removed$`, RememberedRevisionSecretsRemoved)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects are not found or not owned by the revision$`, ClusterObjectSetObjectsNotFoundOrNotOwned)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects are managed in Kubernetes secrets$`, ClusterObjectSetPhaseObjectsManagedInSecrets)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets exist in "([^"]+)" namespace$`, ClusterObjectSetReferredSecretsExist)
@@ -548,14 +552,24 @@ func ClusterExtensionOwnsClusterObjectSets(ctx context.Context, extName string, 
 	sc := scenarioCtx(ctx)
 	extName = substituteScenarioVars(extName, sc)
 	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectsets",
-			"-l", fmt.Sprintf("olm.operatorframework.io/owner-name=%s", extName),
-			"-o", "jsonpath={.items[*].metadata.name}")
+		revisions, err := listClusterObjectSetsInGroup(ctx, extName)
 		if err != nil {
 			return false
 		}
-		names := strings.Fields(strings.TrimSpace(out))
-		return len(names) == expectedCount
+		if len(revisions) != expectedCount {
+			return false
+		}
+		ext, err := getResource("clusterextension", extName, "")
+		if err != nil {
+			return false
+		}
+		for _, rev := range revisions {
+			owner := metav1.GetControllerOf(&rev)
+			if owner == nil || owner.Kind != ocv1.ClusterExtensionKind || owner.Name != extName || owner.UID != ext.GetUID() {
+				return false
+			}
+		}
+		return true
 	})
 	return nil
 }
@@ -2296,21 +2310,13 @@ func resolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, err
 
 // latestActiveRevisionForExtension returns the latest active revision for the extension called extName
 func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterObjectSet, error) {
-	out, err := k8sClient(context.Background(), "get", "clusterobjectsets", "-l", fmt.Sprintf("olm.operatorframework.io/owner-name=%s", extName), "-o", "json")
+	revisions, err := listClusterObjectSetsInGroup(context.Background(), extName)
 	if err != nil {
 		return nil, fmt.Errorf("error listing revisions for extension '%s': %w", extName, err)
 	}
-	if strings.TrimSpace(out) == "" {
-		return nil, fmt.Errorf("no revisions found for extension '%s'", extName)
-	}
-	var revisionList ocv1.ClusterObjectSetList
-	if err := json.Unmarshal([]byte(out), &revisionList); err != nil {
-		return nil, fmt.Errorf("error unmarshalling revisions for extension '%s': %w", extName, err)
-	}
-
 	var latest *ocv1.ClusterObjectSet
-	for i := range revisionList.Items {
-		rev := &revisionList.Items[i]
+	for i := range revisions {
+		rev := &revisions[i]
 		if rev.Spec.LifecycleState != ocv1.ClusterObjectSetLifecycleStateActive {
 			continue
 		}

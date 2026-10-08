@@ -32,6 +32,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"pkg.package-operator.run/boxcutter/managedcache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,7 +43,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
@@ -420,23 +420,39 @@ func collectDeprecationMessages(entries []declcfg.DeprecationEntry) []string {
 	return messages
 }
 
-type ControllerBuilderOption func(builder *ctrl.Builder)
-
-func WithOwns(obj client.Object) ControllerBuilderOption {
-	return func(builder *ctrl.Builder) {
-		builder.Owns(obj)
-	}
+// SetupWithManagerForBoxcutter sets up the controller with ClusterObjectSet revision watches.
+// TODO(COD): Replace this COS watch and mapper with a COD watch when ClusterExtension
+// reconciliation manages ClusterObjectDeployments.
+func (r *ClusterExtensionReconciler) SetupWithManagerForBoxcutter(mgr ctrl.Manager) (crcontroller.Controller, error) {
+	return r.newControllerBuilder(mgr).
+		Watches(&ocv1.ClusterObjectSet{},
+			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForClusterObjectSet)).
+		Build(r)
 }
 
-func WithWatchesRawSource(src source.Source) ControllerBuilderOption {
-	return func(b *ctrl.Builder) {
-		b.WatchesRawSource(src)
-	}
+// SetupWithManagerForHelm sets up the controller with watches for managed Helm resources.
+func (r *ClusterExtensionReconciler) SetupWithManagerForHelm(mgr ctrl.Manager, trackingCache managedcache.TrackingCache) (crcontroller.Controller, error) {
+	return r.newControllerBuilder(mgr).
+		WatchesRawSource(trackingCache.Source(
+			crhandler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtension{}),
+			predicate.ResourceVersionChangedPredicate{},
+			predicate.Funcs{
+				CreateFunc: func(event.TypedCreateEvent[client.Object]) bool { return false },
+			},
+		)).
+		Build(r)
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager, opts ...ControllerBuilderOption) (crcontroller.Controller, error) {
-	ctrlBuilder := ctrl.NewControllerManagedBy(mgr).
+func clusterExtensionRequestsForClusterObjectSet(_ context.Context, obj client.Object) []reconcile.Request {
+	cos, ok := obj.(*ocv1.ClusterObjectSet)
+	if !ok || cos.Spec.Group == "" {
+		return nil
+	}
+	return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: cos.Spec.Group}}}
+}
+
+func (r *ClusterExtensionReconciler) newControllerBuilder(mgr ctrl.Manager) *ctrl.Builder {
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1.ClusterExtension{}).
 		Named("controller-operator-cluster-extension-controller").
 		Watches(&ocv1.ClusterCatalog{},
@@ -458,12 +474,6 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager, opts ...
 					return true
 				},
 			}))
-
-	for _, applyOpt := range opts {
-		applyOpt(ctrlBuilder)
-	}
-
-	return ctrlBuilder.Build(r)
 }
 
 func wrapErrorWithResolutionInfo(resolved ocv1.BundleMetadata, err error) error {

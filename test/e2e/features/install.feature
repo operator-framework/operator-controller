@@ -465,6 +465,8 @@ Feature: Install ClusterExtension
     And ClusterExtension is available
     And ClusterObjectSet "${NAME}-1" has label "olm.operatorframework.io/owner-kind" with value "ClusterExtension"
     And ClusterObjectSet "${NAME}-1" has label "olm.operatorframework.io/owner-name" with value "${NAME}"
+    And ClusterObjectSet "${NAME}-1" has group "${NAME}"
+    And ClusterExtension "${NAME}" owns 1 ClusterObjectSet
 
   @BoxcutterRuntime
   Scenario: ClusterObjectSet objects are externalized to immutable Secrets

@@ -15,6 +15,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         progressionProbes:
@@ -75,6 +76,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         progressionProbes:
@@ -161,6 +163,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         progressionProbes:
@@ -219,6 +222,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         progressionProbes:
@@ -403,6 +407,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         phases:
@@ -454,6 +459,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         phases:
@@ -502,6 +508,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         phases:
@@ -585,6 +592,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         progressDeadlineMinutes: 1
@@ -651,6 +659,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         progressDeadlineMinutes: 1
