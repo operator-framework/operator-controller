@@ -23,8 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
-	"github.com/operator-framework/operator-controller/internal/shared/labels"
+	"github.com/operator-framework/operator-controller/test"
 )
 
 func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
@@ -89,35 +88,18 @@ func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
 			name: "should only include revisions in the same group",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtensionInternal()
-				ext2 := newTestClusterExtensionInternal()
-				ext2.Name = "test-ext-2"
-				ext2.UID = "test-ext-2"
 
 				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
 				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
 				rev2.Spec.Group = "test-ext-2"
 				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
-				require.NoError(t, controllerutil.SetControllerReference(ext2, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
-				return []client.Object{ext, ext2, rev1, rev2, rev3}
+				return []client.Object{ext, rev1, rev2, rev3}
 			},
 			currentRev:   "rev-3",
 			expectedRevs: []string{"rev-1"},
-		},
-		{
-			name: "should include revisions when owner label is missing",
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtensionInternal()
-				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
-				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
-				delete(rev2.Labels, labels.OwnerNameKey)
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
-				return []client.Object{ext, rev1, rev2}
-			},
-			currentRev:   "rev-1",
-			expectedRevs: []string{"rev-2"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -181,6 +163,125 @@ func Test_ClusterObjectSetReconciler_listPreviousRevisions(t *testing.T) {
 	}
 }
 
+func Test_ClusterObjectSetReconciler_revisionOwnerFiltering(t *testing.T) {
+	testScheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(testScheme))
+
+	ownerRef := func(kind, name, uid string, controller bool) metav1.OwnerReference {
+		return metav1.OwnerReference{
+			APIVersion: ocv1.GroupVersion.String(),
+			Kind:       kind,
+			Name:       name,
+			UID:        types.UID(uid),
+			Controller: ptr.To(controller),
+		}
+	}
+	controllerRef := ownerRef("ClusterExtension", "test-ext", "test-ext", true)
+	nonControllerRef := ownerRef("ClusterExtension", "test-ext", "test-ext", false)
+
+	for _, tc := range []struct {
+		name         string
+		currentRefs  []metav1.OwnerReference
+		previousRefs []metav1.OwnerReference
+		match        bool
+	}{
+		{
+			name:         "same controller owner",
+			currentRefs:  []metav1.OwnerReference{controllerRef},
+			previousRefs: []metav1.OwnerReference{controllerRef},
+			match:        true,
+		},
+		{
+			name:         "same controller kind and name with different UIDs",
+			currentRefs:  []metav1.OwnerReference{controllerRef},
+			previousRefs: []metav1.OwnerReference{ownerRef("ClusterExtension", "test-ext", "old-uid", true)},
+			match:        true,
+		},
+		{
+			name:         "different controller names",
+			currentRefs:  []metav1.OwnerReference{controllerRef},
+			previousRefs: []metav1.OwnerReference{ownerRef("ClusterExtension", "other-ext", "other-uid", true)},
+			match:        false,
+		},
+		{
+			name:         "different controller kinds with the same name",
+			currentRefs:  []metav1.OwnerReference{controllerRef},
+			previousRefs: []metav1.OwnerReference{ownerRef("OtherController", "test-ext", "other-uid", true)},
+			match:        false,
+		},
+		{
+			name:  "both without owner references",
+			match: true,
+		},
+		{
+			name:        "owned current revision and ownerless previous revision",
+			currentRefs: []metav1.OwnerReference{controllerRef},
+			match:       false,
+		},
+		{
+			name:         "ownerless current revision and owned previous revision",
+			previousRefs: []metav1.OwnerReference{controllerRef},
+			match:        false,
+		},
+		{
+			name:         "different non-controller owners are ignored",
+			currentRefs:  []metav1.OwnerReference{nonControllerRef},
+			previousRefs: []metav1.OwnerReference{ownerRef("OtherOwner", "other-owner", "other-uid", false)},
+			match:        true,
+		},
+		{
+			name:         "non-controller owner matches an ownerless revision",
+			previousRefs: []metav1.OwnerReference{nonControllerRef},
+			match:        true,
+		},
+		{
+			name:         "controller flag distinguishes otherwise identical references",
+			currentRefs:  []metav1.OwnerReference{controllerRef},
+			previousRefs: []metav1.OwnerReference{nonControllerRef},
+			match:        false,
+		},
+		{
+			name:         "non-controller current owner excludes a controlled revision",
+			currentRefs:  []metav1.OwnerReference{nonControllerRef},
+			previousRefs: []metav1.OwnerReference{controllerRef},
+			match:        false,
+		},
+		{
+			name:        "additional non-controller references are ignored",
+			currentRefs: []metav1.OwnerReference{controllerRef},
+			previousRefs: []metav1.OwnerReference{
+				ownerRef("OtherOwner", "other-owner", "other-uid", false),
+				controllerRef,
+			},
+			match: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			previous := newTestClusterObjectSetInternal(t, "rev-1")
+			previous.OwnerReferences = tc.previousRefs
+			current := newTestClusterObjectSetInternal(t, "rev-2")
+			current.OwnerReferences = tc.currentRefs
+
+			expectedRevs := []string{}
+			if tc.match {
+				expectedRevs = append(expectedRevs, previous.Name)
+			}
+			for _, lister := range []struct {
+				name string
+				list func(*ClusterObjectSetReconciler, context.Context, *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error)
+			}{
+				{name: "siblings", list: (*ClusterObjectSetReconciler).listSiblingRevisions},
+				{name: "previous", list: (*ClusterObjectSetReconciler).listPreviousRevisions},
+			} {
+				t.Run(lister.name, func(t *testing.T) {
+					result := callRevisionLister(t, testScheme, []client.Object{previous, current}, current.Name, lister.list)
+					require.ElementsMatch(t, expectedRevs, result)
+				})
+			}
+		})
+	}
+}
+
 func callRevisionLister(
 	t *testing.T,
 	testScheme *runtime.Scheme,
@@ -190,9 +291,7 @@ func callRevisionLister(
 ) []string {
 	t.Helper()
 	mockCtrl := gomock.NewController(t)
-	testClient := fake.NewClientBuilder().
-		WithScheme(testScheme).
-		WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+	testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), SetupIndexes).
 		WithObjects(existingObjs...).
 		Build()
 
@@ -244,9 +343,6 @@ func newTestClusterObjectSetInternal(t *testing.T, name string) *ocv1.ClusterObj
 			Name:       name,
 			UID:        types.UID(name),
 			Generation: int64(1),
-			Labels: map[string]string{
-				labels.OwnerNameKey: "test-ext",
-			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
 			Group:    "test-ext",

@@ -29,10 +29,10 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
 	mockmachinery "github.com/operator-framework/operator-controller/internal/testutil/mock/machinery"
+	"github.com/operator-framework/operator-controller/test"
 )
 
 const clusterObjectSetName = "test-ext-1"
@@ -409,7 +409,14 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				prevRev1 := newTestClusterObjectSet(t, "test-ext-1", ext, testScheme)
 				prevRev2 := newTestClusterObjectSet(t, "test-ext-2", ext, testScheme)
 				rev := newTestClusterObjectSet(t, "test-ext-3", ext, testScheme)
-				return []client.Object{ext, prevRev1, prevRev2, rev}
+				otherExt := newTestClusterExtension()
+				otherExt.Name = "other-ext"
+				otherExt.UID = "other-ext"
+				otherOwnedRev := newTestClusterObjectSet(t, "other-ext-1", otherExt, testScheme)
+				otherOwnedRev.Spec.Group = ext.Name
+				ownerlessRev := newTestClusterObjectSet(t, "ownerless-1", ext, testScheme)
+				ownerlessRev.OwnerReferences = nil
+				return []client.Object{ext, otherExt, prevRev1, prevRev2, rev, otherOwnedRev, ownerlessRev}
 			},
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterObjectSet{}
@@ -430,6 +437,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				}, rev)
 				require.NoError(t, err)
 				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState)
+
+				for _, name := range []string{"other-ext-1", "ownerless-1"} {
+					err = c.Get(t.Context(), client.ObjectKey{Name: name}, rev)
+					require.NoError(t, err)
+					require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState,
+						"same-group revision %s with a different controller owner must remain active", name)
+				}
 			},
 		},
 	} {
@@ -437,9 +451,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			mockCtrl := gomock.NewController(t)
 
 			// create extension and cluster extension
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
-				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+			testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -542,9 +554,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_CompletedAt(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
-				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+			testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -657,9 +667,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 			rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 
 			// create extension and cluster extension
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
-				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+			testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(ext, rev1).
 				Build()
@@ -940,9 +948,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			mockCtrl := gomock.NewController(t)
 
 			// create extension and cluster extension
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
-				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+			testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -1174,9 +1180,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 
 			// create extension and cluster extension
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
-				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+			testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -1603,9 +1607,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
-				WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+			testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -1706,9 +1708,7 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 		ext := newTestClusterExtension()
 		rev := newTestClusterObjectSet(t, "test-rev", ext, testScheme)
 
-		testClient := fake.NewClientBuilder().
-			WithScheme(testScheme).
-			WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+		testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 			WithObjects(ext, rev).
 			Build()
 

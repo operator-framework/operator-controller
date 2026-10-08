@@ -38,8 +38,12 @@ const (
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
 type ClusterObjectSetSpec struct {
-	// group identifies the ClusterExtension whose revisions belong together.
-	// All revisions for the same ClusterExtension must use its name as their group.
+	// group is a required, immutable identifier that links related revisions together.
+	// Revisions sharing the same group and controller owner kind and name form an ordered sequence.
+	// Only owner references with controller set to true are considered.
+	// Revisions without a controller owner form a sequence with other such revisions in the same group.
+	// The value must be 1 to 52 characters long, start with a lowercase letter,
+	// contain only lowercase letters, digits or hyphens, and end with a letter or digit.
 	//
 	// +required
 	// +kubebuilder:validation:MinLength=1
@@ -66,11 +70,11 @@ type ClusterObjectSetSpec struct {
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Archived' && oldSelf == self", message="cannot un-archive"
 	LifecycleState ClusterObjectSetLifecycleState `json:"lifecycleState,omitempty"`
 
-	// revision is a required, immutable sequence number representing a specific revision
-	// of the parent ClusterExtension.
+	// revision is a required, immutable sequence number identifying a specific
+	// ClusterObjectSet within a sequence of related revisions.
 	//
 	// The revision field must be a positive integer.
-	// Each ClusterObjectSet belonging to the same parent ClusterExtension must have a unique revision number.
+	// Each ClusterObjectSet in the same revision sequence must have a unique revision number.
 	// The revision number must always be the previous revision number plus one, or 1 for the first revision.
 	//
 	// +required
@@ -573,12 +577,12 @@ type ObservedPhase struct {
 // +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=='Ready')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
-// ClusterObjectSet represents an immutable snapshot of Kubernetes objects
-// for a specific version of a ClusterExtension. Each revision contains objects
-// organized into phases that roll out sequentially. The same object can only be managed by a single revision
-// at a time. Ownership of objects is transitioned from one revision to the next as the extension is upgraded
-// or reconfigured. Once the latest revision has rolled out successfully, previous active revisions are archived for
-// posterity.
+// ClusterObjectSet represents an immutable snapshot of Kubernetes objects to
+// apply and manage on the cluster. Each revision contains objects organized into
+// phases that roll out sequentially. The same object can only be managed by a
+// single revision at a time. Ownership of objects is transitioned from one revision
+// to the next as new revisions are rolled out. Once the latest revision has rolled
+// out successfully, previous active revisions are archived for posterity.
 type ClusterObjectSet struct {
 	metav1.TypeMeta `json:",inline"`
 

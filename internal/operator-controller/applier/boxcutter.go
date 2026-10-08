@@ -1,13 +1,11 @@
 package applier
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"io/fs"
 	"maps"
-	"slices"
 	"strings"
 
 	"github.com/cert-manager/cert-manager/pkg/apis/certmanager"
@@ -32,8 +30,8 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/revisions"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
-	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
 )
@@ -256,6 +254,8 @@ func (r *SimpleRevisionGenerator) buildClusterObjectSet(
 
 // BoxcutterStorageMigrator migrates ClusterExtensions from Helm-based storage to
 // ClusterObjectSet storage, enabling upgrades from older operator-controller versions.
+// TODO(COD): Adapt Helm storage migration for ClusterObjectDeployment-backed
+// installations and remove direct COS discovery when that migration path is in place.
 type BoxcutterStorageMigrator struct {
 	ActionClientGetter helmclient.ActionClientGetter
 	RevisionGenerator  ClusterObjectSetGenerator
@@ -282,12 +282,12 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 	if ext.Spec.Namespace == "" {
 		return nil
 	}
-	existingRevisionList := ocv1.ClusterObjectSetList{}
-	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingFields{clusterobjectset.GroupField: ext.Name}); err != nil {
+	existingRevisions, err := revisions.ListForClusterExtension(ctx, m.Client, ext)
+	if err != nil {
 		return fmt.Errorf("listing ClusterObjectSets before attempting migration: %w", err)
 	}
-	if len(existingRevisionList.Items) != 0 {
-		return m.ensureMigratedRevisionStatus(ctx, existingRevisionList.Items)
+	if len(existingRevisions) != 0 {
+		return m.ensureMigratedRevisionStatus(ctx, existingRevisions)
 	}
 
 	ac, err := m.ActionClientGetter.ActionClientFor(ctx, ext)
@@ -449,6 +449,8 @@ func (m *BoxcutterStorageMigrator) ensureRevisionStatus(ctx context.Context, nam
 	return nil
 }
 
+// TODO(COD): Replace direct COS creation, revision discovery and retention with
+// ClusterObjectDeployment reconciliation.
 type Boxcutter struct {
 	Client            client.Client
 	Scheme            *runtime.Scheme
@@ -464,9 +466,9 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	// cluster access is unavailable (since the ClusterObjectSet controller also requires
 	// API access to maintain resources). The revision list is also needed to determine if fallback
 	// is possible when contentFS is nil (at least one revision must exist).
-	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
+	existingRevisions, err := revisions.ListForClusterExtension(ctx, bc.Client, ext)
 	if err != nil {
-		return false, "", err
+		return false, "", fmt.Errorf("listing revisions: %w", err)
 	}
 
 	// If contentFS is nil, we're maintaining the current state without catalog access.
@@ -642,18 +644,6 @@ func (bc *Boxcutter) garbageCollectOldRevisions(ctx context.Context, revisionLis
 		}
 	}
 	return nil
-}
-
-// getExistingRevisions returns the list of ClusterObjectSets for a ClusterExtension with name extName in revision order (oldest to newest)
-func (bc *Boxcutter) getExistingRevisions(ctx context.Context, extName string) ([]ocv1.ClusterObjectSet, error) {
-	existingRevisionList := &ocv1.ClusterObjectSetList{}
-	if err := bc.Client.List(ctx, existingRevisionList, client.MatchingFields{clusterobjectset.GroupField: extName}); err != nil {
-		return nil, fmt.Errorf("listing revisions: %w", err)
-	}
-	slices.SortFunc(existingRevisionList.Items, func(a, b ocv1.ClusterObjectSet) int {
-		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
-	})
-	return existingRevisionList.Items, nil
 }
 
 func latestRevisionNumber(prevRevisions []ocv1.ClusterObjectSet) int64 {

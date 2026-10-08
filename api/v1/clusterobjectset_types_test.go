@@ -18,12 +18,14 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 	ctx := context.Background()
 	i := 0
 	for name, tc := range map[string]struct {
-		spec       ClusterObjectSetSpec
-		updateFunc func(*ClusterObjectSet)
-		allowed    bool
+		spec          ClusterObjectSetSpec
+		updateFunc    func(*ClusterObjectSet)
+		allowed       bool
+		expectedError string
 	}{
 		"group is immutable": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -31,20 +33,36 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.Group = "another-group"
 			},
+			expectedError: "group is immutable",
 		},
-		"unchanged group permits lifecycle update": {
+		"group cannot be cleared": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.Group = ""
+			},
+			expectedError: "spec.group: Required value",
+		},
+		"unchanged group permits lifecycle update": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.Group = "test-group"
 				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateArchived
 			},
 			allowed: true,
 		},
 		"revision is immutable": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -55,6 +73,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		},
 		"phases may be initially empty": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -72,6 +91,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		},
 		"phases may be initially unset": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -88,6 +108,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		},
 		"phases are immutable if not empty": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -109,6 +130,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 		},
 		"spec collisionProtection is immutable": {
 			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -125,7 +147,6 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				},
 				Spec: tc.spec,
 			}
-			cos.Spec.Group = "test-group"
 			i = i + 1
 			require.NoError(t, c.Create(ctx, cos))
 			tc.updateFunc(cos)
@@ -135,6 +156,9 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 			}
 			if !tc.allowed && !errors.IsInvalid(err) {
 				t.Fatal("expected update to fail due to invalid payload, but got:", err)
+			}
+			if tc.expectedError != "" {
+				require.ErrorContains(t, err, tc.expectedError)
 			}
 		})
 	}
@@ -388,27 +412,39 @@ func TestClusterObjectSetValidity(t *testing.T) {
 	}
 }
 
+func TestClusterObjectSetSpecValidation(t *testing.T) {
+	c := newClient(t)
+	t.Run("missing spec", func(t *testing.T) {
+		cos := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": GroupVersion.String(),
+			"kind":       ClusterObjectSetKind,
+			"metadata":   map[string]any{"generateName": "spec-validation-"},
+		}}
+		err := c.Create(t.Context(), cos)
+		require.True(t, errors.IsInvalid(err), "%v", err)
+		require.ErrorContains(t, err, "spec: Required")
+	})
+}
+
 func TestClusterObjectSetGroupValidation(t *testing.T) {
 	c := newClient(t)
 	for _, tc := range []struct {
-		name     string
-		group    *string
-		omitSpec bool
-		valid    bool
+		name  string
+		group *string
+		valid bool
 	}{
-		{name: "missing spec", omitSpec: true},
-		{name: "missing group"},
-		{name: "empty group", group: ptr.To("")},
+		{name: "missing group", valid: false},
+		{name: "empty group", group: ptr.To(""), valid: false},
 		{name: "one character", group: ptr.To("a"), valid: true},
 		{name: "lowercase hyphens and digits", group: ptr.To("my-group-1"), valid: true},
 		{name: "maximum length", group: ptr.To(strings.Repeat("a", 52)), valid: true},
-		{name: "over maximum length", group: ptr.To(strings.Repeat("a", 53))},
-		{name: "starts with digit", group: ptr.To("1group")},
-		{name: "starts with hyphen", group: ptr.To("-group")},
-		{name: "ends with hyphen", group: ptr.To("group-")},
-		{name: "uppercase", group: ptr.To("Group")},
-		{name: "underscore", group: ptr.To("my_group")},
-		{name: "dot", group: ptr.To("my.group")},
+		{name: "over maximum length", group: ptr.To(strings.Repeat("a", 53)), valid: false},
+		{name: "starts with digit", group: ptr.To("1group"), valid: false},
+		{name: "starts with hyphen", group: ptr.To("-group"), valid: false},
+		{name: "ends with hyphen", group: ptr.To("group-"), valid: false},
+		{name: "uppercase", group: ptr.To("Group"), valid: false},
+		{name: "underscore", group: ptr.To("my_group"), valid: false},
+		{name: "dot", group: ptr.To("my.group"), valid: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cos := &unstructured.Unstructured{Object: map[string]any{
@@ -416,26 +452,20 @@ func TestClusterObjectSetGroupValidation(t *testing.T) {
 				"kind":       ClusterObjectSetKind,
 				"metadata":   map[string]any{"generateName": "group-validation-"},
 			}}
-			if !tc.omitSpec {
-				spec := map[string]any{
-					"revision": int64(1), "lifecycleState": string(ClusterObjectSetLifecycleStateActive),
-					"collisionProtection": string(CollisionProtectionPrevent),
-				}
-				if tc.group != nil {
-					spec["group"] = *tc.group
-				}
-				cos.Object["spec"] = spec
+			spec := map[string]any{
+				"revision": int64(1), "lifecycleState": string(ClusterObjectSetLifecycleStateActive),
+				"collisionProtection": string(CollisionProtectionPrevent),
 			}
+			if tc.group != nil {
+				spec["group"] = *tc.group
+			}
+			cos.Object["spec"] = spec
 			err := c.Create(t.Context(), cos)
 			if tc.valid {
 				require.NoError(t, err)
 			} else {
 				require.True(t, errors.IsInvalid(err), "%v", err)
-				if tc.omitSpec {
-					require.ErrorContains(t, err, "spec: Required")
-				} else {
-					require.ErrorContains(t, err, "spec.group")
-				}
+				require.ErrorContains(t, err, "spec.group")
 			}
 		})
 	}

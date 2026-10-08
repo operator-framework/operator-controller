@@ -48,15 +48,12 @@ import (
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
-	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
@@ -75,7 +72,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
-	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
 	cacheutil "github.com/operator-framework/operator-controller/internal/shared/util/cache"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
@@ -425,9 +421,11 @@ func run() error {
 	}
 
 	cl := mgr.GetClient()
+	// TODO(COD): Remove this registration when this manager neither hosts the COS
+	// reconciler nor queries COS revisions directly. COD integration should replace
+	// the direct ClusterExtension-to-COS queries, but the COS reconciler needs the index.
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		if err := mgr.GetFieldIndexer().IndexField(context.Background(), &ocv1.ClusterObjectSet{},
-			clusterobjectset.GroupField, clusterobjectset.ExtractGroup); err != nil {
+		if err := clusterobjctrl.SetupIndexes(context.Background(), mgr.GetFieldIndexer()); err != nil {
 			return fmt.Errorf("indexing ClusterObjectSet group: %w", err)
 		}
 	}
@@ -484,25 +482,14 @@ func run() error {
 		return err
 	}
 
-	var ctrlBuilderOpts []controllers.ControllerBuilderOption
-	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithClusterObjectSetWatch())
-	} else {
-		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithWatchesRawSource(
-			trackingCache.Source(
-				crhandler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtension{}),
-				predicate.ResourceVersionChangedPredicate{},
-				predicate.Funcs{
-					CreateFunc: func(event.TypedCreateEvent[client.Object]) bool { return false },
-				},
-			),
-		))
-	}
-
 	ceReconciler := &controllers.ClusterExtensionReconciler{
 		Client: cl,
 	}
-	_, err = ceReconciler.SetupWithManager(mgr, ctrlBuilderOpts...)
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		_, err = ceReconciler.SetupWithManagerForBoxcutter(mgr)
+	} else {
+		_, err = ceReconciler.SetupWithManagerForHelm(mgr, trackingCache)
+	}
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		return err

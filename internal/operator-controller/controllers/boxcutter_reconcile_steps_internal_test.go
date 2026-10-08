@@ -26,7 +26,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
+	coscontrollers "github.com/operator-framework/operator-controller/internal/object-controller/controllers"
+	"github.com/operator-framework/operator-controller/test"
 )
 
 func TestBoxcutterRevisionStatesGetter_ClassifiesByCompletedAt(t *testing.T) {
@@ -34,11 +35,13 @@ func TestBoxcutterRevisionStatesGetter_ClassifiesByCompletedAt(t *testing.T) {
 	require.NoError(t, ocv1.AddToScheme(sch))
 
 	const extName = "test-ext"
+	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: extName, UID: "test-ext-uid"}}
 
 	newRevision := func(name string, revision int64, completed bool) *ocv1.ClusterObjectSet {
 		cos := &ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
+				Name:            name,
+				OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))},
 			},
 			Spec: ocv1.ClusterObjectSetSpec{Group: extName, Revision: revision},
 		}
@@ -51,16 +54,12 @@ func TestBoxcutterRevisionStatesGetter_ClassifiesByCompletedAt(t *testing.T) {
 	completed := newRevision("test-ext-1", 1, true)
 	rollingOut := newRevision("test-ext-2", 2, false)
 
-	cl := fake.NewClientBuilder().
-		WithScheme(sch).
-		WithIndex(&ocv1.ClusterObjectSet{}, clusterobjectset.GroupField, clusterobjectset.ExtractGroup).
+	cl := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(sch), coscontrollers.SetupIndexes).
 		WithObjects(completed, rollingOut).
 		Build()
 
 	getter := &BoxcutterRevisionStatesGetter{Reader: cl}
-	states, err := getter.GetRevisionStates(context.Background(), &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extName},
-	})
+	states, err := getter.GetRevisionStates(context.Background(), ext)
 	require.NoError(t, err)
 
 	// A revision with completedAt set is Installed.

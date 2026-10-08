@@ -45,7 +45,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/object-controller/scheme"
-	"github.com/operator-framework/operator-controller/internal/shared/clusterobjectset"
 	cacheutil "github.com/operator-framework/operator-controller/internal/shared/util/cache"
 	"github.com/operator-framework/operator-controller/internal/shared/util/tlsprofiles"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
@@ -183,8 +182,7 @@ func newManager(cfg *config, restConfig *rest.Config) (manager.Manager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating discovery client: %w", err)
 	}
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &ocv1.ClusterObjectSet{},
-		clusterobjectset.GroupField, clusterobjectset.ExtractGroup); err != nil {
+	if err := controllers.SetupIndexes(context.Background(), mgr.GetFieldIndexer()); err != nil {
 		return nil, fmt.Errorf("indexing ClusterObjectSet group: %w", err)
 	}
 	factory, err := controllers.NewDefaultRevisionEngineFactory(
