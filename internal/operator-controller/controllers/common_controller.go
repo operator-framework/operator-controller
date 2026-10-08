@@ -165,8 +165,10 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	// Latest revision is the last element (sorted ascending by Spec.Revision).
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
 	readyCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeReady)
-	// RetryableError on the Ready condition indicates a transient error occurred.
-	if readyCond != nil && readyCond.Reason == ocv1.ClusterObjectSetReasonRetryableError {
+	// RetryableError (transient error) or ObjectCollision (an object is owned by another
+	// revision/controller) on the Ready condition both indicate an error prevented installation.
+	if readyCond != nil && (readyCond.Reason == ocv1.ClusterObjectSetReasonRetryableError ||
+		readyCond.Reason == ocv1.ClusterObjectSetReasonObjectCollision) {
 		return ocv1.ReasonFailed
 	}
 
@@ -271,7 +273,7 @@ func progressingFromReady(ready *metav1.Condition, completed bool) metav1.Condit
 	case ocv1.ReasonProgressDeadlineExceeded:
 		cond.Status = metav1.ConditionFalse
 		cond.Reason = ocv1.ReasonProgressDeadlineExceeded
-	case ocv1.ClusterObjectSetReasonRetryableError:
+	case ocv1.ClusterObjectSetReasonRetryableError, ocv1.ClusterObjectSetReasonObjectCollision:
 		cond.Reason = ocv1.ReasonRetrying
 	default:
 		// ProbeFailure, RollingOut, or AllObjectsReady-but-not-yet-complete.

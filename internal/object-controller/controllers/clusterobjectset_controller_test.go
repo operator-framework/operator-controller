@@ -1626,8 +1626,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
-				require.Contains(t, cond.Message, "revision object collisions")
+				require.Equal(t, ocv1.ClusterObjectSetReasonObjectCollision, cond.Reason)
+				require.Contains(t, cond.Message, "Cannot take ownership of 1 object(s) in phase \"everything\"")
 			} else {
 				require.Equal(t, ctrl.Result{}, result)
 				require.NoError(t, err)

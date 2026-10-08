@@ -253,7 +253,7 @@ Feature: Update ClusterExtension
       """
     Then ClusterExtension "${NAME}-dup" reports Progressing as True with Reason Retrying and Message includes:
       """
-      revision object collisions
+      because they are owned by another controller or already exist
       """
     And ClusterExtension "${NAME}" reports Installed as True
     # Force a second revision on the dup via env var change — collision must persist
@@ -284,7 +284,7 @@ Feature: Update ClusterExtension
     Then ClusterExtension "${NAME}-dup" owns 2 ClusterObjectSets
     And ClusterExtension "${NAME}-dup" reports Progressing as True with Reason Retrying and Message includes:
       """
-      revision object collisions
+      because they are owned by another controller or already exist
       """
     And ClusterExtension "${NAME}" reports Installed as True
 
