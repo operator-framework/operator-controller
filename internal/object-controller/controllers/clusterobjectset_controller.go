@@ -46,6 +46,13 @@ import (
 
 const (
 	clusterObjectSetTeardownFinalizer = "olm.operatorframework.io/teardown"
+
+	// validationRetryInterval is how often the reconciler re-checks a revision that is
+	// Ready=False/ValidationFailure due to referenced-content problems (preflight validation,
+	// a mutable referenced Secret, a changed digest, or an invalid referenced manifest).
+	// Referenced Secrets are not watched and the phase/ref spec is immutable, so a periodic
+	// retry lets the revision recover once the Secret is replaced, without a controller restart.
+	validationRetryInterval = 10 * time.Second
 )
 
 // ClusterObjectSetReconciler manages the Kubernetes objects in a ClusterObjectSet.
@@ -131,15 +138,41 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	remaining, hasDeadline := durationUntilDeadline(c.Clock, cos)
 	isDeadlineExceeded := hasDeadline && remaining <= 0
 
-	// Blocked takes precedence over ProgressDeadlineExceeded: it is more actionable for the user.
 	if err := c.verifyReferencedSecretsImmutable(ctx, cos); err != nil {
-		l.Error(err, "referenced Secret verification failed, blocking reconciliation")
-		markAsNotReady(cos, ocv1.ClusterObjectSetReasonBlocked, err.Error())
-		return ctrl.Result{}, nil
+		var mutErr *mutableSecretError
+		if errors.As(err, &mutErr) {
+			// A confirmed mutable Secret requires user action (replacing the immutable Secret),
+			// which is not watched, so keep retrying so the revision can recover.
+			// ValidationFailure takes precedence over ProgressDeadlineExceeded: it is more actionable.
+			l.Error(err, "referenced Secret is mutable, marking revision not ready")
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, err.Error())
+			return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
+		}
+		// A Secret read error is transient; surface it as retryable and requeue with backoff.
+		werr := fmt.Errorf("verifying referenced Secrets: %v", err)
+		setRetryableErrorConditions(cos, werr.Error(), isDeadlineExceeded)
+		return ctrl.Result{}, werr
 	}
 
 	phases, currentPhases, opts, err := c.buildBoxcutterPhases(ctx, cos)
 	if err != nil {
+		var contentErr *referencedContentError
+		if errors.As(err, &contentErr) {
+			// Invalid referenced Secret content (missing key or malformed manifest). The Secret
+			// is not watched and the ref is immutable, so keep retrying so the revision can
+			// recover once the Secret is replaced with valid content.
+			l.Error(err, "invalid referenced content, marking revision not ready")
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, err.Error())
+			return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
+		}
+		var cfgErr *configValidationError
+		if errors.As(err, &cfgErr) {
+			// Invalid revision spec; a spec edit (or a new revision) re-triggers reconciliation,
+			// so no periodic retry is needed.
+			l.Error(err, "invalid configuration, marking revision not ready")
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, err.Error())
+			return ctrl.Result{}, nil
+		}
 		setRetryableErrorConditions(cos, err.Error(), isDeadlineExceeded)
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
 	}
@@ -147,9 +180,12 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	if len(cos.Status.ObservedPhases) == 0 {
 		cos.Status.ObservedPhases = currentPhases
 	} else if err := verifyObservedPhases(cos.Status.ObservedPhases, currentPhases); err != nil {
-		l.Error(err, "resolved phases content changed, blocking reconciliation")
-		markAsNotReady(cos, ocv1.ClusterObjectSetReasonBlocked, err.Error())
-		return ctrl.Result{}, nil
+		// The resolved content of a referenced Secret changed since first reconciliation.
+		// Secrets are not watched, so keep retrying so the revision can recover once the
+		// original content is restored.
+		l.Error(err, "resolved phases content changed, marking revision not ready")
+		markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, err.Error())
+		return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
 	}
 
 	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cos)
@@ -198,15 +234,15 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	// TODO: report status, backoff?
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
-		setRetryableErrorConditions(cos, fmt.Sprintf("revision validation error: %s", verr), isDeadlineExceeded)
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, fmt.Sprintf("revision validation error: %s", verr))
+		return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
 	}
 
 	for i, pres := range rres.GetPhases() {
 		if verr := pres.GetValidationError(); verr != nil {
-			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", i)
-			setRetryableErrorConditions(cos, fmt.Sprintf("phase %d validation error: %s", i, verr), isDeadlineExceeded)
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", pres.GetName())
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, fmt.Sprintf("phase %q validation error: %s", pres.GetName(), verr))
+			return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
 		}
 
 		var collidingObjs []string
@@ -474,6 +510,19 @@ func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
 	return result, nil
 }
 
+// configValidationError marks an error caused by invalid user-provided configuration in the
+// revision spec (a malformed revision/phase object or a bad progression probe). The spec is
+// either immutable or watched, so the reconciler reports it as Ready=False/ValidationFailure
+// without a periodic retry: a spec edit re-triggers reconciliation.
+type configValidationError struct{ error }
+
+// referencedContentError marks a validation failure caused by the content of a referenced
+// Secret (a missing key or a malformed manifest). Referenced Secrets are not watched and the
+// phase/ref spec is immutable, so the failure can only clear when the Secret is replaced.
+// The reconciler reports it as Ready=False/ValidationFailure but keeps retrying periodically
+// so the revision can recover without a controller restart.
+type referencedContentError struct{ error }
+
 func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]boxcutter.Phase, []ocv1.ObservedPhase, []boxcutter.RevisionReconcileOption, error) {
 	siblings, err := c.listSiblingRevisions(ctx, cos)
 	if err != nil {
@@ -513,7 +562,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 				}
 				obj = resolved
 			default:
-				return nil, nil, nil, fmt.Errorf("object in phase %q has neither object nor ref", specPhase.Name)
+				return nil, nil, nil, &configValidationError{fmt.Errorf("object in phase %q has neither object nor ref", specPhase.Name)}
 			}
 
 			objs = append(objs, obj)
@@ -558,31 +607,31 @@ func (c *ClusterObjectSetReconciler) resolveObjectRef(ctx context.Context, ref o
 
 	data, ok := secret.Data[ref.Key]
 	if !ok {
-		return nil, fmt.Errorf("key %q not found in Secret %s/%s", ref.Key, ref.Namespace, ref.Name)
+		return nil, &referencedContentError{fmt.Errorf("key %q not found in Secret %s/%s", ref.Key, ref.Namespace, ref.Name)}
 	}
 
 	// Auto-detect gzip compression (magic bytes 0x1f 0x8b)
 	if len(data) >= 2 && data[0] == 0x1f && data[1] == 0x8b {
 		reader, err := gzip.NewReader(bytes.NewReader(data))
 		if err != nil {
-			return nil, fmt.Errorf("creating gzip reader for key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+			return nil, &referencedContentError{fmt.Errorf("creating gzip reader for key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)}
 		}
 		defer reader.Close()
 		const maxDecompressedSize = 10 * 1024 * 1024 // 10 MiB
 		limited := io.LimitReader(reader, maxDecompressedSize+1)
 		decompressed, err := io.ReadAll(limited)
 		if err != nil {
-			return nil, fmt.Errorf("decompressing key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+			return nil, &referencedContentError{fmt.Errorf("decompressing key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)}
 		}
 		if len(decompressed) > maxDecompressedSize {
-			return nil, fmt.Errorf("decompressed data for key %q in Secret %s/%s exceeds maximum size (%d bytes)", ref.Key, ref.Namespace, ref.Name, maxDecompressedSize)
+			return nil, &referencedContentError{fmt.Errorf("decompressed data for key %q in Secret %s/%s exceeds maximum size (%d bytes)", ref.Key, ref.Namespace, ref.Name, maxDecompressedSize)}
 		}
 		data = decompressed
 	}
 
 	obj := &unstructured.Unstructured{}
 	if err := json.Unmarshal(data, &obj.Object); err != nil {
-		return nil, fmt.Errorf("unmarshaling object from key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)
+		return nil, &referencedContentError{fmt.Errorf("unmarshaling object from key %q in Secret %s/%s: %w", ref.Key, ref.Namespace, ref.Name, err)}
 	}
 
 	return obj, nil
@@ -623,7 +672,7 @@ func buildProgressionProbes(progressionProbes []ocv1.ProgressionProbe) (probing.
 				fieldValueProbe := probing.FieldValueProbe(probe.FieldValue)
 				assertions = append(assertions, &fieldValueProbe)
 			default:
-				return nil, fmt.Errorf("unknown progressionProbe assertion probe type: %s", probe.Type)
+				return nil, &configValidationError{fmt.Errorf("unknown progressionProbe assertion probe type: %s", probe.Type)}
 			}
 		}
 
@@ -639,14 +688,14 @@ func buildProgressionProbes(progressionProbes []ocv1.ProgressionProbe) (probing.
 		case ocv1.SelectorTypeLabel:
 			selector, err := metav1.LabelSelectorAsSelector(&progressionProbe.Selector.Label)
 			if err != nil {
-				return nil, fmt.Errorf("invalid label selector in progressionProbe (%v): %w", progressionProbe.Selector.Label, err)
+				return nil, &configValidationError{fmt.Errorf("invalid label selector in progressionProbe (%v): %w", progressionProbe.Selector.Label, err)}
 			}
 			selectorProbe = &probing.LabelSelector{
 				Selector: selector,
 				Prober:   assertions,
 			}
 		default:
-			return nil, fmt.Errorf("unknown progressionProbe selector type: %s", progressionProbe.Selector.Type)
+			return nil, &configValidationError{fmt.Errorf("unknown progressionProbe selector type: %s", progressionProbe.Selector.Type)}
 		}
 		userProbes = append(userProbes, &probing.ObservedGenerationProbe{
 			Prober: selectorProbe,
@@ -736,22 +785,30 @@ func verifyObservedPhases(stored, current []ocv1.ObservedPhase) error {
 	var mismatches []string
 	for _, c := range current {
 		if prev, ok := storedMap[c.Name]; ok && prev != c.Digest {
-			mismatches = append(mismatches, fmt.Sprintf(
-				"phase %q (expected digest %s, got %s)", c.Name, prev, c.Digest))
+			mismatches = append(mismatches, fmt.Sprintf("%q", c.Name))
 		}
 	}
 	if len(mismatches) > 0 {
-		return fmt.Errorf(
-			"resolved content of %d phase(s) has changed: %s; "+
-				"a referenced object source may have been deleted and recreated with different content",
-			len(mismatches), strings.Join(mismatches, "; "))
+		return fmt.Errorf("resolved content of %d phase(s) has changed since first rollout: %s",
+			len(mismatches), strings.Join(mismatches, ", "))
 	}
 	return nil
 }
 
+// mutableSecretError is returned by verifyReferencedSecretsImmutable when one or
+// more referenced Secrets are confirmed to be mutable. It distinguishes a
+// (non-retryable) validation failure from a transient Secret read error, so the
+// caller can reserve ValidationFailure for the former and retry the latter.
+type mutableSecretError struct {
+	msg string
+}
+
+func (e *mutableSecretError) Error() string { return e.msg }
+
 // verifyReferencedSecretsImmutable checks that all referenced Secrets
-// have Immutable set to true. It collects all violations and returns
-// a single error listing every misconfigured Secret.
+// have Immutable set to true. A confirmed mutable Secret is returned as a
+// *mutableSecretError listing every misconfigured Secret; a failure to read a
+// Secret is returned as a plain (retryable) error.
 func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx context.Context, cos *ocv1.ClusterObjectSet) error {
 	type secretRef struct {
 		name      string
@@ -774,6 +831,7 @@ func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx contex
 	}
 
 	var mutableSecrets []string
+	var readErr error
 	for _, ref := range refs {
 		secret := &corev1.Secret{}
 		key := client.ObjectKey{Name: ref.name, Namespace: ref.namespace}
@@ -783,7 +841,13 @@ func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx contex
 				// resolveObjectRef will handle the not-found with a retryable error.
 				continue
 			}
-			return fmt.Errorf("getting Secret %s/%s: %w", ref.namespace, ref.name, err)
+			// Remember the first read error but keep checking the remaining refs: a
+			// confirmed mutable Secret is a more actionable failure and takes precedence
+			// over a transient read error.
+			if readErr == nil {
+				readErr = fmt.Errorf("getting Secret %s/%s: %w", ref.namespace, ref.name, err)
+			}
+			continue
 		}
 
 		if secret.Immutable == nil || !*secret.Immutable {
@@ -792,8 +856,13 @@ func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx contex
 	}
 
 	if len(mutableSecrets) > 0 {
-		return fmt.Errorf("the following secrets are not immutable (referenced secrets must have immutable set to true): %s",
-			strings.Join(mutableSecrets, ", "))
+		return &mutableSecretError{msg: fmt.Sprintf(
+			"the following secrets are not immutable (referenced secrets must have immutable set to true): %s",
+			strings.Join(mutableSecrets, ", "))}
+	}
+
+	if readErr != nil {
+		return readErr
 	}
 
 	return nil

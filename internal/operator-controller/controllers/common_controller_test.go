@@ -476,9 +476,9 @@ func TestDetermineFailureReason(t *testing.T) {
 			expected: ocv1.ReasonAbsent,
 		},
 		{
-			name:     "latest blocked -> Absent (Blocked is terminal, handled elsewhere)",
-			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonBlocked)}},
-			expected: ocv1.ReasonAbsent,
+			name:     "latest validation failure -> Failed",
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonValidationFailure)}},
+			expected: ocv1.ReasonFailed,
 		},
 		{
 			name: "only the latest revision matters",
@@ -527,8 +527,8 @@ func TestProgressingFromReady(t *testing.T) {
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "boom"},
 		},
 		{
-			name:      "blocked maps to Blocked",
-			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonBlocked, Message: "manual fix needed"},
+			name:      "validation failure maps to Blocked",
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonValidationFailure, Message: "manual fix needed"},
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionFalse, Reason: ocv1.ReasonBlocked, Message: "manual fix needed"},
 		},

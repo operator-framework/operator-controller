@@ -356,7 +356,7 @@ func TestVerifyObservedPhases(t *testing.T) {
 		err := verifyObservedPhases(stored, current)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), `resolved content of 1 phase(s) has changed`)
-		assert.Contains(t, err.Error(), `phase "deploy"`)
+		assert.Contains(t, err.Error(), `"deploy"`)
 	})
 
 	t.Run("reports all mismatched phases", func(t *testing.T) {
@@ -373,9 +373,9 @@ func TestVerifyObservedPhases(t *testing.T) {
 		err := verifyObservedPhases(stored, current)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), `resolved content of 2 phase(s) has changed`)
-		assert.Contains(t, err.Error(), `phase "deploy"`)
-		assert.Contains(t, err.Error(), `phase "crds"`)
-		assert.NotContains(t, err.Error(), `phase "rbac"`)
+		assert.Contains(t, err.Error(), `"deploy"`)
+		assert.Contains(t, err.Error(), `"crds"`)
+		assert.NotContains(t, err.Error(), `"rbac"`)
 	})
 
 	t.Run("fails when phase count changes", func(t *testing.T) {

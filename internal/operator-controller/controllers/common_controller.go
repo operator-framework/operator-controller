@@ -147,12 +147,12 @@ func setProgressingFromReady(ext *ocv1.ClusterExtension, readyCond *metav1.Condi
 //   - The latest rolling revision has Ready condition with Reason: RetryableError (indicates an error occurred)
 //
 // Returns Absent when:
-//   - Rolling revisions exist with the latest not having Ready=RetryableError (healthy phased rollout in progress)
+//   - Rolling revisions exist with the latest not reporting an error reason on Ready (healthy phased rollout in progress)
 //
 // Rationale:
 //   - Failed: Semantically indicates an error prevented installation
 //   - Absent: Semantically indicates "not there yet" (neutral state, e.g., during healthy rollout)
-//   - RetryableError reason on Ready indicates an error (config validation, apply failure, etc.)
+//   - RetryableError (transient) or ValidationFailure (pre-apply check failed) on Ready indicates an error
 //   - Other Ready reasons indicate healthy progress or terminal states handled elsewhere
 //   - Only the LATEST revision matters - old errors superseded by newer healthy revisions should not cause Failed
 //
@@ -165,8 +165,10 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	// Latest revision is the last element (sorted ascending by Spec.Revision).
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
 	readyCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeReady)
-	// RetryableError on the Ready condition indicates a transient error occurred.
-	if readyCond != nil && readyCond.Reason == ocv1.ClusterObjectSetReasonRetryableError {
+	// RetryableError (transient error) or ValidationFailure (a pre-apply check failed) on the
+	// Ready condition both indicate an error prevented installation.
+	if readyCond != nil && (readyCond.Reason == ocv1.ClusterObjectSetReasonRetryableError ||
+		readyCond.Reason == ocv1.ClusterObjectSetReasonValidationFailure) {
 		return ocv1.ReasonFailed
 	}
 
@@ -265,7 +267,7 @@ func progressingFromReady(ready *metav1.Condition, completed bool) metav1.Condit
 	}
 	cond.Message = ready.Message
 	switch ready.Reason {
-	case ocv1.ClusterObjectSetReasonBlocked:
+	case ocv1.ClusterObjectSetReasonValidationFailure:
 		cond.Status = metav1.ConditionFalse
 		cond.Reason = ocv1.ReasonBlocked
 	case ocv1.ReasonProgressDeadlineExceeded:
