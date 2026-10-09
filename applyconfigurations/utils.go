@@ -80,6 +80,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1.FieldValueProbeApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ImageSource"):
 		return &apiv1.ImageSourceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ObjectCounts"):
+		return &apiv1.ObjectCountsApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ObjectSelector"):
 		return &apiv1.ObjectSelectorApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ObjectSourceRef"):

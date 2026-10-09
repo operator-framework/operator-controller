@@ -41,6 +41,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/object-controller/status"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
@@ -231,6 +232,9 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 
+	// Set object counts
+	status.FromReconcile(cos, rres)
+
 	// Report revision-level preflight validation failures and re-check on a flat timer:
 	// the dry-run can be rejected for reasons that clear without a spec change (e.g. RBAC
 	// or a dependency CRD still propagating), and those inputs are not watched.
@@ -405,6 +409,8 @@ func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine
 		setRetryableErrorConditions(cos, err.Error(), false)
 		return ctrl.Result{}, err
 	}
+	// Set object counts
+	status.FromTeardown(cos, tdres)
 	if tdres != nil && !tdres.IsComplete() {
 		markAsArchiving(cos)
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
