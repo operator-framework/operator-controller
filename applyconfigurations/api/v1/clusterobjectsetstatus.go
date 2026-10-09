@@ -49,6 +49,9 @@ type ClusterObjectSetStatusApplyConfiguration struct {
 	//
 	// Rollout completion is recorded separately by status.completedAt.
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	// objectCounts reports aggregate object counts across all phases.
+	// Values are sums of the per-phase counts in observedPhases.
+	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
 	// observedPhases records the content hashes of resolved phases
 	// at first successful reconciliation. This is used to detect if
 	// referenced object sources were deleted and recreated with
@@ -77,6 +80,14 @@ func (b *ClusterObjectSetStatusApplyConfiguration) WithConditions(values ...*met
 		}
 		b.Conditions = append(b.Conditions, *values[i])
 	}
+	return b
+}
+
+// WithObjectCounts sets the ObjectCounts field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ObjectCounts field is set to the value of the last call.
+func (b *ClusterObjectSetStatusApplyConfiguration) WithObjectCounts(value *ObjectCountsApplyConfiguration) *ClusterObjectSetStatusApplyConfiguration {
+	b.ObjectCounts = value
 	return b
 }
 

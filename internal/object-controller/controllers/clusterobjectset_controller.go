@@ -41,6 +41,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/object-controller/status"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
@@ -194,6 +195,9 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 
+	// Set object counts
+	status.FromReconcile(cos, rres)
+
 	// Retry failing preflight checks with a flat 10s retry.
 	// TODO: report status, backoff?
 	if verr := rres.GetValidationError(); verr != nil {
@@ -338,6 +342,8 @@ func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine
 		setRetryableErrorConditions(cos, err.Error(), false)
 		return ctrl.Result{}, err
 	}
+	// Set object counts
+	status.FromTeardown(cos, tdres)
 	if tdres != nil && !tdres.IsComplete() {
 		setRetryableErrorConditions(cos, "removing revision resources that are not owned by another revision", false)
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil

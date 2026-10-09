@@ -338,6 +338,9 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - type
+    - name: objectCounts
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ObjectCounts
     - name: observedPhases
       type:
         list:
@@ -384,6 +387,21 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: ref
       type:
         scalar: string
+- name: com.github.operator-framework.operator-controller.api.v1.ObjectCounts
+  map:
+    fields:
+    - name: available
+      type:
+        scalar: numeric
+    - name: present
+      type:
+        scalar: numeric
+    - name: synced
+      type:
+        scalar: numeric
+    - name: total
+      type:
+        scalar: numeric
 - name: com.github.operator-framework.operator-controller.api.v1.ObjectSelector
   map:
     fields:
@@ -417,6 +435,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: name
       type:
         scalar: string
+    - name: objectCounts
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ObjectCounts
 - name: com.github.operator-framework.operator-controller.api.v1.PreflightConfig
   map:
     fields:

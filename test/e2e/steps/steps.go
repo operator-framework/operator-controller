@@ -132,6 +132,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reconciliation is triggered$`, TriggerClusterObjectSetReconciliation)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has observed phase "([^"]+)" with a non-empty digest$`, ClusterObjectSetHasObservedPhase)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is archived$`, ClusterObjectSetIsArchived)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports phase "([^"]+)" object counts: total=(\d+), present=(\d+), synced=(\d+), available=(\d+)$`, ClusterObjectSetPhaseHasObjectCounts)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports aggregate object counts: total=(\d+), present=(\d+), synced=(\d+), available=(\d+)$`, ClusterObjectSetHasAggregateObjectCounts)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterObjectSetHasLabelWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects are not found or not owned by the revision$`, ClusterObjectSetObjectsNotFoundOrNotOwned)
@@ -976,6 +978,59 @@ func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName st
 // with reason Archived. Polls with timeout.
 func ClusterObjectSetIsArchived(ctx context.Context, revisionName string) error {
 	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Ready", "False", ptr.To("Archived"), nil)
+}
+
+// ClusterObjectSetPhaseHasObjectCounts waits for a specific phase of the named ClusterObjectSet to
+// report exact object counts for total, present, synced, and available. Polls with timeout.
+func ClusterObjectSetPhaseHasObjectCounts(ctx context.Context, cosName, phaseName string, total, present, synced, available int64) error {
+	sc := scenarioCtx(ctx)
+	cosName = substituteScenarioVars(cosName, sc)
+	phaseName = substituteScenarioVars(phaseName, sc)
+	waitFor(ctx, func() bool {
+		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var cos ocv1.ClusterObjectSet
+		if err := json.Unmarshal([]byte(out), &cos); err != nil {
+			return false
+		}
+		for _, phase := range cos.Status.ObservedPhases {
+			if phase.Name == phaseName {
+				return phase.ObjectCounts.Total == total &&
+					phase.ObjectCounts.Present == present &&
+					phase.ObjectCounts.Synced == synced &&
+					phase.ObjectCounts.Available == available
+			}
+		}
+		return false
+	})
+	return nil
+}
+
+// ClusterObjectSetHasAggregateObjectCounts waits for the named ClusterObjectSet to report exact
+// aggregate object counts (summed across all phases). Polls with timeout.
+func ClusterObjectSetHasAggregateObjectCounts(ctx context.Context, cosName string, total, present, synced, available int64) error {
+	sc := scenarioCtx(ctx)
+	cosName = substituteScenarioVars(cosName, sc)
+	waitFor(ctx, func() bool {
+		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var cos ocv1.ClusterObjectSet
+		if err := json.Unmarshal([]byte(out), &cos); err != nil {
+			return false
+		}
+		if cos.Status.ObjectCounts == nil {
+			return false
+		}
+		return cos.Status.ObjectCounts.Total == total &&
+			cos.Status.ObjectCounts.Present == present &&
+			cos.Status.ObjectCounts.Synced == synced &&
+			cos.Status.ObjectCounts.Available == available
+	})
+	return nil
 }
 
 // ClusterObjectSetHasAnnotationWithValue waits for the named ClusterObjectSet to have the specified
