@@ -2,7 +2,8 @@ Feature: Namespace PSA Management
 
   As an OLM user, when I install an operator that declares PSA requirements
   via the suggested-namespace-template CSV annotation, operator-controller
-  should create a managed namespace with PSA labels applied.
+  should create a managed namespace with PSA labels applied and leave
+  user-provided namespaces unmanaged.
 
   Background:
     Given OLM is available
@@ -30,13 +31,14 @@ Feature: Namespace PSA Management
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
+    And namespace "${PACKAGE:test}-system" is managed by OLM
     And namespace "${PACKAGE:test}-system" has labels
       | key                                      | value      |
       | pod-security.kubernetes.io/enforce        | privileged |
       | pod-security.kubernetes.io/audit          | privileged |
       | pod-security.kubernetes.io/warn           | privileged |
 
-  Scenario: User-provided namespace does not get PSA labels
+  Scenario: User-provided namespace remains unmanaged
     Given namespace "${TEST_NAMESPACE}" is available
     And a catalog "test" with packages:
       | package | version | channel | replaces | contents                                           |
@@ -59,4 +61,5 @@ Feature: Namespace PSA Management
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
-    And namespace "${TEST_NAMESPACE}" does not have label "pod-security.kubernetes.io/enforce"
+    # Other cluster controllers may apply PSA labels to user-provided namespaces.
+    And namespace "${TEST_NAMESPACE}" has no owner references
