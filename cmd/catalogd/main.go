@@ -332,6 +332,7 @@ func run(ctx context.Context) error {
 
 	imageCache := imageutil.CatalogCache(unpackCacheBasePath)
 	imagePuller := &imageutil.ContainersImagePuller{
+		CatalogRollbackProtectionEnabled: true,
 		SourceCtxFunc: func(ctx context.Context) (*types.SystemContext, error) {
 			logger := log.FromContext(ctx)
 			srcContext := &types.SystemContext{
@@ -403,10 +404,11 @@ func run(ctx context.Context) error {
 	}
 
 	if err = (&corecontrollers.ClusterCatalogReconciler{
-		Client:      mgr.GetClient(),
-		ImageCache:  imageCache,
-		ImagePuller: imagePuller,
-		Storage:     localStorage,
+		Client:        mgr.GetClient(),
+		ImageCache:    imageCache,
+		ImagePuller:   imagePuller,
+		EventRecorder: mgr.GetEventRecorder("clustercatalog-controller"),
+		Storage:       localStorage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		return err

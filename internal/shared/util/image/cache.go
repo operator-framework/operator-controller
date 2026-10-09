@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/containerd/containerd/archive"
@@ -38,10 +39,36 @@ type Cache interface {
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
 
+const (
+	catalogCreatedFileSuffix = ".catalog-created"
+	catalogRollbackStateFile = ".catalog-rollback-state"
+	unknownCatalogCreated    = "unknown"
+)
+
+// CatalogRollbackProtector validates and records catalog publication dates.
+type CatalogRollbackProtector interface {
+	ValidateCatalog(context.Context, string, string, reference.Canonical) error
+	AcceptCatalog(context.Context, string, string, reference.Canonical) error
+}
+
+// CatalogRollbackError reports an image that would replace a catalog with an
+// older OCI image config creation timestamp.
+type CatalogRollbackError struct {
+	CandidateDigest  string
+	CandidateCreated time.Time
+	AcceptedDigest   string
+	AcceptedCreated  time.Time
+}
+
+func (e *CatalogRollbackError) Error() string {
+	return fmt.Sprintf("catalog image %s created at %s is not newer than cached catalog image %s created at %s", e.CandidateDigest, e.CandidateCreated.Format(time.RFC3339Nano), e.AcceptedDigest, e.AcceptedCreated.Format(time.RFC3339Nano))
+}
+
 func CatalogCache(basePath string) Cache {
 	return &diskCache{
-		basePath:   basePath,
-		filterFunc: filterForCatalogImage(),
+		basePath:            basePath,
+		filterFunc:          filterForCatalogImage(),
+		storeCatalogCreated: true,
 	}
 }
 
@@ -78,8 +105,9 @@ func filterForBundleImage() func(ctx context.Context, srcRef reference.Named, im
 }
 
 type diskCache struct {
-	basePath   string
-	filterFunc func(context.Context, reference.Named, ocispecv1.Image) (archive.Filter, error)
+	basePath            string
+	filterFunc          func(context.Context, reference.Named, ocispecv1.Image) (archive.Filter, error)
+	storeCatalogCreated bool
 }
 
 func (a *diskCache) Fetch(ctx context.Context, ownerID string, canonicalRef reference.Canonical) (fs.FS, time.Time, error) {
@@ -95,6 +123,14 @@ func (a *diskCache) Fetch(ctx context.Context, ownerID string, canonicalRef refe
 	case err != nil:
 		return nil, time.Time{}, fmt.Errorf("error checking image content already unpacked: %w", err)
 	}
+	if a.storeCatalogCreated {
+		if _, err := os.Stat(a.catalogCreatedPath(ownerID, canonicalRef.Digest())); errors.Is(err, os.ErrNotExist) {
+			l.Info("cached catalog has no creation metadata; repulling", "digest", canonicalRef.Digest())
+			return nil, time.Time{}, fsutil.DeleteReadOnlyRecursive(unpackPath)
+		} else if err != nil {
+			return nil, time.Time{}, fmt.Errorf("error checking cached catalog creation metadata: %w", err)
+		}
+	}
 	l.Info("image already unpacked")
 	return os.DirFS(a.unpackPath(ownerID, canonicalRef.Digest())), modTime, nil
 }
@@ -105,6 +141,43 @@ func (a *diskCache) ownerIDPath(ownerID string) string {
 
 func (a *diskCache) unpackPath(ownerID string, digest digest.Digest) string {
 	return filepath.Join(a.ownerIDPath(ownerID), digest.String())
+}
+
+// catalogCreatedPath returns the metadata path for a cached catalog image's creation timestamp.
+func (a *diskCache) catalogCreatedPath(ownerID string, digest digest.Digest) string {
+	return filepath.Join(a.ownerIDPath(ownerID), digest.String()+catalogCreatedFileSuffix)
+}
+
+// catalogRollbackStatePath returns the path for the accepted catalog publication state.
+func (a *diskCache) catalogRollbackStatePath(ownerID string) string {
+	return filepath.Join(a.ownerIDPath(ownerID), catalogRollbackStateFile)
+}
+
+// catalogCreated returns a usable cached creation timestamp, if one is available.
+func (a *diskCache) catalogCreated(ownerID string, canonicalRef reference.Canonical) (time.Time, error) {
+	data, err := os.ReadFile(a.catalogCreatedPath(ownerID, canonicalRef.Digest()))
+	if errors.Is(err, os.ErrNotExist) {
+		return time.Time{}, nil
+	}
+	if err != nil {
+		return time.Time{}, fmt.Errorf("error reading cached catalog created timestamp: %w", err)
+	}
+	if string(data) == unknownCatalogCreated {
+		return time.Time{}, nil
+	}
+	created, err := time.Parse(time.RFC3339Nano, string(data))
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid cached catalog created timestamp for image %s: %w", canonicalRef, err)
+	}
+	if !hasUsableCatalogCreated(created) {
+		return time.Time{}, nil
+	}
+	return created, nil
+}
+
+// hasUsableCatalogCreated reports whether a creation timestamp can order catalog publications.
+func hasUsableCatalogCreated(created time.Time) bool {
+	return created.After(time.Unix(0, 0).UTC())
 }
 
 func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.Named, canonicalRef reference.Canonical, imgCfg ocispecv1.Image, layers iter.Seq[LayerData]) (fs.FS, time.Time, error) {
@@ -145,7 +218,111 @@ func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.
 	if err != nil {
 		return nil, time.Time{}, fmt.Errorf("error getting mod time of unpack directory: %w", err)
 	}
+	if a.storeCatalogCreated {
+		createdPath := a.catalogCreatedPath(ownerID, canonicalRef.Digest())
+		created := unknownCatalogCreated
+		if imgCfg.Created != nil {
+			created = imgCfg.Created.Format(time.RFC3339Nano)
+		}
+		if err := a.storeCatalogMetadata(createdPath, ".catalog-created-", created); err != nil {
+			return nil, time.Time{}, errors.Join(err, fsutil.DeleteReadOnlyRecursive(dest))
+		}
+	}
 	return os.DirFS(dest), modTime, nil
+}
+
+// storeCatalogMetadata atomically replaces a cache metadata file.
+func (a *diskCache) storeCatalogMetadata(path, prefix, value string) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), prefix)
+	if err != nil {
+		return fmt.Errorf("error creating cached catalog metadata file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	if _, err := fmt.Fprint(tmp, value); err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("error writing cached catalog metadata: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("error closing cached catalog metadata file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		return fmt.Errorf("error storing cached catalog metadata: %w", err)
+	}
+	return nil
+}
+
+type catalogRollbackState struct {
+	ref     string
+	digest  string
+	created time.Time
+}
+
+// loadCatalogRollbackState returns the accepted publication state for an owner, if present.
+func (a *diskCache) loadCatalogRollbackState(ownerID string) (catalogRollbackState, bool, error) {
+	data, err := os.ReadFile(a.catalogRollbackStatePath(ownerID))
+	if errors.Is(err, os.ErrNotExist) {
+		return catalogRollbackState{}, false, nil
+	}
+	if err != nil {
+		return catalogRollbackState{}, false, fmt.Errorf("error reading cached catalog rollback state: %w", err)
+	}
+	lines := strings.Split(string(data), "\n")
+	if len(lines) != 3 {
+		return catalogRollbackState{}, false, fmt.Errorf("invalid cached catalog rollback state")
+	}
+	var state catalogRollbackState
+	state.ref, state.digest = lines[0], lines[1]
+	state.created, err = time.Parse(time.RFC3339Nano, lines[2])
+	if err != nil || state.ref == "" || state.digest == "" {
+		return catalogRollbackState{}, false, fmt.Errorf("invalid cached catalog rollback state")
+	}
+	if !hasUsableCatalogCreated(state.created) {
+		state.created = time.Time{}
+	}
+	return state, true, nil
+}
+
+// ValidateCatalog rejects an older catalog publication.
+func (a *diskCache) ValidateCatalog(ctx context.Context, ownerID, ref string, canonicalRef reference.Canonical) error {
+	candidateCreated, err := a.catalogCreated(ownerID, canonicalRef)
+	if err != nil {
+		return err
+	}
+	if candidateCreated.IsZero() {
+		log.FromContext(ctx).Info("catalog creation timestamp is unavailable; rollback protection is not enforced", "digest", canonicalRef.Digest())
+		return nil
+	}
+	state, found, err := a.loadCatalogRollbackState(ownerID)
+	if err != nil {
+		return err
+	}
+	if !found || state.ref != ref || state.digest == canonicalRef.Digest().String() {
+		return nil
+	}
+	if !candidateCreated.After(state.created) {
+		return &CatalogRollbackError{CandidateDigest: canonicalRef.Digest().String(), CandidateCreated: candidateCreated, AcceptedDigest: state.digest, AcceptedCreated: state.created}
+	}
+	return nil
+}
+
+// AcceptCatalog records the catalog publication that was accepted for the source reference.
+func (a *diskCache) AcceptCatalog(_ context.Context, ownerID, ref string, canonicalRef reference.Canonical) error {
+	created, err := a.catalogCreated(ownerID, canonicalRef)
+	if err != nil {
+		return err
+	}
+	if created.IsZero() {
+		previous, found, err := a.loadCatalogRollbackState(ownerID)
+		if err != nil {
+			return err
+		}
+		if found && previous.ref == ref && !previous.created.IsZero() {
+			created = previous.created
+		}
+	}
+	state := fmt.Sprintf("%s\n%s\n%s", ref, canonicalRef.Digest(), created.Format(time.RFC3339Nano))
+	return a.storeCatalogMetadata(a.catalogRollbackStatePath(ownerID), ".catalog-rollback-state-", state)
 }
 
 func (a *diskCache) Delete(_ context.Context, ownerID string) error {
@@ -168,7 +345,7 @@ func (a *diskCache) GarbageCollect(_ context.Context, ownerID string, keep refer
 		if found {
 			foundKeep = true
 		}
-		return found
+		return found || entry.Name() == keep.Digest().String()+catalogCreatedFileSuffix || entry.Name() == catalogRollbackStateFile
 	})
 
 	for _, dirEntry := range dirEntries {
