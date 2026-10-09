@@ -32,6 +32,7 @@ const (
 	ClusterObjectSetReasonArchived        = "Archived"
 	ClusterObjectSetReasonBlocked         = "Blocked"
 	ClusterObjectSetReasonProbeFailure    = "ProbeFailure"
+	ClusterObjectSetReasonObjectCollision = "ObjectCollision"
 	ClusterObjectSetReasonRetryableError  = "RetryableError"
 	ClusterObjectSetReasonAllObjectsReady = "AllObjectsReady"
 )
@@ -500,6 +501,7 @@ type ClusterObjectSetStatus struct {
 	//   - True with reason AllObjectsReady: the revision has rolled out and all objects are at the desired state.
 	//   - False with reason ProbeFailure: one or more objects are failing their readiness probes during rollout.
 	//   - False with reason RollingOut: the revision is actively rolling out and has not yet become ready.
+	//   - False with reason ObjectCollision: one or more objects are controlled by another owner, or are unowned while collision protection prevents adoption, so this revision cannot take ownership of them.
 	//   - False with reason Blocked: the revision has encountered an error that requires manual intervention for recovery.
 	//   - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
 	//   - False with reason Reconciling: the revision encountered an error that prevented it from observing the probes.

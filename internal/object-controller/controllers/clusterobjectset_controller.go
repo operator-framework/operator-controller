@@ -211,14 +211,29 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 		var collidingObjs []string
 		for _, ores := range pres.GetObjects() {
-			if ores.Action() == machinery.ActionCollision {
-				collidingObjs = append(collidingObjs, ores.String())
+			if ores.Action() != machinery.ActionCollision {
+				continue
 			}
+			obj := ores.Object()
+			name := obj.GetName()
+			if ns := obj.GetNamespace(); ns != "" {
+				name = ns + "/" + name
+			}
+			gvk := obj.GetObjectKind().GroupVersionKind()
+			desc := fmt.Sprintf("%s.%s %q", gvk.Kind, gvk.GroupVersion().String(), name)
+			if coll, ok := ores.(machinery.ObjectResultCollision); ok {
+				if owner, hasOwner := coll.ConflictingOwner(); hasOwner {
+					desc += fmt.Sprintf(" is owned by %s %q", owner.Kind, owner.Name)
+				}
+			}
+			collidingObjs = append(collidingObjs, desc)
 		}
 
 		if len(collidingObjs) > 0 {
-			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", i, "collisions", collidingObjs)
-			setRetryableErrorConditions(cos, fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")), isDeadlineExceeded)
+			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", pres.GetName(), "collisions", collidingObjs)
+			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonObjectCollision,
+				fmt.Sprintf("Cannot take ownership of %d object(s) in phase %q because they are owned by another controller or already exist. Remove the conflicting owner or object, or create a new ClusterObjectSet with a more permissive collisionProtection setting.", len(collidingObjs), pres.GetName()),
+				isDeadlineExceeded)
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	}

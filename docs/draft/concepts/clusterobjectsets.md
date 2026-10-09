@@ -175,6 +175,7 @@ Indicates whether all objects in the revision have been successfully rolled out 
 | --- | --- | --- |
 | True | `AllObjectsReady` | All objects are at the desired state |
 | False | `ProbeFailure` | One or more probes failing |
+| False | `ObjectCollision` | One or more objects are controlled by another owner, or are unowned and collision protection prevents adoption |
 | Unknown | `RetryableError` | Error prevented probe observation |
 | Unknown | `Archived` | Objects torn down after archival |
 | Unknown | `Migrated` | Migrated from existing release; probes not yet observed |
