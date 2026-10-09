@@ -37,6 +37,7 @@ Feature: Namespace PSA Management
       | pod-security.kubernetes.io/enforce        | privileged |
       | pod-security.kubernetes.io/audit          | privileged |
       | pod-security.kubernetes.io/warn           | privileged |
+      | e2e.olm.operatorframework.io/template     | applied    |
 
   Scenario: User-provided namespace remains unmanaged
     Given namespace "${TEST_NAMESPACE}" is available
@@ -61,5 +62,6 @@ Feature: Namespace PSA Management
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
-    # Other cluster controllers may apply PSA labels to user-provided namespaces.
+    # Use a custom template label because other cluster controllers may apply PSA labels.
+    And namespace "${TEST_NAMESPACE}" does not have label "e2e.olm.operatorframework.io/template"
     And namespace "${TEST_NAMESPACE}" has no owner references
