@@ -19,6 +19,7 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/scheme"
@@ -93,7 +94,7 @@ func TestStandaloneController(t *testing.T) {
 	defer syncCancel()
 	require.True(t, mgr.GetCache().WaitForCacheSync(syncCtx), "manager cache did not synchronize")
 
-	for _, name := range []string{"inline", "secret-ref"} {
+	for _, name := range []string{"inline", "secret-ref", "mutable-secret-ref"} {
 		t.Run(name, func(t *testing.T) {
 			ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "standalone-"}}
 			require.NoError(t, cl.Create(ctx, ns))
@@ -103,12 +104,13 @@ func TestStandaloneController(t *testing.T) {
 				"data":     map[string]any{"hello": "world"},
 			}}
 			obj := ocv1.ClusterObjectSetObject{Object: manifest}
-			if name == "secret-ref" {
+			var secret *corev1.Secret
+			if name != "inline" {
 				data, err := json.Marshal(manifest.Object)
 				require.NoError(t, err)
-				secret := &corev1.Secret{
+				secret = &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{Name: "content", Namespace: ns.Name},
-					Immutable:  ptr.To(true), Data: map[string][]byte{"object": data},
+					Immutable:  ptr.To(name != "mutable-secret-ref"), Data: map[string][]byte{"object": data},
 				}
 				require.NoError(t, cl.Create(ctx, secret))
 				obj = ocv1.ClusterObjectSetObject{Ref: ocv1.ObjectSourceRef{Name: secret.Name, Namespace: secret.Namespace, Key: "object"}}
@@ -122,6 +124,39 @@ func TestStandaloneController(t *testing.T) {
 				},
 			}
 			require.NoError(t, cl.Create(ctx, cos))
+			if secret != nil {
+				require.NoError(t, controllerutil.SetControllerReference(cos, secret, scheme.Scheme))
+				require.NoError(t, cl.Update(ctx, secret))
+			}
+			rolloutTimeout := time.Minute
+			if name == "mutable-secret-ref" {
+				require.EventuallyWithT(t, func(collect *assert.CollectT) {
+					if !assert.NoError(collect, cl.Get(ctx, client.ObjectKeyFromObject(cos), cos)) {
+						return
+					}
+					condition := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+					if assert.NotNil(collect, condition) {
+						assert.Equal(collect, ocv1.ClusterObjectSetReasonBlocked, condition.Reason)
+						assert.Contains(collect, condition.Message, "not immutable")
+					}
+				}, 5*time.Second, 100*time.Millisecond)
+
+				// Let status-triggered reconciliations settle before changing only
+				// the Secret. Recovery must precede the 10-second polling retry.
+				lastVersion, unchangedSince := cos.ResourceVersion, time.Now()
+				require.Eventually(t, func() bool {
+					if err := cl.Get(ctx, client.ObjectKeyFromObject(cos), cos); err != nil {
+						return false
+					}
+					if cos.ResourceVersion != lastVersion {
+						lastVersion, unchangedSince = cos.ResourceVersion, time.Now()
+					}
+					return time.Since(unchangedSince) >= time.Second
+				}, 3*time.Second, 100*time.Millisecond)
+				secret.Immutable = ptr.To(true)
+				require.NoError(t, cl.Update(ctx, secret))
+				rolloutTimeout = 5 * time.Second
+			}
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				if !assert.NoError(collect, cl.Get(ctx, client.ObjectKeyFromObject(cos), cos)) {
 					return
@@ -132,12 +167,51 @@ func TestStandaloneController(t *testing.T) {
 					assert.Equal(collect, metav1.ConditionTrue, ready.Status)
 					assert.Equal(collect, ocv1.ClusterObjectSetReasonAllObjectsReady, ready.Reason)
 				}
-			}, time.Minute, 100*time.Millisecond)
+			}, rolloutTimeout, 100*time.Millisecond)
 			cm := &corev1.ConfigMap{}
 			require.NoError(t, cl.Get(ctx, client.ObjectKey{Name: name, Namespace: ns.Name}, cm))
 			require.Equal(t, "world", cm.Data["hello"])
 			require.NotNil(t, metav1.GetControllerOf(cm))
 			require.Equal(t, cos.UID, metav1.GetControllerOf(cm).UID)
+
+			if secret != nil {
+				// A completed COS does not poll. Replacing an owned source Secret
+				// must trigger content verification, and restoring it must unblock
+				// reconciliation without changing the COS or its managed objects.
+				original := secret.DeepCopy()
+				require.NoError(t, cl.Delete(ctx, secret))
+				secret.ResourceVersion = ""
+				secret.UID = ""
+				changed := manifest.DeepCopy()
+				changed.Object["data"] = map[string]any{"hello": "changed"}
+				secret.Data["object"], err = json.Marshal(changed.Object)
+				require.NoError(t, err)
+				require.NoError(t, cl.Create(ctx, secret))
+				require.EventuallyWithT(t, func(collect *assert.CollectT) {
+					if !assert.NoError(collect, cl.Get(ctx, client.ObjectKeyFromObject(cos), cos)) {
+						return
+					}
+					condition := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+					if assert.NotNil(collect, condition) {
+						assert.Equal(collect, ocv1.ClusterObjectSetReasonBlocked, condition.Reason)
+						assert.Contains(collect, condition.Message, "resolved content of 1 phase(s) has changed")
+					}
+				}, 30*time.Second, 100*time.Millisecond)
+
+				require.NoError(t, cl.Delete(ctx, secret))
+				original.ResourceVersion = ""
+				original.UID = ""
+				require.NoError(t, cl.Create(ctx, original))
+				require.EventuallyWithT(t, func(collect *assert.CollectT) {
+					if !assert.NoError(collect, cl.Get(ctx, client.ObjectKeyFromObject(cos), cos)) {
+						return
+					}
+					condition := meta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+					if assert.NotNil(collect, condition) {
+						assert.Equal(collect, ocv1.ClusterObjectSetReasonAllObjectsReady, condition.Reason)
+					}
+				}, 30*time.Second, 100*time.Millisecond)
+			}
 
 			// Observe managed-object changes without updating the ClusterObjectSet.
 			originalUID := cm.UID

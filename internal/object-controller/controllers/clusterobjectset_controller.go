@@ -16,7 +16,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -131,25 +130,31 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	remaining, hasDeadline := durationUntilDeadline(c.Clock, cos)
 	isDeadlineExceeded := hasDeadline && remaining <= 0
 
+	secretReader := newReferencedSecretReader(c.Client)
 	// Blocked takes precedence over ProgressDeadlineExceeded: it is more actionable for the user.
-	if err := c.verifyReferencedSecretsImmutable(ctx, cos); err != nil {
-		l.Error(err, "referenced Secret verification failed, blocking reconciliation")
+	if err := c.verifyReferencedSecretsImmutable(ctx, cos, secretReader); err != nil {
+		var mutableSecrets *mutableSecretsError
+		if !errors.As(err, &mutableSecrets) {
+			setRetryableErrorConditions(cos, err.Error(), isDeadlineExceeded)
+			return ctrl.Result{}, err
+		}
+		l.V(1).Info("referenced Secret verification failed, blocking reconciliation", "error", err.Error())
 		markAsNotReady(cos, ocv1.ClusterObjectSetReasonBlocked, err.Error())
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
-	phases, currentPhases, opts, err := c.buildBoxcutterPhases(ctx, cos)
+	phases, currentPhases, opts, err := c.buildBoxcutterPhases(ctx, cos, secretReader)
 	if err != nil {
 		setRetryableErrorConditions(cos, err.Error(), isDeadlineExceeded)
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
 	}
 
-	if len(cos.Status.ObservedPhases) == 0 {
-		cos.Status.ObservedPhases = currentPhases
-	} else if err := verifyObservedPhases(cos.Status.ObservedPhases, currentPhases); err != nil {
-		l.Error(err, "resolved phases content changed, blocking reconciliation")
-		markAsNotReady(cos, ocv1.ClusterObjectSetReasonBlocked, err.Error())
-		return ctrl.Result{}, nil
+	if len(cos.Status.ObservedPhases) > 0 {
+		if err := verifyObservedPhases(cos.Status.ObservedPhases, currentPhases); err != nil {
+			l.Error(err, "resolved phases content changed, blocking reconciliation")
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonBlocked, err.Error())
+			return ctrl.Result{}, nil
+		}
 	}
 
 	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cos)
@@ -176,6 +181,9 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 	if err := c.ensureFinalizer(ctx, cos, clusterObjectSetTeardownFinalizer); err != nil {
 		return ctrl.Result{}, fmt.Errorf("error ensuring teardown finalizer: %v", err)
+	}
+	if len(cos.Status.ObservedPhases) == 0 {
+		cos.Status.ObservedPhases = currentPhases
 	}
 
 	if err := c.establishWatch(ctx, cos, revision); err != nil {
@@ -341,8 +349,14 @@ type Sourcoser interface {
 	Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source
 }
 
-func (c *ClusterObjectSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (c *ClusterObjectSetReconciler) SetupWithManager(mgr ctrl.Manager, secretWatchOptions ...builder.OwnsOption) error {
 	c.Clock = clock.RealClock{}
+	// Cached Secret reads and events must use the same informer. Standalone
+	// callers select metadata-only events because they read payloads directly.
+	secretWatchOptions = append([]builder.OwnsOption{
+		builder.MatchEveryOwner,
+		builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+	}, secretWatchOptions...)
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(controller.Options{
 			RateLimiter: newDeadlineAwareRateLimiter(
@@ -363,6 +377,7 @@ func (c *ClusterObjectSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				predicate.ResourceVersionChangedPredicate{},
 			),
 		).
+		Owns(&corev1.Secret{}, secretWatchOptions...).
 		Complete(c)
 }
 
@@ -474,7 +489,7 @@ func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
 	return result, nil
 }
 
-func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]boxcutter.Phase, []ocv1.ObservedPhase, []boxcutter.RevisionReconcileOption, error) {
+func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet, secretReader *referencedSecretReader) ([]boxcutter.Phase, []ocv1.ObservedPhase, []boxcutter.RevisionReconcileOption, error) {
 	siblings, err := c.listSiblingRevisions(ctx, cos)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("listing sibling revisions: %w", err)
@@ -507,7 +522,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 			case specObj.Object.Object != nil:
 				obj = specObj.Object.DeepCopy()
 			case specObj.Ref.Name != "":
-				resolved, err := c.resolveObjectRef(ctx, specObj.Ref)
+				resolved, err := secretReader.resolveObjectRef(ctx, specObj.Ref)
 				if err != nil {
 					return nil, nil, nil, fmt.Errorf("resolving ref in phase %q: %w", specPhase.Name, err)
 				}
@@ -549,10 +564,10 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 
 // resolveObjectRef fetches the referenced Secret, reads the value at the specified key,
 // auto-detects gzip compression, and deserializes into an unstructured.Unstructured.
-func (c *ClusterObjectSetReconciler) resolveObjectRef(ctx context.Context, ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
-	secret := &corev1.Secret{}
+func (r *referencedSecretReader) resolveObjectRef(ctx context.Context, ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
 	key := client.ObjectKey{Name: ref.Name, Namespace: ref.Namespace}
-	if err := c.Client.Get(ctx, key, secret); err != nil {
+	secret, err := r.get(ctx, key)
+	if err != nil {
 		return nil, fmt.Errorf("getting Secret %s/%s: %w", ref.Namespace, ref.Name, err)
 	}
 
@@ -752,48 +767,33 @@ func verifyObservedPhases(stored, current []ocv1.ObservedPhase) error {
 // verifyReferencedSecretsImmutable checks that all referenced Secrets
 // have Immutable set to true. It collects all violations and returns
 // a single error listing every misconfigured Secret.
-func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx context.Context, cos *ocv1.ClusterObjectSet) error {
-	type secretRef struct {
-		name      string
-		namespace string
-	}
-	seen := make(map[secretRef]struct{})
-	var refs []secretRef
+func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx context.Context, cos *ocv1.ClusterObjectSet, secretReader *referencedSecretReader) error {
+	seen := sets.New[client.ObjectKey]()
+	var mutableSecrets []string
 
 	for _, phase := range cos.Spec.Phases {
 		for _, obj := range phase.Objects {
 			if obj.Ref.Name == "" {
 				continue
 			}
-			sr := secretRef{name: obj.Ref.Name, namespace: obj.Ref.Namespace}
-			if _, ok := seen[sr]; !ok {
-				seen[sr] = struct{}{}
-				refs = append(refs, sr)
-			}
-		}
-	}
-
-	var mutableSecrets []string
-	for _, ref := range refs {
-		secret := &corev1.Secret{}
-		key := client.ObjectKey{Name: ref.name, Namespace: ref.namespace}
-		if err := c.Client.Get(ctx, key, secret); err != nil {
-			if apierrors.IsNotFound(err) {
-				// Secret not yet available — skip verification.
-				// resolveObjectRef will handle the not-found with a retryable error.
+			key := client.ObjectKey{Name: obj.Ref.Name, Namespace: obj.Ref.Namespace}
+			if seen.Has(key) {
 				continue
 			}
-			return fmt.Errorf("getting Secret %s/%s: %w", ref.namespace, ref.name, err)
-		}
+			seen.Insert(key)
+			secret, err := secretReader.get(ctx, key)
+			if err != nil {
+				return fmt.Errorf("getting Secret %s/%s: %w", key.Namespace, key.Name, err)
+			}
 
-		if secret.Immutable == nil || !*secret.Immutable {
-			mutableSecrets = append(mutableSecrets, fmt.Sprintf("%s/%s", ref.namespace, ref.name))
+			if secret.Immutable == nil || !*secret.Immutable {
+				mutableSecrets = append(mutableSecrets, fmt.Sprintf("%s/%s", key.Namespace, key.Name))
+			}
 		}
 	}
 
 	if len(mutableSecrets) > 0 {
-		return fmt.Errorf("the following secrets are not immutable (referenced secrets must have immutable set to true): %s",
-			strings.Join(mutableSecrets, ", "))
+		return &mutableSecretsError{names: mutableSecrets}
 	}
 
 	return nil
