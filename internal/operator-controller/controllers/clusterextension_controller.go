@@ -372,7 +372,7 @@ type deprecationInfo struct {
 func buildDeprecationInfo(ext *ocv1.ClusterExtension, installedBundleName string, deprecation *declcfg.Deprecation) deprecationInfo {
 	info := deprecationInfo{BundleStatus: metav1.ConditionUnknown}
 	channelSet := sets.New[string]()
-	if ext.Spec.Source.Catalog != nil {
+	if ext.Spec.Source.Catalog.PackageName != "" {
 		channelSet.Insert(ext.Spec.Source.Catalog.Channels...)
 	}
 

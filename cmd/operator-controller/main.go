@@ -430,7 +430,7 @@ func run() error {
 		return catalogclient.BuildHTTPClient(cpwCatalogd)
 	})
 
-	resolver := &resolve.CatalogResolver{
+	catalogResolver := &resolve.CatalogResolver{
 		WalkCatalogsFunc: resolve.CatalogWalker(
 			func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
 				var catalogs ocv1.ClusterCatalogList
@@ -444,6 +444,15 @@ func run() error {
 		Validations: []resolve.ValidationFunc{
 			resolve.NoDependencyValidation,
 		},
+	}
+	resolver := resolve.MultiResolver{
+		ocv1.SourceTypeCatalog: catalogResolver,
+	}
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		resolver.RegisterType(ocv1.SourceTypeOCIImage, &resolve.OCIImageResolver{
+			Puller: imagePuller,
+			Cache:  imageCache,
+		})
 	}
 
 	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
@@ -646,6 +655,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.ValidateClusterExtension(
 			controllers.ServiceAccountDeprecationWarning(),
+			controllers.ValidateDirectBundle(),
 		),
 		controllers.MigrateStorage(storageMigrator),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
@@ -703,6 +713,7 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.ValidateClusterExtension(
 			controllers.ServiceAccountDeprecationWarning(),
+			controllers.ValidateDirectBundle(),
 		),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
