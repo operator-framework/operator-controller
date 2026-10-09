@@ -704,3 +704,82 @@ Feature: Install ClusterObjectSet
       """
     Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ProgressDeadlineExceeded
     And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
+
+  Scenario: Report Object Counts for managed workloads
+    Given namespace "${TEST_NAMESPACE}" is available
+    When ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${COS_NAME}
+      spec:
+        lifecycleState: Active
+        collisionProtection: Prevent
+        progressionProbes:
+        - selector:
+            type: GroupKind
+            groupKind:
+              group: apps
+              kind: Deployment
+          assertions:
+          - type: ConditionEqual
+            conditionEqual:
+              type: Available
+              status: "True"
+        phases:
+        - name: workload
+          objects:
+          - object:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: test-deployment
+                namespace: ${TEST_NAMESPACE}
+              spec:
+                replicas: 1
+                selector:
+                  matchLabels:
+                    app: workload
+                template:
+                  metadata:
+                    labels:
+                      app: workload
+                  spec:
+                    containers:
+                    - name: workload
+                      image: busybox:1.36
+                      imagePullPolicy: IfNotPresent
+                      command: ["sleep", "1000"]
+                      readinessProbe:
+                        exec:
+                          command: ["true"]
+                        initialDelaySeconds: 20
+                      securityContext:
+                        allowPrivilegeEscalation: false
+                        capabilities:
+                          drop:
+                          - ALL
+                        seccompProfile:
+                          type: RuntimeDefault
+        - name: config
+          objects:
+          - object:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: test-configmap
+                namespace: ${TEST_NAMESPACE}
+              data:
+                key: value
+        revision: 1
+      """
+    Then resource "deployment/test-deployment" is installed
+    And ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ProbeFailure
+    And ClusterObjectSet "${COS_NAME}" reports phase "workload" object counts: total=1, present=1, synced=1, available=0
+    And ClusterObjectSet "${COS_NAME}" reports phase "config" object counts: total=1, present=0, synced=0, available=0
+    And ClusterObjectSet "${COS_NAME}" reports aggregate object counts: total=2, present=1, synced=1, available=0
+    And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
+    And ClusterObjectSet "${COS_NAME}" reports phase "workload" object counts: total=1, present=1, synced=1, available=1
+    And ClusterObjectSet "${COS_NAME}" reports phase "config" object counts: total=1, present=1, synced=1, available=1
+    And ClusterObjectSet "${COS_NAME}" reports aggregate object counts: total=2, present=2, synced=2, available=2

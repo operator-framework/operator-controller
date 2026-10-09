@@ -512,13 +512,17 @@ type ClusterObjectSetStatus struct {
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
+	// objectCounts reports aggregate object counts across all phases.
+	// Values are sums of the per-phase counts in observedPhases.
+	// +optional
+	ObjectCounts *ObjectCounts `json:"objectCounts,omitempty"`
+
 	// observedPhases records the content hashes of resolved phases
 	// at first successful reconciliation. This is used to detect if
 	// referenced object sources were deleted and recreated with
 	// different content. Each entry covers all fully-resolved object
 	// manifests within a phase, making it source-agnostic.
 	//
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0",message="observedPhases is immutable"
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=map
 	// +listMapKey=name
@@ -539,6 +543,7 @@ type ObservedPhase struct {
 	// name is the phase name matching a phase in spec.phases.
 	//
 	// +required
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0",message="name is immutable"
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start and end with an alphanumeric character."
@@ -548,10 +553,39 @@ type ObservedPhase struct {
 	// at first successful resolution, in the format "<algorithm>:<hex>".
 	//
 	// +required
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0",message="digest is immutable"
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=256
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]+:[a-f0-9]+$')`,message="digest must be in the format '<algorithm>:<hex>'"
 	Digest string `json:"digest"`
+
+	// objectCounts reports the number of objects in this phase by state.
+	// +optional
+	ObjectCounts ObjectCounts `json:"objectCounts,omitzero"`
+}
+
+// ObjectCounts reports the number of objects in a phase by state.
+type ObjectCounts struct {
+	// total is the number of objects in this phase.
+	// +required
+	Total int64 `json:"total"`
+
+	// present is the number of objects in this phase that exist on the
+	// cluster. During reconcile, this counts objects that the controller
+	// has found or created. During teardown, this decrements toward zero
+	// as objects are deleted.
+	// +required
+	Present int64 `json:"present"`
+
+	// synced is the number of objects in this phase whose cluster state
+	// matches the desired state.
+	// +required
+	Synced int64 `json:"synced"`
+
+	// available is the number of objects in this phase that are synced
+	// and pass their assertions.
+	// +required
+	Available int64 `json:"available"`
 }
 
 // +genclient
