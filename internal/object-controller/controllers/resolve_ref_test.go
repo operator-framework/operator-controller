@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -19,6 +20,7 @@ import (
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -217,11 +219,20 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 
+	// A missing key in an (immutable) referenced Secret is invalid configuration that will
+	// not resolve on retry: no error is returned, and Ready reports ValidationFailure.
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
 		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "key")
+	require.NoError(t, err)
+
+	updated := &ocv1.ClusterObjectSet{}
+	require.NoError(t, fakeClient.Get(context.Background(), client.ObjectKey{Name: cos.Name}, updated))
+	cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	require.NotNil(t, cond)
+	assert.Equal(t, metav1.ConditionFalse, cond.Status)
+	assert.Equal(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason)
+	assert.Contains(t, cond.Message, "key")
 }
 
 func TestResolveObjectRef_InvalidJSON(t *testing.T) {
@@ -258,11 +269,20 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 
+	// A malformed referenced manifest is invalid configuration that will not resolve on
+	// retry: no error is returned, and Ready reports ValidationFailure.
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
 		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "unmarshal")
+	require.NoError(t, err)
+
+	updated := &ocv1.ClusterObjectSet{}
+	require.NoError(t, fakeClient.Get(context.Background(), client.ObjectKey{Name: cos.Name}, updated))
+	cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	require.NotNil(t, cond)
+	assert.Equal(t, metav1.ConditionFalse, cond.Status)
+	assert.Equal(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason)
+	assert.Contains(t, cond.Message, "unmarshal")
 }
 
 func newRefTestCOS(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterObjectSet {
