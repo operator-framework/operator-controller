@@ -515,10 +515,10 @@ func TestProgressingFromReady(t *testing.T) {
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "Revision is rolling out."},
 		},
 		{
-			name:      "probe failure maps to RollingOut",
-			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonProbeFailure, Message: "probe failed"},
+			name:      "objects not ready maps to RollingOut",
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonObjectsNotReady, Message: "Objects are not yet ready."},
 			completed: false,
-			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "probe failed"},
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "Objects are not yet ready."},
 		},
 		{
 			name:      "retryable error maps to Retrying",
@@ -586,14 +586,14 @@ func TestSetAvailableFromRevisionStates(t *testing.T) {
 					Conditions: []metav1.Condition{{
 						Type:    ocv1.ClusterObjectSetTypeReady,
 						Status:  metav1.ConditionFalse,
-						Reason:  ocv1.ClusterObjectSetReasonProbeFailure,
+						Reason:  ocv1.ClusterObjectSetReasonObjectsNotReady,
 						Message: "probe failed",
 					}},
 				},
 			},
 			expectAvailable: &metav1.Condition{
 				Status:  metav1.ConditionFalse,
-				Reason:  ocv1.ClusterObjectSetReasonProbeFailure,
+				Reason:  ocv1.ClusterObjectSetReasonObjectsNotReady,
 				Message: "probe failed",
 			},
 		},

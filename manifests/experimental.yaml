@@ -1931,8 +1931,7 @@ spec:
                   objects are not at the desired state; Unknown is the initial state, before
                   the first reconciliation has evaluated the revision.
                     - True with reason AllObjectsReady: the revision has rolled out and all objects are at the desired state.
-                    - False with reason ProbeFailure: one or more objects are failing their readiness probes during rollout.
-                    - False with reason RollingOut: the revision is actively rolling out and has not yet become ready.
+                    - False with reason ObjectsNotReady: one or more objects are still being applied or have not yet passed their readiness probes during rollout.
                     - False with reason ObjectCollision: one or more objects are controlled by another owner, or are unowned while collision protection prevents adoption, so this revision cannot take ownership of them.
                     - False with reason ValidationFailure: the revision failed a pre-apply check (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content) and requires manual intervention.
                     - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.

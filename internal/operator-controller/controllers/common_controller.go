@@ -276,7 +276,7 @@ func progressingFromReady(ready *metav1.Condition, completed bool) metav1.Condit
 	case ocv1.ClusterObjectSetReasonRetryableError, ocv1.ClusterObjectSetReasonObjectCollision:
 		cond.Reason = ocv1.ReasonRetrying
 	default:
-		// ProbeFailure, RollingOut, or AllObjectsReady-but-not-yet-complete.
+		// Any other (non-error) reason on a not-yet-complete revision is rolling out.
 		cond.Reason = ocv1.ReasonRollingOut
 	}
 	return cond
