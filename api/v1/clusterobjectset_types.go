@@ -30,6 +30,7 @@ const (
 
 	// Condition Reasons
 	ClusterObjectSetReasonArchived          = "Archived"
+	ClusterObjectSetReasonArchiving         = "Archiving"
 	ClusterObjectSetReasonObjectsNotReady   = "ObjectsNotReady"
 	ClusterObjectSetReasonObjectCollision   = "ObjectCollision"
 	ClusterObjectSetReasonRetryableError    = "RetryableError"
@@ -504,6 +505,7 @@ type ClusterObjectSetStatus struct {
 	//   - False with reason ValidationFailure: the revision failed a pre-apply check (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content) and requires manual intervention.
 	//   - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
 	//   - False with reason RetryableError: the revision encountered a transient error that may resolve on a subsequent reconciliation.
+	//   - False with reason Archiving: the revision is being archived and its owned objects are still being torn down.
 	//   - False with reason Archived: the revision has been archived and its objects have been torn down.
 	//
 	// Rollout completion is recorded separately by status.completedAt.

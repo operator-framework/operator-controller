@@ -393,7 +393,7 @@ func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine
 		return ctrl.Result{}, err
 	}
 	if tdres != nil && !tdres.IsComplete() {
-		setRetryableErrorConditions(cos, "removing revision resources that are not owned by another revision", false)
+		markAsArchiving(cos)
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 	// Ensure conditions are set before removing the finalizer when archiving
@@ -778,6 +778,11 @@ func markAsNotReady(cos *ocv1.ClusterObjectSet, reason, message string) bool {
 		Message:            message,
 		ObservedGeneration: cos.Generation,
 	})
+}
+
+func markAsArchiving(cos *ocv1.ClusterObjectSet) {
+	const msg = "The object set is being archived; removing owned objects."
+	markAsNotReady(cos, ocv1.ClusterObjectSetReasonArchiving, msg)
 }
 
 func markAsArchived(cos *ocv1.ClusterObjectSet) bool {

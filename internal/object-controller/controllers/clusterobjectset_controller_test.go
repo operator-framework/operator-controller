@@ -1157,7 +1157,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "set Ready:False:RetryableError and requeue when archived revision archival is incomplete",
+			name:           "set Ready:False:Archiving and requeue when archived revision archival is incomplete",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -1185,8 +1185,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ClusterObjectSetReasonRetryableError, cond.Reason)
-				require.Equal(t, "removing revision resources that are not owned by another revision", cond.Message)
+				require.Equal(t, ocv1.ClusterObjectSetReasonArchiving, cond.Reason)
+				require.Equal(t, "The object set is being archived; removing owned objects.", cond.Message)
 
 				// Finalizer should still be present
 				require.Contains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
