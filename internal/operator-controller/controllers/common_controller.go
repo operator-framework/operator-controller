@@ -144,7 +144,7 @@ func setProgressingFromReady(ext *ocv1.ClusterExtension, readyCond *metav1.Condi
 //
 // Returns Failed when:
 //   - No rolling revisions exist (nothing to install)
-//   - The latest rolling revision has Ready condition with Reason: RetryableError (indicates an error occurred)
+//   - The latest rolling revision has Ready condition with Reason: ObjectCollision or ValidationFailure (an error occurred)
 //
 // Returns Absent when:
 //   - Rolling revisions exist with the latest not reporting an error reason on Ready (healthy phased rollout in progress)
@@ -152,7 +152,8 @@ func setProgressingFromReady(ext *ocv1.ClusterExtension, readyCond *metav1.Condi
 // Rationale:
 //   - Failed: Semantically indicates an error prevented installation
 //   - Absent: Semantically indicates "not there yet" (neutral state, e.g., during healthy rollout)
-//   - RetryableError (transient) or ValidationFailure (pre-apply check failed) on Ready indicates an error
+//   - ObjectCollision (a foreign owner) or ValidationFailure (pre-apply check failed) on Ready indicates an error
+//   - A transient error leaves the Ready condition unchanged (or absent), so it maps to Absent, not Failed
 //   - Other Ready reasons indicate healthy progress or terminal states handled elsewhere
 //   - Only the LATEST revision matters - old errors superseded by newer healthy revisions should not cause Failed
 //
@@ -165,10 +166,11 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	// Latest revision is the last element (sorted ascending by Spec.Revision).
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
 	readyCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeReady)
-	// RetryableError (transient error) or ObjectCollision (an object is owned by another
-	// revision/controller) on the Ready condition both indicate an error prevented installation.
-	if readyCond != nil && (readyCond.Reason == ocv1.ClusterObjectSetReasonRetryableError ||
-		readyCond.Reason == ocv1.ClusterObjectSetReasonObjectCollision || readyCond.Reason == ocv1.ClusterObjectSetReasonValidationFailure) {
+	// ObjectCollision (an object is owned by another revision/controller) or
+	// ValidationFailure (a failed pre-apply check) on the Ready condition both
+	// indicate an error prevented installation.
+	if readyCond != nil && (readyCond.Reason == ocv1.ClusterObjectSetReasonObjectCollision ||
+		readyCond.Reason == ocv1.ClusterObjectSetReasonValidationFailure) {
 		return ocv1.ReasonFailed
 	}
 
@@ -273,7 +275,7 @@ func progressingFromReady(ready *metav1.Condition, completed bool) metav1.Condit
 	case ocv1.ReasonProgressDeadlineExceeded:
 		cond.Status = metav1.ConditionFalse
 		cond.Reason = ocv1.ReasonProgressDeadlineExceeded
-	case ocv1.ClusterObjectSetReasonRetryableError, ocv1.ClusterObjectSetReasonObjectCollision:
+	case ocv1.ClusterObjectSetReasonObjectCollision:
 		cond.Reason = ocv1.ReasonRetrying
 	default:
 		// Any other (non-error) reason on a not-yet-complete revision is rolling out.

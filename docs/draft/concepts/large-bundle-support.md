@@ -416,8 +416,8 @@ The reconciler distinguishes two failure modes:
 
 - A referenced **Secret that does not exist yet** — for example, informer cache lag
   after creation, or a partially completed creation sequence — is treated as a
-  transient error. The ClusterObjectSet reports `Ready=False, Reason=RetryableError`
-  and the controller retries with backoff.
+  transient error. The ClusterObjectSet leaves its `Ready` condition unchanged and the
+  controller returns the error so it retries with backoff.
 - **Invalid referenced content** — a missing key, a malformed manifest, or content
   that has changed since first rollout — is a validation failure. The ClusterObjectSet
   reports `Ready=False, Reason=ValidationFailure`. Because referenced Secrets are not

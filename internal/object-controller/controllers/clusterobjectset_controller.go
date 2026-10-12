@@ -149,10 +149,9 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, err.Error())
 			return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
 		}
-		// A Secret read error is transient; surface it as retryable and requeue with backoff.
-		werr := fmt.Errorf("verifying referenced Secrets: %v", err)
-		setRetryableErrorConditions(cos, werr.Error(), isDeadlineExceeded)
-		return ctrl.Result{}, werr
+		// A Secret read error is transient; leave the Ready condition unchanged and
+		// return the error for rate-limited backoff.
+		return ctrl.Result{}, fmt.Errorf("verifying referenced Secrets: %v", err)
 	}
 
 	phases, currentPhases, opts, err := c.buildBoxcutterPhases(ctx, cos)
@@ -174,7 +173,6 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, err.Error())
 			return ctrl.Result{}, nil
 		}
-		setRetryableErrorConditions(cos, err.Error(), isDeadlineExceeded)
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
 	}
 
@@ -191,7 +189,6 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cos)
 	if err != nil {
-		setRetryableErrorConditions(cos, err.Error(), isDeadlineExceeded)
 		return ctrl.Result{}, fmt.Errorf("failed to create revision engine: %v", err)
 	}
 
@@ -205,7 +202,6 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 	if cos.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {
 		if err := c.TrackingCache.Free(ctx, cos); err != nil {
-			markAsNotReady(cos, ocv1.ClusterObjectSetReasonRetryableError, err.Error())
 			return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 		}
 		return c.archive(ctx, revisionEngine, cos, revision)
@@ -216,9 +212,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	}
 
 	if err := c.establishWatch(ctx, cos, revision); err != nil {
-		werr := fmt.Errorf("establish watch: %v", err)
-		setRetryableErrorConditions(cos, werr.Error(), isDeadlineExceeded)
-		return ctrl.Result{}, werr
+		return ctrl.Result{}, fmt.Errorf("establish watch: %v", err)
 	}
 
 	rres, err := revisionEngine.Reconcile(ctx, revision, opts...)
@@ -227,7 +221,6 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			// Log detailed reconcile reports only in debug mode (V(1)) to reduce verbosity.
 			l.V(1).Info("reconcile report", "report", rres.String())
 		}
-		setRetryableErrorConditions(cos, err.Error(), isDeadlineExceeded)
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 
@@ -389,7 +382,6 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 func (c *ClusterObjectSetReconciler) delete(ctx context.Context, cos *ocv1.ClusterObjectSet) (ctrl.Result, error) {
 	if err := c.TrackingCache.Free(ctx, cos); err != nil {
-		markAsNotReady(cos, ocv1.ClusterObjectSetReasonRetryableError, err.Error())
 		return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 	}
 	if err := c.removeFinalizer(ctx, cos, clusterObjectSetTeardownFinalizer); err != nil {
@@ -401,9 +393,9 @@ func (c *ClusterObjectSetReconciler) delete(ctx context.Context, cos *ocv1.Clust
 func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine RevisionEngine, cos *ocv1.ClusterObjectSet, revision boxcutter.RevisionBuilder) (ctrl.Result, error) {
 	tdres, err := revisionEngine.Teardown(ctx, revision, machinerytypes.WithObserveAfterIncomplete{})
 	if err != nil {
-		err = fmt.Errorf("error archiving revision: %v", err)
-		setRetryableErrorConditions(cos, err.Error(), false)
-		return ctrl.Result{}, err
+		// Transient teardown error: leave the Ready condition unchanged and return
+		// the error for rate-limited backoff.
+		return ctrl.Result{}, fmt.Errorf("error archiving revision: %v", err)
 	}
 	if tdres != nil && !tdres.IsComplete() {
 		markAsArchiving(cos)
@@ -767,10 +759,6 @@ func setReadyWithDeadline(cos *ocv1.ClusterObjectSet, status metav1.ConditionSta
 		Message:            message,
 		ObservedGeneration: cos.Generation,
 	})
-}
-
-func setRetryableErrorConditions(cos *ocv1.ClusterObjectSet, message string, isDeadlineExceeded bool) {
-	setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonRetryableError, message, isDeadlineExceeded)
 }
 
 func markAsReady(cos *ocv1.ClusterObjectSet, reason, message string) bool {

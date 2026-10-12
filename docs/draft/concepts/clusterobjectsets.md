@@ -221,10 +221,11 @@ Indicates whether all objects in the revision have been successfully rolled out 
 | False | `Superseded` | One or more objects have been adopted by a newer revision of the object set |
 | False | `ObjectCollision` | One or more objects are controlled by another owner, or are unowned and collision protection prevents adoption |
 | False | `ValidationFailure` | A pre-apply check failed (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content); requires manual intervention |
-| Unknown | `RetryableError` | Error prevented probe observation |
 | False | `Archiving` | The revision is being archived; owned objects are still being torn down |
 | False | `Archived` | Objects torn down after archival |
 | Unknown | `Migrated` | Migrated from existing release; probes not yet observed |
+
+A transient internal error (e.g. an API read failure) leaves the `Ready` condition unchanged and is retried with backoff; it is not reported as a distinct reason, so on a first reconcile the condition may remain absent (`Unknown`).
 
 ### Succeeded
 
