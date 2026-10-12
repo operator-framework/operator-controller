@@ -218,6 +218,7 @@ Indicates whether all objects in the revision have been successfully rolled out 
 | --- | --- | --- |
 | True | `AllObjectsReady` | All objects are at the desired state |
 | False | `ObjectsNotReady` | One or more objects are still being applied or have not yet passed their readiness probes during rollout |
+| False | `Superseded` | One or more objects have been adopted by a newer revision of the object set |
 | False | `ObjectCollision` | One or more objects are controlled by another owner, or are unowned and collision protection prevents adoption |
 | False | `ValidationFailure` | A pre-apply check failed (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content); requires manual intervention |
 | Unknown | `RetryableError` | Error prevented probe observation |

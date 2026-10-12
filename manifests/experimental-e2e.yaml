@@ -1971,6 +1971,7 @@ spec:
                   the first reconciliation has evaluated the revision.
                     - True with reason AllObjectsReady: the revision has rolled out and all objects are at the desired state.
                     - False with reason ObjectsNotReady: one or more objects are still being applied or have not yet passed their readiness probes during rollout.
+                    - False with reason Superseded: one or more objects have been adopted by a newer revision of the object set.
                     - False with reason ObjectCollision: one or more objects are controlled by another owner, or are unowned while collision protection prevents adoption, so this revision cannot take ownership of them.
                     - False with reason ValidationFailure: the revision failed a pre-apply check (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content) and requires manual intervention.
                     - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.

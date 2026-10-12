@@ -214,6 +214,97 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
+			// A fully handed-off revision can report rres.IsComplete()==true because
+			// progressed objects count as complete (boxcutter). It must still report
+			// Superseded, not AllObjectsReady, and must NOT stamp completedAt — otherwise
+			// the superseded revision could be mis-identified as the installed one.
+			name:                    "complete revision with a progressed object reports Superseded, not AllObjectsReady",
+			reconcilingRevisionName: clusterObjectSetName,
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
+				isComplete: true,
+				phases: []machinery.PhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
+						name:       "somephase",
+						isComplete: true,
+						objects: []machinery.ObjectResult{
+							newMockObjectResult(mockCtrl, objectResultConfig{
+								action:   machinery.ActionProgressed,
+								complete: true,
+								object: func() client.Object {
+									obj := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cm", Namespace: "ns"}}
+									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
+									return obj
+								}(),
+							}),
+						},
+					}),
+				},
+			}),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				return []client.Object{ext, newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)}
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterObjectSet{}
+				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, rev))
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonSuperseded, cond.Reason)
+				require.True(t, rev.Status.CompletedAt.IsZero(), "a superseded revision must not stamp completedAt")
+			},
+		},
+		{
+			// When one or more objects have been adopted by a newer sibling revision
+			// (machinery.ActionProgressed), the revision reports Superseded, which takes
+			// precedence over ObjectsNotReady even when other objects are still not ready.
+			name:                    "set Ready:False:Superseded when an object has progressed to a newer revision",
+			reconcilingRevisionName: clusterObjectSetName,
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
+				inTransition: true,
+				isComplete:   false,
+				phases: []machinery.PhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
+						name:       "somephase",
+						isComplete: false,
+						objects: []machinery.ObjectResult{
+							newMockObjectResult(mockCtrl, objectResultConfig{
+								action: machinery.ActionProgressed,
+								object: func() client.Object {
+									obj := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cm", Namespace: "ns"}}
+									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
+									return obj
+								}(),
+							}),
+							newMockObjectResult(mockCtrl, objectResultConfig{
+								object: func() client.Object {
+									obj := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "svc", Namespace: "ns"}}
+									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
+									return obj
+								}(),
+								probes: machinerytypes.ProbeResultContainer{
+									boxcutter.ProgressProbeType: {Status: machinerytypes.ProbeStatusFalse, Messages: []string{"not ready"}},
+								},
+							}),
+						},
+					}),
+				},
+			}),
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				return []client.Object{ext, newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)}
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterObjectSet{}
+				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, rev))
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonSuperseded, cond.Reason)
+				require.Equal(t, "Object(s) have been adopted by a newer revision of the object set.", cond.Message)
+			},
+		},
+		{
 			name:                    "set Ready:False:ObjectsNotReady condition when probe failures are detected and revision is in transition",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
@@ -1436,6 +1527,47 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 				// The deadline "last status" must be the generic not-ready summary, not the
 				// per-object probe detail, so the deadline message stays stable.
 				require.Equal(t, "Revision has not rolled out for 1 minute(s). Last status: Objects are not yet ready.", cnd.Message)
+			},
+		},
+		{
+			// A progressed (superseded) object AND an exceeded progress deadline must
+			// set Ready=False/ProgressDeadlineExceeded (deadline wins over Superseded).
+			name: "Ready set to false/ProgressDeadlineExceeded when deadline is exceeded with a superseded object (deadline wins over Superseded)",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+				rev1.Spec.ProgressDeadlineMinutes = 1
+				rev1.CreationTimestamp = metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
+				return []client.Object{rev1, ext}
+			},
+			clock: clocktesting.NewFakeClock(time.Date(2022, 1, 1, 0, 1, 1, 0, time.UTC)),
+			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
+				inTransition: true,
+				isComplete:   false,
+				phases: []machinery.PhaseResult{
+					newMockPhaseResult(mockCtrl, phaseResultConfig{
+						name:       "somephase",
+						isComplete: false,
+						objects: []machinery.ObjectResult{
+							newMockObjectResult(mockCtrl, objectResultConfig{
+								action: machinery.ActionProgressed,
+								object: func() client.Object {
+									obj := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cm", Namespace: "ns"}}
+									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
+									return obj
+								}(),
+							}),
+						},
+					}),
+				},
+			}),
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterObjectSet{}
+				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, rev))
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				require.NotNil(t, cnd)
+				require.Equal(t, metav1.ConditionFalse, cnd.Status)
+				require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cnd.Reason)
 			},
 		},
 		{
