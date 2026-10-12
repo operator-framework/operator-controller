@@ -88,7 +88,7 @@ When transitioning from one revision to the next:
 1. A new ClusterObjectSet is created with the next sequential revision number
 2. Both old and new revisions remain `Active` during the transition
 3. Objects transition ownership from the old revision to the new one
-4. Once the new revision reports `Succeeded`, the old revision can be archived
+4. Once the new revision has rolled out successfully, the old revision can be archived
 
 ### Archival
 
@@ -196,19 +196,7 @@ For a detailed design discussion, see [Large Bundle Support](large-bundle-suppor
 
 ## Status conditions
 
-ClusterObjectSets report three conditions that describe their current state:
-
-### Progressing
-
-Indicates whether the revision is actively rolling out.
-
-| Status | Reason | Meaning |
-| --- | --- | --- |
-| True | `RollingOut` | Actively making progress |
-| True | `Retrying` | Encountered a retryable error |
-| True | `Succeeded` | Reached the desired state |
-| False | `Blocked` | Error requiring manual intervention |
-| False | `Archived` | No longer actively reconciled |
+ClusterObjectSets report a single `Ready` condition describing their current state. Rollout *completion* is recorded separately as a timestamp in `status.completedAt`, not as a condition.
 
 ### Ready
 
@@ -223,13 +211,12 @@ Indicates whether all objects in the revision have been successfully rolled out 
 | False | `ValidationFailure` | A pre-apply check failed (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content); requires manual intervention |
 | False | `Archiving` | The revision is being archived; owned objects are still being torn down |
 | False | `Archived` | Objects torn down after archival |
-| Unknown | `Migrated` | Migrated from existing release; probes not yet observed |
 
 A transient internal error (e.g. an API read failure) leaves the `Ready` condition unchanged and is retried with backoff; it is not reported as a distinct reason, so on a first reconcile the condition may remain absent (`Unknown`).
 
-### Succeeded
+### Completion (`status.completedAt`)
 
-A terminal condition set once the rollout completes. It persists even if the revision later becomes unavailable, marking that this version was successfully deployed at least once.
+The first time a revision becomes ready, the controller stamps `status.completedAt` with the current time. This timestamp is set once and never changes, marking that this revision successfully rolled out at least once — it persists even if the revision later becomes not ready. The ClusterExtension controller uses it to determine the installed revision.
 
 ## How operator-controller uses ClusterObjectSets
 
@@ -252,7 +239,7 @@ When a ClusterExtension is upgraded to a new version:
 1. A new ClusterObjectSet is created with `revision: N+1`
 2. Both old and new revisions are `Active` during the transition
 3. Objects transition ownership from the old revision to the new one
-4. Once the new revision reports `Succeeded`, the old revision is archived
+4. Once the new revision has rolled out successfully, the old revision is archived
 5. Older archived revisions are garbage collected, keeping the last 5 for auditing
 
 ### Relationship with ClusterExtension
