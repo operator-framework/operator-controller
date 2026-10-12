@@ -222,10 +222,11 @@ Indicates whether all objects in the revision have been successfully rolled out 
 | False | `ObjectCollision` | One or more objects are controlled by another owner, or are unowned and collision protection prevents adoption |
 | False | `PreconditionsNotMet` | A precondition for applying the revision is not yet satisfied (a referenced Secret is mutable or has invalid or changed content, or a preflight dry-run was rejected, e.g. an immutable field, a conflicting object, or RBAC/dependency CRDs not yet propagated); the revision keeps retrying and recovers once the precondition is met |
 | False | `InvalidSpecification` | The revision spec is invalid (a malformed revision/phase object or progression probe); requires a spec change |
-| Unknown | `RetryableError` | Error prevented probe observation |
 | False | `Archiving` | The revision is being archived; owned objects are still being torn down |
 | False | `Archived` | Objects torn down after archival |
 | Unknown | `Migrated` | Migrated from existing release; probes not yet observed |
+
+A transient internal error (e.g. an API read failure) leaves the `Ready` condition unchanged and is retried with backoff; it is not reported as a distinct reason, so on a first reconcile the condition may remain absent (`Unknown`).
 
 ### Succeeded
 
