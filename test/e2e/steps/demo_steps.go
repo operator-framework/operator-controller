@@ -93,7 +93,7 @@ func ensureCatalogPortForward(ctx context.Context) (string, error) {
 		resetCatalogPortForward(ctx)
 	}
 
-	ns := componentNamespaces["catalogd"]
+	ns := componentNamespaces[catalogdComponent]
 	target, err := catalogdLeaderPod(ctx, ns)
 	port := int32(443)
 	if err != nil {
