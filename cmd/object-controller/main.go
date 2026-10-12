@@ -33,6 +33,7 @@ import (
 	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter/managedcache"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -191,7 +192,7 @@ func newManager(cfg *config, restConfig *rest.Config) (manager.Manager, error) {
 	}
 	if err := (&controllers.ClusterObjectSetReconciler{
 		Client: mgr.GetClient(), RevisionEngineFactory: factory, TrackingCache: trackingCache,
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, builder.OnlyMetadata); err != nil {
 		return nil, fmt.Errorf("setting up ClusterObjectSet controller: %w", err)
 	}
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
