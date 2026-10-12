@@ -120,9 +120,10 @@ func WithCSVAnnotation(key, value string) BundleOption {
 	}
 }
 
-// WithNSTemplate adds a suggested namespace template annotation to the CSV with the specified PSA level.
+// WithNSTemplate adds a suggested namespace template annotation to the CSV with the specified PSA level
+// and a custom label to verify template application independently of cluster PSA controllers.
 func WithNSTemplate(psaLevel string) BundleOption {
-	template := fmt.Sprintf(`{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"pod-security.kubernetes.io/enforce":"%s","pod-security.kubernetes.io/audit":"%s","pod-security.kubernetes.io/warn":"%s"}}}`, psaLevel, psaLevel, psaLevel)
+	template := fmt.Sprintf(`{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"e2e.olm.operatorframework.io/template":"applied","pod-security.kubernetes.io/enforce":"%s","pod-security.kubernetes.io/audit":"%s","pod-security.kubernetes.io/warn":"%s"}}}`, psaLevel, psaLevel, psaLevel)
 	return WithCSVAnnotation("operatorframework.io/suggested-namespace-template", template)
 }
 
