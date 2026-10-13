@@ -39,7 +39,7 @@ type BoxcutterRevisionStatesGetter struct {
 }
 
 func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
-	existingRevisions, err := revisions.ListForClusterExtension(ctx, d.Reader, ext)
+	existingRevisions, err := revisions.ListForGroup(ctx, d.Reader, ext.Name)
 	if err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}

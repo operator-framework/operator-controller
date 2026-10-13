@@ -33,9 +33,10 @@ import (
 	"github.com/operator-framework/operator-controller/test"
 )
 
-func TestListForClusterExtension(t *testing.T) {
+func TestListForGroup(t *testing.T) {
 	scheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(scheme))
+	const group = "test-group"
 	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "current-uid"}}
 	owner := *metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))
 	differentName, differentKind, differentIdentity := owner, owner, owner
@@ -54,15 +55,15 @@ func TestListForClusterExtension(t *testing.T) {
 		owners   []metav1.OwnerReference
 		revision int64
 	}{
-		{name: "matching-owner", group: ext.Name, owners: []metav1.OwnerReference{owner}, revision: 2},
-		{name: "oldest", group: ext.Name, owners: []metav1.OwnerReference{differentIdentity}, revision: 1},
+		{name: "matching-owner", group: group, owners: []metav1.OwnerReference{owner}, revision: 2},
+		{name: "oldest", group: group, owners: []metav1.OwnerReference{differentIdentity}, revision: 1},
 		{name: "other-group", group: "other-group", owners: []metav1.OwnerReference{owner}, revision: 99},
-		{name: "other-name", group: ext.Name, owners: []metav1.OwnerReference{differentName}, revision: 100},
-		{name: "other-kind", group: ext.Name, owners: []metav1.OwnerReference{differentKind}, revision: 101},
-		{name: "ownerless", group: ext.Name, revision: 102},
-		{name: "non-controller", group: ext.Name, owners: []metav1.OwnerReference{nonController}, revision: 103},
-		{name: "unspecified-controller", group: ext.Name, owners: []metav1.OwnerReference{unspecifiedController}, revision: 104},
-		{name: "foreign-controller-with-ce-owner", group: ext.Name, owners: []metav1.OwnerReference{differentKind, nonController}, revision: 105},
+		{name: "other-name", group: group, owners: []metav1.OwnerReference{differentName}, revision: 100},
+		{name: "other-kind", group: group, owners: []metav1.OwnerReference{differentKind}, revision: 101},
+		{name: "ownerless", group: group, revision: 102},
+		{name: "non-controller", group: group, owners: []metav1.OwnerReference{nonController}, revision: 103},
+		{name: "unspecified-controller", group: group, owners: []metav1.OwnerReference{unspecifiedController}, revision: 104},
+		{name: "foreign-controller-with-ce-owner", group: group, owners: []metav1.OwnerReference{differentKind, nonController}, revision: 105},
 	} {
 		objects = append(objects, &ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{Name: tc.name, OwnerReferences: tc.owners},
@@ -75,7 +76,7 @@ func TestListForClusterExtension(t *testing.T) {
 	}
 	cl := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
 		WithObjects(objects...).Build()
-	got, err := revisions.ListForClusterExtension(t.Context(), cl, ext)
+	got, err := revisions.ListForGroup(t.Context(), cl, group)
 	require.NoError(t, err)
 	names := make([]string, 0, len(got))
 	for _, cos := range got {

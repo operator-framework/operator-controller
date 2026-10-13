@@ -26,12 +26,12 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-// ListForClusterExtension returns all COS revisions in the extension's group, oldest first.
-// CE-generated revisions use the extension name as their group. Owner references
-// do not affect revision association. Lifecycle filtering is left to callers.
-func ListForClusterExtension(ctx context.Context, reader client.Reader, ext *ocv1.ClusterExtension) ([]ocv1.ClusterObjectSet, error) {
+// ListForGroup returns all COS revisions in the group, oldest first.
+// Owner references do not affect revision association. Lifecycle filtering is
+// left to callers.
+func ListForGroup(ctx context.Context, reader client.Reader, group string) ([]ocv1.ClusterObjectSet, error) {
 	list := &ocv1.ClusterObjectSetList{}
-	if err := reader.List(ctx, list, client.MatchingFields{".spec.group": ext.Name}); err != nil {
+	if err := reader.List(ctx, list, client.MatchingFields{".spec.group": group}); err != nil {
 		return nil, err
 	}
 	slices.SortFunc(list.Items, func(a, b ocv1.ClusterObjectSet) int {

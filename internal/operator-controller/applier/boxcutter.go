@@ -282,7 +282,7 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 	if ext.Spec.Namespace == "" {
 		return nil
 	}
-	existingRevisions, err := revisions.ListForClusterExtension(ctx, m.Client, ext)
+	existingRevisions, err := revisions.ListForGroup(ctx, m.Client, ext.Name)
 	if err != nil {
 		return fmt.Errorf("listing ClusterObjectSets before attempting migration: %w", err)
 	}
@@ -466,7 +466,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	// cluster access is unavailable (since the ClusterObjectSet controller also requires
 	// API access to maintain resources). The revision list is also needed to determine if fallback
 	// is possible when contentFS is nil (at least one revision must exist).
-	existingRevisions, err := revisions.ListForClusterExtension(ctx, bc.Client, ext)
+	existingRevisions, err := revisions.ListForGroup(ctx, bc.Client, ext.Name)
 	if err != nil {
 		return false, "", fmt.Errorf("listing revisions: %w", err)
 	}
