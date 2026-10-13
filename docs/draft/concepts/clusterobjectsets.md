@@ -442,8 +442,7 @@ Multiple objects can reference different keys within the same Secret, allowing e
 kubectl get clusterobjectsets
 
 # List revisions in a specific extension's group
-kubectl get clusterobjectsets -o json | \
-  jq -r '.items[] | select(.spec.group == "my-extension") | .metadata.name'
+kubectl get clusterobjectsets --field-selector spec.group=my-extension
 
 # View full details for a specific revision
 kubectl get clusterobjectset <name> -o yaml

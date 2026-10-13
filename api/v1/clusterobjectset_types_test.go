@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestClusterObjectSetImmutability(t *testing.T) {
@@ -467,6 +468,50 @@ func TestClusterObjectSetGroupValidation(t *testing.T) {
 				require.True(t, errors.IsInvalid(err), "%v", err)
 				require.ErrorContains(t, err, "spec.group")
 			}
+		})
+	}
+}
+
+func TestClusterObjectSetGroupFieldSelector(t *testing.T) {
+	// Use an uncached client so filtering is performed by the API server.
+	c := newClient(t)
+	for _, fixture := range []struct {
+		name     string
+		group    string
+		revision int64
+	}{
+		{name: "field-selector-a-1", group: "field-selector-a", revision: 1},
+		{name: "field-selector-a-2", group: "field-selector-a", revision: 2},
+		{name: "field-selector-b-1", group: "field-selector-b", revision: 1},
+	} {
+		cos := &ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{Name: fixture.name},
+			Spec: ClusterObjectSetSpec{
+				Group:               fixture.group,
+				Revision:            fixture.revision,
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+		}
+		require.NoError(t, c.Create(t.Context(), cos))
+	}
+
+	for _, tc := range []struct {
+		group string
+		want  []string
+	}{
+		{group: "field-selector-a", want: []string{"field-selector-a-1", "field-selector-a-2"}},
+		{group: "field-selector-b", want: []string{"field-selector-b-1"}},
+		{group: "field-selector-missing"},
+	} {
+		t.Run(tc.group, func(t *testing.T) {
+			var list ClusterObjectSetList
+			require.NoError(t, c.List(t.Context(), &list, client.MatchingFields{"spec.group": tc.group}))
+			names := make([]string, 0, len(list.Items))
+			for _, cos := range list.Items {
+				names = append(names, cos.Name)
+			}
+			require.ElementsMatch(t, tc.want, names)
 		})
 	}
 }
