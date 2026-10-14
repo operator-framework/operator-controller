@@ -321,7 +321,9 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 	//nolint:nestif
 	if rres.IsComplete() && !superseded {
-		// Archive previous revisions
+		// Archive previous revisions.
+		// TODO(COD): Move the decision to archive previous revisions to
+		// ClusterObjectDeployment reconciliation when that controller is introduced.
 		previous, err := c.listPreviousRevisions(ctx, cos)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("listing previous revisions: %v", err)

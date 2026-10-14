@@ -84,9 +84,9 @@ func ResourceKeepsUID(ctx context.Context, resourceName string) error {
 	return nil
 }
 
-// A local cache index does not make spec.group selectable through kubectl.
+// listClusterObjectSetsInGroup selects revisions by group on the API server.
 func listClusterObjectSetsInGroup(ctx context.Context, group string) ([]ocv1.ClusterObjectSet, error) {
-	out, err := k8sClient(ctx, "get", "clusterobjectsets", "-o", "json")
+	out, err := k8sClient(ctx, "get", "clusterobjectsets", "--field-selector", "spec.group="+group, "-o", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -94,13 +94,7 @@ func listClusterObjectSetsInGroup(ctx context.Context, group string) ([]ocv1.Clu
 	if err := json.Unmarshal([]byte(out), &list); err != nil {
 		return nil, err
 	}
-	var revisions []ocv1.ClusterObjectSet
-	for _, rev := range list.Items {
-		if rev.Spec.Group == group {
-			revisions = append(revisions, rev)
-		}
-	}
-	return revisions, nil
+	return list.Items, nil
 }
 
 func ClusterObjectSetHasGroup(ctx context.Context, revisionName, group string) error {

@@ -1391,6 +1391,9 @@ spec:
     - jsonPath: .spec.group
       name: Group
       type: string
+    - jsonPath: .spec.revision
+      name: Revision
+      type: integer
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: Ready
       type: string

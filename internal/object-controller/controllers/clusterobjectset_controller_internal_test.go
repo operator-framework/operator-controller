@@ -23,7 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	"github.com/operator-framework/operator-controller/test"
 )
 
@@ -104,20 +103,6 @@ func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
 			},
 			currentRev:   "rev-3",
 			expectedRevs: []string{"rev-1"},
-		},
-		{
-			name: "should include revisions when owner label is missing",
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtensionInternal()
-				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
-				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
-				delete(rev2.Labels, labels.OwnerNameKey)
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
-				return []client.Object{ext, rev1, rev2}
-			},
-			currentRev:   "rev-1",
-			expectedRevs: []string{"rev-2"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -201,17 +186,37 @@ func Test_ClusterObjectSetReconciler_OwnerChangesPreserveRevisionChain(t *testin
 	r := &ClusterObjectSetReconciler{Client: cl}
 
 	for _, tc := range []struct {
-		name   string
-		owners []metav1.OwnerReference
+		name           string
+		previousOwners []metav1.OwnerReference
+		currentOwners  []metav1.OwnerReference
 	}{
-		{name: "same owner", owners: []metav1.OwnerReference{owner}},
-		{name: "different owner", owners: []metav1.OwnerReference{foreignOwner}},
-		{name: "owner removed"},
-		{name: "owner added again", owners: []metav1.OwnerReference{owner}},
+		{
+			name:           "same owner",
+			previousOwners: []metav1.OwnerReference{owner},
+			currentOwners:  []metav1.OwnerReference{owner},
+		},
+		{
+			name:           "different owner",
+			previousOwners: []metav1.OwnerReference{foreignOwner},
+			currentOwners:  []metav1.OwnerReference{owner},
+		},
+		{
+			name:          "owner removed",
+			currentOwners: []metav1.OwnerReference{owner},
+		},
+		{
+			name:           "owner added again",
+			previousOwners: []metav1.OwnerReference{owner},
+			currentOwners:  []metav1.OwnerReference{owner},
+		},
+		{name: "both revisions ownerless"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(current), current))
+			current.OwnerReferences = tc.currentOwners
+			require.NoError(t, cl.Update(t.Context(), current))
 			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(previous), previous))
-			previous.OwnerReferences = tc.owners
+			previous.OwnerReferences = tc.previousOwners
 			require.NoError(t, cl.Update(t.Context(), previous))
 			siblings, err := r.listSiblingRevisions(t.Context(), current)
 			require.NoError(t, err)
@@ -286,9 +291,6 @@ func newTestClusterObjectSetInternal(t *testing.T, name string) *ocv1.ClusterObj
 			Name:       name,
 			UID:        types.UID(name),
 			Generation: int64(1),
-			Labels: map[string]string{
-				labels.OwnerNameKey: "test-ext",
-			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
 			Group:    "test-ext",

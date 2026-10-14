@@ -1,12 +1,27 @@
 @BoxcutterRuntime
 Feature: Track ClusterObjectSet revisions by group
 
+  As a ClusterObjectSet user, I want to group successive revisions so that a new
+  revision can update the Kubernetes objects managed by an earlier revision
+  without deleting and recreating them. This handoff should work even when the
+  ClusterObjectSets have different controller owners or no owner. I also want
+  collision protection between groups, and pruning a group's old revisions
+  should leave other groups' revisions untouched.
+
   Background:
     Given OLM is available
     And an image registry is available
     And namespace "${TEST_NAMESPACE}" is available
 
-  Scenario Outline: Group handoff preserves objects across <ownership>
+  Scenario Outline: Group handoff preserves objects when <revision-ownership>
+    Both ClusterObjectSets have the same group. Their controller owner references
+    point to different Namespaces, or one or both ClusterObjectSets have no owner
+    reference. These owner references must not determine group membership.
+
+    The new revision must update the existing ConfigMap without deleting and
+    recreating it. The UID saved before handoff must still match after the new
+    revision is ready and the previous revision is archived.
+
     Given resource is applied
       """
       apiVersion: v1
@@ -14,7 +29,7 @@ Feature: Track ClusterObjectSet revisions by group
       metadata:
         name: ${TEST_NAMESPACE}-other
       """
-    And ClusterObjectSet with Namespace owner "<lower-owner>" is applied
+    And ClusterObjectSet with Namespace owner "<lower-revision-owner>" is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
@@ -40,7 +55,7 @@ Feature: Track ClusterObjectSet revisions by group
     Then ClusterObjectSet "${NAME}-1" reports Ready as True with Reason AllObjectsReady
     And ClusterObjectSet "${NAME}-1" phase objects use SSA manager "cos-group/${NAME}"
     And resource "configmap/${NAME}-payload" UID is remembered
-    When ClusterObjectSet with Namespace owner "<higher-owner>" is applied
+    When ClusterObjectSet with Namespace owner "<higher-revision-owner>" is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
@@ -76,10 +91,11 @@ Feature: Track ClusterObjectSet revisions by group
     # An empty owner creates an ownerless COS. Namespace owners are real,
     # cluster-scoped objects, independent of CE and future COD controllers.
     Examples:
-      | ownership             | lower-owner       | higher-owner            |
-      | different controllers | ${TEST_NAMESPACE} | ${TEST_NAMESPACE}-other |
-      | owned to ownerless    | ${TEST_NAMESPACE} |                         |
-      | ownerless to owned    |                   | ${TEST_NAMESPACE}       |
+      | revision-ownership                                     | lower-revision-owner | higher-revision-owner   |
+      | revisions have different controller owners             | ${TEST_NAMESPACE}    | ${TEST_NAMESPACE}-other |
+      | an owned revision is followed by an ownerless revision | ${TEST_NAMESPACE}    |                         |
+      | an ownerless revision is followed by an owned revision |                      | ${TEST_NAMESPACE}       |
+      | both revisions have no controller owner                |                      |                         |
 
   Scenario: Different groups collide even with the same controller owner
     Given ClusterObjectSet with Namespace owner "${TEST_NAMESPACE}" is applied
