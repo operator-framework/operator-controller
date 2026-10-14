@@ -481,6 +481,11 @@ func TestDetermineFailureReason(t *testing.T) {
 			expected: ocv1.ReasonFailed,
 		},
 		{
+			name:     "latest superseded -> Absent",
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonSuperseded)}},
+			expected: ocv1.ReasonAbsent,
+		},
+		{
 			name: "only the latest revision matters",
 			rolling: []*RevisionMetadata{
 				{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonRetryableError)},
@@ -519,6 +524,12 @@ func TestProgressingFromReady(t *testing.T) {
 			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonObjectsNotReady, Message: "Objects are not yet ready."},
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "Objects are not yet ready."},
+		},
+		{
+			name:      "superseded maps to RollingOut",
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonSuperseded, Message: "Object(s) have been adopted by a newer revision of the object set."},
+			completed: false,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "Object(s) have been adopted by a newer revision of the object set."},
 		},
 		{
 			name:      "archiving maps to RollingOut",

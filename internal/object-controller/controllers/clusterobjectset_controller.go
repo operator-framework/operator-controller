@@ -48,10 +48,11 @@ const (
 	clusterObjectSetTeardownFinalizer = "olm.operatorframework.io/teardown"
 
 	// validationRetryInterval is how often the reconciler re-checks a revision that is
-	// Ready=False/ValidationFailure due to referenced-content problems (preflight validation,
-	// a mutable referenced Secret, a changed digest, or an invalid referenced manifest).
-	// Referenced Secrets are not watched and the phase/ref spec is immutable, so a periodic
-	// retry lets the revision recover once the Secret is replaced, without a controller restart.
+	// Ready=False/ValidationFailure. These failures stem from inputs that are not watched
+	// — a mutable or changed referenced Secret, an invalid referenced manifest, or a
+	// preflight dry-run rejected until RBAC or a dependency CRD propagates — and the ref
+	// spec is immutable, so a periodic retry lets the revision recover (once the Secret is
+	// replaced or the cluster state catches up) without a controller restart.
 	validationRetryInterval = 10 * time.Second
 )
 
@@ -230,8 +231,9 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 
-	// Retry failing preflight checks with a flat 10s retry.
-	// TODO: report status, backoff?
+	// Report revision-level preflight validation failures and re-check on a flat timer:
+	// the dry-run can be rejected for reasons that clear without a spec change (e.g. RBAC
+	// or a dependency CRD still propagating), and those inputs are not watched.
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
 		markAsNotReady(cos, ocv1.ClusterObjectSetReasonValidationFailure, fmt.Sprintf("revision validation error: %s", verr))
@@ -294,8 +296,15 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		}
 	}
 
+	// A revision whose objects have all been adopted by a newer sibling revision can
+	// report IsComplete() (progressed objects count as complete), but it is superseded,
+	// not successfully rolled out: skip the completion branch so it does not archive
+	// previous revisions, report AllObjectsReady, or record a first completion
+	// (completedAt) that would identify it as the installed revision.
+	superseded := hasSupersededObject(rres)
+
 	//nolint:nestif
-	if rres.IsComplete() {
+	if rres.IsComplete() && !superseded {
 		// Archive previous revisions
 		previous, err := c.listPreviousRevisions(ctx, cos)
 		if err != nil {
@@ -357,9 +366,13 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		if len(notReadyMsgs) > 0 {
 			l.V(1).Info("objects not yet ready", "count", len(notReadyMsgs), "details", notReadyMsgs)
 		}
-		if isDeadlineExceeded {
+		// Precedence: ProgressDeadlineExceeded > Superseded > ObjectsNotReady.
+		switch {
+		case isDeadlineExceeded:
 			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonObjectsNotReady, genericNotReadyMsg, true)
-		} else {
+		case superseded:
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonSuperseded, "Object(s) have been adopted by a newer revision of the object set.")
+		default:
 			notReadyMsg := genericNotReadyMsg
 			if len(notReadyMsgs) > 0 {
 				notReadyMsg = fmt.Sprintf("%d object(s) are not yet ready.", len(notReadyMsgs))
@@ -778,6 +791,21 @@ func markAsNotReady(cos *ocv1.ClusterObjectSet, reason, message string) bool {
 		Message:            message,
 		ObservedGeneration: cos.Generation,
 	})
+}
+
+// hasSupersededObject reports whether any object in the revision has been adopted
+// by a newer sibling revision (machinery.ActionProgressed). boxcutter only emits
+// ActionProgressed for a newer sibling (a foreign owner is a collision), so no
+// revision comparison is needed here.
+func hasSupersededObject(rres machinery.RevisionResult) bool {
+	for _, pres := range rres.GetPhases() {
+		for _, ores := range pres.GetObjects() {
+			if ores.Action() == machinery.ActionProgressed {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func markAsArchiving(cos *ocv1.ClusterObjectSet) {
