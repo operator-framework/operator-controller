@@ -457,6 +457,8 @@ _Appears in:_
 | `pollIntervalMinutes` _integer_ | pollIntervalMinutes is an optional field that sets the interval, in minutes, at which the image source is polled for new content.<br />You cannot specify pollIntervalMinutes when ref is a digest-based reference.<br />When omitted, the image is not polled for new content. |  | Minimum: 1 <br />Optional: \{\} <br /> |
 
 
+
+
 #### ObjectSelector
 
 
