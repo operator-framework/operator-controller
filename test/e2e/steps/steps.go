@@ -485,7 +485,7 @@ func ResourceIsAppliedAsUser(ctx context.Context, user, group string, yamlTempla
 func ResourceApplyAsUserFails(ctx context.Context, user, group, errMsg string, yamlTemplate *godog.DocString) error {
 	sc := scenarioCtx(ctx)
 	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
-	_, err := toUnstructured(yamlContent)
+	res, err := toUnstructured(yamlContent)
 	if err != nil {
 		return fmt.Errorf("failed to parse resource yaml: %v", err)
 	}
@@ -499,18 +499,56 @@ func ResourceApplyAsUserFails(ctx context.Context, user, group, errMsg string, y
 		}
 		return strings.Contains(stdErr, errMsg)
 	})
-	_, stdErr, err := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-", "--as="+user, "--as-group="+group)
-	if err == nil {
-		res, _ := toUnstructured(yamlContent)
-		if res != nil {
-			sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: strings.ToLower(res.GetKind())})
+	// The dry-run above may have been served by a kube-apiserver replica that already enforces the
+	// binding while the real apply is load-balanced to a different replica that has not caught up yet —
+	// VAP binding enforcement propagates per-replica and is eventually consistent, so a single dry-run
+	// denial does not guarantee the next request is denied. Poll the real apply until it is denied with
+	// the expected message; if a request slips through the propagation window, the object is persisted,
+	// so delete it and retry. This converges without leaking the resource or reporting a false
+	// "it succeeded".
+	var lastErr error
+	// pendingCleanup is true once an apply has been admitted and the persisted object has not yet been
+	// confirmed removed. We must not report success while a leaked object remains — a following
+	// "is not found" step would time out, and ScenarioCleanup skips tracked-resource deletion once the
+	// scenario has failed, so the object would also leak into the next scenario.
+	pendingCleanup := false
+	deadline := time.Now().Add(timeout)
+	for {
+		_, stdErr, applyErr := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-", "--as="+user, "--as-group="+group)
+		switch {
+		case applyErr == nil:
+			// Admitted before enforcement propagated to this replica. Track for cleanup and remove it below.
+			if !pendingCleanup {
+				sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: strings.ToLower(res.GetKind())})
+			}
+			pendingCleanup = true
+			lastErr = fmt.Errorf("apply was admitted before enforcement propagated")
+		case strings.Contains(stdErr, errMsg):
+			// Denied with the expected message. Succeed only once any earlier-admitted object is gone.
+			if !pendingCleanup {
+				return nil
+			}
+		default:
+			lastErr = fmt.Errorf("expected apply error containing %q, got: %s", errMsg, stdErr)
 		}
-		return fmt.Errorf("expected apply to fail with %q, but it succeeded", errMsg)
+		if pendingCleanup {
+			// A blocking delete (default --wait) returns only once the object is actually removed, so a
+			// nil error confirms removal. Keep pendingCleanup set on failure so a later denial is not accepted.
+			delArgs := []string{"delete", res.GetKind(), res.GetName(), "--ignore-not-found"}
+			if ns := res.GetNamespace(); ns != "" {
+				delArgs = append(delArgs, "-n", ns)
+			}
+			if _, delErr := k8sClient(ctx, delArgs...); delErr != nil {
+				lastErr = fmt.Errorf("failed to remove admitted resource: %w", delErr)
+			} else {
+				pendingCleanup = false
+			}
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("expected apply to fail with %q within %s: %w", errMsg, timeout, lastErr)
+		}
+		time.Sleep(tick)
 	}
-	if !strings.Contains(stdErr, errMsg) {
-		return fmt.Errorf("expected apply error containing %q, got: %s", errMsg, stdErr)
-	}
-	return nil
 }
 
 // ResourceApplyEmitsWarning asserts the last kubectl apply produced stderr output containing the expected warning.
