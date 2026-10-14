@@ -60,9 +60,9 @@ Feature: Install ClusterObjectSet
       """
 
     Then resource "persistentvolumeclaim/test-pvc" is installed
-    And ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ProbeFailure and Message:
+    And ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ObjectsNotReady and Message:
     """
-      Object PersistentVolumeClaim.v1 ${TEST_NAMESPACE}/test-pvc: value at key "status.phase" != "Bound"; expected: "Bound" got: "Pending"
+      1 object(s) are not yet ready.
     """
     And resource "configmap/test-configmap" is not installed
 
@@ -204,9 +204,9 @@ Feature: Install ClusterObjectSet
       """
 
     Then resource "configmap/test-configmap-1" is installed
-    And ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ProbeFailure and Message:
+    And ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ObjectsNotReady and Message:
     """
-      Object ConfigMap.v1 ${TEST_NAMESPACE}/test-configmap-1: value at key "data.foo" != "bar"; expected: "bar" got: "foo"
+      1 object(s) are not yet ready.
     """
     And resource "configmap/test-configmap-2" is not installed
 

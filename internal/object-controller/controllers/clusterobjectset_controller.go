@@ -294,11 +294,6 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		}
 	}
 
-	revisionNumber := cos.Spec.Revision
-	if rres.InTransition() {
-		setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %d is rolling out.", revisionNumber), isDeadlineExceeded)
-	}
-
 	//nolint:nestif
 	if rres.IsComplete() {
 		// Archive previous revisions
@@ -326,7 +321,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			cos.Status.CompletedAt = metav1.NewTime(c.Clock.Now())
 		}
 	} else {
-		var probeFailureMsgs []string
+		var notReadyMsgs []string
 		for _, pres := range rres.GetPhases() {
 			if pres.IsComplete() {
 				continue
@@ -344,29 +339,32 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 				}
 				obj := ores.Object()
 				gvk := obj.GetObjectKind().GroupVersionKind()
-				// I think these can be pretty large and verbose. We may want to
-				// work a little on the formatting...?
-				probeFailureMsgs = append(probeFailureMsgs, fmt.Sprintf(
+				// Count every not-ready object (the condition reports the count); the
+				// per-object detail here is for the V(1) debug log, not the message.
+				notReadyMsgs = append(notReadyMsgs, fmt.Sprintf(
 					"Object %s.%s %s/%s: %v",
 					gvk.Kind, gvk.GroupVersion().String(),
 					obj.GetNamespace(), obj.GetName(), strings.Join(pr.Messages, " and "),
 				))
-				break
 			}
 		}
 
-		rollingOutMsg := fmt.Sprintf("Revision %d is rolling out.", revisionNumber)
-		switch {
-		case isDeadlineExceeded:
-			// Deadline wins over ProbeFailure. Use the generic rolling-out summary as
-			// the "last status", not the per-object probe detail, so the reconstructed
-			// ClusterExtension Progressing/ProgressDeadlineExceeded message matches the
-			// message the removed COS Progressing condition historically carried.
-			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ReasonRollingOut, rollingOutMsg, true)
-		case len(probeFailureMsgs) > 0:
-			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonProbeFailure, strings.Join(probeFailureMsgs, "\n"), false)
-		default:
-			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ReasonRollingOut, rollingOutMsg, false)
+		// Generic summary used as the ProgressDeadlineExceeded "last status", kept
+		// stable (not the volatile per-object detail) so the deadline message does not
+		// churn. The non-deadline path reports the count. Per-object detail is kept out
+		// of the condition message and logged at V(1) for debugging.
+		const genericNotReadyMsg = "Objects are not yet ready."
+		if len(notReadyMsgs) > 0 {
+			l.V(1).Info("objects not yet ready", "count", len(notReadyMsgs), "details", notReadyMsgs)
+		}
+		if isDeadlineExceeded {
+			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonObjectsNotReady, genericNotReadyMsg, true)
+		} else {
+			notReadyMsg := genericNotReadyMsg
+			if len(notReadyMsgs) > 0 {
+				notReadyMsg = fmt.Sprintf("%d object(s) are not yet ready.", len(notReadyMsgs))
+			}
+			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonObjectsNotReady, notReadyMsg, false)
 		}
 		if hasDeadline && !isDeadlineExceeded {
 			return ctrl.Result{RequeueAfter: remaining}, nil

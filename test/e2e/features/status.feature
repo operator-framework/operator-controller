@@ -33,14 +33,14 @@ Feature: Report status of the managed ClusterExtension workload
   @BoxcutterRuntime
   Scenario: Report availability change when managed workload is not ready
     When deployment "test-operator-${SCENARIO_ID}" reports as not ready
-    Then ClusterExtension reports Available as False with Reason ProbeFailure
-    And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ProbeFailure
+    Then ClusterExtension reports Available as False with Reason ObjectsNotReady
+    And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ObjectsNotReady
 
   @BoxcutterRuntime
   Scenario: Report availability change when managed workload restores its readiness
     Given deployment "test-operator-${SCENARIO_ID}" reports as not ready
-    And ClusterExtension reports Available as False with Reason ProbeFailure
-    And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ProbeFailure
+    And ClusterExtension reports Available as False with Reason ObjectsNotReady
+    And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ObjectsNotReady
     When deployment "test-operator-${SCENARIO_ID}" reports as ready
     Then ClusterExtension is available
     And ClusterObjectSet "${NAME}-1" reports Ready as True with Reason AllObjectsReady

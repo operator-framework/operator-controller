@@ -343,7 +343,7 @@ Feature: Update ClusterExtension
     And ClusterExtension is available
     When ClusterExtension version is updated to "1.0.2"
     Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
-    And ClusterObjectSet "${NAME}-2" reports Ready as False with Reason ProbeFailure
+    And ClusterObjectSet "${NAME}-2" reports Ready as False with Reason ObjectsNotReady
 
   Scenario: Clearing deprecated serviceAccount field is reconciled without warnings
     Given ClusterExtension is applied
