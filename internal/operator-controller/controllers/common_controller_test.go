@@ -521,6 +521,12 @@ func TestProgressingFromReady(t *testing.T) {
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "Objects are not yet ready."},
 		},
 		{
+			name:      "archiving maps to RollingOut",
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonArchiving, Message: "The object set is being archived; removing owned objects."},
+			completed: false,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRollingOut, Message: "The object set is being archived; removing owned objects."},
+		},
+		{
 			name:      "retryable error maps to Retrying",
 			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionUnknown, Reason: ocv1.ClusterObjectSetReasonRetryableError, Message: "boom"},
 			completed: false,
