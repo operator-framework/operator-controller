@@ -150,7 +150,7 @@ Recommended conventions:
 2. **Immutability**: Secrets must set `immutable: true`. The reconciler verifies
    that all referenced Secrets have `immutable: true` set before proceeding.
    Mutable referenced Secrets are rejected and the ClusterObjectSet reports
-   `Ready=False, Reason=ValidationFailure`. Additionally, the reconciler records
+   `Ready=False, Reason=PreconditionsNotMet`. Additionally, the reconciler records
    content hashes of the resolved phases on first successful reconciliation
    and reports the same condition if the content changes (e.g., if a Secret is
    deleted and recreated with the same name but different data).
@@ -397,7 +397,7 @@ referenced Secrets have `immutable: true` set. After successfully building
 the phases (resolving all refs), the reconciler computes a per-phase content
 digest and compares it against the digests recorded in `.status.observedPhases`
 (if present). If any phase's content has changed, the ClusterObjectSet reports
-`Ready=False, Reason=ValidationFailure`. On first successful build, phase
+`Ready=False, Reason=PreconditionsNotMet`. On first successful build, phase
 content digests are persisted to status for future comparisons.
 
 When processing a COS phase:
@@ -419,8 +419,8 @@ The reconciler distinguishes two failure modes:
   transient error. The ClusterObjectSet reports `Ready=False, Reason=RetryableError`
   and the controller retries with backoff.
 - **Invalid referenced content** — a missing key, a malformed manifest, or content
-  that has changed since first rollout — is a validation failure. The ClusterObjectSet
-  reports `Ready=False, Reason=ValidationFailure`. Because referenced Secrets are not
+  that has changed since first rollout — is an unmet precondition. The ClusterObjectSet
+  reports `Ready=False, Reason=PreconditionsNotMet`. Because referenced Secrets are not
   watched and the `ref` is immutable, the reconciler retries this case periodically so
   the revision recovers automatically once the referenced Secret is replaced with
   corrected content. Referenced Secrets are immutable, so correcting the content means

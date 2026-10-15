@@ -1934,7 +1934,8 @@ spec:
                     - False with reason ObjectsNotReady: one or more objects are still being applied or have not yet passed their readiness probes during rollout.
                     - False with reason Superseded: one or more objects have been adopted by a newer revision of the object set.
                     - False with reason ObjectCollision: one or more objects are controlled by another owner, or are unowned while collision protection prevents adoption, so this revision cannot take ownership of them.
-                    - False with reason ValidationFailure: the revision failed a pre-apply check (an invalid revision/phase object or probe, preflight validation, a mutable referenced Secret, or changed referenced content) and requires manual intervention.
+                    - False with reason PreconditionsNotMet: a precondition for applying the revision is not yet satisfied (a referenced Secret is mutable or has invalid or changed content, or a preflight dry-run was rejected, e.g. an immutable field, a conflicting object, or RBAC/dependency CRDs not yet propagated); the revision keeps retrying and recovers once the precondition is met.
+                    - False with reason InvalidSpecification: the revision spec is invalid (a malformed revision/phase object or progression probe) and requires a spec change to proceed.
                     - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
                     - False with reason RetryableError: the revision encountered a transient error that may resolve on a subsequent reconciliation.
                     - False with reason Archiving: the revision is being archived and its owned objects are still being torn down.

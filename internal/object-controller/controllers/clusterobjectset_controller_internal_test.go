@@ -468,7 +468,7 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 
 		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "not immutable")
+		assert.Contains(t, err.Error(), "must be immutable but are not")
 	})
 
 	t.Run("skips phases with inline objects only", func(t *testing.T) {

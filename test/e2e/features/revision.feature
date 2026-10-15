@@ -423,7 +423,7 @@ Feature: Install ClusterObjectSet
     And resource "deployment/test-httpd" is installed
     And ClusterObjectSet "${COS_NAME}" has observed phase "resources" with a non-empty digest
 
-  Scenario: ClusterObjectSet reports ValidationFailure when referenced Secret is mutable
+  Scenario: ClusterObjectSet reports PreconditionsNotMet when referenced Secret is mutable
     Given namespace "${TEST_NAMESPACE}" is available
     And resource is applied
       """
@@ -465,12 +465,12 @@ Feature: Install ClusterObjectSet
               key: configmap
         revision: 1
       """
-    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ValidationFailure and Message:
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason PreconditionsNotMet and Message:
     """
-      the following secrets are not immutable (referenced secrets must have immutable set to true): ${TEST_NAMESPACE}/${COS_NAME}-mutable-secret
+      Referenced Secret(s) must be immutable but are not: ${TEST_NAMESPACE}/${COS_NAME}-mutable-secret. Recreate them with immutable set to true.
     """
 
-  Scenario: ClusterObjectSet reports ValidationFailure when referenced Secret content changes
+  Scenario: ClusterObjectSet reports PreconditionsNotMet when referenced Secret content changes
     Given namespace "${TEST_NAMESPACE}" is available
     When resource is applied
       """
@@ -541,7 +541,7 @@ Feature: Install ClusterObjectSet
           }
       """
     And ClusterObjectSet "${COS_NAME}" reconciliation is triggered
-    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason ValidationFailure and Message includes:
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason PreconditionsNotMet and Message includes:
     """
       resolved content of 1 phase(s) has changed since first rollout: "resources"
     """
