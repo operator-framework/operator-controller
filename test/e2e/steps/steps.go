@@ -534,7 +534,13 @@ func ResourceApplyAsUserFails(ctx context.Context, user, group, errMsg string, y
 		if pendingCleanup {
 			// A blocking delete (default --wait) returns only once the object is actually removed, so a
 			// nil error confirms removal. Keep pendingCleanup set on failure so a later denial is not accepted.
-			delArgs := []string{"delete", res.GetKind(), res.GetName(), "--ignore-not-found"}
+			// Bound the wait by the remaining step budget (at least one tick) so a finalizer-blocked delete —
+			// e.g. a ClusterExtension waiting on its controller — cannot push the step past deadline.
+			remaining := time.Until(deadline)
+			if remaining < tick {
+				remaining = tick
+			}
+			delArgs := []string{"delete", res.GetKind(), res.GetName(), "--ignore-not-found", "--timeout=" + remaining.String()}
 			if ns := res.GetNamespace(); ns != "" {
 				delArgs = append(delArgs, "-n", ns)
 			}
