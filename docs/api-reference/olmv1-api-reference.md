@@ -13,6 +13,8 @@ Package v1 contains API Schema definitions for the olm v1 API group
 - [ClusterCatalogList](#clustercataloglist)
 - [ClusterExtension](#clusterextension)
 - [ClusterExtensionList](#clusterextensionlist)
+- [ClusterObjectDeployment](#clusterobjectdeployment)
+- [ClusterObjectDeploymentList](#clusterobjectdeploymentlist)
 
 
 
@@ -384,6 +386,217 @@ _Appears in:_
 | `activeRevisions` _[RevisionStatus](#revisionstatus) array_ | activeRevisions holds a list of currently active (non-archived) ClusterObjectSets,<br />including both installed and rolling out revisions.<br />**Experimental channel:**  |  | Optional: \{\} <br /> |
 
 
+#### ClusterObjectDeployment
+
+
+
+ClusterObjectDeployment manages mutable desired content through immutable
+ClusterObjectSet revisions. It is an experimental, cluster-scoped API.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentList](#clusterobjectdeploymentlist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `olm.operatorframework.io/v1` | | |
+| `kind` _string_ | `ClusterObjectDeployment` | | |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `spec` _[ClusterObjectDeploymentSpec](#clusterobjectdeploymentspec)_ | spec defines the desired deployment template and progress deadline. |  | Required: \{\} <br /> |
+| `status` _[ClusterObjectDeploymentStatus](#clusterobjectdeploymentstatus)_ | status defines the observed state and is written through the status subresource. |  | Optional: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentAnnotationValue
+
+_Underlying type:_ _string_
+
+ClusterObjectDeploymentAnnotationValue is a bounded Kubernetes annotation value.
+The aggregate byte limit is validated on the containing annotations map.
+
+_Validation:_
+- MaxLength: 262144
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplateMetadata](#clusterobjectdeploymenttemplatemetadata)
+
+
+
+#### ClusterObjectDeploymentLabelValue
+
+_Underlying type:_ _string_
+
+ClusterObjectDeploymentLabelValue is a bounded Kubernetes label value.
+Its length bounds the cost of label validation.
+
+_Validation:_
+- MaxLength: 63
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplateMetadata](#clusterobjectdeploymenttemplatemetadata)
+
+
+
+#### ClusterObjectDeploymentList
+
+
+
+ClusterObjectDeploymentList contains ClusterObjectDeployment objects.
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `olm.operatorframework.io/v1` | | |
+| `kind` _string_ | `ClusterObjectDeploymentList` | | |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `items` _[ClusterObjectDeployment](#clusterobjectdeployment) array_ | items is the list of deployments. |  | Required: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentObjectCounts
+
+
+
+ClusterObjectDeploymentObjectCounts reports object states in the highest active revision.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentStatus](#clusterobjectdeploymentstatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `total` _integer_ | total is the total number of objects in the revision. Its presence distinguishes<br />reported zero counts from an omitted objectCounts summary. |  | Maximum: 1000 <br />Minimum: 0 <br />Required: \{\} <br /> |
+| `present` _integer_ | present is the number of objects found or created on the cluster. |  | Maximum: 1000 <br />Minimum: 0 <br />Optional: \{\} <br /> |
+| `synced` _integer_ | synced is the number of objects matching their desired state. |  | Maximum: 1000 <br />Minimum: 0 <br />Optional: \{\} <br /> |
+| `available` _integer_ | available is the number of synced objects passing their readiness assertions. |  | Maximum: 1000 <br />Minimum: 0 <br />Optional: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentRevision
+
+
+
+ClusterObjectDeploymentRevision summarizes the current conditions of an active revision.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentStatus](#clusterobjectdeploymentstatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | name is the name of the ClusterObjectSet. It may contain the full positive int64<br />revision suffix; it is not restricted to a uint32 suffix or a 63-character label. |  | MaxLength: 253 <br />MinLength: 1 <br />Pattern: `^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$` <br />Required: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions contains the revision's current status conditions. |  | Optional: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentSpec
+
+
+
+ClusterObjectDeploymentSpec defines the mutable desired state of a deployment.
+
+
+
+_Appears in:_
+- [ClusterObjectDeployment](#clusterobjectdeployment)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `template` _[ClusterObjectDeploymentTemplate](#clusterobjectdeploymenttemplate)_ | template is the desired metadata and content of newly created ClusterObjectSets.<br />Changes to template create a new revision; existing revisions remain immutable. |  | Required: \{\} <br /> |
+| `progressDeadlineMinutes` _integer_ | progressDeadlineMinutes is the maximum number of minutes without phase progress<br />before an incomplete rollout reports ProgressDeadlineExceeded. Omission disables<br />the deadline. A supplied value must be positive. Deadline changes do not create<br />revisions, and this value is not copied into the legacy ClusterObjectSet deadline. |  | Minimum: 1 <br />Optional: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentStatus
+
+
+
+ClusterObjectDeploymentStatus summarizes owned active revisions and rollout progress.
+
+
+
+_Appears in:_
+- [ClusterObjectDeployment](#clusterobjectdeployment)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions describes installation health and progress for the observed generation.<br />Available is True for one Ready active revision, False for none or one unready<br />revision, and Unknown with reason Progressing for multiple active revisions.<br />Progressing is True with reason NewClusterObjectSetProgressing while the desired<br />rollout is incomplete, or False with reason NewClusterObjectSetProgressed after<br />completion or ProgressDeadlineExceeded after a deadline expires. Completion<br />remains recorded even if the completed revision later becomes unhealthy. |  | Optional: \{\} <br /> |
+| `activeRevisions` _[ClusterObjectDeploymentRevision](#clusterobjectdeploymentrevision) array_ | activeRevisions summarizes owned active, non-deleting ClusterObjectSets,<br />including a newly created revision, ordered by increasing int64 revision. |  | Optional: \{\} <br /> |
+| `objectCounts` _[ClusterObjectDeploymentObjectCounts](#clusterobjectdeploymentobjectcounts)_ | objectCounts reports counts from the highest owned active revision, rather than<br />summing overlapping revisions. Omitted when that revision has not reported<br />counts or no active revision exists. Available corresponds to the child's ready count. |  | Optional: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentTemplate
+
+
+
+ClusterObjectDeploymentTemplate describes the caller-controlled part of a revision.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentSpec](#clusterobjectdeploymentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `metadata` _[ClusterObjectDeploymentTemplateMetadata](#clusterobjectdeploymenttemplatemetadata)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `spec` _[ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)_ | spec contains the desired revision content. Group, revision, lifecycle state,<br />and ownership are assigned by the controller and cannot be set here. |  | Required: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentTemplateMetadata
+
+
+
+ClusterObjectDeploymentTemplateMetadata contains bounded revision metadata.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplate](#clusterobjectdeploymenttemplate)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `labels` _object (keys:string, values:[ClusterObjectDeploymentLabelValue](#clusterobjectdeploymentlabelvalue))_ | labels contains up to 32 Kubernetes labels copied onto each revision.<br />The olm.operatorframework.io/template-hash label is reserved for the controller. |  | MaxProperties: 32 <br />Optional: \{\} <br /> |
+| `annotations` _object (keys:string, values:[ClusterObjectDeploymentAnnotationValue](#clusterobjectdeploymentannotationvalue))_ | annotations contains up to 32 Kubernetes annotations copied onto each revision.<br />Each value and the aggregate size of all keys and values must fit within 256 KiB.<br />Any controller-added annotations must also fit in that aggregate budget. |  | MaxProperties: 32 <br />Optional: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentTemplateSpec
+
+
+
+ClusterObjectDeploymentTemplateSpec contains mutable ClusterObjectSet content.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplate](#clusterobjectdeploymenttemplate)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `progressionProbes` _[ProgressionProbe](#progressionprobe) array_ | progressionProbes supplies custom readiness probes for objects in every phase.<br />The existing ClusterObjectSet selector and assertion semantics apply. |  | MaxItems: 20 <br />MinItems: 1 <br />Optional: \{\} <br /> |
+| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is the default strategy for objects in the revision.<br />Objects and phases may override it. When omitted the controller uses Prevent<br />in the generated ClusterObjectSet. Omission remains distinct from explicit<br />Prevent for template identity; admission does not default this field. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
+
+
+#### CollisionProtection
+
+_Underlying type:_ _string_
+
+CollisionProtection specifies if and how ownership collisions are prevented.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `Prevent` | CollisionProtectionPrevent prevents owner collisions entirely<br />by only allowing to work with objects itself has created.<br /> |
+| `IfNoController` | CollisionProtectionIfNoController allows to patch and override<br />objects already present if they are not owned by another controller.<br /> |
+| `None` | CollisionProtectionNone allows to patch and override objects<br />already present and owned by other controllers.<br />Be careful! This setting may cause multiple controllers to fight over a resource,<br />causing load on the API server and etcd.<br /> |
 
 
 #### ConditionEqualProbe
@@ -513,6 +726,21 @@ _Appears in:_
 | `FieldValue` |  |
 
 
+#### ProgressionProbe
+
+
+
+ProgressionProbe provides a custom probe definition, consisting of an object selection method and assertions.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `selector` _[ObjectSelector](#objectselector)_ | selector is a required field which defines the method by which we select objects to apply the below<br />assertions to. Any object which matches the defined selector will have all the associated assertions<br />applied against it.<br />If no objects within a phase are selected by the provided selector, then all assertions defined here<br />are considered to have succeeded.<br />**Experimental channel:**  |  | Required: \{\} <br /> |
+| `assertions` _[Assertion](#assertion) array_ | assertions is a required list of checks which will run against the objects selected by the selector. If<br />one or more assertions fail then the phase within which the object lives will be not be considered<br />'Ready', blocking rollout of all subsequent phases.<br />**Experimental channel:**  |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
 
 
 #### ResolvedCatalogSource
