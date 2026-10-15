@@ -208,8 +208,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.NotEqual(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason,
-					"a paused downstream phase's validation error must not be reported as a terminal validation failure")
+				require.NotEqual(t, ocv1.ClusterObjectSetReasonPreconditionsNotMet, cond.Reason,
+					"a paused downstream phase's validation error must not be reported as an unmet-preconditions failure")
 				require.Equal(t, ocv1.ClusterObjectSetReasonObjectsNotReady, cond.Reason)
 			},
 		},
@@ -867,13 +867,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 			}, result)
 			require.NoError(t, err)
 
-			// preflight validation failures surface as Ready=False/ValidationFailure.
+			// preflight validation failures surface as Ready=False/PreconditionsNotMet.
 			updated := &ocv1.ClusterObjectSet{}
 			require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, updated))
 			cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 			require.NotNil(t, cond)
 			require.Equal(t, metav1.ConditionFalse, cond.Status)
-			require.Equal(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason)
+			require.Equal(t, ocv1.ClusterObjectSetReasonPreconditionsNotMet, cond.Reason)
 		})
 	}
 }
@@ -910,10 +910,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_VerifyReferencedSecrets(t *testin
 			wantReason: ocv1.ClusterObjectSetReasonRetryableError,
 		},
 		{
-			name:       "mutable Secret is a validation failure",
+			name:       "mutable Secret is an unmet precondition",
 			secrets:    []client.Object{secret("secret-a", true), secret("secret-b", false)},
 			wantErr:    false,
-			wantReason: ocv1.ClusterObjectSetReasonValidationFailure,
+			wantReason: ocv1.ClusterObjectSetReasonPreconditionsNotMet,
 		},
 		{
 			// A confirmed mutable Secret takes precedence over a concurrent read error.
@@ -921,7 +921,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_VerifyReferencedSecrets(t *testin
 			secrets:    []client.Object{secret("secret-b", false)},
 			failGet:    "secret-a",
 			wantErr:    false,
-			wantReason: ocv1.ClusterObjectSetReasonValidationFailure,
+			wantReason: ocv1.ClusterObjectSetReasonPreconditionsNotMet,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1022,7 +1022,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ReferencedContentValidationRecove
 	}
 	req := ctrl.Request{NamespacedName: types.NamespacedName{Name: clusterObjectSetName}}
 
-	// Malformed referenced content is a validation failure that keeps retrying so the
+	// Malformed referenced content is an unmet precondition that keeps retrying so the
 	// revision can recover once the Secret is replaced.
 	result, err := r.Reconcile(t.Context(), req)
 	require.NoError(t, err)
@@ -1033,7 +1033,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ReferencedContentValidationRecove
 	cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason)
+	require.Equal(t, ocv1.ClusterObjectSetReasonPreconditionsNotMet, cond.Reason)
 	// No phase digest is recorded while the content is invalid, so recovery is unobstructed.
 	require.Empty(t, rev.Status.ObservedPhases)
 
@@ -1072,14 +1072,14 @@ func Test_ClusterObjectSetReconciler_Reconcile_BuildPhasesErrorClassification(t 
 		wantReason string
 	}{
 		{
-			name: "invalid progression probe is a validation failure",
+			name: "invalid progression probe is an invalid specification",
 			setupCOS: func(cos *ocv1.ClusterObjectSet) {
 				cos.Spec.ProgressionProbes = []ocv1.ProgressionProbe{{
 					Selector: ocv1.ObjectSelector{Type: "Bogus"},
 				}}
 			},
 			wantErr:    false,
-			wantReason: ocv1.ClusterObjectSetReasonValidationFailure,
+			wantReason: ocv1.ClusterObjectSetReasonInvalidSpecification,
 		},
 		{
 			name:       "sibling revision list error is retryable",

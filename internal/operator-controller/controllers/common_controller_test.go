@@ -476,8 +476,13 @@ func TestDetermineFailureReason(t *testing.T) {
 			expected: ocv1.ReasonAbsent,
 		},
 		{
-			name:     "latest validation failure -> Failed",
-			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonValidationFailure)}},
+			name:     "latest preconditions not met -> Failed",
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonPreconditionsNotMet)}},
+			expected: ocv1.ReasonFailed,
+		},
+		{
+			name:     "latest invalid specification -> Failed",
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonInvalidSpecification)}},
 			expected: ocv1.ReasonFailed,
 		},
 		{
@@ -544,10 +549,16 @@ func TestProgressingFromReady(t *testing.T) {
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "boom"},
 		},
 		{
-			name:      "validation failure maps to Blocked",
-			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonValidationFailure, Message: "manual fix needed"},
+			name:      "invalid specification maps to Blocked",
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonInvalidSpecification, Message: "manual fix needed"},
 			completed: false,
 			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionFalse, Reason: ocv1.ReasonBlocked, Message: "manual fix needed"},
+		},
+		{
+			name:      "preconditions not met maps to Retrying",
+			ready:     &metav1.Condition{Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectSetReasonPreconditionsNotMet, Message: "waiting on a precondition"},
+			completed: false,
+			expected:  metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "waiting on a precondition"},
 		},
 		{
 			name:      "deadline exceeded maps to ProgressDeadlineExceeded",

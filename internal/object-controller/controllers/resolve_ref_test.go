@@ -219,8 +219,8 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 
-	// A missing key in an (immutable) referenced Secret is invalid configuration that will
-	// not resolve on retry: no error is returned, and Ready reports ValidationFailure.
+	// A missing key in an (immutable) referenced Secret is a referenced-content problem:
+	// no error is returned, and Ready reports PreconditionsNotMet (retried until the Secret is fixed).
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
 		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
@@ -231,7 +231,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 	cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 	require.NotNil(t, cond)
 	assert.Equal(t, metav1.ConditionFalse, cond.Status)
-	assert.Equal(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason)
+	assert.Equal(t, ocv1.ClusterObjectSetReasonPreconditionsNotMet, cond.Reason)
 	assert.Contains(t, cond.Message, "key")
 }
 
@@ -269,8 +269,8 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 		Clock:                 clocktesting.NewFakeClock(metav1.Now().Time),
 	}
 
-	// A malformed referenced manifest is invalid configuration that will not resolve on
-	// retry: no error is returned, and Ready reports ValidationFailure.
+	// A malformed referenced manifest is a referenced-content problem: no error is returned,
+	// and Ready reports PreconditionsNotMet (retried until the Secret content is fixed).
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
 		NamespacedName: types.NamespacedName{Name: cos.Name},
 	})
@@ -281,7 +281,7 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 	cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 	require.NotNil(t, cond)
 	assert.Equal(t, metav1.ConditionFalse, cond.Status)
-	assert.Equal(t, ocv1.ClusterObjectSetReasonValidationFailure, cond.Reason)
+	assert.Equal(t, ocv1.ClusterObjectSetReasonPreconditionsNotMet, cond.Reason)
 	assert.Contains(t, cond.Message, "unmarshal")
 }
 
