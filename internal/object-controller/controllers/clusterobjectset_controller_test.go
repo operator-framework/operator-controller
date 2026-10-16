@@ -70,9 +70,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		},
 		{
 			// A transient error leaves the Ready condition unchanged and returns the
-			// error for rate-limited backoff. On a first reconcile with no prior Ready,
-			// the condition stays absent (consumers read absent as Unknown).
-			name:                    "Ready condition is left unset on transient error when not previously set",
+			// error for rate-limited backoff. On a first reconcile the transient path
+			// sets no concrete reason, so an active revision reports the initialized
+			// Ready=Unknown/Pending.
+			name:                    "Ready condition is Unknown/Pending on transient error when not previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			revisionResult:          newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			revisionReconcileErr:    errors.New("some error"),
@@ -87,7 +88,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				require.Nil(t, meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady))
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonPending, cond.Reason)
 			},
 		},
 		{
@@ -123,9 +127,9 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 		},
 		{
 			// A revision whose FIRST reconcile fails at engine creation (factory error)
-			// leaves the Ready condition unset — a transient error does not fabricate a
-			// Ready reason.
-			name:                    "Ready condition is left unset on factory error when not previously set",
+			// does not fabricate a concrete Ready reason; an active revision reports the
+			// initialized Ready=Unknown/Pending.
+			name:                    "Ready condition is Unknown/Pending on factory error when not previously set",
 			reconcilingRevisionName: clusterObjectSetName,
 			factoryErr:              errors.New("failed to create revision engine"),
 			existingObjs: func() []client.Object {
@@ -139,7 +143,10 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				require.Nil(t, meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady))
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonPending, cond.Reason)
 				require.Nil(t, meta.FindStatusCondition(rev.Status.Conditions, "Progressing"))
 			},
 		},
@@ -958,12 +965,16 @@ func Test_ClusterObjectSetReconciler_Reconcile_VerifyReferencedSecrets(t *testin
 
 			updated := &ocv1.ClusterObjectSet{}
 			if tc.wantErr {
-				// A read error is returned so controller-runtime requeues with backoff, and
-				// the Ready condition is left untouched (absent on this first reconcile).
+				// A read error is returned so controller-runtime requeues with backoff. The
+				// read-error path itself does not set a concrete Ready reason; on a first
+				// reconcile an active revision reports the initialized Ready=Unknown/Pending.
 				require.Error(t, err)
 				require.Equal(t, ctrl.Result{}, result)
 				require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, updated))
-				require.Nil(t, meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady))
+				cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonPending, cond.Reason)
 				return
 			}
 			// A confirmed mutable Secret is a validation failure that keeps retrying so the
@@ -1121,11 +1132,15 @@ func Test_ClusterObjectSetReconciler_Reconcile_BuildPhasesErrorClassification(t 
 			require.Equal(t, ctrl.Result{}, result)
 			updated := &ocv1.ClusterObjectSet{}
 			if tc.wantErr {
-				// Transient errors are returned so controller-runtime requeues with backoff,
-				// and the Ready condition is left untouched (absent on this first reconcile).
+				// Transient errors are returned so controller-runtime requeues with backoff.
+				// The transient path itself does not set a concrete Ready reason; on a first
+				// reconcile an active revision reports the initialized Ready=Unknown/Pending.
 				require.Error(t, err)
 				require.NoError(t, testClient.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, updated))
-				require.Nil(t, meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady))
+				cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonPending, cond.Reason)
 				return
 			}
 			require.NoError(t, err)
@@ -1684,6 +1699,74 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 			tc.validate(t, testClient)
 		})
 	}
+}
+
+func Test_ClusterObjectSetReconciler_Reconcile_InitializesReadyPending(t *testing.T) {
+	testScheme := newScheme(t)
+
+	// newListFailingClient returns a client whose ClusterObjectSetList List always fails,
+	// so reconcile returns a transient error from listSiblingRevisions before it sets any
+	// concrete Ready reason — isolating the Ready initialization behavior.
+	newListFailingClient := func(objs ...client.Object) client.Client {
+		return fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+			WithObjects(objs...).
+			WithInterceptorFuncs(interceptor.Funcs{
+				List: func(ctx context.Context, cl client.WithWatch, list client.ObjectList, opts ...client.ListOption) error {
+					if _, ok := list.(*ocv1.ClusterObjectSetList); ok {
+						return errors.New("etcdserver: request timed out")
+					}
+					return cl.List(ctx, list, opts...)
+				},
+			}).
+			Build()
+	}
+
+	reconcileReady := func(t *testing.T, c client.Client) *metav1.Condition {
+		mockCtrl := gomock.NewController(t)
+		_, err := (&controllers.ClusterObjectSetReconciler{
+			Client:                c,
+			RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, newNoopMockRevisionEngine(mockCtrl), nil),
+			TrackingCache:         newMockTrackingCache(mockCtrl, c, nil),
+		}).Reconcile(t.Context(), ctrl.Request{NamespacedName: types.NamespacedName{Name: clusterObjectSetName}})
+		require.Error(t, err)
+		updated := &ocv1.ClusterObjectSet{}
+		require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: clusterObjectSetName}, updated))
+		return meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	}
+
+	t.Run("initializes Ready=Unknown/Pending on a fresh active revision", func(t *testing.T) {
+		ext := newTestClusterExtension()
+		rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+		cond := reconcileReady(t, newListFailingClient(ext, rev))
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionUnknown, cond.Status)
+		require.Equal(t, ocv1.ClusterObjectSetReasonPending, cond.Reason)
+	})
+
+	t.Run("does not overwrite an already-set Ready", func(t *testing.T) {
+		ext := newTestClusterExtension()
+		rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:    ocv1.ClusterObjectSetTypeReady,
+			Status:  metav1.ConditionTrue,
+			Reason:  ocv1.ClusterObjectSetReasonAllObjectsReady,
+			Message: "All objects are at the desired state",
+		})
+		cond := reconcileReady(t, newListFailingClient(ext, rev))
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionTrue, cond.Status, "a transient error must not flap an already-observed Ready")
+		require.Equal(t, ocv1.ClusterObjectSetReasonAllObjectsReady, cond.Reason)
+	})
+
+	t.Run("does not initialize Ready for an archived revision", func(t *testing.T) {
+		ext := newTestClusterExtension()
+		rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+		rev.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
+		cond := reconcileReady(t, newListFailingClient(ext, rev))
+		require.Nil(t, cond, "an archived revision should not report Ready=Pending")
+	})
 }
 
 func newTestClusterExtension() *ocv1.ClusterExtension {

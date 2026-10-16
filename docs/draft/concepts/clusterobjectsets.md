@@ -224,9 +224,10 @@ Indicates whether all objects in the revision have been successfully rolled out 
 | False | `InvalidSpecification` | The revision spec is invalid (a malformed revision/phase object or progression probe); requires a spec change |
 | False | `Archiving` | The revision is being archived; owned objects are still being torn down |
 | False | `Archived` | Objects torn down after archival |
+| Unknown | `Pending` | The revision has not yet been evaluated (initial state) |
 | Unknown | `Migrated` | Migrated from existing release; probes not yet observed |
 
-A transient internal error (e.g. an API read failure) leaves the `Ready` condition unchanged and is retried with backoff; it is not reported as a distinct reason, so on a first reconcile the condition may remain absent (`Unknown`).
+On a revision's first reconciliation the `Ready` condition is initialized to `Unknown`/`Pending`, so it is always present. A transient internal error (e.g. an API read failure) leaves the `Ready` condition unchanged and is retried with backoff; it is not reported as a distinct reason (while the revision is still `Pending`, it stays `Unknown`/`Pending`).
 
 ### Succeeded
 

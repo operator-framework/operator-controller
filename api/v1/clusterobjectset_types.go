@@ -29,6 +29,7 @@ const (
 	ClusterObjectSetTypeReady = "Ready"
 
 	// Condition Reasons
+	ClusterObjectSetReasonPending              = "Pending"
 	ClusterObjectSetReasonArchived             = "Archived"
 	ClusterObjectSetReasonArchiving            = "Archiving"
 	ClusterObjectSetReasonObjectsNotReady      = "ObjectsNotReady"
@@ -500,6 +501,7 @@ type ClusterObjectSetStatus struct {
 	// True means all objects are at the desired state; False means one or more
 	// objects are not at the desired state; Unknown is the initial state, before
 	// the first reconciliation has evaluated the revision.
+	//   - Unknown with reason Pending: the revision has not yet been evaluated (initial state, set when the condition is first created).
 	//   - True with reason AllObjectsReady: the revision has rolled out and all objects are at the desired state.
 	//   - False with reason ObjectsNotReady: one or more objects are still being applied or have not yet passed their readiness probes during rollout.
 	//   - False with reason Superseded: one or more objects have been adopted by a newer revision of the object set.

@@ -97,6 +97,18 @@ func (c *ClusterObjectSetReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	reconciledRev := existingRev.DeepCopy()
 	res, reconcileErr := c.reconcile(ctx, reconciledRev)
 
+	// Ensure an active revision always reports a Ready condition. If reconcile left it
+	// absent — e.g. an early transient error returned before the first evaluation set a
+	// concrete state — initialize it to Unknown/Pending. This runs after reconcile (past
+	// any in-reconcile metadata patches that refresh the object), only sets Ready when
+	// absent so it never overwrites a previously observed state, and is skipped for
+	// revisions that are being deleted or archived.
+	if reconciledRev.DeletionTimestamp.IsZero() &&
+		reconciledRev.Spec.LifecycleState != ocv1.ClusterObjectSetLifecycleStateArchived &&
+		meta.FindStatusCondition(reconciledRev.Status.Conditions, ocv1.ClusterObjectSetTypeReady) == nil {
+		markAsPending(reconciledRev)
+	}
+
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingRev.Status, reconciledRev.Status)
 
@@ -174,6 +186,13 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			markAsNotReady(cos, ocv1.ClusterObjectSetReasonInvalidSpecification, fmt.Sprintf("The object set spec is invalid: %v.", err))
 			return ctrl.Result{}, nil
 		}
+		// Invariant: the error sites in buildBoxcutterPhases classify every deterministic
+		// (spec/content) failure as a *configValidationError or *referencedContentError,
+		// handled above. Anything reaching here is therefore a transient infrastructure
+		// error (e.g. listing sibling revisions or reading a referenced Secret failed), so
+		// leave Ready unchanged and return the error for a rate-limited backoff requeue.
+		// New deterministic failure modes added to buildBoxcutterPhases must be wrapped in
+		// one of those typed errors so they are reported rather than retried forever.
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
 	}
 
@@ -802,6 +821,19 @@ func hasSupersededObject(rres machinery.RevisionResult) bool {
 	return false
 }
 
+// markAsPending initializes Ready=Unknown/Pending. It is only used before the first
+// evaluation (when Ready is absent), so a freshly created revision always reports an
+// explicit Ready condition rather than an absent one.
+func markAsPending(cos *ocv1.ClusterObjectSet) {
+	meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterObjectSetTypeReady,
+		Status:             metav1.ConditionUnknown,
+		Reason:             ocv1.ClusterObjectSetReasonPending,
+		Message:            "The revision has not yet been evaluated.",
+		ObservedGeneration: cos.Generation,
+	})
+}
+
 func markAsArchiving(cos *ocv1.ClusterObjectSet) {
 	const msg = "The object set is being archived; removing owned objects."
 	markAsNotReady(cos, ocv1.ClusterObjectSetReasonArchiving, msg)
@@ -823,7 +855,10 @@ func computePhaseDigest(name string, objects []client.Object) (string, error) {
 	}
 	data, err := json.Marshal(phaseMap)
 	if err != nil {
-		return "", fmt.Errorf("marshaling phase %q: %w", name, err)
+		// A non-marshalable object is invalid spec content, not a transient error;
+		// classify it so the reconciler reports InvalidSpecification instead of
+		// retrying forever.
+		return "", &configValidationError{fmt.Errorf("marshaling phase %q: %w", name, err)}
 	}
 	h := sha256.Sum256(data)
 	return fmt.Sprintf("sha256:%x", h), nil
