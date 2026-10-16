@@ -2003,6 +2003,8 @@ spec:
                 description: |-
                   objectCounts reports aggregate object counts across all phases.
                   Values are sums of the per-phase counts in observedPhases.
+                  It is omitted until counts have been computed; when present, all count
+                  fields are reported (including zeros).
                 properties:
                   present:
                     description: |-
@@ -2037,6 +2039,9 @@ spec:
                     minimum: 0
                     type: integer
                 required:
+                - present
+                - ready
+                - synced
                 - total
                 type: object
               observedPhases:
@@ -2073,8 +2078,10 @@ spec:
                           character.
                         rule: '!format.dns1123Label().validate(self).hasValue()'
                     objectCounts:
-                      description: objectCounts reports the number of objects in this
-                        phase by state.
+                      description: |-
+                        objectCounts reports the number of objects in this phase by state.
+                        It is omitted until counts have been computed; when present, all count
+                        fields are reported (including zeros).
                       properties:
                         present:
                           description: |-
@@ -2109,12 +2116,14 @@ spec:
                           minimum: 0
                           type: integer
                       required:
+                      - present
+                      - ready
+                      - synced
                       - total
                       type: object
                   required:
                   - digest
                   - name
-                  - objectCounts
                   type: object
                 maxItems: 20
                 type: array

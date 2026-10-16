@@ -53,6 +53,8 @@ type ClusterObjectSetStatusApplyConfiguration struct {
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// objectCounts reports aggregate object counts across all phases.
 	// Values are sums of the per-phase counts in observedPhases.
+	// It is omitted until counts have been computed; when present, all count
+	// fields are reported (including zeros).
 	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
 	// observedPhases records the content hashes of resolved phases
 	// at first successful reconciliation. This is used to detect if

@@ -29,6 +29,8 @@ type ObservedPhaseApplyConfiguration struct {
 	// at first successful resolution, in the format "<algorithm>:<hex>".
 	Digest *string `json:"digest,omitempty"`
 	// objectCounts reports the number of objects in this phase by state.
+	// It is omitted until counts have been computed; when present, all count
+	// fields are reported (including zeros).
 	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
 }
 
