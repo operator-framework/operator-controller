@@ -517,6 +517,18 @@ type ClusterObjectSetStatus struct {
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
+	// resolvedContentHash is a SHA-256 hash of all resolved phase object
+	// content (inline objects and objectRef-resolved objects, in phase order).
+	// Set once on the first successful resolution and never changed. Used to
+	// detect content substitution.
+	//
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0",message="resolvedContentHash is immutable"
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]+:[a-f0-9]+$')`,message="digest must be in the format '<algorithm>:<hex>'"
+	ResolvedContentHash string `json:"resolvedContentHash,omitempty"`
+
 	// objectCounts reports aggregate object counts across all phases.
 	// Values are sums of the per-phase counts in observedPhases.
 	// +optional

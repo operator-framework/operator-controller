@@ -2121,6 +2121,20 @@ spec:
                 x-kubernetes-list-map-keys:
                 - name
                 x-kubernetes-list-type: map
+              resolvedContentHash:
+                description: |-
+                  resolvedContentHash is a SHA-256 hash of all resolved phase object
+                  content (inline objects and objectRef-resolved objects, in phase order).
+                  Set once on the first successful resolution and never changed. Used to
+                  detect content substitution.
+                maxLength: 256
+                minLength: 1
+                type: string
+                x-kubernetes-validations:
+                - message: resolvedContentHash is immutable
+                  rule: self == oldSelf || oldSelf.size() == 0
+                - message: digest must be in the format '<algorithm>:<hex>'
+                  rule: self.matches('^[a-z0-9]+:[a-f0-9]+$')
             type: object
             x-kubernetes-validations:
             - message: completedAt cannot be removed once set

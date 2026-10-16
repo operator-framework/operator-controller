@@ -155,7 +155,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{}, fmt.Errorf("verifying referenced Secrets: %v", err)
 	}
 
-	phases, currentPhases, opts, err := c.buildBoxcutterPhases(ctx, cos)
+	phases, currentPhases, resolvedContentHash, opts, err := c.buildBoxcutterPhases(ctx, cos)
 	if err != nil {
 		var contentErr *referencedContentError
 		if errors.As(err, &contentErr) {
@@ -188,6 +188,12 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
 	}
 
+	if len(cos.Spec.Phases) > 0 && cos.Status.ResolvedContentHash != "" && resolvedContentHash != cos.Status.ResolvedContentHash {
+		l.Error(fmt.Errorf("resolved content hash mismatch"), "resolved content changed since first reconciliation, marking revision not ready")
+		markAsNotReady(cos, ocv1.ClusterObjectSetReasonPreconditionsNotMet, fmt.Sprintf("resolved content hash mismatch: expected %s, got %s", cos.Status.ResolvedContentHash, resolvedContentHash))
+		return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
+	}
+
 	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cos)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to create revision engine: %v", err)
@@ -214,6 +220,10 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 	if err := c.establishWatch(ctx, cos, revision); err != nil {
 		return ctrl.Result{}, fmt.Errorf("establish watch: %v", err)
+	}
+
+	if len(cos.Spec.Phases) > 0 && cos.Status.ResolvedContentHash == "" {
+		cos.Status.ResolvedContentHash = resolvedContentHash
 	}
 
 	rres, err := revisionEngine.Reconcile(ctx, revision, opts...)
@@ -567,10 +577,10 @@ type configValidationError struct{ error }
 // so the revision can recover without a controller restart.
 type referencedContentError struct{ error }
 
-func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]boxcutter.Phase, []ocv1.ObservedPhase, []boxcutter.RevisionReconcileOption, error) {
+func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]boxcutter.Phase, []ocv1.ObservedPhase, string, []boxcutter.RevisionReconcileOption, error) {
 	siblings, err := c.listSiblingRevisions(ctx, cos)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("listing sibling revisions: %w", err)
+		return nil, nil, "", nil, fmt.Errorf("listing sibling revisions: %w", err)
 	}
 
 	siblingObjs := make([]client.Object, len(siblings))
@@ -580,7 +590,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 
 	progressionProbes, err := buildProgressionProbes(cos.Spec.ProgressionProbes)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", nil, err
 	}
 
 	opts := []boxcutter.RevisionReconcileOption{
@@ -592,6 +602,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 
 	phases := make([]boxcutter.Phase, 0, len(cos.Spec.Phases))
 	observedPhases := make([]ocv1.ObservedPhase, 0, len(cos.Spec.Phases))
+	aggregateHash := sha256.New()
 	for _, specPhase := range cos.Spec.Phases {
 		objs := make([]client.Object, 0, len(specPhase.Objects))
 		for _, specObj := range specPhase.Objects {
@@ -602,20 +613,23 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 			case specObj.Ref.Name != "":
 				resolved, err := c.resolveObjectRef(ctx, specObj.Ref)
 				if err != nil {
-					return nil, nil, nil, fmt.Errorf("resolving ref in phase %q: %w", specPhase.Name, err)
+					return nil, nil, "", nil, fmt.Errorf("resolving ref in phase %q: %w", specPhase.Name, err)
 				}
 				obj = resolved
 			default:
-				return nil, nil, nil, &configValidationError{fmt.Errorf("an object in phase %q has neither an inline object nor a Secret reference", specPhase.Name)}
+				return nil, nil, "", nil, &configValidationError{fmt.Errorf("an object in phase %q has neither an inline object nor a Secret reference", specPhase.Name)}
 			}
-
 			objs = append(objs, obj)
 		}
 
-		// Compute digest from the user-provided objects before controller mutations.
+		// computePhaseDigest marshals the full phase content (name + objects) and returns
+		// a sha256 digest. Feed that digest into aggregateHash to cover all phases.
 		digest, err := computePhaseDigest(specPhase.Name, objs)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("computing phase digest: %w", err)
+			return nil, nil, "", nil, fmt.Errorf("computing phase digest: %w", err)
+		}
+		if _, err := aggregateHash.Write([]byte(digest)); err != nil {
+			return nil, nil, "", nil, fmt.Errorf("hashing phase %q digest: %w", specPhase.Name, err)
 		}
 		observedPhases = append(observedPhases, ocv1.ObservedPhase{Name: specPhase.Name, Digest: digest})
 
@@ -637,7 +651,7 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 
 		phases = append(phases, boxcutter.NewPhase(specPhase.Name, objs))
 	}
-	return phases, observedPhases, opts, nil
+	return phases, observedPhases, fmt.Sprintf("sha256:%x", aggregateHash.Sum(nil)), opts, nil
 }
 
 // resolveObjectRef fetches the referenced Secret, reads the value at the specified key,

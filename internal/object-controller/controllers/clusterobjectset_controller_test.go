@@ -1054,6 +1054,54 @@ func Test_ClusterObjectSetReconciler_Reconcile_ReferencedContentValidationRecove
 	require.Equal(t, ocv1.ClusterObjectSetReasonAllObjectsReady, cond.Reason)
 }
 
+func Test_ClusterObjectSetReconciler_Reconcile_HashMismatch(t *testing.T) {
+	const clusterObjectSetName = "test-ext-1"
+
+	testScheme := newScheme(t)
+	mockCtrl := gomock.NewController(t)
+
+	ext := newTestClusterExtension()
+	rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+	// Pre-set a hash in status that won't match the hash computed from the
+	// inline phase content, triggering a mismatch error.
+	rev1.Status.ResolvedContentHash = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+	testClient := fake.NewClientBuilder().
+		WithScheme(testScheme).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+		WithObjects(ext, rev1).
+		Build()
+
+	mockEngine := newMockRevisionEngineWithReconcile(mockCtrl,
+		func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+			return newMockRevisionResult(mockCtrl, revisionResultConfig{}), nil
+		}, nil,
+	)
+
+	result, err := (&controllers.ClusterObjectSetReconciler{
+		Client:                testClient,
+		RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, mockEngine, nil),
+		TrackingCache:         newMockTrackingCache(mockCtrl, testClient, nil),
+	}).Reconcile(t.Context(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Name: clusterObjectSetName},
+	})
+
+	require.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, result)
+	require.NoError(t, err)
+
+	// The controller must surface a ValidationFailure condition so the Ready
+	// status reflects the mismatch rather than being stale from the last
+	// successful reconcile.
+	updated := &ocv1.ClusterObjectSet{}
+	require.NoError(t, testClient.Get(t.Context(), types.NamespacedName{Name: clusterObjectSetName}, updated))
+	cond := meta.FindStatusCondition(updated.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectSetReasonPreconditionsNotMet, cond.Reason)
+	require.Contains(t, cond.Message, "resolved content hash mismatch")
+	require.Contains(t, cond.Message, "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+}
+
 func Test_ClusterObjectSetReconciler_Reconcile_BuildPhasesErrorClassification(t *testing.T) {
 	const clusterObjectSetName = "test-ext-1"
 
