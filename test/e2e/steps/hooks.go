@@ -17,6 +17,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/component-base/featuregate"
 	"k8s.io/klog/v2/textlogger"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,6 +57,8 @@ type scenarioContext struct {
 	leaderPods           map[string]string // component name -> leader pod name
 	deploymentRestores   []deploymentRestore
 	extensionObjects     []client.Object
+	revisionSecrets      []resource
+	resourceUIDs         map[string]types.UID
 	proxy                *recordingProxy
 	catalogAddr          string
 	catalogCleanup       func()

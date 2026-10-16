@@ -31,6 +31,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
 	mockmachinery "github.com/operator-framework/operator-controller/internal/testutil/mock/machinery"
 )
@@ -586,17 +587,23 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name: "archive previous revisions on successful rollout",
+			name: "archive same-group predecessors regardless of controller ownership",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
 			}),
 			reconcilingRevisionName: "test-ext-3",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				prevRev1 := newTestClusterObjectSet(t, "test-ext-1", ext, testScheme)
-				prevRev2 := newTestClusterObjectSet(t, "test-ext-2", ext, testScheme)
+				ownerlessPrevious := newTestClusterObjectSet(t, "test-ext-1", ext, testScheme)
+				ownerlessPrevious.OwnerReferences = nil
+				differentOwnerPrevious := newTestClusterObjectSet(t, "test-ext-2", ext, testScheme)
+				differentOwnerPrevious.OwnerReferences[0].Name = "other-owner"
+				differentOwnerPrevious.OwnerReferences[0].UID = "other-uid"
 				rev := newTestClusterObjectSet(t, "test-ext-3", ext, testScheme)
-				return []client.Object{ext, prevRev1, prevRev2, rev}
+				// Sharing the current revision's owner must not cause another group to be archived.
+				otherGroup := newTestClusterObjectSet(t, "other-group-1", ext, testScheme)
+				otherGroup.Spec.Group = "other-group"
+				return []client.Object{ext, ownerlessPrevious, differentOwnerPrevious, rev, otherGroup}
 			},
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterObjectSet{}
@@ -617,6 +624,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				}, rev)
 				require.NoError(t, err)
 				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState)
+				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: "other-group-1"}, rev))
+				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState)
 			},
 		},
 	} {
@@ -624,8 +633,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			mockCtrl := gomock.NewController(t)
 
 			// create extension and cluster extension
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
+			testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -728,8 +736,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_CompletedAt(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
+			testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -842,8 +849,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testin
 			rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
 
 			// create extension and cluster extension
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
+			testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(ext, rev1).
 				Build()
@@ -941,8 +947,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_VerifyReferencedSecrets(t *testin
 				},
 			}}
 
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
+			testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(append([]client.Object{ext, rev1}, tc.secrets...)...).
 				WithInterceptorFuncs(interceptor.Funcs{
@@ -1014,8 +1019,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ReferencedContentValidationRecove
 		Data:       map[string][]byte{"configmap": []byte("not-json")},
 	}
 
-	testClient := fake.NewClientBuilder().
-		WithScheme(testScheme).
+	testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		WithObjects(ext, rev1, badSecret).
 		Build()
@@ -1105,8 +1109,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_BuildPhasesErrorClassification(t 
 				tc.setupCOS(rev1)
 			}
 
-			builder := fake.NewClientBuilder().
-				WithScheme(testScheme).
+			builder := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(ext, rev1)
 			if tc.listFails {
@@ -1398,8 +1401,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			mockCtrl := gomock.NewController(t)
 
 			// create extension and cluster extension
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
+			testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -1671,8 +1673,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ProgressDeadline(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 
 			// create extension and cluster extension
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
+			testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -1809,6 +1810,7 @@ func newTestClusterObjectSet(t *testing.T, revisionName string, ext *ocv1.Cluste
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
+			Group:          ext.Name,
 			LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 			Revision:       revNum,
 			Phases: []ocv1.ClusterObjectSetPhase{
@@ -2220,8 +2222,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ForeignRevisionCollision(t *testi
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
+			testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 				WithObjects(tc.existingObjs()...).
 				Build()
@@ -2322,8 +2323,7 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 		ext := newTestClusterExtension()
 		rev := newTestClusterObjectSet(t, "test-rev", ext, testScheme)
 
-		testClient := fake.NewClientBuilder().
-			WithScheme(testScheme).
+		testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 			WithObjects(ext, rev).
 			Build()
 

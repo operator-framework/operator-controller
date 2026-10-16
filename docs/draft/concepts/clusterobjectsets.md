@@ -6,17 +6,27 @@ This document explains what ClusterObjectSets are, how they enable safe phased r
 
 A `ClusterObjectSet` is a cluster-scoped Kubernetes API that represents a versioned set of Kubernetes resources organized into ordered phases. It provides a declarative way to roll out a group of related resources sequentially, with built-in readiness checks between phases.
 
-The revision content — the `revision` number, `collisionProtection` strategy, and `phases` (including all objects within them) — is immutable once set. This guarantees that the record of what was deployed at a given revision cannot change after creation. Other fields like `lifecycleState` can change over the object's lifecycle (e.g. transitioning from `Active` to `Archived`), and optional fields like `progressDeadlineMinutes` and `progressionProbes` can be configured independently.
+The revision content — the `group` identifier, `revision` number, `collisionProtection` strategy, and `phases` (including all objects within them) — is immutable once set. This guarantees that the record of what was deployed at a given revision cannot change after creation. Other fields like `lifecycleState` can change over the object's lifecycle (e.g. transitioning from `Active` to `Archived`), and optional fields like `progressDeadlineMinutes` and `progressionProbes` can be configured independently.
 
 Each ClusterObjectSet has:
 
+- A **group** — a required, immutable identifier linking revisions into one sequence, regardless of their owner references
 - A **revision number** — an immutable, sequential integer that identifies the version
 - A **lifecycle state** — either `Active` (being reconciled) or `Archived` (inactive); transitions from Active to Archived but not back
 - A list of **phases** — immutable, ordered groups of Kubernetes objects that are applied sequentially
 - A **collision protection** strategy — immutable, controlling how pre-existing objects are handled
 - **Status conditions** — reporting rollout progress, availability, and success
 
+<!-- TODO(COD): Update this integration description when operator-controller
+manages ClusterObjectDeployments instead of ClusterObjectSets directly. -->
 ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, the operator-controller uses ClusterObjectSets as the mechanism to deploy and upgrade ClusterExtensions.
+
+The `group` value must be 1–52 characters long, start with a lowercase letter,
+contain only lowercase letters, digits or hyphens, and end with a letter or digit.
+Revisions in the same group can transfer managed objects between them even when
+they have different controller owners or no owner references. They share the
+server-side apply field manager `cos-group/<group>`. Different groups remain
+subject to normal object collision protection.
 
 ### Controller deployment
 
@@ -85,7 +95,7 @@ When a ClusterObjectSet is `Active`, the controller actively reconciles it using
 
 When transitioning from one revision to the next:
 
-1. A new ClusterObjectSet is created with the next sequential revision number
+1. A new ClusterObjectSet is created with the same group and the next sequential revision number
 2. Both old and new revisions remain `Active` during the transition
 3. Objects transition ownership from the old revision to the new one
 4. Once the new revision reports `Succeeded`, the old revision can be archived
@@ -261,6 +271,10 @@ When a ClusterExtension is upgraded to a new version:
 
 A `ClusterExtension` owns one or more `ClusterObjectSet` resources. The ClusterExtension's `.status.activeRevisions` field lists all currently active (non-archived) revisions along with their status conditions.
 
+Operator-controller sets `spec.group` to the ClusterExtension's name and retains
+the ClusterExtension controller owner reference for garbage collection. Revision
+lookup uses the group; labels and owner references do not determine membership.
+
 When created by operator-controller, ClusterObjectSets carry labels that identify the parent:
 
 ```yaml
@@ -284,6 +298,7 @@ kind: ClusterObjectSet
 metadata:
   name: my-app-rev1
 spec:
+  group: my-app
   revision: 1
   lifecycleState: Active
   collisionProtection: Prevent
@@ -391,6 +406,7 @@ kind: ClusterObjectSet
 metadata:
   name: my-app-rev1
 spec:
+  group: my-app
   revision: 1
   lifecycleState: Active
   collisionProtection: Prevent
@@ -427,8 +443,8 @@ Multiple objects can reference different keys within the same Secret, allowing e
 # List all ClusterObjectSets
 kubectl get clusterobjectsets
 
-# List revisions for a specific extension
-kubectl get clusterobjectsets -l olm.operatorframework.io/owner-name=my-extension
+# List revisions in a specific extension's group
+kubectl get clusterobjectsets --field-selector spec.group=my-extension
 
 # View full details for a specific revision
 kubectl get clusterobjectset <name> -o yaml
@@ -440,7 +456,7 @@ kubectl -n olmv1-system logs deployment/object-controller-controller-manager
 Example output:
 
 ```
-NAME                   READY     AGE
-my-extension-abc12     Unknown   2d
-my-extension-def34     True      1h
+NAME                   GROUP          READY     AGE
+my-extension-abc12     my-extension   Unknown   2d
+my-extension-def34     my-extension   True      1h
 ```

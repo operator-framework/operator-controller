@@ -34,6 +34,7 @@ func TestValidate(t *testing.T) {
 		return s
 	}
 	defaultRevisionSpec := func(s *ClusterObjectSetSpec) *ClusterObjectSetSpec {
+		s.Group = "test-group"
 		s.Revision = 1
 		s.CollisionProtection = CollisionProtectionPrevent
 		return s
@@ -188,6 +189,7 @@ func TestClusterObjectSetCompletedAtImmutable(t *testing.T) {
 	cos := &ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{Name: "cos-completedat-immutable"},
 		Spec: ClusterObjectSetSpec{
+			Group:               "test-group",
 			Revision:            1,
 			CollisionProtection: CollisionProtectionPrevent,
 			LifecycleState:      ClusterObjectSetLifecycleStateActive,
@@ -218,6 +220,7 @@ func TestClusterObjectSetCompletedAtCannotBeRemoved(t *testing.T) {
 	cos := &ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{Name: "cos-completedat-noremove"},
 		Spec: ClusterObjectSetSpec{
+			Group:               "test-group",
 			Revision:            1,
 			CollisionProtection: CollisionProtectionPrevent,
 			LifecycleState:      ClusterObjectSetLifecycleStateActive,
