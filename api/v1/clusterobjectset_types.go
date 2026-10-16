@@ -614,6 +614,9 @@ type ObjectCounts struct {
 	Ready int64 `json:"ready,omitempty"`
 }
 
+// TODO(COD): Update the archival description below when archival decisions move
+// to ClusterObjectDeployment reconciliation.
+
 // +genclient
 // +genclient:nonNamespaced
 // +kubebuilder:object:root=true
