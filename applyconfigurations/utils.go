@@ -88,6 +88,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1.ObjectSourceRefApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ObservedPhase"):
 		return &apiv1.ObservedPhaseApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("OCIImageSource"):
+		return &apiv1.OCIImageSourceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("PreflightConfig"):
 		return &apiv1.PreflightConfigApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ProgressionProbe"):

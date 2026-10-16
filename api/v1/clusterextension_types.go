@@ -99,8 +99,10 @@ type ClusterExtensionSpec struct {
 	// source is required and selects the installation source of content for this ClusterExtension.
 	// Set the sourceType field to perform the selection.
 	//
-	// Catalog is currently the only implemented sourceType.
 	// Setting sourceType to "Catalog" requires the catalog field to also be defined.
+	// <opcon:experimental:description>
+	// Setting sourceType to "OCIImage" requires the ociImage field to also be defined.
+	// </opcon:experimental:description>
 	//
 	// Below is a minimal example of a source definition (in yaml):
 	//
@@ -142,23 +144,41 @@ type ClusterExtensionSpec struct {
 	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
 }
 
-const SourceTypeCatalog = "Catalog"
+const (
+	SourceTypeCatalog  = "Catalog"
+	SourceTypeOCIImage = "OCIImage"
+)
 
 // SourceConfig is a discriminated union which selects the installation source.
 //
 // +union
 // +kubebuilder:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'Catalog' ? has(self.catalog) : !has(self.catalog)",message="catalog is required when sourceType is Catalog, and forbidden otherwise"
+// <opcon:experimental:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'OCIImage' ? has(self.ociImage) : !has(self.ociImage)",message="ociImage is required when sourceType is OCIImage, and forbidden otherwise">
 type SourceConfig struct {
 	// sourceType is required and specifies the type of install source.
 	//
+	// <opcon:standard:description>
 	// The only allowed value is "Catalog".
 	//
 	// When set to "Catalog", information for determining the appropriate bundle of content to install
 	// is fetched from ClusterCatalog resources on the cluster.
 	// When using the Catalog sourceType, the catalog field must also be set.
+	// </opcon:standard:description>
+	//
+	// <opcon:experimental:description>
+	// The allowed values are "Catalog" and "OCIImage".
+	//
+	// When set to "OCIImage", the bundle image is used directly. Direct sources do not perform
+	// dependency resolution and are only supported by the Boxcutter runtime.
+	//
+	// When set to "Catalog", information for determining the appropriate bundle of content to install
+	// is fetched from ClusterCatalog resources on the cluster.
+	// When using the Catalog sourceType, the catalog field must also be set.
+	// </opcon:experimental:description>
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Catalog"
+	// <opcon:experimental:validation:Enum=Catalog;OCIImage>
 	// +required
 	SourceType string `json:"sourceType"`
 
@@ -166,7 +186,68 @@ type SourceConfig struct {
 	// It is required when sourceType is "Catalog", and forbidden otherwise.
 	//
 	// +optional
-	Catalog *CatalogFilter `json:"catalog,omitempty"`
+	Catalog CatalogFilter `json:"catalog,omitzero"`
+
+	// ociImage configures a bundle image to install directly.
+	// <opcon:experimental:description>
+	// They do not provide catalog dependency resolution or upgrade safety.
+	// </opcon:experimental:description>
+	// <opcon:experimental>
+	// +optional
+	OCIImage OCIImageSource `json:"ociImage,omitzero"`
+}
+
+// OCIImageSource identifies a bundle image to install directly from an OCI registry.
+// +kubebuilder:validation:MinProperties:=1
+type OCIImageSource struct {
+	// ref is a required field that defines the reference to a container image for a registry+v1 bundle.
+	// It cannot be more than 1000 characters.
+	//
+	// A reference has 3 parts: the domain, name, and identifier.
+	//
+	// The domain is typically the registry where an image is located.
+	// It must be alphanumeric characters (lowercase and uppercase) separated by the "." character.
+	// Hyphenation is allowed, but the domain must start and end with alphanumeric characters.
+	// Specifying a port to use is also allowed by adding the ":" character followed by numeric values.
+	// The port must be the last value in the domain.
+	// Some examples of valid domain values are "registry.mydomain.io", "quay.io", "my-registry.io:8080".
+	//
+	// The name is typically the repository in the registry where an image is located.
+	// It must contain lowercase alphanumeric characters separated only by the ".", "_", "__", "-" characters.
+	// Multiple names can be concatenated with the "/" character.
+	// The domain and name are combined using the "/" character.
+	// Some examples of valid name values are "operatorhubio/catalog", "catalog", "my-catalog.prod".
+	// An example of the domain and name parts of a reference being combined is "quay.io/operatorhubio/catalog".
+	//
+	// The identifier is typically the tag or digest for an image reference and is present at the end of the reference.
+	// It starts with a separator character used to distinguish the end of the name and beginning of the identifier.
+	// For a digest-based reference, the "@" character is the separator.
+	// For a tag-based reference, the ":" character is the separator.
+	// An identifier is required in the reference.
+	//
+	// Digest-based references must contain an algorithm reference immediately after the "@" separator.
+	// The algorithm reference must be followed by the ":" character and an encoded string.
+	// The algorithm must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the "-", "_", "+", and "." characters.
+	// Some examples of valid algorithm values are "sha256", "sha256+b64u", "multihash+base58".
+	// The encoded string following the algorithm must be hex digits (a-f, A-F, 0-9) and must be a minimum of 32 characters.
+	//
+	// Tag-based references must begin with a word character (alphanumeric + "_") followed by word characters or ".", and "-" characters.
+	// The tag must not be longer than 127 characters.
+	//
+	// An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"
+	// An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest"
+	//
+	// +required
+	// +kubebuilder:validation:MaxLength:=1000
+	// +kubebuilder:validation:XValidation:rule="self.matches('^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\\\b')",message="must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character."
+	// +kubebuilder:validation:XValidation:rule="self.find('(\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)') != \"\"",message="a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters."
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" || self.find(':.*$') != \"\"",message="must end with a digest or a tag"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') == \"\" ? (self.find(':.*$') != \"\" ? self.find(':.*$').substring(1).size() <= 127 : true) : true",message="tag is invalid. the tag must not be more than 127 characters"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') == \"\" ? (self.find(':.*$') != \"\" ? self.find(':.*$').matches(':[\\\\w][\\\\w.-]*$') : true) : true",message="tag is invalid. valid tags must begin with a word character (alphanumeric + \"_\") followed by word characters or \".\", and \"-\" characters"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find('(@.*:)').matches('(@[A-Za-z][A-Za-z0-9]*([-_+.][A-Za-z][A-Za-z0-9]*)*[:])') : true",message="digest algorithm is not valid. valid algorithms must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the \"-\", \"_\", \"+\", and \".\" characters."
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find(':.*$').substring(1).size() >= 32 : true",message="digest is not valid. the encoded string must be at least 32 characters"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find(':.*$').matches(':[0-9A-Fa-f]*$') : true",message="digest is not valid. the encoded string must only contain hex characters (A-F, a-f, 0-9)"
+	Ref string `json:"ref"`
 }
 
 // ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
