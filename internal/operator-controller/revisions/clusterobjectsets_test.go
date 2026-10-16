@@ -30,7 +30,7 @@ import (
 	coscontrollers "github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/revisions"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
-	"github.com/operator-framework/operator-controller/test"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func TestListForGroup(t *testing.T) {
@@ -74,7 +74,7 @@ func TestListForGroup(t *testing.T) {
 	for _, object := range objects[2:] {
 		object.SetLabels(map[string]string{labels.OwnerNameKey: ext.Name})
 	}
-	cl := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
+	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
 		WithObjects(objects...).Build()
 	got, err := revisions.ListForGroup(t.Context(), cl, group)
 	require.NoError(t, err)

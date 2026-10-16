@@ -26,7 +26,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
-	"github.com/operator-framework/operator-controller/test"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func newSchemeWithCoreV1(t *testing.T) *apimachineryruntime.Scheme {
@@ -69,7 +69,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 		Key:       "my-key",
 	})
 
-	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
+	fakeClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -131,7 +131,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 		Key:       "my-key",
 	})
 
-	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
+	fakeClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -164,7 +164,7 @@ func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 		Key:       "my-key",
 	})
 
-	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
+	fakeClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -204,7 +204,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 		Key:       "missing-key",
 	})
 
-	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
+	fakeClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()
@@ -253,7 +253,7 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 		Key:       "my-key",
 	})
 
-	fakeClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
+	fakeClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
 		WithObjects(secret, cos).
 		WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 		Build()

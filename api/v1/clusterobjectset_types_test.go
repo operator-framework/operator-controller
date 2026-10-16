@@ -168,13 +168,13 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 func TestClusterObjectSetValidity(t *testing.T) {
 	c := newClient(t)
 	ctx := context.Background()
-	i := 0
 	for name, tc := range map[string]struct {
 		spec  ClusterObjectSetSpec
 		valid bool
 	}{
 		"revision cannot be negative": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-negative-revision",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       -1,
 			},
@@ -182,12 +182,14 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"revision cannot be zero": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-zero-revision",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 			},
 			valid: false,
 		},
 		"revision must be positive": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-positive-revision",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -196,12 +198,14 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"lifecycleState must be set": {
 			spec: ClusterObjectSetSpec{
+				Group:    "validity-missing-lifecycle",
 				Revision: 1,
 			},
 			valid: false,
 		},
 		"phases must have no more than 20 phases": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-too-many-phases",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
 				Phases:         make([]ClusterObjectSetPhase, 21),
@@ -210,6 +214,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"phases entries must have no more than 50 objects": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-too-many-objects",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
 				Phases: []ClusterObjectSetPhase{
@@ -223,6 +228,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"phases entry names cannot be empty": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-empty-phase-name",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
 				Phases: []ClusterObjectSetPhase{
@@ -235,6 +241,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"phases entry names cannot start with symbols": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-symbol-phase-name",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
 				Phases: []ClusterObjectSetPhase{
@@ -247,6 +254,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"phases entry names cannot start with numeric characters": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-numeric-phase-name",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
 				Phases: []ClusterObjectSetPhase{
@@ -259,6 +267,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"spec collisionProtection accepts Prevent": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-prevent-collisions",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -267,6 +276,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"spec collisionProtection accepts IfNoController": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-if-no-controller",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionIfNoController,
@@ -275,6 +285,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"spec collisionProtection accepts None": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-allow-collisions",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionNone,
@@ -283,6 +294,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"spec collisionProtection is required": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-required-collision-protection",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
 			},
@@ -290,6 +302,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"spec collisionProtection rejects invalid values": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-invalid-collision-protection",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtection("Invalid"),
@@ -298,6 +311,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"spec collisionProtection must be set": {
 			spec: ClusterObjectSetSpec{
+				Group:          "validity-unset-collision-protection",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
 			},
@@ -305,6 +319,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"object collisionProtection is optional": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-optional-object-collision-protection",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -323,6 +338,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"object with inline object is valid": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-inline-object",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -341,6 +357,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"object with ref is valid": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-ref-object",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -359,6 +376,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"object with both object and ref is invalid": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-object-and-ref",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -378,6 +396,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		},
 		"object with neither object nor ref is invalid": {
 			spec: ClusterObjectSetSpec{
+				Group:               "validity-object-and-ref-missing",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
@@ -396,12 +415,10 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			cos := &ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: fmt.Sprintf("bar%d", i),
+					Name: fmt.Sprintf("%s-%d", tc.spec.Group, tc.spec.Revision),
 				},
 				Spec: tc.spec,
 			}
-			cos.Spec.Group = "test-group"
-			i = i + 1
 			err := c.Create(ctx, cos)
 			if tc.valid && err != nil {
 				t.Fatal("expected create to succeed, but got:", err)
@@ -419,7 +436,7 @@ func TestClusterObjectSetSpecValidation(t *testing.T) {
 		cos := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": GroupVersion.String(),
 			"kind":       ClusterObjectSetKind,
-			"metadata":   map[string]any{"generateName": "spec-validation-"},
+			"metadata":   map[string]any{"name": "spec-validation-1"},
 		}}
 		err := c.Create(t.Context(), cos)
 		require.True(t, errors.IsInvalid(err), "%v", err)
@@ -429,7 +446,7 @@ func TestClusterObjectSetSpecValidation(t *testing.T) {
 
 func TestClusterObjectSetGroupValidation(t *testing.T) {
 	c := newClient(t)
-	for _, tc := range []struct {
+	for i, tc := range []struct {
 		name  string
 		group *string
 		valid bool
@@ -448,10 +465,14 @@ func TestClusterObjectSetGroupValidation(t *testing.T) {
 		{name: "dot", group: ptr.To("my.group"), valid: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			objectName := fmt.Sprintf("group-validation-%d", i+1)
+			if tc.valid {
+				objectName = fmt.Sprintf("%s-1", *tc.group)
+			}
 			cos := &unstructured.Unstructured{Object: map[string]any{
 				"apiVersion": GroupVersion.String(),
 				"kind":       ClusterObjectSetKind,
-				"metadata":   map[string]any{"generateName": "group-validation-"},
+				"metadata":   map[string]any{"name": objectName},
 			}}
 			spec := map[string]any{
 				"revision": int64(1), "lifecycleState": string(ClusterObjectSetLifecycleStateActive),

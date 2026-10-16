@@ -34,9 +34,9 @@ import (
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	bundlecsv "github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 	mockapplier "github.com/operator-framework/operator-controller/internal/testutil/mock/applier"
 	mockctrlclient "github.com/operator-framework/operator-controller/internal/testutil/mock/ctrlclient"
-	"github.com/operator-framework/operator-controller/test"
 )
 
 var (
@@ -550,6 +550,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 		},
 	}
 
+	// Exercise group-based discovery when the existing revision lacks the owner-name label.
 	revisionWithoutOwnerLabel := defaultDesiredRevision.DeepCopy()
 	revisionWithoutOwnerLabel.Labels = nil
 
@@ -634,7 +635,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 		{
-			name: "no change, revision exists",
+			name: "no change, existing revision has no owner label",
 			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -1107,16 +1108,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup
-			cb := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), coscontrollers.SetupIndexes).
+			cb := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), coscontrollers.SetupIndexes).
 				WithObjects(tc.existingObjs...)
-			// A misleading owner label must not let another group's revisions
-			// affect numbering or retention for this extension.
-			cb.WithObjects(&ocv1.ClusterObjectSet{
-				ObjectMeta: metav1.ObjectMeta{Name: "other-group-99", Labels: map[string]string{labels.OwnerNameKey: ext.Name}},
-				Spec: ocv1.ClusterObjectSetSpec{
-					Group: "other-group", Revision: 99, LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
-				},
-			})
 			if tc.clientIterceptor != nil {
 				cb.WithInterceptorFuncs(*tc.clientIterceptor)
 			}
@@ -1164,54 +1157,111 @@ func TestBoxcutter_Apply(t *testing.T) {
 					tc.validate(t, fakeClient)
 				}
 			}
-			require.NoError(t, fakeClient.Get(t.Context(), client.ObjectKey{Name: "other-group-99"}, &ocv1.ClusterObjectSet{}))
 		})
 	}
 }
 
-func TestBoxcutter_Apply_FallbackUsesGroup(t *testing.T) {
+func TestBoxcutter_Apply_GroupIsolation(t *testing.T) {
 	for _, tc := range []struct {
-		name      string
-		group     string
-		ownerName string
-		wantError bool
+		name               string
+		extensionRevisions []int64
+		otherGroupRevision int64
+		wantRevision       int64
+		wantRemainingNames []string
 	}{
-		{name: "ownerless", group: "test-ext"},
-		{name: "different controller owner", group: "test-ext", ownerName: "other-ext"},
-		{name: "different group with matching owner", group: "other-group", ownerName: "test-ext", wantError: true},
+		{
+			name:               "numbering ignores another group's higher revision",
+			extensionRevisions: []int64{1},
+			otherGroupRevision: 99,
+			wantRevision:       2,
+			wantRemainingNames: []string{"test-ext-1", "test-ext-2", "other-group-99"},
+		},
+		{
+			name:               "retention preserves another group's older revision",
+			extensionRevisions: []int64{2, 3, 4, 5, 6, 7},
+			otherGroupRevision: 1,
+			wantRevision:       8,
+			wantRemainingNames: []string{"test-ext-3", "test-ext-4", "test-ext-5", "test-ext-6", "test-ext-7", "test-ext-8", "other-group-1"},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			scheme := runtime.NewScheme()
 			require.NoError(t, ocv1.AddToScheme(scheme))
 			ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-ext-uid"}}
-			cos := &ocv1.ClusterObjectSet{
-				ObjectMeta: metav1.ObjectMeta{Name: "revision-1"},
+			owner := *metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))
+			objects := make([]client.Object, 0, len(tc.extensionRevisions)+1)
+			for _, revision := range tc.extensionRevisions {
+				objects = append(objects, &ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            fmt.Sprintf("test-ext-%d", revision),
+						Labels:          map[string]string{labels.OwnerNameKey: ext.Name},
+						OwnerReferences: []metav1.OwnerReference{owner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group: ext.Name, Revision: revision, LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+					},
+				})
+			}
+			// Even with a matching label and controller owner, another group is
+			// excluded from both revision numbering and retention.
+			otherGroup := &ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            fmt.Sprintf("other-group-%d", tc.otherGroupRevision),
+					Labels:          map[string]string{labels.OwnerNameKey: ext.Name},
+					OwnerReferences: []metav1.OwnerReference{owner},
+				},
 				Spec: ocv1.ClusterObjectSetSpec{
-					Group: tc.group, Revision: 1, LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+					Group: "other-group", Revision: tc.otherGroupRevision, LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 				},
 			}
-			if tc.ownerName != "" {
-				owner := *metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))
-				owner.Name = tc.ownerName
-				if tc.ownerName != ext.Name {
-					owner.UID = "other-owner-uid"
-				}
-				cos.OwnerReferences = []metav1.OwnerReference{owner}
+			objects = append(objects, otherGroup)
+			cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
+				WithObjects(objects...).
+				WithInterceptorFuncs(interceptor.Funcs{
+					Apply: func(ctx context.Context, cl client.WithWatch, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+						cos, ok := obj.(*ocv1ac.ClusterObjectSetApplyConfiguration)
+						if !ok {
+							return fmt.Errorf("expected ClusterObjectSetApplyConfiguration, got %T", obj)
+						}
+						// The fake client does not enforce spec immutability. Reject
+						// updates to existing COS so Apply creates a new revision.
+						err := cl.Get(ctx, client.ObjectKey{Name: *cos.GetName()}, &ocv1.ClusterObjectSet{})
+						if err == nil {
+							return apierrors.NewInvalid(ocv1.GroupVersion.WithKind(ocv1.ClusterObjectSetKind).GroupKind(), *cos.GetName(),
+								field.ErrorList{field.Invalid(field.NewPath("spec.phases"), "updated phases", "spec.phases is immutable")})
+						}
+						if !apierrors.IsNotFound(err) {
+							return err
+						}
+						return cl.Apply(ctx, obj, opts...)
+					},
+				}).Build()
+			generator := mockapplier.NewMockClusterObjectSetGenerator(gomock.NewController(t))
+			generator.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), ext, gomock.Any(), gomock.Any()).Return(
+				ocv1ac.ClusterObjectSet("").WithSpec(ocv1ac.ClusterObjectSetSpec().
+					WithGroup(ext.Name).WithLifecycleState(ocv1.ClusterObjectSetLifecycleStateActive)), nil)
+			boxcutter := &applier.Boxcutter{Client: cl, Scheme: scheme, RevisionGenerator: generator, FieldOwner: "test-owner"}
+
+			completed, status, err := boxcutter.Apply(t.Context(), fstest.MapFS{}, ext, nil, nil)
+			require.NoError(t, err)
+			require.True(t, completed)
+			require.Empty(t, status)
+
+			var created ocv1.ClusterObjectSet
+			require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: fmt.Sprintf("test-ext-%d", tc.wantRevision)}, &created))
+			require.Equal(t, tc.wantRevision, created.Spec.Revision)
+			require.Equal(t, ext.Name, created.Spec.Group)
+			var remaining ocv1.ClusterObjectSetList
+			require.NoError(t, cl.List(t.Context(), &remaining))
+			names := make([]string, 0, len(remaining.Items))
+			for _, revision := range remaining.Items {
+				names = append(names, revision.Name)
 			}
-			cl := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
-				WithObjects(cos).Build()
-			bc := &applier.Boxcutter{
-				Client: cl, Scheme: scheme,
-				RevisionGenerator: mockapplier.NewMockClusterObjectSetGenerator(gomock.NewController(t)),
-			}
-			completed, _, err := bc.Apply(t.Context(), nil, ext, nil, nil)
-			if tc.wantError {
-				require.ErrorContains(t, err, "no revision installed")
-				require.False(t, completed)
-			} else {
-				require.NoError(t, err)
-				require.True(t, completed)
-			}
+			require.ElementsMatch(t, tc.wantRemainingNames, names)
+			var retainedOtherGroup ocv1.ClusterObjectSet
+			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(otherGroup), &retainedOtherGroup))
+			require.Equal(t, otherGroup.Spec, retainedOtherGroup.Spec)
+			require.Equal(t, otherGroup.OwnerReferences, retainedOtherGroup.OwnerReferences)
 		})
 	}
 }
@@ -1246,7 +1296,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "other-group-1", Labels: map[string]string{labels.OwnerNameKey: ext.Name}},
 			Spec:       ocv1.ClusterObjectSetSpec{Group: "other-group", Revision: 1},
 		}
-		cl := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), coscontrollers.SetupIndexes).
+		cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), coscontrollers.SetupIndexes).
 			WithStatusSubresource(&ocv1.ClusterObjectSet{}).
 			WithObjects(other).Build()
 		sm := &applier.BoxcutterStorageMigrator{

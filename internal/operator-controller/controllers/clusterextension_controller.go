@@ -432,6 +432,10 @@ func (r *ClusterExtensionReconciler) SetupWithManagerForBoxcutter(mgr ctrl.Manag
 
 // SetupWithManagerForHelm sets up the controller with watches for managed Helm resources.
 func (r *ClusterExtensionReconciler) SetupWithManagerForHelm(mgr ctrl.Manager, trackingCache managedcache.TrackingCache) (crcontroller.Controller, error) {
+	if err := mgr.Add(trackingCache); err != nil {
+		return nil, fmt.Errorf("unable to add tracking cache to manager: %w", err)
+	}
+
 	return r.newControllerBuilder(mgr).
 		WatchesRawSource(trackingCache.Source(
 			crhandler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtension{}),

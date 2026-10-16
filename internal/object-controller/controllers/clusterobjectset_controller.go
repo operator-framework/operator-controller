@@ -567,7 +567,7 @@ func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
 		if r.Name == cos.Name {
 			continue
 		}
-		if r.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived ||
+		if r.Spec.LifecycleState != ocv1.ClusterObjectSetLifecycleStateActive ||
 			!r.DeletionTimestamp.IsZero() {
 			continue
 		}

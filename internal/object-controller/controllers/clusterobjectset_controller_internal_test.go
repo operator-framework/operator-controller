@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/test"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
@@ -175,15 +175,6 @@ func Test_ClusterObjectSetReconciler_OwnerChangesPreserveRevisionChain(t *testin
 	foreignOwner.Kind = "OtherController"
 	foreignOwner.Name = "other-owner"
 	foreignOwner.UID = "other-uid"
-	previous := newTestClusterObjectSetInternal(t, "rev-1")
-	current := newTestClusterObjectSetInternal(t, "rev-2")
-	current.OwnerReferences = []metav1.OwnerReference{owner}
-	otherGroup := newTestClusterObjectSetInternal(t, "other-1")
-	otherGroup.Spec.Group = "other-group"
-	otherGroup.OwnerReferences = []metav1.OwnerReference{owner}
-	cl := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), SetupIndexes).
-		WithObjects(previous, current, otherGroup).Build()
-	r := &ClusterObjectSetReconciler{Client: cl}
 
 	for _, tc := range []struct {
 		name           string
@@ -201,23 +192,23 @@ func Test_ClusterObjectSetReconciler_OwnerChangesPreserveRevisionChain(t *testin
 			currentOwners:  []metav1.OwnerReference{owner},
 		},
 		{
-			name:          "owner removed",
+			name:          "previous revision ownerless",
 			currentOwners: []metav1.OwnerReference{owner},
-		},
-		{
-			name:           "owner added again",
-			previousOwners: []metav1.OwnerReference{owner},
-			currentOwners:  []metav1.OwnerReference{owner},
 		},
 		{name: "both revisions ownerless"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(current), current))
-			current.OwnerReferences = tc.currentOwners
-			require.NoError(t, cl.Update(t.Context(), current))
-			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(previous), previous))
+			previous := newTestClusterObjectSetInternal(t, "rev-1")
 			previous.OwnerReferences = tc.previousOwners
-			require.NoError(t, cl.Update(t.Context(), previous))
+			current := newTestClusterObjectSetInternal(t, "rev-2")
+			current.OwnerReferences = tc.currentOwners
+			otherGroup := newTestClusterObjectSetInternal(t, "other-1")
+			otherGroup.Spec.Group = "other-group"
+			otherGroup.OwnerReferences = []metav1.OwnerReference{owner}
+			cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), SetupIndexes).
+				WithObjects(previous, current, otherGroup).Build()
+			r := &ClusterObjectSetReconciler{Client: cl}
+
 			siblings, err := r.listSiblingRevisions(t.Context(), current)
 			require.NoError(t, err)
 			require.Len(t, siblings, 1)
@@ -239,7 +230,7 @@ func callRevisionLister(
 ) []string {
 	t.Helper()
 	mockCtrl := gomock.NewController(t)
-	testClient := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), SetupIndexes).
+	testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), SetupIndexes).
 		WithObjects(existingObjs...).
 		Build()
 
@@ -293,8 +284,9 @@ func newTestClusterObjectSetInternal(t *testing.T, name string) *ocv1.ClusterObj
 			Generation: int64(1),
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
-			Group:    "test-ext",
-			Revision: revNum,
+			Group:          "test-ext",
+			LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+			Revision:       revNum,
 			Phases: []ocv1.ClusterObjectSetPhase{
 				{
 					Name:    "everything",

@@ -77,7 +77,6 @@ type ClusterObjectSetSpec struct {
 	//
 	// The revision field must be a positive integer.
 	// Each ClusterObjectSet in the same revision sequence must have a unique revision number.
-	// The revision number must always be the previous revision number plus one, or 1 for the first revision.
 	//
 	// +required
 	// +kubebuilder:validation:Minimum:=1

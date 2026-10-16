@@ -421,7 +421,7 @@ func run() error {
 	// direct ClusterExtension-to-COS queries.
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		if err := clusterobjctrl.SetupIndexes(context.Background(), mgr.GetFieldIndexer()); err != nil {
-			return fmt.Errorf("indexing ClusterObjectSet group: %w", err)
+			return fmt.Errorf("setting up ClusterObjectSet indexes: %w", err)
 		}
 	}
 
@@ -470,9 +470,6 @@ func run() error {
 		)
 		if err != nil {
 			return fmt.Errorf("unable to create tracking cache: %w", err)
-		}
-		if err := mgr.Add(trackingCache); err != nil {
-			return fmt.Errorf("unable to add tracking cache to manager: %w", err)
 		}
 	}
 

@@ -183,7 +183,7 @@ func newManager(cfg *config, restConfig *rest.Config) (manager.Manager, error) {
 		return nil, fmt.Errorf("creating discovery client: %w", err)
 	}
 	if err := controllers.SetupIndexes(context.Background(), mgr.GetFieldIndexer()); err != nil {
-		return nil, fmt.Errorf("indexing ClusterObjectSet group: %w", err)
+		return nil, fmt.Errorf("setting up ClusterObjectSet indexes: %w", err)
 	}
 	factory, err := controllers.NewDefaultRevisionEngineFactory(
 		mgr.GetScheme(), trackingCache, memory.NewMemCacheClient(discoveryClient),

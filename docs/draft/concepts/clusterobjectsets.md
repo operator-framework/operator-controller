@@ -17,6 +17,8 @@ Each ClusterObjectSet has:
 - A **collision protection** strategy — immutable, controlling how pre-existing objects are handled
 - **Status conditions** — reporting rollout progress, availability, and success
 
+<!-- TODO(COD): Update this integration description when operator-controller
+manages ClusterObjectDeployments instead of ClusterObjectSets directly. -->
 ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, the operator-controller uses ClusterObjectSets as the mechanism to deploy and upgrade ClusterExtensions.
 
 The `group` value must be 1–52 characters long, start with a lowercase letter,

@@ -27,7 +27,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	coscontrollers "github.com/operator-framework/operator-controller/internal/object-controller/controllers"
-	"github.com/operator-framework/operator-controller/test"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func TestBoxcutterRevisionStatesGetter_ClassifiesByCompletedAt(t *testing.T) {
@@ -52,7 +52,7 @@ func TestBoxcutterRevisionStatesGetter_ClassifiesByCompletedAt(t *testing.T) {
 	completed := newRevision("test-ext-1", 1, true)
 	rollingOut := newRevision("test-ext-2", 2, false)
 
-	cl := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(sch), coscontrollers.SetupIndexes).
+	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(sch), coscontrollers.SetupIndexes).
 		WithObjects(completed, rollingOut).
 		Build()
 

@@ -13,13 +13,13 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
-	"github.com/operator-framework/operator-controller/test"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func TestSetupIndexes_GroupLookup(t *testing.T) {
 	scheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(scheme))
-	cl := test.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), controllers.SetupIndexes).
+	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), controllers.SetupIndexes).
 		WithObjects(
 			&ocv1.ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{

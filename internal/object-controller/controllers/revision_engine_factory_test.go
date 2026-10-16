@@ -20,10 +20,12 @@ package controllers_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,7 +44,108 @@ import (
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 )
 
+// TestDefaultRevisionEngineFactory_FieldOwnership uses envtest to verify the
+// factory's SSA manager and OLM metadata configuration against a real API server.
 func TestDefaultRevisionEngineFactory_FieldOwnership(t *testing.T) {
+	t.Run("revisions in the same group reuse the SSA manager", func(t *testing.T) {
+		env := newRevisionEngineFactoryTestEnv(t)
+		objectKey := client.ObjectKey{Namespace: env.owner.Name, Name: "payload"}
+
+		for _, revisionNumber := range []int64{1, 2} {
+			cos := &ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("factory-test-%d", revisionNumber)},
+				Spec:       ocv1.ClusterObjectSetSpec{Group: "factory-test", Revision: revisionNumber},
+			}
+			expectedRevision := fmt.Sprint(revisionNumber)
+			expectedValue := "revision-" + expectedRevision
+			desired := &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"metadata":   map[string]any{"namespace": objectKey.Namespace, "name": objectKey.Name},
+				"data":       map[string]any{"value": expectedValue},
+			}}
+			engine, err := env.factory.CreateRevisionEngine(env.ctx, cos)
+			require.NoError(t, err)
+			revision := boxcutter.NewRevisionWithOwner(cos.Name, cos.Spec.Revision,
+				[]boxcutter.Phase{boxcutter.NewPhase("deploy", []client.Object{desired})},
+				env.owner, ownerhandling.NewNative(env.scheme),
+			)
+
+			// Reconcile until the cached engine applies this revision's value.
+			actual := &corev1.ConfigMap{}
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				result, err := engine.Reconcile(env.ctx, revision)
+				if !assert.NoError(collect, err) || !assert.NotNil(collect, result) {
+					return
+				}
+				assert.Nil(collect, result.GetValidationError())
+				if assert.NoError(collect, env.client.Get(env.ctx, objectKey, actual)) {
+					assert.Equal(collect, expectedValue, actual.Data["value"])
+				}
+			}, 5*time.Second, 10*time.Millisecond)
+
+			// Both revisions must leave one group-scoped SSA manager and OLM metadata.
+			require.Equal(t, []string{"cos-group/factory-test"}, applyFieldManagers(actual))
+			require.Equal(t, expectedRevision, actual.Annotations["olm.operatorframework.io/revision"])
+			require.Equal(t, "olm.operatorframework.io", actual.Labels["app.kubernetes.io/managed-by"])
+		}
+	})
+
+	t.Run("different groups use distinct SSA managers", func(t *testing.T) {
+		env := newRevisionEngineFactoryTestEnv(t)
+
+		for _, tc := range []struct {
+			group           string
+			objectName      string
+			expectedManager string
+		}{
+			{group: "factory-test", objectName: "payload", expectedManager: "cos-group/factory-test"},
+			{group: "factory-other", objectName: "other-payload", expectedManager: "cos-group/factory-other"},
+		} {
+			cos := &ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{Name: tc.group + "-1"},
+				Spec:       ocv1.ClusterObjectSetSpec{Group: tc.group, Revision: 1},
+			}
+			desired := &corev1.ConfigMap{
+				TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"},
+				ObjectMeta: metav1.ObjectMeta{Namespace: env.owner.Name, Name: tc.objectName},
+				Data:       map[string]string{"value": "revision-1"},
+			}
+			engine, err := env.factory.CreateRevisionEngine(env.ctx, cos)
+			require.NoError(t, err)
+			revision := boxcutter.NewRevisionWithOwner(cos.Name, cos.Spec.Revision,
+				[]boxcutter.Phase{boxcutter.NewPhase("deploy", []client.Object{desired})},
+				env.owner, ownerhandling.NewNative(env.scheme),
+			)
+
+			// Apply each group's revision to its own ConfigMap.
+			result, err := engine.Reconcile(env.ctx, revision)
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			require.Nil(t, result.GetValidationError())
+
+			// Each resource must record its group's manager and the OLM metadata.
+			actual := &corev1.ConfigMap{}
+			require.NoError(t, env.client.Get(env.ctx, client.ObjectKeyFromObject(desired), actual))
+			require.Equal(t, "revision-1", actual.Data["value"])
+			require.Equal(t, []string{tc.expectedManager}, applyFieldManagers(actual))
+			require.Equal(t, "1", actual.Annotations["olm.operatorframework.io/revision"])
+			require.Equal(t, "olm.operatorframework.io", actual.Labels["app.kubernetes.io/managed-by"])
+		}
+	})
+}
+
+type revisionEngineFactoryTestEnv struct {
+	ctx     context.Context
+	client  client.Client
+	scheme  *runtime.Scheme
+	owner   *corev1.Namespace
+	factory controllers.RevisionEngineFactory
+}
+
+func newRevisionEngineFactoryTestEnv(t *testing.T) *revisionEngineFactoryTestEnv {
+	t.Helper()
+
 	scheme := newScheme(t)
 	require.NoError(t, corev1.AddToScheme(scheme))
 	cl, err := client.New(config, client.Options{Scheme: scheme})
@@ -52,11 +155,8 @@ func TestDefaultRevisionEngineFactory_FieldOwnership(t *testing.T) {
 	// metadata configuration from the COS controller's lifecycle behavior.
 	owner := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "factory-field-owner-"}}
 	require.NoError(t, cl.Create(t.Context(), owner))
-	objectKey := client.ObjectKey{Namespace: owner.Name, Name: "payload"}
 	t.Cleanup(func() {
-		require.NoError(t, client.IgnoreNotFound(cl.Delete(context.Background(), &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{Namespace: objectKey.Namespace, Name: objectKey.Name},
-		})))
+		require.NoError(t, cl.DeleteAllOf(context.Background(), &corev1.ConfigMap{}, client.InNamespace(owner.Name)))
 		require.NoError(t, cl.Delete(context.Background(), owner))
 	})
 
@@ -85,89 +185,17 @@ func TestDefaultRevisionEngineFactory_FieldOwnership(t *testing.T) {
 		scheme, trackingCache, memory.NewMemCacheClient(discoveryClient), cl.RESTMapper(), config,
 	)
 	require.NoError(t, err)
-	cos := &ocv1.ClusterObjectSet{
-		ObjectMeta: metav1.ObjectMeta{Name: "factory-test-1"},
-		Spec:       ocv1.ClusterObjectSetSpec{Group: "factory-test", Revision: 1},
+	return &revisionEngineFactoryTestEnv{
+		ctx: ctx, client: cl, scheme: scheme, owner: owner, factory: factory,
 	}
-	engine, err := factory.CreateRevisionEngine(ctx, cos)
-	require.NoError(t, err)
+}
 
-	obj := &corev1.ConfigMap{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"},
-		ObjectMeta: metav1.ObjectMeta{Namespace: objectKey.Namespace, Name: objectKey.Name},
-		Data:       map[string]string{"value": "revision-1"},
-	}
-	revision := boxcutter.NewRevisionWithOwner(cos.Name, cos.Spec.Revision,
-		[]boxcutter.Phase{boxcutter.NewPhase("deploy", []client.Object{obj})},
-		owner, ownerhandling.NewNative(scheme),
-	)
-	result, err := engine.Reconcile(ctx, revision)
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	require.Nil(t, result.GetValidationError(), "%v", result.GetValidationError())
-
-	actual := &corev1.ConfigMap{}
-	require.NoError(t, cl.Get(ctx, objectKey, actual))
-	require.Equal(t, "1", actual.Annotations["olm.operatorframework.io/revision"])
-	require.Equal(t, "olm.operatorframework.io", actual.Labels["app.kubernetes.io/managed-by"])
-
-	var applyManagers []string
-	for _, fields := range actual.ManagedFields {
+func applyFieldManagers(obj client.Object) []string {
+	var managers []string
+	for _, fields := range obj.GetManagedFields() {
 		if fields.Operation == metav1.ManagedFieldsOperationApply {
-			applyManagers = append(applyManagers, fields.Manager)
+			managers = append(managers, fields.Manager)
 		}
 	}
-	require.Contains(t, applyManagers, "cos-group/factory-test")
-
-	// A subsequent revision updates the same field using the same SSA manager.
-	cos.Name = "factory-test-2"
-	cos.Spec.Revision = 2
-	engine, err = factory.CreateRevisionEngine(ctx, cos)
-	require.NoError(t, err)
-	obj.Data["value"] = "revision-2"
-	objectMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	require.NoError(t, err)
-	desired := &unstructured.Unstructured{Object: objectMap}
-	revision = boxcutter.NewRevisionWithOwner(cos.Name, cos.Spec.Revision,
-		[]boxcutter.Phase{boxcutter.NewPhase("deploy", []client.Object{desired})},
-		owner, ownerhandling.NewNative(scheme),
-	)
-	require.Eventually(t, func() bool {
-		if _, err := engine.Reconcile(ctx, revision); err != nil {
-			return false
-		}
-		return cl.Get(ctx, objectKey, actual) == nil && actual.Data["value"] == "revision-2"
-	}, 5*time.Second, 10*time.Millisecond)
-	applyManagers = nil
-	for _, fields := range actual.ManagedFields {
-		if fields.Operation == metav1.ManagedFieldsOperationApply {
-			applyManagers = append(applyManagers, fields.Manager)
-		}
-	}
-	require.Equal(t, []string{"cos-group/factory-test"}, applyManagers)
-	require.Equal(t, "2", actual.Annotations["olm.operatorframework.io/revision"])
-
-	// Another group gets its own SSA manager.
-	cos.Name = "factory-other-1"
-	cos.Spec.Group = "factory-other"
-	cos.Spec.Revision = 1
-	engine, err = factory.CreateRevisionEngine(ctx, cos)
-	require.NoError(t, err)
-	other := desired.DeepCopy()
-	other.SetName("other-payload")
-	t.Cleanup(func() { require.NoError(t, client.IgnoreNotFound(cl.Delete(context.Background(), other))) })
-	revision = boxcutter.NewRevisionWithOwner(cos.Name, cos.Spec.Revision,
-		[]boxcutter.Phase{boxcutter.NewPhase("deploy", []client.Object{other})},
-		owner, ownerhandling.NewNative(scheme),
-	)
-	_, err = engine.Reconcile(ctx, revision)
-	require.NoError(t, err)
-	require.NoError(t, cl.Get(ctx, client.ObjectKeyFromObject(other), actual))
-	applyManagers = nil
-	for _, fields := range actual.ManagedFields {
-		if fields.Operation == metav1.ManagedFieldsOperationApply {
-			applyManagers = append(applyManagers, fields.Manager)
-		}
-	}
-	require.Equal(t, []string{"cos-group/factory-other"}, applyManagers)
+	return managers
 }
