@@ -19,6 +19,21 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: Ready
       type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].reason
+      name: Reason
+      type: string
+    - jsonPath: .status.objectCounts.total
+      name: '#Total'
+      type: integer
+    - jsonPath: .status.objectCounts.present
+      name: '#Present'
+      type: integer
+    - jsonPath: .status.objectCounts.synced
+      name: '#Synced'
+      type: integer
+    - jsonPath: .status.objectCounts.ready
+      name: '#Ready'
+      type: integer
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date

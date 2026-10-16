@@ -608,6 +608,11 @@ type ObjectCounts struct {
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=='Ready')].status`
+// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.conditions[?(@.type=='Ready')].reason`
+// +kubebuilder:printcolumn:name="#Total",type=integer,JSONPath=`.status.objectCounts.total`
+// +kubebuilder:printcolumn:name="#Present",type=integer,JSONPath=`.status.objectCounts.present`
+// +kubebuilder:printcolumn:name="#Synced",type=integer,JSONPath=`.status.objectCounts.synced`
+// +kubebuilder:printcolumn:name="#Ready",type=integer,JSONPath=`.status.objectCounts.ready`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterObjectSet represents an immutable snapshot of Kubernetes objects
