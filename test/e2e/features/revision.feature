@@ -1,10 +1,10 @@
-@BoxcutterRuntime
+@ObjectController
 Feature: Install ClusterObjectSet
 
   As an OLM user I would like to install a ClusterObjectSet directly, without using the cluster extension API.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   Scenario: Probe failure for PersistentVolumeClaim halts phase progression
     Given ServiceAccount "pvc-probe-sa" with needed permissions is available in test namespace

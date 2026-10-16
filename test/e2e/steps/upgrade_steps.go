@@ -29,9 +29,13 @@ var (
 		if err != nil {
 			return err
 		}
-		olm, _, err := detectOLMDeployments()
+		deployments, err := detectOLMDeployments()
 		if err != nil {
 			return err
+		}
+		olm := deployments[operatorControllerComponent]
+		if olm == nil {
+			return fmt.Errorf("operator-controller deployment not found after installation")
 		}
 		olmNamespace = olm.Namespace
 		return nil
@@ -124,8 +128,8 @@ func ComponentIsReadyToReconcile(ctx context.Context, component string) error {
 
 // resourceTypeToComponent maps resource type names to their controller component labels.
 var resourceTypeToComponent = map[string]string{
-	"ClusterCatalog":   "catalogd",
-	"ClusterExtension": "operator-controller",
+	"ClusterCatalog":   catalogdComponent,
+	"ClusterExtension": operatorControllerComponent,
 }
 
 // reconcileEndingCheck returns a function that checks whether the leader pod's logs
@@ -150,7 +154,7 @@ func reconcileEndingCheck(ctx context.Context, namespace, leaderPod, resourceNam
 func ClusterExtensionIsReconciled(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 
-	component := "operator-controller"
+	component := operatorControllerComponent
 	resourceName := sc.clusterExtensionName
 	if resourceName == "" {
 		return fmt.Errorf("no ClusterExtension found in scenario context")
@@ -246,7 +250,7 @@ func ScenarioCatalogIsReconciled(ctx context.Context, catalogUserName string) er
 		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
 	}
 
-	component := "catalogd"
+	component := catalogdComponent
 	if err := ComponentIsReadyToReconcile(ctx, component); err != nil {
 		return err
 	}

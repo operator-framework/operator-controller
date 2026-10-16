@@ -17,6 +17,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/component-base/featuregate"
 	"k8s.io/klog/v2/textlogger"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,6 +45,7 @@ type deploymentRestore struct {
 type scenarioContext struct {
 	id                   string
 	featureName          string
+	tags                 sets.Set[string]
 	scenarioName         string
 	namespace            string
 	clusterExtensionName string
@@ -87,14 +89,16 @@ const (
 )
 
 var (
-	devMode      = false
-	featureGates = map[featuregate.Feature]bool{
+	devMode              = false
+	objectControllerOnly bool
+	featureGates         = map[featuregate.Feature]bool{
 		features.WebhookProviderCertManager:        true,
 		features.SingleOwnNamespaceInstallSupport:  false,
 		features.WebhookProviderOpenshiftServiceCA: false,
 		features.BoxcutterRuntime:                  false,
 		features.DeploymentConfig:                  false,
 		catalogdHAFeature:                          false,
+		objectControllerFeature:                    false,
 	}
 	logger logr.Logger
 )
@@ -102,6 +106,7 @@ var (
 func init() {
 	flagSet := pflag.CommandLine
 	flagSet.BoolVar(&devMode, "log.debug", false, "print debug log level")
+	flagSet.BoolVar(&objectControllerOnly, "e2e.object-controller-only", false, "require object-controller with no ClusterExtension or ClusterCatalog APIs for direct ClusterObjectSet scenarios")
 }
 
 func RegisterHooks(sc *godog.ScenarioContext) {
@@ -112,33 +117,30 @@ func RegisterHooks(sc *godog.ScenarioContext) {
 	sc.After(ScenarioCleanup)
 }
 
-// detectOLMDeployments returns the operator-controller deployment (first) and the catalogd
-// deployment (second) found via the app.kubernetes.io/part-of=olm label across all namespaces.
-// The catalogd return value may be nil when OLM is not yet installed (upgrade scenarios
-// install it in a Background step).
-func detectOLMDeployments() (*appsv1.Deployment, *appsv1.Deployment, error) {
+// detectOLMDeployments finds installed components across namespaces. Missing
+// components are valid for standalone installations and upgrade scenarios.
+func detectOLMDeployments() (map[string]*appsv1.Deployment, error) {
 	raw, err := k8sClient(context.Background(), "get", "deployments", "-A", "-l", "app.kubernetes.io/part-of=olm", "-o", "jsonpath={.items}")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	dl := []appsv1.Deployment{}
 	if err := json.Unmarshal([]byte(raw), &dl); err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal OLM deployments: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal OLM deployments: %v", err)
 	}
 
-	var operatorController, catalogd *appsv1.Deployment
+	deployments := map[string]*appsv1.Deployment{}
 	for i := range dl {
 		switch dl[i].Name {
 		case olmDeploymentName:
-			operatorController = &dl[i]
+			deployments[operatorControllerComponent] = &dl[i]
 		case catalogdDeploymentName:
-			catalogd = &dl[i]
+			deployments[catalogdComponent] = &dl[i]
+		case objectControllerDeploymentName:
+			deployments[objectControllerComponent] = &dl[i]
 		}
 	}
-	if operatorController == nil {
-		return nil, nil, fmt.Errorf("failed to detect OLM Deployment")
-	}
-	return operatorController, catalogd, nil
+	return deployments, nil
 }
 
 func BeforeSuite() {
@@ -156,20 +158,36 @@ func BeforeSuite() {
 		featureGates[catalogdHAFeature] = true
 	}
 
-	olm, catalogdDep, err := detectOLMDeployments()
+	deployments, err := detectOLMDeployments()
 	if err != nil {
 		logger.Info("OLM deployments not found; skipping feature gate detection (upgrade scenarios will install OLM in Background)")
 		return
 	}
+	configureControllerFeatures(deployments)
+}
+
+func configureControllerFeatures(deployments map[string]*appsv1.Deployment) {
+	objectController := deployments[objectControllerComponent]
+	featureGates[objectControllerFeature] = objectController != nil
+	if objectController != nil {
+		componentNamespaces[objectControllerComponent] = objectController.Namespace
+	} else {
+		delete(componentNamespaces, objectControllerComponent)
+	}
+	olm, catalogdDep := deployments[operatorControllerComponent], deployments[catalogdComponent]
+	if olm == nil {
+		logger.Info("operator-controller is absent; using independently detected components")
+		return
+	}
 	olmNamespace = olm.Namespace
-	componentNamespaces["operator-controller"] = olmNamespace
+	componentNamespaces[operatorControllerComponent] = olmNamespace
 
 	// Catalogd may be in a different namespace than operator-controller.
 	catalogdNS := olmNamespace
 	if catalogdDep != nil {
 		catalogdNS = catalogdDep.Namespace
 	}
-	componentNamespaces["catalogd"] = catalogdNS
+	componentNamespaces[catalogdComponent] = catalogdNS
 
 	// Refine CatalogdHA based on actual catalogd replica count now that catalogdNS is
 	// known.  The node-count check above can fire on any multi-node cluster even when
@@ -203,6 +221,11 @@ func BeforeSuite() {
 func CheckFeatureTags(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	for _, tag := range sc.Tags {
 		if enabled, found := featureGates[featuregate.Feature(tag.Name[1:])]; found && !enabled {
+			// An explicitly requested standalone suite, or an integrated Boxcutter
+			// installation, must fail readiness if its controller is missing.
+			if tag.Name == "@"+string(objectControllerFeature) && (objectControllerOnly || featureGates[features.BoxcutterRuntime]) {
+				continue
+			}
 			logger.Info(fmt.Sprintf("Skipping scenario %q because feature gate %q is disabled", sc.Name, tag.Name[1:]))
 			return ctx, godog.ErrSkip
 		}
@@ -214,6 +237,7 @@ func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Con
 	scCtx := &scenarioContext{
 		id:                   sc.Id,
 		featureName:          strings.TrimSuffix(filepath.Base(sc.Uri), filepath.Ext(sc.Uri)),
+		tags:                 sets.New[string](),
 		scenarioName:         sc.Name,
 		namespace:            fmt.Sprintf("ns-%s", sc.Id),
 		clusterExtensionName: fmt.Sprintf("ce-%s", sc.Id),
@@ -222,6 +246,9 @@ func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Con
 		catalogPackageNames:  make(map[string]string),
 		metricsResponse:      make(map[string]string),
 		leaderPods:           make(map[string]string),
+	}
+	for _, tag := range sc.Tags {
+		scCtx.tags.Insert(tag.Name)
 	}
 	return context.WithValue(ctx, scenarioContextKey, scCtx), nil
 }
