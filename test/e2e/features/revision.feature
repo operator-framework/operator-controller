@@ -723,6 +723,7 @@ Feature: Install ClusterObjectSet
       metadata:
         name: ${COS_NAME}
       spec:
+        group: ${NAME}
         lifecycleState: Active
         collisionProtection: Prevent
         progressionProbes:
