@@ -350,6 +350,9 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - name
+    - name: resolvedContentHash
+      type:
+        scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.CollisionProtection
   scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.ConditionEqualProbe

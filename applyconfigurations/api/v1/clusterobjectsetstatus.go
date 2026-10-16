@@ -51,6 +51,11 @@ type ClusterObjectSetStatusApplyConfiguration struct {
 	//
 	// Rollout completion is recorded separately by status.completedAt.
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	// resolvedContentHash is a SHA-256 hash of all resolved phase object
+	// content (inline objects and objectRef-resolved objects, in phase order).
+	// Set once on the first successful resolution and never changed. Used to
+	// detect content substitution.
+	ResolvedContentHash *string `json:"resolvedContentHash,omitempty"`
 	// objectCounts reports aggregate object counts across all phases.
 	// Values are sums of the per-phase counts in observedPhases.
 	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
@@ -82,6 +87,14 @@ func (b *ClusterObjectSetStatusApplyConfiguration) WithConditions(values ...*met
 		}
 		b.Conditions = append(b.Conditions, *values[i])
 	}
+	return b
+}
+
+// WithResolvedContentHash sets the ResolvedContentHash field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ResolvedContentHash field is set to the value of the last call.
+func (b *ClusterObjectSetStatusApplyConfiguration) WithResolvedContentHash(value string) *ClusterObjectSetStatusApplyConfiguration {
+	b.ResolvedContentHash = &value
 	return b
 }
 
