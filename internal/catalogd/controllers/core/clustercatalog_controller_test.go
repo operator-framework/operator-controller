@@ -16,6 +16,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -38,6 +39,14 @@ func newMockStore(ctrl *gomock.Controller, shouldError bool) *mockstorage.MockIn
 	m.EXPECT().BaseURL(gomock.Any()).Return("URL").AnyTimes()
 	m.EXPECT().ContentExists(gomock.Any()).Return(true).AnyTimes()
 	return m
+}
+
+type fakeEventRecorder struct {
+	events chan string
+}
+
+func (f *fakeEventRecorder) Eventf(_ runtime.Object, _ runtime.Object, _ string, reason, action, note string, args ...interface{}) {
+	f.events <- fmt.Sprintf("%s:%s:%s", reason, action, fmt.Sprintf(note, args...))
 }
 
 func TestCatalogdControllerReconcile(t *testing.T) {
@@ -1139,4 +1148,43 @@ func mustRef(t *testing.T, ref string) reference.Canonical {
 		t.Fatal(err)
 	}
 	return p.(reference.Canonical)
+}
+
+func TestReconcileCatalogRollbackKeepsServingCatalog(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	acceptedRef := mustRef(t, "my.org/catalog@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+	catalog := &ocv1.ClusterCatalog{
+		ObjectMeta: metav1.ObjectMeta{Name: "catalog", Finalizers: []string{fbcDeletionFinalizer}},
+		Spec: ocv1.ClusterCatalogSpec{
+			Source:           ocv1.CatalogSource{Type: ocv1.SourceTypeImage, Image: &ocv1.ImageSource{Ref: "my.org/catalog:latest", PollIntervalMinutes: ptr.To(5)}},
+			AvailabilityMode: ocv1.AvailabilityModeAvailable,
+		},
+		Status: ocv1.ClusterCatalogStatus{
+			Conditions: []metav1.Condition{
+				{Type: ocv1.TypeServing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonAvailable},
+				{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonSucceeded},
+			},
+			ResolvedSource: &ocv1.ResolvedCatalogSource{Type: ocv1.SourceTypeImage, Image: &ocv1.ResolvedImageSource{Ref: acceptedRef.String()}},
+			URLs:           &ocv1.ClusterCatalogURLs{Base: "URL"},
+			LastUnpacked:   ptr.To(metav1.Now()),
+		},
+	}
+	originalStatus := catalog.Status.DeepCopy()
+	events := &fakeEventRecorder{events: make(chan string, 1)}
+	reconciler := &ClusterCatalogReconciler{
+		ImagePuller: &imageutil.FakePuller{Error: &imageutil.CatalogRollbackError{
+			CandidateDigest: "sha256:candidate", CandidateCreated: time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC),
+			AcceptedDigest: "sha256:accepted", AcceptedCreated: time.Date(2026, time.January, 2, 0, 0, 0, 0, time.UTC),
+		}},
+		ImageCache:     &imageutil.FakeCache{},
+		Storage:        newMockStore(mockCtrl, false),
+		EventRecorder:  events,
+		storedCatalogs: map[string]storedCatalogData{catalog.Name: {ref: acceptedRef, lastUnpack: catalog.Status.LastUnpacked.Time, lastSuccessfulPoll: time.Now().Add(-6 * time.Minute)}},
+	}
+	require.NoError(t, reconciler.setupFinalizers())
+	result, err := reconciler.reconcile(context.Background(), catalog)
+	require.NoError(t, err)
+	assert.Positive(t, result.RequeueAfter)
+	assert.Equal(t, *originalStatus, catalog.Status)
+	assert.Contains(t, <-events.events, "CatalogRollbackPrevented")
 }
