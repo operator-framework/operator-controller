@@ -152,7 +152,7 @@ func setProgressingFromReady(ext *ocv1.ClusterExtension, readyCond *metav1.Condi
 // Rationale:
 //   - Failed: Semantically indicates an error prevented installation
 //   - Absent: Semantically indicates "not there yet" (neutral state, e.g., during healthy rollout)
-//   - ObjectCollision (a foreign owner), PreconditionsNotMet (a pre-apply precondition not yet met),
+//   - ObjectCollision (a foreign owner), PreconditionsNotMet (a preflight precondition not yet met),
 //     or InvalidSpecification (an invalid revision spec) on Ready indicates an error
 //   - A transient error leaves the Ready condition unchanged (or absent), so it maps to Absent, not Failed
 //   - Other Ready reasons indicate healthy progress or terminal states handled elsewhere
@@ -168,7 +168,7 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
 	readyCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterObjectSetTypeReady)
 	// ObjectCollision (an object is owned by another revision/controller),
-	// PreconditionsNotMet (a pre-apply precondition not yet met), or InvalidSpecification
+	// PreconditionsNotMet (a preflight precondition not yet met), or InvalidSpecification
 	// (an invalid revision spec) on the Ready condition all indicate an error prevented installation.
 	if readyCond != nil && (readyCond.Reason == ocv1.ClusterObjectSetReasonObjectCollision ||
 		readyCond.Reason == ocv1.ClusterObjectSetReasonPreconditionsNotMet ||
@@ -280,7 +280,7 @@ func progressingFromReady(ready *metav1.Condition, completed bool) metav1.Condit
 		cond.Status = metav1.ConditionFalse
 		cond.Reason = ocv1.ReasonProgressDeadlineExceeded
 	case ocv1.ClusterObjectSetReasonObjectCollision, ocv1.ClusterObjectSetReasonPreconditionsNotMet:
-		// A foreign-owned object (ObjectCollision) or an unmet pre-apply precondition
+		// A foreign-owned object (ObjectCollision) or an unmet preflight precondition
 		// (PreconditionsNotMet) prevents the rollout from proceeding, but the revision keeps
 		// retrying and recovers once the obstruction clears.
 		cond.Reason = ocv1.ReasonRetrying

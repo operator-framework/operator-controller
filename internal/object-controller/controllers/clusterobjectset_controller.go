@@ -252,7 +252,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	// or a dependency CRD still propagating), and those inputs are not watched.
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
-		markAsNotReady(cos, ocv1.ClusterObjectSetReasonPreconditionsNotMet, fmt.Sprintf("A pre-apply check rejected the revision: %v.", verr))
+		markAsNotReady(cos, ocv1.ClusterObjectSetReasonPreconditionsNotMet, fmt.Sprintf("A preflight check rejected the revision: %v.", verr))
 		return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
 	}
 
@@ -275,7 +275,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 				continue
 			}
 			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", pres.GetName())
-			markAsNotReady(cos, ocv1.ClusterObjectSetReasonPreconditionsNotMet, fmt.Sprintf("A pre-apply check rejected phase %q: %v.", pres.GetName(), verr))
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonPreconditionsNotMet, fmt.Sprintf("A preflight check rejected phase %q: %v.", pres.GetName(), verr))
 			return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
 		}
 
