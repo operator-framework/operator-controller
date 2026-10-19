@@ -45,19 +45,17 @@ import (
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
-	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	clusterobjctrl "github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
@@ -419,6 +417,13 @@ func run() error {
 	}
 
 	cl := mgr.GetClient()
+	// TODO(COD): Remove this registration when COD replaces this manager's
+	// direct ClusterExtension-to-COS queries.
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		if err := clusterobjctrl.SetupIndexes(context.Background(), mgr.GetFieldIndexer()); err != nil {
+			return fmt.Errorf("setting up ClusterObjectSet indexes: %w", err)
+		}
+	}
 
 	catalogsCachePath := filepath.Join(cfg.cachePath, "catalogs")
 	if err := os.MkdirAll(catalogsCachePath, 0700); err != nil {
@@ -457,10 +462,7 @@ func run() error {
 	}
 
 	var trackingCache managedcache.TrackingCache
-	var ctrlBuilderOpts []controllers.ControllerBuilderOption
-	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterObjectSet{}))
-	} else {
+	if !features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		trackingCache, err = managedcache.NewTrackingCache(
 			ctrl.Log.WithName("trackingCache"),
 			mgr.GetConfig(),
@@ -469,24 +471,16 @@ func run() error {
 		if err != nil {
 			return fmt.Errorf("unable to create tracking cache: %w", err)
 		}
-		if err := mgr.Add(trackingCache); err != nil {
-			return fmt.Errorf("unable to add tracking cache to manager: %w", err)
-		}
-		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithWatchesRawSource(
-			trackingCache.Source(
-				crhandler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtension{}),
-				predicate.ResourceVersionChangedPredicate{},
-				predicate.Funcs{
-					CreateFunc: func(event.TypedCreateEvent[client.Object]) bool { return false },
-				},
-			),
-		))
 	}
 
 	ceReconciler := &controllers.ClusterExtensionReconciler{
 		Client: cl,
 	}
-	_, err = ceReconciler.SetupWithManager(mgr, ctrlBuilderOpts...)
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		_, err = ceReconciler.SetupWithManagerForBoxcutter(mgr)
+	} else {
+		_, err = ceReconciler.SetupWithManagerForHelm(mgr, trackingCache)
+	}
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		return err
