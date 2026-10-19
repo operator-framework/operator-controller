@@ -45,6 +45,7 @@ type ServiceAccountReferenceApplyConfiguration struct {
 	// - some-serviceaccount-
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
 	Name *string `json:"name,omitempty"`
 }
 

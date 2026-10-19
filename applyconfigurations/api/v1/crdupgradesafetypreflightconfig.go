@@ -35,6 +35,7 @@ type CRDUpgradeSafetyPreflightConfigApplyConfiguration struct {
 	// Use this option with caution as unintended consequences such as data loss can occur.
 	//
 	// When set to "Strict", the CRD Upgrade Safety pre-flight check runs during an upgrade operation.
+	//
 	Enforcement *apiv1.CRDUpgradeSafetyEnforcement `json:"enforcement,omitempty"`
 }
 

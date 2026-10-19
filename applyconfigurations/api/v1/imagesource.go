@@ -62,6 +62,7 @@ type ImageSourceApplyConfiguration struct {
 	//
 	// An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"
 	// An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest"
+	//
 	Ref *string `json:"ref,omitempty"`
 	// pollIntervalMinutes is an optional field that sets the interval, in minutes, at which the image source is polled for new content.
 	// You cannot specify pollIntervalMinutes when ref is a digest-based reference.

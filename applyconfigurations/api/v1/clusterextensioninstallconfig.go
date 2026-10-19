@@ -28,6 +28,7 @@ type ClusterExtensionInstallConfigApplyConfiguration struct {
 	//
 	// When specified, it replaces the default preflight configuration for install/upgrade actions.
 	// When not specified, the default configuration is used.
+	//
 	Preflight *PreflightConfigApplyConfiguration `json:"preflight,omitempty"`
 }
 

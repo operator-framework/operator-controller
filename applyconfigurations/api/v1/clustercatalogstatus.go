@@ -45,6 +45,7 @@ type ClusterCatalogStatusApplyConfiguration struct {
 	// If the system initially fetched contents and polling identifies updates, both conditions can be active simultaneously:
 	// - The Serving condition remains True with reason Available because the previous contents are still served via the HTTP(S) web server.
 	// - The Progressing condition is True with reason Retrying because the system is working to serve the new version.
+	//
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// resolvedSource contains information about the resolved source based on the source type.
 	ResolvedSource *ResolvedCatalogSourceApplyConfiguration `json:"resolvedSource,omitempty"`

@@ -49,8 +49,10 @@ type ClusterExtensionStatusApplyConfiguration struct {
 	// - ChannelDeprecated is True if any requested channel is marked deprecated, False if not deprecated, or Unknown if catalog data is unavailable.
 	// - PackageDeprecated is True if the requested package is marked deprecated, False if not deprecated, or Unknown if catalog data is unavailable.
 	// - Deprecated is a rollup condition that is True when any deprecation exists, False when none exist, or Unknown when catalog data is unavailable.
+	//
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// install is a representation of the current installation status for this ClusterExtension.
+	//
 	Install *ClusterExtensionInstallStatusApplyConfiguration `json:"install,omitempty"`
 	// activeRevisions holds a list of currently active (non-archived) ClusterObjectSets,
 	// including both installed and rolling out revisions.

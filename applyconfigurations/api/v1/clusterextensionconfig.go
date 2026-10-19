@@ -34,12 +34,14 @@ type ClusterExtensionConfigApplyConfiguration struct {
 	// The only allowed value is "Inline".
 	//
 	// When set to "Inline", the cluster extension configuration is defined inline within the ClusterExtension resource.
+	//
 	ConfigType *apiv1.ClusterExtensionConfigType `json:"configType,omitempty"`
 	// inline contains JSON or YAML values specified directly in the ClusterExtension.
 	//
 	// It is used to specify arbitrary configuration values for the ClusterExtension.
 	// It must be set if configType is 'Inline' and must be a valid JSON/YAML object containing at least one property.
 	// The configuration values are validated at runtime against a JSON schema provided by the bundle.
+	//
 	Inline *apiextensionsv1.JSON `json:"inline,omitempty"`
 }
 

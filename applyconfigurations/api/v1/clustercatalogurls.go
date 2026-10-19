@@ -33,6 +33,7 @@ type ClusterCatalogURLsApplyConfiguration struct {
 	// - /all - this endpoint returns the entire catalog contents in the FBC format
 	//
 	// New endpoints may be added as needs evolve.
+	//
 	Base *string `json:"base,omitempty"`
 }
 

@@ -55,6 +55,7 @@ type ClusterExtensionSpecApplyConfiguration struct {
 	// <opcon:experimental:validation:XValidation:rule="self == oldSelf",message="namespace is immutable">
 	// <opcon:experimental:validation:XValidation:rule="self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">
 	// <opcon:experimental:validation:Optional>
+	//
 	Namespace *string `json:"namespace,omitempty"`
 	// serviceAccount is a deprecated field and is completely ignored.
 	// OLMv1 is a single-tenant system where users with ClusterExtension write access are
@@ -62,6 +63,7 @@ type ClusterExtensionSpecApplyConfiguration struct {
 	// cluster-admin privileges and uses its own service account for all cluster interactions.
 	//
 	// Deprecated: serviceAccount is no longer used and will be removed in a future release.
+	//
 	ServiceAccount *ServiceAccountReferenceApplyConfiguration `json:"serviceAccount,omitempty"`
 	// source is required and selects the installation source of content for this ClusterExtension.
 	// Set the sourceType field to perform the selection.
@@ -75,9 +77,11 @@ type ClusterExtensionSpecApplyConfiguration struct {
 	// sourceType: Catalog
 	// catalog:
 	// packageName: example-package
+	//
 	Source *SourceConfigApplyConfiguration `json:"source,omitempty"`
 	// install is optional and configures installation options for the ClusterExtension,
 	// such as the pre-flight check configuration.
+	//
 	Install *ClusterExtensionInstallConfigApplyConfiguration `json:"install,omitempty"`
 	// config is optional and specifies bundle-specific configuration.
 	// Configuration is bundle-specific and a bundle may provide a configuration schema.

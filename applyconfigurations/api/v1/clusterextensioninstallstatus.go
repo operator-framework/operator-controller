@@ -27,6 +27,7 @@ type ClusterExtensionInstallStatusApplyConfiguration struct {
 	//
 	// A "bundle" is a versioned set of content that represents the resources that need to be applied
 	// to a cluster to install a package.
+	//
 	Bundle *BundleMetadataApplyConfiguration `json:"bundle,omitempty"`
 }
 

@@ -36,11 +36,13 @@ type ClusterObjectSetObjectApplyConfiguration struct {
 	// Exactly one of object or ref must be set.
 	//
 	// This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
+	//
 	Object *unstructured.Unstructured `json:"object,omitempty"`
 	// ref is an optional reference to a Secret that holds the serialized
 	// object manifest.
 	//
 	// Exactly one of object or ref must be set.
+	//
 	Ref *ObjectSourceRefApplyConfiguration `json:"ref,omitempty"`
 	// collisionProtection controls whether the operator can adopt and modify objects
 	// that already exist on the cluster.
@@ -60,6 +62,7 @@ type ClusterObjectSetObjectApplyConfiguration struct {
 	// the same resource, resulting in increased load on the API server and etcd.
 	//
 	// When omitted, the value is inherited from the phase, then spec.
+	//
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 

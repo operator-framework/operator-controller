@@ -26,9 +26,11 @@ type BundleMetadataApplyConfiguration struct {
 	// name is required and follows the DNS subdomain standard as defined in [RFC 1123].
 	// It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.),
 	// start and end with an alphanumeric character, and be no longer than 253 characters.
+	//
 	Name *string `json:"name,omitempty"`
 	// version is required and references the version that this bundle represents.
 	// It follows the semantic versioning standard as defined in https://semver.org/.
+	//
 	Version *string `json:"version,omitempty"`
 	// release is an optional field that identifies a specific release of this bundle's version.
 	// A release represents a re-publication of the same version, typically used to deliver

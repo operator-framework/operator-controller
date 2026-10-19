@@ -31,6 +31,7 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	// All revisions sharing the same group form an ordered sequence, regardless of owner references.
 	// The value must be 1 to 52 characters long, start with a lowercase letter,
 	// contain only lowercase letters, digits or hyphens, and end with a letter or digit.
+	//
 	Group *string `json:"group,omitempty"`
 	// lifecycleState specifies the lifecycle state of the ClusterObjectSet.
 	//
@@ -44,12 +45,14 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	// It is possible for more than one revision to be "Active" simultaneously. This will occur when
 	// moving from one revision to another. The old revision will not be set to "Archived" until the
 	// new revision has been completely rolled out.
+	//
 	LifecycleState *apiv1.ClusterObjectSetLifecycleState `json:"lifecycleState,omitempty"`
 	// revision is a required, immutable sequence number identifying a specific
 	// ClusterObjectSet within a sequence of related revisions.
 	//
 	// The revision field must be a positive integer.
 	// Each ClusterObjectSet in the same revision sequence must have a unique revision number.
+	//
 	Revision *int64 `json:"revision,omitempty"`
 	// phases is an optional, immutable list of phases that group objects to be applied together.
 	//
@@ -68,6 +71,7 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	// Once set, even if empty, the phases field is immutable.
 	//
 	// Each phase in the list must have a unique name. The maximum number of phases is 20.
+	//
 	Phases []ClusterObjectSetPhaseApplyConfiguration `json:"phases,omitempty"`
 	// progressDeadlineMinutes is an optional field that defines the maximum period
 	// of time in minutes after which an installation should be considered failed and
@@ -97,6 +101,7 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	// explicitly specify its own collisionProtection.
 	//
 	// The resolution order is: object > phase > spec
+	//
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 

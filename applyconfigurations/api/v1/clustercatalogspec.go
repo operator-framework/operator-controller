@@ -40,6 +40,7 @@ type ClusterCatalogSpecApplyConfiguration struct {
 	// type: Image
 	// image:
 	// ref: quay.io/operatorhubio/catalog:latest
+	//
 	Source *CatalogSourceApplyConfiguration `json:"source,omitempty"`
 	// priority is an optional field that defines a priority for this ClusterCatalog.
 	//
@@ -56,6 +57,7 @@ type ClusterCatalogSpecApplyConfiguration struct {
 	//
 	// The lowest possible value is -2147483648.
 	// The highest possible value is 2147483647.
+	//
 	Priority *int32 `json:"priority,omitempty"`
 	// availabilityMode is an optional field that defines how the ClusterCatalog is made available to clients on the cluster.
 	//
@@ -69,6 +71,7 @@ type ClusterCatalogSpecApplyConfiguration struct {
 	// When set to "Unavailable", the catalog contents are no longer served over the catalog content HTTP server.
 	// Treat this the same as if the ClusterCatalog does not exist.
 	// Use "Unavailable" when you want to keep the ClusterCatalog but treat it as if it doesn't exist.
+	//
 	AvailabilityMode *apiv1.AvailabilityMode `json:"availabilityMode,omitempty"`
 }
 

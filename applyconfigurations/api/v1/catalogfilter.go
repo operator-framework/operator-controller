@@ -48,6 +48,7 @@ type CatalogFilterApplyConfiguration struct {
 	// - some.package
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
 	PackageName *string `json:"packageName,omitempty"`
 	// version is an optional semver constraint (a specific version or range of versions).
 	// When unspecified, the latest version available is installed.
@@ -123,6 +124,7 @@ type CatalogFilterApplyConfiguration struct {
 	// - "^0 || ^3 || ^5"
 	//
 	// For more information on semver, please see https://semver.org/
+	//
 	Version *string `json:"version,omitempty"`
 	// channels is optional and specifies a set of channels belonging to the package
 	// specified in the packageName field.
@@ -161,10 +163,12 @@ type CatalogFilterApplyConfiguration struct {
 	// - --default-channel
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
 	Channels []string `json:"channels,omitempty"`
 	// selector is optional and filters the set of ClusterCatalogs used in the bundle selection process.
 	//
 	// When unspecified, all ClusterCatalogs are used in the bundle selection process.
+	//
 	Selector *metav1.LabelSelectorApplyConfiguration `json:"selector,omitempty"`
 	// upgradeConstraintPolicy is optional and controls whether the upgrade paths defined in the catalog
 	// are enforced for the package referenced in the packageName field.
@@ -181,6 +185,7 @@ type CatalogFilterApplyConfiguration struct {
 	// Use this option only if you have independently verified the changes.
 	//
 	// When omitted, the default value is "CatalogProvided".
+	//
 	UpgradeConstraintPolicy *apiv1.UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 

@@ -25,13 +25,16 @@ package v1
 // serialized object manifest.
 type ObjectSourceRefApplyConfiguration struct {
 	// name is the name of the referenced Secret.
+	//
 	Name *string `json:"name,omitempty"`
 	// namespace is the namespace of the referenced Secret.
 	// When empty, defaults to the OLM system namespace during ref resolution.
+	//
 	Namespace *string `json:"namespace,omitempty"`
 	// key is the data key within the referenced Secret containing the
 	// object manifest content. The value at this key must be a
 	// JSON-serialized Kubernetes object manifest.
+	//
 	Key *string `json:"key,omitempty"`
 }
 

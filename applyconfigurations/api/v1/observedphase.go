@@ -24,9 +24,11 @@ package v1
 // ObservedPhase records the observed content digest of a resolved phase.
 type ObservedPhaseApplyConfiguration struct {
 	// name is the phase name matching a phase in spec.phases.
+	//
 	Name *string `json:"name,omitempty"`
 	// digest is the digest of the phase's resolved object content
 	// at first successful resolution, in the format "<algorithm>:<hex>".
+	//
 	Digest *string `json:"digest,omitempty"`
 	// objectCounts reports the number of objects in this phase by state.
 	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`

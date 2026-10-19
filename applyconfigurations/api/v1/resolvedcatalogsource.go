@@ -33,6 +33,7 @@ type ResolvedCatalogSourceApplyConfiguration struct {
 	// The only allowed value is "Image".
 	//
 	// When set to "Image", information about the resolved image source is set in the image field.
+	//
 	Type *apiv1.SourceType `json:"type,omitempty"`
 	// image contains resolution information for a catalog sourced from an image.
 	// It must be set when type is Image, and forbidden otherwise.

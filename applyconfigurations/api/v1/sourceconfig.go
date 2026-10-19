@@ -30,9 +30,11 @@ type SourceConfigApplyConfiguration struct {
 	// When set to "Catalog", information for determining the appropriate bundle of content to install
 	// is fetched from ClusterCatalog resources on the cluster.
 	// When using the Catalog sourceType, the catalog field must also be set.
+	//
 	SourceType *string `json:"sourceType,omitempty"`
 	// catalog configures how information is sourced from a catalog.
 	// It is required when sourceType is "Catalog", and forbidden otherwise.
+	//
 	Catalog *CatalogFilterApplyConfiguration `json:"catalog,omitempty"`
 }
 

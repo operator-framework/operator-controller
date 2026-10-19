@@ -34,6 +34,7 @@ type CatalogSourceApplyConfiguration struct {
 	//
 	// When set to "Image", the ClusterCatalog content is sourced from an OCI image.
 	// When using an image source, the image field must be set and must be the only field defined for this type.
+	//
 	Type *apiv1.SourceType `json:"type,omitempty"`
 	// image configures how catalog contents are sourced from an OCI image.
 	// It is required when type is Image, and forbidden otherwise.

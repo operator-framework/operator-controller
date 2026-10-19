@@ -37,6 +37,7 @@ type ClusterObjectSetPhaseApplyConfiguration struct {
 	// Common phase names include: namespaces, policies, rbac, crds, storage, deploy, publish.
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
 	Name *string `json:"name,omitempty"`
 	// objects is a required list of all Kubernetes objects that belong to this phase.
 	//
@@ -50,6 +51,7 @@ type ClusterObjectSetPhaseApplyConfiguration struct {
 	//
 	// When omitted, we use .spec.collistionProtection as the default for any object in this phase that does not
 	// explicitly specify its own collisionProtection.
+	//
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 

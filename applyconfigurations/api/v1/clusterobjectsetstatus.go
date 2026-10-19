@@ -51,6 +51,7 @@ type ClusterObjectSetStatusApplyConfiguration struct {
 	// - False with reason Archived: the revision has been archived and its objects have been torn down.
 	//
 	// Rollout completion is recorded separately by status.completedAt.
+	//
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// objectCounts reports aggregate object counts across all phases.
 	// Values are sums of the per-phase counts in observedPhases.
@@ -60,10 +61,12 @@ type ClusterObjectSetStatusApplyConfiguration struct {
 	// referenced object sources were deleted and recreated with
 	// different content. Each entry covers all fully-resolved object
 	// manifests within a phase, making it source-agnostic.
+	//
 	ObservedPhases []ObservedPhaseApplyConfiguration `json:"observedPhases,omitempty"`
 	// completedAt is the timestamp at which the revision was first observed to be
 	// ready, meaning it had successfully rolled out and all of its objects passed
 	// their probes. It is set once and is immutable thereafter.
+	//
 	CompletedAt *apismetav1.Time `json:"completedAt,omitempty"`
 }
 
