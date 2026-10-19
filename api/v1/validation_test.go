@@ -239,3 +239,37 @@ func TestClusterObjectSetCompletedAtCannotBeRemoved(t *testing.T) {
 	err := c.Status().Update(t.Context(), cos)
 	require.True(t, errors.IsInvalid(err), "expected removal to fail as invalid, but got: %v", err)
 }
+
+func TestClusterObjectSetDigestImmutable(t *testing.T) {
+	c := newClient(t)
+
+	cos := &ClusterObjectSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "cos-digest-immutable"},
+		Spec: ClusterObjectSetSpec{
+			Group:               "test-group",
+			Revision:            1,
+			CollisionProtection: CollisionProtectionPrevent,
+			LifecycleState:      ClusterObjectSetLifecycleStateActive,
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), cos))
+
+	// A phase digest may be set once, from empty.
+	cos.Status.ObservedPhases = []ObservedPhase{
+		{
+			Name:         "deploy",
+			Digest:       "sha256:abc123",
+			ObjectCounts: ObjectCounts{Total: 1},
+		},
+	}
+	require.NoError(t, c.Status().Update(t.Context(), cos))
+
+	// Re-applying the same digest must be allowed.
+	cos.Status.ObservedPhases[0].Digest = "sha256:abc123"
+	require.NoError(t, c.Status().Update(t.Context(), cos))
+
+	// Changing the digest once set must be rejected.
+	cos.Status.ObservedPhases[0].Digest = "sha256:def456"
+	err := c.Status().Update(t.Context(), cos)
+	require.True(t, errors.IsInvalid(err), "expected update to fail as invalid, but got: %v", err)
+}

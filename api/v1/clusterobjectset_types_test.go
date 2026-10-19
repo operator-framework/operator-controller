@@ -140,6 +140,29 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				cos.Spec.CollisionProtection = CollisionProtectionNone
 			},
 		},
+		"lifecycleState cannot be un-archived": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateArchived,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateActive
+			},
+		},
+		"lifecycleState can transition from active to archived": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateArchived
+			},
+			allowed: true,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			cos := &ClusterObjectSet{
@@ -168,6 +191,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 func TestClusterObjectSetValidity(t *testing.T) {
 	c := newClient(t)
 	ctx := context.Background()
+	i := 0
 	for name, tc := range map[string]struct {
 		spec  ClusterObjectSetSpec
 		valid bool
@@ -260,6 +284,40 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				Phases: []ClusterObjectSetPhase{
 					{
 						Name: "1-invalid",
+					},
+				},
+			},
+			valid: false,
+		},
+		"phases entry names cannot exceed 63 characters": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases: []ClusterObjectSetPhase{
+					{
+						Name:    strings.Repeat("a", 64),
+						Objects: []ClusterObjectSetObject{},
+					},
+				},
+			},
+			valid: false,
+		},
+		"phases entry names must be unique": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases: []ClusterObjectSetPhase{
+					{
+						Name:    "deploy",
+						Objects: []ClusterObjectSetObject{},
+					},
+					{
+						Name:    "deploy",
+						Objects: []ClusterObjectSetObject{},
 					},
 				},
 			},
@@ -374,6 +432,22 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			},
 			valid: true,
 		},
+		"object ref requires a name": {
+			spec:  refSpec(ObjectSourceRef{Key: "my-key"}),
+			valid: false,
+		},
+		"object ref requires a key": {
+			spec:  refSpec(ObjectSourceRef{Name: "my-secret"}),
+			valid: false,
+		},
+		"object ref name cannot exceed 253 characters": {
+			spec:  refSpec(ObjectSourceRef{Name: strings.Repeat("a", 254), Key: "my-key"}),
+			valid: false,
+		},
+		"object ref namespace cannot exceed 63 characters": {
+			spec:  refSpec(ObjectSourceRef{Name: "my-secret", Key: "my-key", Namespace: strings.Repeat("a", 64)}),
+			valid: false,
+		},
 		"object with both object and ref is invalid": {
 			spec: ClusterObjectSetSpec{
 				Group:               "validity-object-and-ref",
@@ -411,14 +485,163 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			},
 			valid: false,
 		},
+		"progressionProbe with GroupKind selector and ConditionEqual assertion is valid": {
+			spec: probeSpec(ProgressionProbe{
+				Selector:   validGroupKindSelector(),
+				Assertions: []Assertion{validConditionEqualAssertion()},
+			}),
+			valid: true,
+		},
+		"progressionProbe with Label selector and FieldValue assertion is valid": {
+			spec: probeSpec(ProgressionProbe{
+				Selector: ObjectSelector{
+					Type:  SelectorTypeLabel,
+					Label: metav1.LabelSelector{MatchLabels: map[string]string{"app": "test"}},
+				},
+				Assertions: []Assertion{
+					{
+						Type:       ProbeTypeFieldValue,
+						FieldValue: FieldValueProbe{FieldPath: "status.phase", Value: "Bound"},
+					},
+				},
+			}),
+			valid: true,
+		},
+		"progressionProbe rejects invalid selector type": {
+			spec: probeSpec(ProgressionProbe{
+				Selector:   ObjectSelector{Type: SelectorType("Invalid")},
+				Assertions: []Assertion{validConditionEqualAssertion()},
+			}),
+			valid: false,
+		},
+		"progressionProbe GroupKind selector requires groupKind": {
+			spec: probeSpec(ProgressionProbe{
+				Selector:   ObjectSelector{Type: SelectorTypeGroupKind},
+				Assertions: []Assertion{validConditionEqualAssertion()},
+			}),
+			valid: false,
+		},
+		"progressionProbe GroupKind selector forbids label": {
+			spec: probeSpec(ProgressionProbe{
+				Selector: ObjectSelector{
+					Type:      SelectorTypeGroupKind,
+					GroupKind: metav1.GroupKind{Kind: "ConfigMap"},
+					Label:     metav1.LabelSelector{MatchLabels: map[string]string{"app": "test"}},
+				},
+				Assertions: []Assertion{validConditionEqualAssertion()},
+			}),
+			valid: false,
+		},
+		"progressionProbe Label selector requires label": {
+			spec: probeSpec(ProgressionProbe{
+				Selector:   ObjectSelector{Type: SelectorTypeLabel},
+				Assertions: []Assertion{validConditionEqualAssertion()},
+			}),
+			valid: false,
+		},
+		"progressionProbe Label selector rejects both matchLabels and matchExpressions": {
+			spec: probeSpec(ProgressionProbe{
+				Selector: ObjectSelector{
+					Type: SelectorTypeLabel,
+					Label: metav1.LabelSelector{
+						MatchLabels: map[string]string{"app": "test"},
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{Key: "app", Operator: metav1.LabelSelectorOpExists},
+						},
+					},
+				},
+				Assertions: []Assertion{validConditionEqualAssertion()},
+			}),
+			valid: false,
+		},
+		"progressionProbe rejects invalid assertion type": {
+			spec: probeSpec(ProgressionProbe{
+				Selector:   validGroupKindSelector(),
+				Assertions: []Assertion{{Type: ProbeType("Invalid")}},
+			}),
+			valid: false,
+		},
+		"progressionProbe ConditionEqual assertion requires conditionEqual": {
+			spec: probeSpec(ProgressionProbe{
+				Selector:   validGroupKindSelector(),
+				Assertions: []Assertion{{Type: ProbeTypeConditionEqual}},
+			}),
+			valid: false,
+		},
+		"progressionProbe assertion forbids mismatched member": {
+			spec: probeSpec(ProgressionProbe{
+				Selector: validGroupKindSelector(),
+				Assertions: []Assertion{
+					{
+						Type:           ProbeTypeFieldValue,
+						FieldValue:     FieldValueProbe{FieldPath: "status.phase", Value: "Bound"},
+						ConditionEqual: ConditionEqualProbe{Type: "Ready", Status: "True"},
+					},
+				},
+			}),
+			valid: false,
+		},
+		"progressionProbe ConditionEqual status must be True or False": {
+			spec: probeSpec(ProgressionProbe{
+				Selector: validGroupKindSelector(),
+				Assertions: []Assertion{
+					{
+						Type:           ProbeTypeConditionEqual,
+						ConditionEqual: ConditionEqualProbe{Type: "Ready", Status: "Unknown"},
+					},
+				},
+			}),
+			valid: false,
+		},
+		"progressionProbe FieldValue rejects invalid field path": {
+			spec: probeSpec(ProgressionProbe{
+				Selector: validGroupKindSelector(),
+				Assertions: []Assertion{
+					{
+						Type:       ProbeTypeFieldValue,
+						FieldValue: FieldValueProbe{FieldPath: "status..phase", Value: "Bound"},
+					},
+				},
+			}),
+			valid: false,
+		},
+		"progressionProbe FieldsEqual rejects invalid field path": {
+			spec: probeSpec(ProgressionProbe{
+				Selector: validGroupKindSelector(),
+				Assertions: []Assertion{
+					{
+						Type:        ProbeTypeFieldsEqual,
+						FieldsEqual: FieldsEqualProbe{FieldA: "spec..replicas", FieldB: "status.readyReplicas"},
+					},
+				},
+			}),
+			valid: false,
+		},
+		"progressionProbe requires at least one assertion": {
+			spec: probeSpec(ProgressionProbe{
+				Selector: validGroupKindSelector(),
+			}),
+			valid: false,
+		},
+		"progressionProbes must have no more than 20 probes": {
+			spec: func() ClusterObjectSetSpec {
+				probes := make([]ProgressionProbe, 21)
+				for i := range probes {
+					probes[i] = validProbe()
+				}
+				return probeSpec(probes...)
+			}(),
+			valid: false,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			cos := &ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: fmt.Sprintf("%s-%d", tc.spec.Group, tc.spec.Revision),
+					Name: fmt.Sprintf("cos-validity-%d", i),
 				},
 				Spec: tc.spec,
 			}
+			i++
 			err := c.Create(ctx, cos)
 			if tc.valid && err != nil {
 				t.Fatal("expected create to succeed, but got:", err)
@@ -535,6 +758,61 @@ func TestClusterObjectSetGroupFieldSelector(t *testing.T) {
 			require.ElementsMatch(t, tc.want, names)
 		})
 	}
+}
+
+// probeSpec returns a minimal valid ClusterObjectSetSpec carrying the given progression probes,
+// so that each case only varies the probe under test.
+func probeSpec(probes ...ProgressionProbe) ClusterObjectSetSpec {
+	return ClusterObjectSetSpec{
+		Group:               "test-group",
+		LifecycleState:      ClusterObjectSetLifecycleStateActive,
+		Revision:            1,
+		CollisionProtection: CollisionProtectionPrevent,
+		ProgressionProbes:   probes,
+	}
+}
+
+// validProbe returns a well-formed progression probe, used to exercise list-level
+// constraints (e.g. MaxItems) without tripping any per-probe rule.
+func validProbe() ProgressionProbe {
+	return ProgressionProbe{
+		Selector:   validGroupKindSelector(),
+		Assertions: []Assertion{validConditionEqualAssertion()},
+	}
+}
+
+// refSpec returns a minimal valid ClusterObjectSetSpec whose single phase object is sourced
+// from the given ref, so that each ObjectSourceRef case only varies the ref under test.
+func refSpec(ref ObjectSourceRef) ClusterObjectSetSpec {
+	return ClusterObjectSetSpec{
+		Group:               "test-group",
+		LifecycleState:      ClusterObjectSetLifecycleStateActive,
+		Revision:            1,
+		CollisionProtection: CollisionProtectionPrevent,
+		Phases: []ClusterObjectSetPhase{
+			{
+				Name:    "deploy",
+				Objects: []ClusterObjectSetObject{{Ref: ref}},
+			},
+		},
+	}
+}
+
+// validGroupKindSelector is a well-formed GroupKind selector, used when a case exercises the
+// assertion union and needs the selector to be valid.
+func validGroupKindSelector() ObjectSelector {
+	return ObjectSelector{
+		Type:      SelectorTypeGroupKind,
+		GroupKind: metav1.GroupKind{Kind: "ConfigMap"},
+	}
+}
+
+// validConditionEqualAssertion is a well-formed assertion, used when a case exercises the
+// selector union and needs the assertion to be valid.
+func validConditionEqualAssertion() Assertion {
+	return Assertion{
+		Type:           ProbeTypeConditionEqual,
+		ConditionEqual: ConditionEqualProbe{Type: "Ready", Status: "True"}}
 }
 
 func configMap() unstructured.Unstructured {
