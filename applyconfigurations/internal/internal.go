@@ -249,6 +249,67 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: install
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.ClusterExtensionInstallStatus
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeployment
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentSpec
+    - name: status
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentStatus
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentSpec
+  map:
+    fields:
+    - name: template
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplate
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplate
+  map:
+    fields:
+    - name: spec
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplateSpec
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplateSpec
+  map:
+    fields:
+    - name: collisionProtection
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.CollisionProtection
+    - name: phases
+      type:
+        list:
+          elementType:
+            namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSetPhase
+          elementRelationship: associative
+          keys:
+          - name
+    - name: progressionProbes
+      type:
+        list:
+          elementType:
+            namedType: com.github.operator-framework.operator-controller.api.v1.ProgressionProbe
+          elementRelationship: atomic
 - name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSet
   map:
     fields:

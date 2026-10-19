@@ -1,5 +1,5 @@
 processor:
-  ignoreTypes: [ClusterObjectSet, ClusterObjectSetList, ObservedPhase]
+  ignoreTypes: ['\.ClusterObjectSet(List|Spec|Status)?$', '\.ObservedPhase$']
   ignoreFields: []
 
 render:

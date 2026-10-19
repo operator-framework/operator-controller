@@ -13,6 +13,8 @@ Package v1 contains API Schema definitions for the olm v1 API group
 - [ClusterCatalogList](#clustercataloglist)
 - [ClusterExtension](#clusterextension)
 - [ClusterExtensionList](#clusterextensionlist)
+- [ClusterObjectDeployment](#clusterobjectdeployment)
+- [ClusterObjectDeploymentList](#clusterobjectdeploymentlist)
 
 
 
@@ -384,6 +386,176 @@ _Appears in:_
 | `activeRevisions` _[RevisionStatus](#revisionstatus) array_ | activeRevisions holds a list of currently active (non-archived) ClusterObjectSets,<br />including both installed and rolling out revisions.<br />**Experimental channel:**  |  | Optional: \{\} <br /> |
 
 
+#### ClusterObjectDeployment
+
+
+
+ClusterObjectDeployment manages mutable desired content through immutable
+ClusterObjectSet revisions. It is an experimental, cluster-scoped API.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentList](#clusterobjectdeploymentlist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `olm.operatorframework.io/v1` | | |
+| `kind` _string_ | `ClusterObjectDeployment` | | |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `spec` _[ClusterObjectDeploymentSpec](#clusterobjectdeploymentspec)_ | spec defines the desired deployment template. |  | Required: \{\} <br /> |
+| `status` _[ClusterObjectDeploymentStatus](#clusterobjectdeploymentstatus)_ | status defines the observed state and is written through the status subresource. |  | Optional: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentList
+
+
+
+ClusterObjectDeploymentList contains ClusterObjectDeployment objects.
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `olm.operatorframework.io/v1` | | |
+| `kind` _string_ | `ClusterObjectDeploymentList` | | |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `items` _[ClusterObjectDeployment](#clusterobjectdeployment) array_ | items is the list of deployments. |  | Required: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentSpec
+
+
+
+ClusterObjectDeploymentSpec defines the mutable desired state of a deployment.
+
+
+
+_Appears in:_
+- [ClusterObjectDeployment](#clusterobjectdeployment)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `template` _[ClusterObjectDeploymentTemplate](#clusterobjectdeploymenttemplate)_ | template is the desired content of newly created ClusterObjectSets.<br />Changes to template create a new revision; existing revisions remain immutable. |  | Required: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentStatus
+
+
+
+ClusterObjectDeploymentStatus reports rollout progress.
+
+
+
+_Appears in:_
+- [ClusterObjectDeployment](#clusterobjectdeployment)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions describes rollout progress for the observed generation.<br />Progressing is True with reason NewClusterObjectSetProgressing while the desired<br />rollout is incomplete, or False with reason NewClusterObjectSetProgressed after<br />completion. Completion remains recorded even if the completed revision later<br />becomes unhealthy. |  | Optional: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentTemplate
+
+
+
+ClusterObjectDeploymentTemplate describes the caller-controlled part of a revision.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentSpec](#clusterobjectdeploymentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `spec` _[ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)_ | spec contains the desired revision content. Group, revision, lifecycle state,<br />and ownership are assigned by the controller and cannot be set here. |  | Required: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentTemplateSpec
+
+
+
+ClusterObjectDeploymentTemplateSpec contains mutable ClusterObjectSet content.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplate](#clusterobjectdeploymenttemplate)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `phases` _[ClusterObjectSetPhase](#clusterobjectsetphase) array_ | phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains<br />at most 50 objects using the existing inline object or immutable Secret reference<br />representation. Phase, object, and probe order participate in template identity. |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
+| `progressionProbes` _[ProgressionProbe](#progressionprobe) array_ | progressionProbes supplies custom readiness probes for objects in every phase.<br />The existing ClusterObjectSet selector and assertion semantics apply. |  | MaxItems: 20 <br />MinItems: 1 <br />Optional: \{\} <br /> |
+| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is the default strategy for objects in the revision.<br />Objects and phases may override it. When omitted the controller uses Prevent<br />in the generated ClusterObjectSet. Omission remains distinct from explicit<br />Prevent for template identity; admission does not default this field. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
+
+
+
+
+#### ClusterObjectSetObject
+
+
+
+ClusterObjectSetObject represents a Kubernetes object to be applied as part
+of a phase, along with its collision protection settings.
+
+Exactly one of object or ref must be set.
+
+_Validation:_
+- ExactlyOneOf: [object ref]
+
+_Appears in:_
+- [ClusterObjectSetPhase](#clusterobjectsetphase)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `object` _[Unstructured](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#unstructured-unstructured-v1)_ | object is an optional embedded Kubernetes object to be applied.<br />Exactly one of object or ref must be set.<br />This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields. |  | EmbeddedResource: \{\} <br />Optional: \{\} <br /> |
+| `ref` _[ObjectSourceRef](#objectsourceref)_ | ref is an optional reference to a Secret that holds the serialized<br />object manifest.<br />Exactly one of object or ref must be set. |  | Optional: \{\} <br /> |
+| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection controls whether the operator can adopt and modify objects<br />that already exist on the cluster.<br />Allowed values are: "Prevent", "IfNoController", and "None".<br />When set to "Prevent", the operator only manages objects it created itself.<br />This prevents ownership collisions.<br />When set to "IfNoController", the operator can adopt and modify pre-existing objects<br />that are not owned by another controller.<br />This is useful for taking over management of manually-created resources.<br />When set to "None", the operator can adopt and modify any pre-existing object, even if<br />owned by another controller.<br />Use this setting with extreme caution as it may cause multiple controllers to fight over<br />the same resource, resulting in increased load on the API server and etcd.<br />When omitted, the value is inherited from the phase, then spec. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
+
+
+#### ClusterObjectSetPhase
+
+
+
+ClusterObjectSetPhase represents a group of objects that are applied together. The phase is considered
+complete only after all objects pass their status probes.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | name is a required identifier for this phase.<br />phase names must follow the DNS label standard as defined in [RFC 1123].<br />They must contain only lowercase alphanumeric characters or hyphens (-),<br />start and end with an alphanumeric character, and be no longer than 63 characters.<br />Common phase names include: namespaces, policies, rbac, crds, storage, deploy, publish.<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `objects` _[ClusterObjectSetObject](#clusterobjectsetobject) array_ | objects is a required list of all Kubernetes objects that belong to this phase.<br />All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50. |  | ExactlyOneOf: [object ref] <br />MaxItems: 50 <br />Required: \{\} <br /> |
+| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection specifies the default collision protection strategy for all objects<br />in this phase. Individual objects can override this value.<br />When set, this value is used as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection.<br />When omitted, we use .spec.collistionProtection as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
+
+
+#### CollisionProtection
+
+_Underlying type:_ _string_
+
+CollisionProtection specifies if and how ownership collisions are prevented.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+- [ClusterObjectSetObject](#clusterobjectsetobject)
+- [ClusterObjectSetPhase](#clusterobjectsetphase)
+
+| Field | Description |
+| --- | --- |
+| `Prevent` | CollisionProtectionPrevent prevents owner collisions entirely<br />by only allowing to work with objects itself has created.<br /> |
+| `IfNoController` | CollisionProtectionIfNoController allows to patch and override<br />objects already present if they are not owned by another controller.<br /> |
+| `None` | CollisionProtectionNone allows to patch and override objects<br />already present and owned by other controllers.<br />Be careful! This setting may cause multiple controllers to fight over a resource,<br />causing load on the API server and etcd.<br /> |
 
 
 #### ConditionEqualProbe
@@ -477,6 +649,23 @@ _Appears in:_
 | `label` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#labelselector-v1-meta)_ | label is the label selector definition.<br />Required when type is "Label".<br />A probe using a Label selector will be executed against every object matching the labels or expressions; you must use care<br />when using this type of selector. For example, if multiple Kind objects are selected via labels then the probe is<br />likely to fail because the values of different Kind objects rarely share the same schema.<br />The LabelSelector field uses the following Kubernetes format:<br />https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector<br />Requires exactly one of matchLabels or matchExpressions.<br />**Experimental channel:**  |  | Optional: \{\} <br /> |
 
 
+#### ObjectSourceRef
+
+
+
+ObjectSourceRef references content within a Secret that contains a
+serialized object manifest.
+
+
+
+_Appears in:_
+- [ClusterObjectSetObject](#clusterobjectsetobject)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | name is the name of the referenced Secret. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `namespace` _string_ | namespace is the namespace of the referenced Secret.<br />When empty, defaults to the OLM system namespace during ref resolution. |  | MaxLength: 63 <br />Optional: \{\} <br /> |
+| `key` _string_ | key is the data key within the referenced Secret containing the<br />object manifest content. The value at this key must be a<br />JSON-serialized Kubernetes object manifest. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
 
 
 #### PreflightConfig
@@ -513,6 +702,21 @@ _Appears in:_
 | `FieldValue` |  |
 
 
+#### ProgressionProbe
+
+
+
+ProgressionProbe provides a custom probe definition, consisting of an object selection method and assertions.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `selector` _[ObjectSelector](#objectselector)_ | selector is a required field which defines the method by which we select objects to apply the below<br />assertions to. Any object which matches the defined selector will have all the associated assertions<br />applied against it.<br />If no objects within a phase are selected by the provided selector, then all assertions defined here<br />are considered to have succeeded.<br />**Experimental channel:**  |  | Required: \{\} <br /> |
+| `assertions` _[Assertion](#assertion) array_ | assertions is a required list of checks which will run against the objects selected by the selector. If<br />one or more assertions fail then the phase within which the object lives will be not be considered<br />'Ready', blocking rollout of all subsequent phases.<br />**Experimental channel:**  |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
 
 
 #### ResolvedCatalogSource

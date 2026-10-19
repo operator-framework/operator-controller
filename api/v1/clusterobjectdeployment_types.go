@@ -1,0 +1,143 @@
+/*
+Copyright 2026.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+)
+
+const (
+	ClusterObjectDeploymentKind = "ClusterObjectDeployment"
+
+	// Condition types.
+	ClusterObjectDeploymentTypeProgressing = "Progressing"
+
+	// Condition reasons.
+	ClusterObjectDeploymentReasonNewClusterObjectSetProgressed  = "NewClusterObjectSetProgressed"
+	ClusterObjectDeploymentReasonNewClusterObjectSetProgressing = "NewClusterObjectSetProgressing"
+)
+
+// ClusterObjectDeploymentSpec defines the mutable desired state of a deployment.
+type ClusterObjectDeploymentSpec struct {
+	// template is the desired content of newly created ClusterObjectSets.
+	// Changes to template create a new revision; existing revisions remain immutable.
+	// +required
+	Template ClusterObjectDeploymentTemplate `json:"template,omitzero"`
+}
+
+// ClusterObjectDeploymentTemplate describes the caller-controlled part of a revision.
+type ClusterObjectDeploymentTemplate struct {
+	// spec contains the desired revision content. Group, revision, lifecycle state,
+	// and ownership are assigned by the controller and cannot be set here.
+	// +required
+	Spec ClusterObjectDeploymentTemplateSpec `json:"spec,omitzero"`
+}
+
+// ClusterObjectDeploymentTemplateSpec contains mutable ClusterObjectSet content.
+type ClusterObjectDeploymentTemplateSpec struct {
+	// phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains
+	// at most 50 objects using the existing inline object or immutable Secret reference
+	// representation. Phase, object, and probe order participate in template identity.
+	// +required
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=20
+	// +listType=map
+	// +listMapKey=name
+	Phases []ClusterObjectSetPhase `json:"phases"` //nolint:kubeapilinter // These are ordered groups of objects, not an enum describing lifecycle state.
+
+	// progressionProbes supplies custom readiness probes for objects in every phase.
+	// The existing ClusterObjectSet selector and assertion semantics apply.
+	// +optional
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=20
+	// +listType=atomic
+	ProgressionProbes []ProgressionProbe `json:"progressionProbes,omitempty"`
+
+	// collisionProtection is the default strategy for objects in the revision.
+	// Objects and phases may override it. When omitted the controller uses Prevent
+	// in the generated ClusterObjectSet. Omission remains distinct from explicit
+	// Prevent for template identity; admission does not default this field.
+	// +optional
+	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
+	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
+}
+
+// ClusterObjectDeploymentStatus reports rollout progress.
+type ClusterObjectDeploymentStatus struct {
+	// conditions describes rollout progress for the observed generation.
+	// Progressing is True with reason NewClusterObjectSetProgressing while the desired
+	// rollout is incomplete, or False with reason NewClusterObjectSetProgressed after
+	// completion. Completion remains recorded even if the completed revision later
+	// becomes unhealthy.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +patchStrategy=merge
+	// +patchMergeKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"` //nolint:kubeapilinter // This CRD uses structural list-map validation, not protobuf serialization.
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster,shortName=cod
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name=Progressing,type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
+// +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:validation:XValidation:rule="size(self.metadata.name) <= 52 && self.metadata.name.matches('^[a-z]([a-z0-9-]*[a-z0-9])?$')",message="name must be 1 to 52 lowercase alphanumeric or hyphen characters, starting with a letter and ending with an alphanumeric character"
+
+// ClusterObjectDeployment manages mutable desired content through immutable
+// ClusterObjectSet revisions. It is an experimental, cluster-scoped API.
+type ClusterObjectDeployment struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata. Names are valid COS groups of at
+	// most 52 characters; generated child names also include an int64 revision suffix.
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// spec defines the desired deployment template.
+	// +required
+	Spec ClusterObjectDeploymentSpec `json:"spec,omitzero"`
+
+	// status defines the observed state and is written through the status subresource.
+	// +optional
+	Status ClusterObjectDeploymentStatus `json:"status,omitzero"` //nolint:kubeapilinter // OpenShift APIs use value structs with omitzero for optional status.
+}
+
+// +kubebuilder:object:root=true
+
+// ClusterObjectDeploymentList contains ClusterObjectDeployment objects.
+type ClusterObjectDeploymentList struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard list metadata.
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// items is the list of deployments.
+	// +required
+	Items []ClusterObjectDeployment `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(func(s *runtime.Scheme) error {
+		s.AddKnownTypes(GroupVersion, &ClusterObjectDeployment{}, &ClusterObjectDeploymentList{})
+		return nil
+	})
+}
