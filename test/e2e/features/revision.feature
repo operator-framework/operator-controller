@@ -580,6 +580,93 @@ Feature: Install ClusterObjectSet
     And ClusterObjectSet "${COS_NAME}" reconciliation is triggered
     Then ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
 
+  Scenario: ClusterObjectSet reports PreconditionsNotMet when a referenced Secret is missing the key
+    Given namespace "${TEST_NAMESPACE}" is available
+    And resource is applied
+      """
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ${COS_NAME}-missing-key-secret
+        namespace: ${TEST_NAMESPACE}
+      immutable: true
+      type: olm.operatorframework.io/object-data
+      stringData:
+        configmap: |
+          {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+              "name": "test-cm-missing-key",
+              "namespace": "${TEST_NAMESPACE}"
+            },
+            "data": {
+              "key": "value"
+            }
+          }
+      """
+    When ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${COS_NAME}
+      spec:
+        group: ${NAME}
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - ref:
+              name: ${COS_NAME}-missing-key-secret
+              namespace: ${TEST_NAMESPACE}
+              key: does-not-exist
+        revision: 1
+      """
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason PreconditionsNotMet and Message:
+    """
+      Referenced content is invalid: resolving ref in phase "resources": key "does-not-exist" not found in Secret ${TEST_NAMESPACE}/${COS_NAME}-missing-key-secret. Fix the Secret content.
+    """
+
+  Scenario: ClusterObjectSet reports PreconditionsNotMet when a referenced Secret has malformed content
+    Given namespace "${TEST_NAMESPACE}" is available
+    And resource is applied
+      """
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ${COS_NAME}-malformed-secret
+        namespace: ${TEST_NAMESPACE}
+      immutable: true
+      type: olm.operatorframework.io/object-data
+      stringData:
+        configmap: "this is not valid json"
+      """
+    When ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${COS_NAME}
+      spec:
+        group: ${NAME}
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - ref:
+              name: ${COS_NAME}-malformed-secret
+              namespace: ${TEST_NAMESPACE}
+              key: configmap
+        revision: 1
+      """
+    Then ClusterObjectSet "${COS_NAME}" reports Ready as False with Reason PreconditionsNotMet and Message includes:
+    """
+      Referenced content is invalid: resolving ref in phase "resources": unmarshaling object from key "configmap" in Secret ${TEST_NAMESPACE}/${COS_NAME}-malformed-secret
+    """
+
 
   @ProgressDeadline
   Scenario: Archiving a COS with ProgressDeadlineExceeded cleans up its resources
