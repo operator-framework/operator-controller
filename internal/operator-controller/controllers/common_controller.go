@@ -88,22 +88,6 @@ func availableFromReady(ready metav1.Condition, generation int64) metav1.Conditi
 	return a
 }
 
-// setActiveRevisionsFromRevisionStates derives the active revisions for the ClusterExtension status
-func setActiveRevisionsFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *RevisionStates) {
-	ext.Status.ActiveRevisions = make([]ocv1.RevisionStatus, 0, 1+len(revisionStates.RollingOut))
-	if i := revisionStates.Installed; i != nil {
-		ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, ocv1.RevisionStatus{Name: i.RevisionName})
-	}
-	for _, r := range revisionStates.RollingOut {
-		rs := ocv1.RevisionStatus{Name: r.RevisionName}
-		ready := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterObjectSetTypeReady)
-		if ready != nil {
-			apimeta.SetStatusCondition(&rs.Conditions, availableFromReady(*ready, ext.GetGeneration()))
-		}
-		ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, rs)
-	}
-}
-
 // setAvailableFromRevisionStates sets the Available status condition based on the given revision states
 func setAvailableFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *RevisionStates) {
 	if i := revisionStates.Installed; i != nil {

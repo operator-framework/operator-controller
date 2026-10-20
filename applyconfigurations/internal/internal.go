@@ -230,14 +230,6 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.operator-framework.operator-controller.api.v1.ClusterExtensionStatus
   map:
     fields:
-    - name: activeRevisions
-      type:
-        list:
-          elementType:
-            namedType: com.github.operator-framework.operator-controller.api.v1.RevisionStatus
-          elementRelationship: associative
-          keys:
-          - name
     - name: conditions
       type:
         list:
@@ -536,20 +528,6 @@ var schemaYAML = typed.YAMLObject(`types:
   map:
     fields:
     - name: ref
-      type:
-        scalar: string
-- name: com.github.operator-framework.operator-controller.api.v1.RevisionStatus
-  map:
-    fields:
-    - name: conditions
-      type:
-        list:
-          elementType:
-            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
-          elementRelationship: associative
-          keys:
-          - type
-    - name: name
       type:
         scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.SelectorType

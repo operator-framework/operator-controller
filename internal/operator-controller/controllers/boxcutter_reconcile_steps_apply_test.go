@@ -31,13 +31,11 @@ import (
 
 func TestApplyBundleWithBoxcutter(t *testing.T) {
 	type args struct {
-		activeRevisions   []ocv1.RevisionStatus
 		initialConditions []metav1.Condition
 		revisionStates    *RevisionStates
 	}
 	type want struct {
-		activeRevisions []ocv1.RevisionStatus
-		progressing     *metav1.Condition
+		progressing *metav1.Condition
 	}
 
 	for _, tc := range []struct {
@@ -46,11 +44,8 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 		want want
 	}{
 		{
-			name: "two active revisions during update",
+			name: "installed and rolling out revision during update",
 			args: args{
-				activeRevisions: []ocv1.RevisionStatus{
-					{Name: "ce-1"},
-				},
 				revisionStates: &RevisionStates{
 					Installed: &RevisionMetadata{
 						RevisionName: "ce-1",
@@ -65,18 +60,17 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				},
 			},
 			want: want{
-				activeRevisions: []ocv1.RevisionStatus{
-					{Name: "ce-1"},
-					{Name: "ce-2"},
+				progressing: &metav1.Condition{
+					Type:    ocv1.TypeProgressing,
+					Status:  metav1.ConditionTrue,
+					Reason:  ocv1.ReasonRollingOut,
+					Message: "Revision is rolling out.",
 				},
 			},
 		},
 		{
-			name: "replaces existing with new active revisions",
+			name: "new installed revision after update",
 			args: args{
-				activeRevisions: []ocv1.RevisionStatus{
-					{Name: "ce-1"},
-				},
 				revisionStates: &RevisionStates{
 					Installed: &RevisionMetadata{
 						RevisionName: "ce-2",
@@ -88,17 +82,17 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				},
 			},
 			want: want{
-				activeRevisions: []ocv1.RevisionStatus{
-					{Name: "ce-2"},
+				progressing: &metav1.Condition{
+					Type:    ocv1.TypeProgressing,
+					Status:  metav1.ConditionTrue,
+					Reason:  ocv1.ReasonSucceeded,
+					Message: "Desired state reached",
 				},
 			},
 		},
 		{
 			name: "ongoing installation",
 			args: args{
-				activeRevisions: []ocv1.RevisionStatus{
-					{Name: "ce-1"},
-				},
 				revisionStates: &RevisionStates{
 					RollingOut: []*RevisionMetadata{
 						{RevisionName: "ce-1"},
@@ -106,17 +100,17 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				},
 			},
 			want: want{
-				activeRevisions: []ocv1.RevisionStatus{
-					{Name: "ce-1"},
+				progressing: &metav1.Condition{
+					Type:    ocv1.TypeProgressing,
+					Status:  metav1.ConditionTrue,
+					Reason:  ocv1.ReasonRollingOut,
+					Message: "Revision is rolling out.",
 				},
 			},
 		},
 		{
 			name: "rolling revision without Ready resets stale Progressing to RollingOut default",
 			args: args{
-				activeRevisions: []ocv1.RevisionStatus{
-					{Name: "ce-1"},
-				},
 				initialConditions: []metav1.Condition{
 					{
 						Type:    ocv1.TypeProgressing,
@@ -134,9 +128,6 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				},
 			},
 			want: want{
-				activeRevisions: []ocv1.RevisionStatus{
-					{Name: "ce-1"},
-				},
 				progressing: &metav1.Condition{
 					Type:    ocv1.TypeProgressing,
 					Status:  metav1.ConditionTrue,
@@ -155,8 +146,7 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 					Generation: 1,
 				},
 				Status: ocv1.ClusterExtensionStatus{
-					ActiveRevisions: tc.args.activeRevisions,
-					Conditions:      tc.args.initialConditions,
+					Conditions: tc.args.initialConditions,
 				},
 			}
 
@@ -177,12 +167,6 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 			result, err := stepFunc(ctx, state, ext)
 			require.NoError(t, err)
 			require.Nil(t, result)
-
-			require.Len(t, ext.Status.ActiveRevisions, len(tc.want.activeRevisions))
-			for i, expected := range tc.want.activeRevisions {
-				require.Equal(t, expected.Name, ext.Status.ActiveRevisions[i].Name,
-					"ActiveRevisions[%d].Name mismatch", i)
-			}
 
 			if tc.want.progressing != nil {
 				got := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
