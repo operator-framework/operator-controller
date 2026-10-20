@@ -141,6 +141,31 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				cos.Spec.CollisionProtection = CollisionProtectionNone
 			},
 		},
+		"progressionProbes may be initially unset": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.ProgressionProbes = []ProgressionProbe{validProbe()}
+			},
+			allowed: true,
+		},
+		"progressionProbes are immutable once set": {
+			spec: ClusterObjectSetSpec{
+				Group:               "test-group",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				ProgressionProbes:   []ProgressionProbe{validProbe()},
+			},
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.ProgressionProbes = []ProgressionProbe{validProbe(), validProbe()}
+			},
+			expectedError: "progressionProbes is immutable",
+		},
 		"lifecycleState cannot be un-archived": {
 			spec: ClusterObjectSetSpec{
 				Group:               "test-group",

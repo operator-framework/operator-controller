@@ -131,6 +131,10 @@ type ClusterObjectSetSpec struct {
 	//
 	// The maximum number of probes is 20.
 	//
+	// Once set, even if empty, the progressionProbes field is immutable, as it is
+	// part of the immutable content of a revision.
+	//
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="progressionProbes is immutable"
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=atomic
