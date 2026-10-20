@@ -518,6 +518,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			UID:  "test-uid",
 		},
 	}
+	currentOwner := *metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))
 	defaultDesiredRevision := &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-ext-1",
@@ -550,9 +551,14 @@ func TestBoxcutter_Apply(t *testing.T) {
 		},
 	}
 
-	// Exercise group-based discovery when the existing revision lacks the owner-name label.
+	// Exercise group-based discovery and handoff when the existing revision lacks
+	// the owner-name label and is controlled by a different owner.
 	revisionWithoutOwnerLabel := defaultDesiredRevision.DeepCopy()
 	revisionWithoutOwnerLabel.Labels = nil
+	revisionWithoutOwnerLabel.OwnerReferences = []metav1.OwnerReference{{
+		APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+		Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
+	}}
 
 	allowedRevisionValue := func(revNum int64) *interceptor.Funcs {
 		return &interceptor.Funcs{
@@ -572,6 +578,13 @@ func TestBoxcutter_Apply(t *testing.T) {
 				return client.Apply(ctx, obj, opts...)
 			},
 		}
+	}
+	archivedOnlyDeletion := allowedRevisionValue(9)
+	archivedOnlyDeletion.Delete = func(ctx context.Context, c client.WithWatch, obj client.Object, opts ...client.DeleteOption) error {
+		if obj.GetName() != "rev-3" {
+			return fmt.Errorf("unexpected deletion of revision %q", obj.GetName())
+		}
+		return c.Delete(ctx, obj, opts...)
 	}
 	testCases := []struct {
 		name             string
@@ -635,7 +648,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 		{
-			name: "no change, existing revision has no owner label",
+			name: "no change, handoff from a foreign owner without an owner label",
 			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -679,6 +692,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				// No new revision should be created
 				require.Len(t, revList.Items, 1)
 				assert.Equal(t, "test-ext-1", revList.Items[0].Name)
+				assert.True(t, metav1.IsControlledBy(&revList.Items[0], ext))
 			},
 		},
 		{
@@ -759,7 +773,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 		{
-			name: "keep at most 5 past revisions across controller owners",
+			name: "keep at most 5 past revisions controlled by the current owner",
 			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
 				ctrl := gomock.NewController(t)
 				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
@@ -778,11 +792,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 			existingObjs: []client.Object{
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-1",
-						OwnerReferences: []metav1.OwnerReference{{
-							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
-							Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
-						}},
+						Name:            "rev-1",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -795,7 +806,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-2",
+						Name:            "rev-2",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -808,7 +820,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-3",
+						Name:            "rev-3",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -821,7 +834,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-4",
+						Name:            "rev-4",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -834,7 +848,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-5",
+						Name:            "rev-5",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -847,11 +862,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-6",
-						OwnerReferences: []metav1.OwnerReference{{
-							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
-							Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
-						}},
+						Name:            "rev-6",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -905,7 +917,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 			existingObjs: []client.Object{
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-1",
+						Name:            "rev-1",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -918,7 +931,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-2",
+						Name:            "rev-2",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -932,7 +946,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-3",
+						Name:            "rev-3",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -945,7 +960,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-4",
+						Name:            "rev-4",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -959,7 +975,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-5",
+						Name:            "rev-5",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -972,7 +989,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-6",
+						Name:            "rev-6",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -985,7 +1003,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 				},
 				&ocv1.ClusterObjectSet{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "rev-7",
+						Name:            "rev-7",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
 						Labels: map[string]string{
 							labels.OwnerNameKey: ext.Name,
 						},
@@ -1008,10 +1027,534 @@ func TestBoxcutter_Apply(t *testing.T) {
 				err = c.Get(t.Context(), client.ObjectKey{Name: "rev-2"}, rev2)
 				require.NoError(t, err)
 
-				// Verify active revisions are kept even if beyond the limit
+				// The archived revision within the allowance must also be preserved.
 				rev4 := &ocv1.ClusterObjectSet{}
 				err = c.Get(t.Context(), client.ObjectKey{Name: "rev-4"}, rev4)
-				require.NoError(t, err, "active revision 4 should still exist even though it's beyond the limit")
+				require.NoError(t, err, "archived revision 4 is within the retention allowance")
+
+				revList := &ocv1.ClusterObjectSetList{}
+				require.NoError(t, c.List(t.Context(), revList, client.MatchingFields{".spec.group": ext.Name}))
+				names := make([]string, 0, len(revList.Items))
+				for _, rev := range revList.Items {
+					names = append(names, rev.Name)
+				}
+				require.ElementsMatch(t, []string{"rev-2", "rev-3", "rev-4", "rev-5", "rev-6", "rev-7", "test-ext-8"}, names)
+			},
+		},
+		{
+			name: "exclude other owners from the retention allowance",
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec().WithGroup(ext.Name)), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
+			},
+			existingObjs: []client.Object{
+				// Five current-owner revisions have no owner labels. The other seven
+				// have matching labels but must not consume their retention allowance.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-1",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       1,
+					},
+				},
+				// A matching owner-name label does not override a foreign controller UID.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-2",
+						OwnerReferences: []metav1.OwnerReference{{
+							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+							Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
+						}},
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       2,
+					},
+				},
+				// Same owner name, but a previous ClusterExtension UID.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-3",
+						OwnerReferences: []metav1.OwnerReference{{
+							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+							Name: ext.Name, UID: "old-uid", Controller: ptr.To(true),
+						}},
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       3,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-4",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       4,
+					},
+				},
+				// An owner-name label alone does not establish controller ownership.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "rev-5",
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       5,
+					},
+				},
+				// The current extension is an owner, but not the controller.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-6",
+						OwnerReferences: []metav1.OwnerReference{{
+							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+							Name: ext.Name, UID: ext.UID, Controller: ptr.To(false),
+						}},
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       6,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-7",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       7,
+					},
+				},
+				// An omitted controller flag does not establish controller ownership.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-8",
+						OwnerReferences: []metav1.OwnerReference{{
+							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+							Name: ext.Name, UID: ext.UID,
+						}},
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       8,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-9",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       9,
+					},
+				},
+				// The current non-controller reference precedes the foreign controller.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-10",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+								Name: ext.Name, UID: ext.UID, Controller: ptr.To(false),
+							},
+							{
+								APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+								Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
+							},
+						},
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       10,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-11",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       11,
+					},
+				},
+				// The foreign controller precedes the current non-controller reference.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-12",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+								Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
+							},
+							{
+								APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+								Name: ext.Name, UID: ext.UID, Controller: ptr.To(false),
+							},
+						},
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       12,
+					},
+				},
+			},
+			clientIterceptor: allowedRevisionValue(13),
+			validate: func(t *testing.T, c client.Client) {
+				revList := &ocv1.ClusterObjectSetList{}
+				require.NoError(t, c.List(t.Context(), revList, client.MatchingFields{".spec.group": ext.Name}))
+				names := make([]string, 0, len(revList.Items))
+				for _, rev := range revList.Items {
+					names = append(names, rev.Name)
+				}
+				require.ElementsMatch(t, []string{"rev-1", "rev-2", "rev-3", "rev-4", "rev-5", "rev-6", "rev-7", "rev-8", "rev-9", "rev-10", "rev-11", "rev-12", "test-ext-13"}, names)
+
+				// Revision numbering uses the entire group, including foreign-owned revisions.
+				created := &ocv1.ClusterObjectSet{}
+				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: "test-ext-13"}, created))
+				require.Equal(t, int64(13), created.Spec.Revision)
+				require.True(t, metav1.IsControlledBy(created, ext))
+			},
+		},
+		{
+			name: "delete only excess current-owner revisions among other owners",
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec().WithGroup(ext.Name)), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
+			},
+			existingObjs: []client.Object{
+				// Six current-owner revisions are interleaved with excluded revisions.
+				// Only rev-2 exceeds the current owner's retention allowance.
+				// A matching owner-name label does not override a foreign controller UID.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-1",
+						OwnerReferences: []metav1.OwnerReference{{
+							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+							Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
+						}},
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       1,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-2",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       2,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-3",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       3,
+					},
+				},
+				// An owner-name label alone does not establish controller ownership.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "rev-4",
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       4,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-5",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       5,
+					},
+				},
+				// A matching owner-name label does not override a foreign controller UID.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-6",
+						OwnerReferences: []metav1.OwnerReference{{
+							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+							Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
+						}},
+						Labels: map[string]string{labels.OwnerNameKey: ext.Name},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+						Revision:       6,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-7",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       7,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-8",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       8,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-9",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       9,
+					},
+				},
+				// A matching owner-name label does not override a foreign controller UID.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-10",
+						OwnerReferences: []metav1.OwnerReference{{
+							APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+							Name: "other-owner", UID: "other-uid", Controller: ptr.To(true),
+						}},
+						Labels:            map[string]string{labels.OwnerNameKey: ext.Name},
+						DeletionTimestamp: ptr.To(metav1.Now()),
+						Finalizers:        []string{"test.example/retain"},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+						Revision:       10,
+					},
+				},
+			},
+			clientIterceptor: allowedRevisionValue(11),
+			validate: func(t *testing.T, c client.Client) {
+				deleted := &ocv1.ClusterObjectSet{}
+				err := c.Get(t.Context(), client.ObjectKey{Name: "rev-2"}, deleted)
+				require.True(t, apierrors.IsNotFound(err), "excess current-owner archived revision must be deleted: %v", err)
+
+				revList := &ocv1.ClusterObjectSetList{}
+				require.NoError(t, c.List(t.Context(), revList, client.MatchingFields{".spec.group": ext.Name}))
+				names := make([]string, 0, len(revList.Items))
+				for _, rev := range revList.Items {
+					names = append(names, rev.Name)
+				}
+				require.ElementsMatch(t, []string{"rev-1", "rev-3", "rev-4", "rev-5", "rev-6", "rev-7", "rev-8", "rev-9", "rev-10", "test-ext-11"}, names)
+
+				// Revision numbering uses the entire group, including foreign-owned revisions.
+				created := &ocv1.ClusterObjectSet{}
+				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: "test-ext-11"}, created))
+				require.Equal(t, int64(11), created.Spec.Revision)
+				require.True(t, metav1.IsControlledBy(created, ext))
+			},
+		},
+		{
+			name: "count active and deleting revisions toward the retention allowance",
+			mockBuilder: func(t *testing.T) applier.ClusterObjectSetGenerator {
+				ctrl := gomock.NewController(t)
+				m := mockapplier.NewMockClusterObjectSetGenerator(ctrl)
+				m.EXPECT().GenerateRevision(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+						return ocv1ac.ClusterObjectSet("").
+							WithAnnotations(revisionAnnotations).
+							WithLabels(map[string]string{
+								labels.OwnerNameKey: ext.Name,
+							}).
+							WithSpec(ocv1ac.ClusterObjectSetSpec().WithGroup(ext.Name)), nil
+					}).AnyTimes()
+				m.EXPECT().GenerateRevisionFromHelmRelease(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				return m
+			},
+			existingObjs: []client.Object{
+				// All eight revisions count. Among the oldest three, rev-3 is the
+				// only archived revision eligible for deletion.
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-1",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+						Revision:       1,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "rev-2",
+						OwnerReferences:   []metav1.OwnerReference{currentOwner},
+						DeletionTimestamp: ptr.To(metav1.Now()),
+						Finalizers:        []string{"test.example/retain"},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+						Revision:       2,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-3",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       3,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-4",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       4,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-5",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+						Revision:       5,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-6",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+						Revision:       6,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "rev-7",
+						OwnerReferences:   []metav1.OwnerReference{currentOwner},
+						DeletionTimestamp: ptr.To(metav1.Now()),
+						Finalizers:        []string{"test.example/retain"},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+						Revision:       7,
+					},
+				},
+				&ocv1.ClusterObjectSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "rev-8",
+						OwnerReferences: []metav1.OwnerReference{currentOwner},
+					},
+					Spec: ocv1.ClusterObjectSetSpec{
+						Group:          ext.Name,
+						LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+						Revision:       8,
+					},
+				},
+			},
+			clientIterceptor: archivedOnlyDeletion,
+			validate: func(t *testing.T, c client.Client) {
+				deleted := &ocv1.ClusterObjectSet{}
+				err := c.Get(t.Context(), client.ObjectKey{Name: "rev-3"}, deleted)
+				require.True(t, apierrors.IsNotFound(err), "excess current-owner archived revision must be deleted: %v", err)
+
+				revList := &ocv1.ClusterObjectSetList{}
+				require.NoError(t, c.List(t.Context(), revList, client.MatchingFields{".spec.group": ext.Name}))
+				names := make([]string, 0, len(revList.Items))
+				for _, rev := range revList.Items {
+					names = append(names, rev.Name)
+				}
+				require.ElementsMatch(t, []string{"rev-1", "rev-2", "rev-4", "rev-5", "rev-6", "rev-7", "rev-8", "test-ext-9"}, names)
+
+				created := &ocv1.ClusterObjectSet{}
+				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: "test-ext-9"}, created))
+				require.Equal(t, int64(9), created.Spec.Revision)
+				require.True(t, metav1.IsControlledBy(created, ext))
 			},
 		},
 		{

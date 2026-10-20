@@ -590,7 +590,7 @@ func (bc *Boxcutter) createExternalizedRevision(ctx context.Context, ext *ocv1.C
 	desiredRevision.WithName(revisionName)
 	desiredRevision.Spec.WithRevision(revisionNumber)
 
-	if err := bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
+	if err := bc.garbageCollectOldRevisions(ctx, ext, prevRevisions); err != nil {
 		return fmt.Errorf("garbage collecting old revisions: %w", err)
 	}
 
@@ -628,12 +628,20 @@ func (bc *Boxcutter) createExternalizedRevision(ctx context.Context, ext *ocv1.C
 	return nil
 }
 
-// garbageCollectOldRevisions deletes archived revisions beyond ClusterObjectSetRetentionLimit.
-// Active revisions are never deleted. revisionList must be sorted oldest to newest.
-func (bc *Boxcutter) garbageCollectOldRevisions(ctx context.Context, revisionList []ocv1.ClusterObjectSet) error {
-	for index, r := range revisionList {
+// garbageCollectOldRevisions deletes archived revisions controlled by owner beyond
+// ClusterObjectSetRetentionLimit. Other owners' revisions do not count toward the
+// limit. Active and deleting revisions controlled by owner still count, but only
+// archived revisions are deleted. revisionList must be sorted oldest to newest.
+func (bc *Boxcutter) garbageCollectOldRevisions(ctx context.Context, owner metav1.Object, revisionList []ocv1.ClusterObjectSet) error {
+	ownedRevisions := make([]ocv1.ClusterObjectSet, 0, len(revisionList))
+	for i := range revisionList {
+		if metav1.IsControlledBy(&revisionList[i], owner) {
+			ownedRevisions = append(ownedRevisions, revisionList[i])
+		}
+	}
+	for index, r := range ownedRevisions {
 		// Only delete archived revisions that are beyond the limit
-		if index < len(revisionList)-ClusterObjectSetRetentionLimit && r.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {
+		if index < len(ownedRevisions)-ClusterObjectSetRetentionLimit && r.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {
 			if err := bc.Client.Delete(ctx, &ocv1.ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: r.Name,
