@@ -532,8 +532,10 @@ type ClusterObjectSetStatus struct {
 
 	// objectCounts reports aggregate object counts across all phases.
 	// Values are sums of the per-phase counts in observedPhases.
+	// It is omitted until counts have been computed; when present, all count
+	// fields are reported (including zeros).
 	// +optional
-	ObjectCounts ObjectCounts `json:"objectCounts,omitempty"`
+	ObjectCounts ObjectCounts `json:"objectCounts,omitzero"`
 
 	// observedPhases records the content hashes of resolved phases
 	// at first successful reconciliation. This is used to detect if
@@ -577,8 +579,10 @@ type ObservedPhase struct {
 	Digest string `json:"digest"`
 
 	// objectCounts reports the number of objects in this phase by state.
-	// +required
-	ObjectCounts ObjectCounts `json:"objectCounts"`
+	// It is omitted until counts have been computed; when present, all count
+	// fields are reported (including zeros).
+	// +optional
+	ObjectCounts ObjectCounts `json:"objectCounts,omitzero"`
 }
 
 // ObjectCounts reports the number of objects in a ClusterObjectSet or phase by state.
@@ -593,24 +597,24 @@ type ObjectCounts struct {
 	// cluster. During reconcile, this counts objects that the controller
 	// has found or created. During teardown, this decrements toward zero
 	// as objects are deleted.
-	// +optional
+	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
-	Present int64 `json:"present,omitempty"`
+	Present int64 `json:"present"`
 
 	// synced is the number of objects in this phase whose cluster state
 	// matches the desired state.
-	// +optional
+	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
-	Synced int64 `json:"synced,omitempty"`
+	Synced int64 `json:"synced"`
 
 	// ready is the number of objects in this phase that are synced
 	// and pass their assertions.
-	// +optional
+	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
-	Ready int64 `json:"ready,omitempty"`
+	Ready int64 `json:"ready"`
 }
 
 // TODO(COD): Update the archival description below when archival decisions move

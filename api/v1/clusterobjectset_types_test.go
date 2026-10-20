@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -825,4 +826,45 @@ func configMap() unstructured.Unstructured {
 			},
 		},
 	}
+}
+
+// TestObjectCountsSerializationIncludesZeroCounts guards against the count fields
+// being dropped from status when zero. total/present/synced/ready are all required,
+// so a "0 of N" count (e.g. ready=0 while a phase is rolling out, or synced/ready=0
+// during teardown) must still be serialized rather than omitted via omitempty.
+func TestObjectCountsSerializationIncludesZeroCounts(t *testing.T) {
+	data, err := json.Marshal(ObjectCounts{Total: 1, Present: 1, Synced: 1, Ready: 0})
+	require.NoError(t, err)
+	require.JSONEq(t, `{"total":1,"present":1,"synced":1,"ready":0}`, string(data))
+
+	// All-zero counts must still serialize every field (nothing omitted).
+	data, err = json.Marshal(ObjectCounts{})
+	require.NoError(t, err)
+	require.JSONEq(t, `{"total":0,"present":0,"synced":0,"ready":0}`, string(data))
+}
+
+// TestObjectCountsOmittedWhenZero verifies the parent objectCounts field is optional:
+// a zero-valued ObjectCounts is omitted entirely (via omitzero on a value struct —
+// omitempty does not omit non-pointer structs), but when any count is non-zero the whole
+// struct is serialized with all of its (required) fields, including zeros.
+func TestObjectCountsOmittedWhenZero(t *testing.T) {
+	// Aggregate status: zero objectCounts is omitted.
+	data, err := json.Marshal(ClusterObjectSetStatus{})
+	require.NoError(t, err)
+	require.NotContains(t, string(data), "objectCounts")
+
+	// Aggregate status: a non-zero objectCounts serializes with every field.
+	data, err = json.Marshal(ClusterObjectSetStatus{ObjectCounts: ObjectCounts{Total: 1}})
+	require.NoError(t, err)
+	require.Contains(t, string(data), `"objectCounts":{"total":1,"present":0,"synced":0,"ready":0}`)
+
+	// Per-phase: zero objectCounts is omitted (name/digest still present).
+	data, err = json.Marshal(ObservedPhase{Name: "deploy", Digest: "sha256:abc"})
+	require.NoError(t, err)
+	require.NotContains(t, string(data), "objectCounts")
+
+	// Per-phase: a non-zero objectCounts serializes with every field.
+	data, err = json.Marshal(ObservedPhase{Name: "deploy", Digest: "sha256:abc", ObjectCounts: ObjectCounts{Present: 2}})
+	require.NoError(t, err)
+	require.Contains(t, string(data), `"objectCounts":{"total":0,"present":2,"synced":0,"ready":0}`)
 }
