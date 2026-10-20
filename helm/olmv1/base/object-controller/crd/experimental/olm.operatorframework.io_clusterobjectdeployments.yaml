@@ -63,10 +63,8 @@ spec:
                     properties:
                       collisionProtection:
                         description: |-
-                          collisionProtection is the default strategy for objects in the revision.
-                          Objects and phases may override it. When omitted the controller uses Prevent
-                          in the generated ClusterObjectSet. Omission remains distinct from explicit
-                          Prevent for template identity; admission does not default this field.
+                          collisionProtection is the required default collision protection strategy for objects in the revision.
+                          Objects and phases may override it.
                         enum:
                         - Prevent
                         - IfNoController
@@ -469,6 +467,7 @@ spec:
                         type: array
                         x-kubernetes-list-type: atomic
                     required:
+                    - collisionProtection
                     - phases
                     type: object
                 required:

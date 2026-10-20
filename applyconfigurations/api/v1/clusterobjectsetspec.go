@@ -93,13 +93,11 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	//
 	// <opcon:experimental>
 	ProgressionProbes []ProgressionProbeApplyConfiguration `json:"progressionProbes,omitempty"`
-	// collisionProtection specifies the default collision protection strategy for all objects
-	// in this revision. Individual phases or objects can override this value.
+	// collisionProtection is a required field that specifies the default collision protection
+	// strategy for all objects in this revision. Individual phases or objects can override this value.
 	//
-	// When set, this value is used as the default for any phase or object that does not
-	// explicitly specify its own collisionProtection.
-	//
-	// The resolution order is: object > phase > spec
+	// This value is used as the default for any phase or object that does not explicitly specify
+	// its own collisionProtection. The resolution order is: object > phase > spec.
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 

@@ -142,18 +142,16 @@ type ClusterObjectSetSpec struct {
 	// <opcon:experimental>
 	ProgressionProbes []ProgressionProbe `json:"progressionProbes,omitempty"`
 
-	// collisionProtection specifies the default collision protection strategy for all objects
-	// in this revision. Individual phases or objects can override this value.
+	// collisionProtection is a required field that specifies the default collision protection
+	// strategy for all objects in this revision. Individual phases or objects can override this value.
 	//
-	// When set, this value is used as the default for any phase or object that does not
-	// explicitly specify its own collisionProtection.
-	//
-	// The resolution order is: object > phase > spec
+	// This value is used as the default for any phase or object that does not explicitly specify
+	// its own collisionProtection. The resolution order is: object > phase > spec.
 	//
 	// +required
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="collisionProtection is immutable"
-	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
+	CollisionProtection CollisionProtection `json:"collisionProtection"`
 }
 
 // ProgressionProbe provides a custom probe definition, consisting of an object selection method and assertions.

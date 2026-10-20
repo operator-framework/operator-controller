@@ -492,7 +492,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `phases` _[ClusterObjectSetPhase](#clusterobjectsetphase) array_ | phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains<br />at most 50 objects using the existing inline object or immutable Secret reference<br />representation. Phase, object, and probe order participate in template identity. |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
 | `progressionProbes` _[ProgressionProbe](#progressionprobe) array_ | progressionProbes supplies custom readiness probes for objects in every phase.<br />The existing ClusterObjectSet selector and assertion semantics apply. |  | MaxItems: 20 <br />MinItems: 1 <br />Optional: \{\} <br /> |
-| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is the default strategy for objects in the revision.<br />Objects and phases may override it. When omitted the controller uses Prevent<br />in the generated ClusterObjectSet. Omission remains distinct from explicit<br />Prevent for template identity; admission does not default this field. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
+| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is the required default collision protection strategy for objects in the revision.<br />Objects and phases may override it. |  | Enum: [Prevent IfNoController None] <br />Required: \{\} <br /> |
 
 
 
