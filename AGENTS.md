@@ -245,6 +245,12 @@ Two manifest variants exist:
 - **Standard:** Production-ready features
 - **Experimental:** Features under development/testing (includes `ClusterObjectSet` API)
 
+Experimental APIs may change incompatibly between releases. We do not provide migration support for
+experimental API changes.
+Stable APIs retain their compatibility guarantees, and bugs affecting supported production upgrades or
+migrations must still be addressed. Experimental API changes must follow the API conventions and
+regeneration requirements below.
+
 ### API Conventions
 
 API changes in `api/v1/*_types.go` must follow the [OpenShift API conventions](https://github.com/openshift/enhancements/blob/master/dev-guide/api-conventions.md) in addition to upstream [Kubernetes API conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md).
