@@ -68,13 +68,11 @@ type ClusterObjectDeploymentTemplateSpec struct {
 	// +listType=atomic
 	ProgressionProbes []ProgressionProbe `json:"progressionProbes,omitempty"`
 
-	// collisionProtection is the default strategy for objects in the revision.
-	// Objects and phases may override it. When omitted the controller uses Prevent
-	// in the generated ClusterObjectSet. Omission remains distinct from explicit
-	// Prevent for template identity; admission does not default this field.
-	// +optional
+	// collisionProtection is the required default collision protection strategy for objects in the revision.
+	// Objects and phases may override it.
+	// +required
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
-	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
+	CollisionProtection CollisionProtection `json:"collisionProtection"`
 }
 
 // ClusterObjectDeploymentStatus reports rollout progress.

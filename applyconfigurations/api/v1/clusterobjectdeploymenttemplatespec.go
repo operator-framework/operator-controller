@@ -34,10 +34,8 @@ type ClusterObjectDeploymentTemplateSpecApplyConfiguration struct {
 	// progressionProbes supplies custom readiness probes for objects in every phase.
 	// The existing ClusterObjectSet selector and assertion semantics apply.
 	ProgressionProbes []ProgressionProbeApplyConfiguration `json:"progressionProbes,omitempty"`
-	// collisionProtection is the default strategy for objects in the revision.
-	// Objects and phases may override it. When omitted the controller uses Prevent
-	// in the generated ClusterObjectSet. Omission remains distinct from explicit
-	// Prevent for template identity; admission does not default this field.
+	// collisionProtection is the required default collision protection strategy for objects in the revision.
+	// Objects and phases may override it.
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
