@@ -42,7 +42,6 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/status"
-	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
 const (
@@ -645,15 +644,9 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 		}
 		observedPhases = append(observedPhases, ocv1.ObservedPhase{Name: specPhase.Name, Digest: digest})
 
-		// Apply controller mutations after digest computation.
+		// Managed objects are labeled app.kubernetes.io/managed-by by the boxcutter
+		// revision engine; the controller does not add owner labels of its own.
 		for i, obj := range objs {
-			objLabels := obj.GetLabels()
-			if objLabels == nil {
-				objLabels = map[string]string{}
-			}
-			objLabels[labels.OwnerNameKey] = cos.Labels[labels.OwnerNameKey]
-			obj.SetLabels(objLabels)
-
 			switch cp := EffectiveCollisionProtection(cos.Spec.CollisionProtection, specPhase.CollisionProtection, specPhase.Objects[i].CollisionProtection); cp {
 			case ocv1.CollisionProtectionIfNoController, ocv1.CollisionProtectionNone:
 				opts = append(opts, boxcutter.WithObjectReconcileOptions(
