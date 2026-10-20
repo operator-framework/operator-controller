@@ -152,7 +152,10 @@ func newManager(cfg *config, restConfig *rest.Config) (manager.Manager, error) {
 		RenewDeadline:                 ptr.To(107 * time.Second),
 		RetryPeriod:                   ptr.To(26 * time.Second),
 		Cache: cache.Options{
-			ByObject:                    map[client.Object]cache.ByObject{&ocv1.ClusterObjectSet{}: {}},
+			ByObject: map[client.Object]cache.ByObject{
+				&ocv1.ClusterObjectSet{}:        {},
+				&ocv1.ClusterObjectDeployment{}: {},
+			},
 			ReaderFailOnMissingInformer: true,
 			DefaultTransform:            cacheutil.StripAnnotations(),
 		},
@@ -196,6 +199,11 @@ func newManager(cfg *config, restConfig *rest.Config) (manager.Manager, error) {
 		Client: mgr.GetClient(), RevisionEngineFactory: factory, TrackingCache: trackingCache,
 	}).SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("setting up ClusterObjectSet controller: %w", err)
+	}
+	if err := (&controllers.ClusterObjectDeploymentReconciler{
+		Client: mgr.GetClient(),
+	}).SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("setting up ClusterObjectDeployment controller: %w", err)
 	}
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		return nil, err

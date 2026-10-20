@@ -16,6 +16,9 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(Scheme))
 	utilruntime.Must(apiextensionsv1.AddToScheme(Scheme))
 	// Object management does not require the ClusterExtension or ClusterCatalog APIs.
-	Scheme.AddKnownTypes(ocv1.GroupVersion, &ocv1.ClusterObjectSet{}, &ocv1.ClusterObjectSetList{})
+	Scheme.AddKnownTypes(ocv1.GroupVersion,
+		&ocv1.ClusterObjectSet{}, &ocv1.ClusterObjectSetList{},
+		&ocv1.ClusterObjectDeployment{}, &ocv1.ClusterObjectDeploymentList{},
+	)
 	metav1.AddToGroupVersion(Scheme, ocv1.GroupVersion)
 }
