@@ -88,6 +88,9 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	//
 	// The maximum number of probes is 20.
 	//
+	// Once set, even if empty, the progressionProbes field is immutable, as it is
+	// part of the immutable content of a revision.
+	//
 	// <opcon:experimental>
 	ProgressionProbes []ProgressionProbeApplyConfiguration `json:"progressionProbes,omitempty"`
 	// collisionProtection specifies the default collision protection strategy for all objects

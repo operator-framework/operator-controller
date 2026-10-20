@@ -2240,6 +2240,9 @@ spec:
                   a ConfigMap if that particular object does not pass the probe check.
 
                   The maximum number of probes is 20.
+
+                  Once set, even if empty, the progressionProbes field is immutable, as it is
+                  part of the immutable content of a revision.
                 items:
                   description: ProgressionProbe provides a custom probe definition,
                     consisting of an object selection method and assertions.
@@ -2486,6 +2489,9 @@ spec:
                 minItems: 1
                 type: array
                 x-kubernetes-list-type: atomic
+                x-kubernetes-validations:
+                - message: progressionProbes is immutable
+                  rule: self == oldSelf || oldSelf.size() == 0
               revision:
                 description: |-
                   revision is a required, immutable sequence number identifying a specific
