@@ -3,58 +3,231 @@
 package controllers_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 const clusterObjectDeploymentName = "test-cod-1"
 
-func Test_ClusterObjectDeploymentReconciler_Reconcile(t *testing.T) {
-	testScheme := newScheme(t)
-
-	for _, tc := range []struct {
-		name         string
-		existingObjs []client.Object
-	}{
-		{
-			name:         "returns no error when the ClusterObjectDeployment does not exist",
-			existingObjs: nil,
-		},
-		{
-			name: "returns no error for an existing ClusterObjectDeployment",
-			existingObjs: []client.Object{
-				&ocv1.ClusterObjectDeployment{
-					ObjectMeta: metav1.ObjectMeta{Name: clusterObjectDeploymentName},
+func codFixture() *ocv1.ClusterObjectDeployment {
+	return &ocv1.ClusterObjectDeployment{
+		ObjectMeta: metav1.ObjectMeta{Name: clusterObjectDeploymentName},
+		Spec: ocv1.ClusterObjectDeploymentSpec{
+			Template: ocv1.ClusterObjectDeploymentTemplate{
+				Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
+					CollisionProtection: ocv1.CollisionProtectionPrevent,
+					Phases: []ocv1.ClusterObjectSetPhase{{
+						Name: "resources",
+						Objects: []ocv1.ClusterObjectSetObject{{
+							Object: unstructured.Unstructured{Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "ConfigMap",
+								"metadata":   map[string]interface{}{"name": "cm", "namespace": "ns"},
+							}},
+						}},
+					}},
 				},
 			},
 		},
+	}
+}
+
+func newCODClient(t *testing.T, objs ...client.Object) client.Client {
+	t.Helper()
+	return testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(newScheme(t)), controllers.SetupIndexes).
+		WithStatusSubresource(&ocv1.ClusterObjectDeployment{}, &ocv1.ClusterObjectSet{}).
+		WithObjects(objs...).
+		Build()
+}
+
+func reconcileCOD(t *testing.T, c client.Client) (ctrl.Result, error) {
+	t.Helper()
+	return (&controllers.ClusterObjectDeploymentReconciler{Client: c, Scheme: newScheme(t)}).
+		Reconcile(t.Context(), ctrl.Request{NamespacedName: types.NamespacedName{Name: clusterObjectDeploymentName}})
+}
+
+func getCOS(t *testing.T, c client.Client, name string) (*ocv1.ClusterObjectSet, bool) {
+	t.Helper()
+	cos := &ocv1.ClusterObjectSet{}
+	err := c.Get(t.Context(), types.NamespacedName{Name: name}, cos)
+	if apierrors.IsNotFound(err) {
+		return nil, false
+	}
+	require.NoError(t, err)
+	return cos, true
+}
+
+func progressing(t *testing.T, c client.Client) *metav1.Condition {
+	t.Helper()
+	cod := &ocv1.ClusterObjectDeployment{}
+	require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
+	return apimeta.FindStatusCondition(cod.Status.Conditions, ocv1.ClusterObjectDeploymentTypeProgressing)
+}
+
+func Test_ClusterObjectDeploymentReconciler_CreatesFirstRevision(t *testing.T) {
+	c := newCODClient(t, codFixture())
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.True(t, ok, "revision 1 should be created")
+	require.Equal(t, clusterObjectDeploymentName, cos.Spec.Group)
+	require.Equal(t, int64(1), cos.Spec.Revision)
+	require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, cos.Spec.LifecycleState)
+	require.NotEmpty(t, cos.Labels[labels.TemplateHashKey])
+
+	ref := metav1.GetControllerOf(cos)
+	require.NotNil(t, ref)
+	require.Equal(t, ocv1.ClusterObjectDeploymentKind, ref.Kind)
+	require.Equal(t, clusterObjectDeploymentName, ref.Name)
+
+	cond := progressing(t, c)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionTrue, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, cond.Reason)
+}
+
+func Test_ClusterObjectDeploymentReconciler_NoNewRevisionWhenTemplateUnchanged(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		completed  bool
+		wantStatus metav1.ConditionStatus
+		wantReason string
+	}{
+		{
+			name:       "completed latest revision reports Progressed",
+			completed:  true,
+			wantStatus: metav1.ConditionFalse,
+			wantReason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed,
+		},
+		{
+			name:       "not-yet-completed latest revision reports Progressing",
+			completed:  false,
+			wantStatus: metav1.ConditionTrue,
+			wantReason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			testClient := fake.NewClientBuilder().
-				WithScheme(testScheme).
-				WithStatusSubresource(&ocv1.ClusterObjectDeployment{}).
-				WithObjects(tc.existingObjs...).
-				Build()
+			c := newCODClient(t, codFixture())
 
-			result, err := (&controllers.ClusterObjectDeploymentReconciler{
-				Client: testClient,
-			}).Reconcile(t.Context(), ctrl.Request{
-				NamespacedName: types.NamespacedName{
-					Name: clusterObjectDeploymentName,
-				},
-			})
-
+			// First reconcile creates revision 1 with the correct template-hash label.
+			_, err := reconcileCOD(t, c)
 			require.NoError(t, err)
-			require.Equal(t, ctrl.Result{}, result)
+
+			if tc.completed {
+				cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+				require.True(t, ok)
+				cos.Status.CompletedAt = metav1.Now()
+				require.NoError(t, c.Status().Update(t.Context(), cos))
+			}
+
+			// Second reconcile must not create a new revision.
+			_, err = reconcileCOD(t, c)
+			require.NoError(t, err)
+
+			_, ok := getCOS(t, c, clusterObjectDeploymentName+"-2")
+			require.False(t, ok, "no second revision should be created when the template is unchanged")
+
+			cond := progressing(t, c)
+			require.NotNil(t, cond)
+			require.Equal(t, tc.wantStatus, cond.Status)
+			require.Equal(t, tc.wantReason, cond.Reason)
 		})
 	}
+}
+
+func Test_ClusterObjectDeploymentReconciler_CreatesNewRevisionOnTemplateChange(t *testing.T) {
+	c := newCODClient(t, codFixture())
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	// Change the template.
+	cod := &ocv1.ClusterObjectDeployment{}
+	require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
+	cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"k": "v"}
+	require.NoError(t, c.Update(t.Context(), cod))
+
+	_, err = reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-2")
+	require.True(t, ok, "a template change should create revision 2")
+	require.Equal(t, int64(2), cos.Spec.Revision)
+
+	cond := progressing(t, c)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionTrue, cond.Status)
+}
+
+func Test_ClusterObjectDeploymentReconciler_CreatesNewRevisionWhenLatestArchived(t *testing.T) {
+	c := newCODClient(t, codFixture())
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	// Archive revision 1.
+	cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.True(t, ok)
+	cos.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
+	require.NoError(t, c.Update(t.Context(), cos))
+
+	_, err = reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	rev2, ok := getCOS(t, c, clusterObjectDeploymentName+"-2")
+	require.True(t, ok, "archiving the only revision should trigger a new revision")
+	require.Equal(t, int64(2), rev2.Spec.Revision)
+}
+
+func Test_ClusterObjectDeploymentReconciler_DeletionIsNoop(t *testing.T) {
+	cod := codFixture()
+	now := metav1.Now()
+	cod.DeletionTimestamp = &now
+	cod.Finalizers = []string{"test.only/keep"}
+
+	c := newCODClient(t, cod)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	_, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.False(t, ok, "a deleting ClusterObjectDeployment must not create revisions")
+
+	require.Nil(t, progressing(t, c))
+}
+
+func Test_ClusterObjectDeploymentReconciler_SurfacesAlreadyExists(t *testing.T) {
+	base := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(newScheme(t)), controllers.SetupIndexes).
+		WithStatusSubresource(&ocv1.ClusterObjectDeployment{}, &ocv1.ClusterObjectSet{}).
+		WithObjects(codFixture()).
+		Build()
+
+	c := interceptor.NewClient(base, interceptor.Funcs{
+		Create: func(_ context.Context, _ client.WithWatch, obj client.Object, _ ...client.CreateOption) error {
+			gr := ocv1.GroupVersion.WithResource("clusterobjectsets").GroupResource()
+			return apierrors.NewAlreadyExists(gr, obj.GetName())
+		},
+	})
+
+	_, err := (&controllers.ClusterObjectDeploymentReconciler{Client: c, Scheme: newScheme(t)}).
+		Reconcile(t.Context(), ctrl.Request{NamespacedName: types.NamespacedName{Name: clusterObjectDeploymentName}})
+	require.Error(t, err, "an AlreadyExists on create must surface as a reconcile error, not be silently tolerated")
 }

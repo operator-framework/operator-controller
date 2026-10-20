@@ -441,17 +441,6 @@ type Sourcoser interface {
 	Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source
 }
 
-// SetupIndexes registers the cache indexes used to look up ClusterObjectSet revisions.
-func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
-	return indexer.IndexField(ctx, &ocv1.ClusterObjectSet{}, ".spec.group", func(obj client.Object) []string {
-		cos, ok := obj.(*ocv1.ClusterObjectSet)
-		if !ok || cos.Spec.Group == "" {
-			return nil
-		}
-		return []string{cos.Spec.Group}
-	})
-}
-
 func (c *ClusterObjectSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	c.Clock = clock.RealClock{}
 	return ctrl.NewControllerManagedBy(mgr).
@@ -556,7 +545,7 @@ func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
 	predicate func(*ocv1.ClusterObjectSet) bool,
 ) ([]*ocv1.ClusterObjectSet, error) {
 	revList := &ocv1.ClusterObjectSetList{}
-	if err := c.Client.List(ctx, revList, client.MatchingFields{".spec.group": cos.Spec.Group}); err != nil {
+	if err := c.Client.List(ctx, revList, client.MatchingFields{clusterObjectSetGroupIndex: cos.Spec.Group}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
 
