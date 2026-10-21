@@ -393,14 +393,14 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			},
 			valid: true,
 		},
-		"spec collisionProtection is required": {
+		"spec collisionProtection rejects empty values": {
 			spec: ClusterObjectSetSpec{
-				Group:          "validity-required-collision-protection",
+				Group:          "validity-empty-collision-protection",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
 				Revision:       1,
 			},
 			valid:         false,
-			expectedError: "spec.collisionProtection: Required value",
+			expectedError: "spec.collisionProtection: Unsupported value",
 		},
 		"spec collisionProtection rejects invalid values": {
 			spec: ClusterObjectSetSpec{
