@@ -4,6 +4,8 @@ package controllers_test
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,6 +22,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
+	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
@@ -49,7 +52,7 @@ func codFixture() *ocv1.ClusterObjectDeployment {
 	}
 }
 
-func newCODClient(t *testing.T, objs ...client.Object) client.Client {
+func newCODClient(t *testing.T, objs ...client.Object) client.WithWatch {
 	t.Helper()
 	return testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(newScheme(t)), controllers.SetupIndexes).
 		WithStatusSubresource(&ocv1.ClusterObjectDeployment{}, &ocv1.ClusterObjectSet{}).
@@ -377,4 +380,103 @@ func Test_ClusterObjectDeploymentReconciler_SurfacesAlreadyExists(t *testing.T) 
 	_, err := (&controllers.ClusterObjectDeploymentReconciler{Client: c, Scheme: newScheme(t)}).
 		Reconcile(t.Context(), ctrl.Request{NamespacedName: types.NamespacedName{Name: clusterObjectDeploymentName}})
 	require.Error(t, err, "an AlreadyExists on create must surface as a reconcile error, not be silently tolerated")
+}
+
+func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		latest         int64
+		lifecycleState ocv1.ClusterObjectSetLifecycleState
+		changed        bool
+		wantErr        bool
+		wantCreates    int
+	}{
+		{
+			name:           "allocates final revision after archived foreign-owned history",
+			latest:         ocv1.ClusterObjectSetMaxRevision - 1,
+			lifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+			changed:        false,
+			wantErr:        false,
+			wantCreates:    1,
+		},
+		{
+			name:           "changed template at maximum creates nothing",
+			latest:         ocv1.ClusterObjectSetMaxRevision,
+			lifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+			changed:        true,
+			wantErr:        true,
+			wantCreates:    0,
+		},
+		{
+			name:           "stored maximum int64 cannot overflow",
+			latest:         math.MaxInt64,
+			lifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
+			changed:        false,
+			wantErr:        true,
+			wantCreates:    0,
+		},
+		{
+			name:           "unchanged template at maximum still reconciles",
+			latest:         ocv1.ClusterObjectSetMaxRevision,
+			lifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+			changed:        false,
+			wantErr:        false,
+			wantCreates:    0,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cod := codFixture()
+			latest := &ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: fmt.Sprintf("%s-%d", cod.Name, tc.latest),
+					Labels: map[string]string{
+						labels.TemplateHashKey: hashutil.DeepHashObject(cod.Spec.Template),
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(&ocv1.ClusterObjectDeployment{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "other-deployment",
+								UID:  "other-uid",
+							},
+						}, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind)),
+					},
+				},
+				Spec: ocv1.ClusterObjectSetSpec{
+					Group:               cod.Name,
+					Revision:            tc.latest,
+					LifecycleState:      tc.lifecycleState,
+					CollisionProtection: ocv1.CollisionProtectionPrevent,
+					Phases:              cod.Spec.Template.Spec.Phases,
+				},
+			}
+			if tc.changed {
+				cod.Spec.Template.Spec.CollisionProtection = ocv1.CollisionProtectionNone
+			}
+			creates := 0
+			c := interceptor.NewClient(newCODClient(t, cod, latest), interceptor.Funcs{
+				Create: func(ctx context.Context, cl client.WithWatch, obj client.Object, opts ...client.CreateOption) error {
+					creates++
+					return cl.Create(ctx, obj, opts...)
+				},
+			})
+
+			_, err := reconcileCOD(t, c)
+
+			if tc.wantErr {
+				require.ErrorContains(t, err, fmt.Sprintf("revision limit %d reached", ocv1.ClusterObjectSetMaxRevision))
+				require.ErrorContains(t, err, fmt.Sprintf("group %q", cod.Name))
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.wantCreates, creates)
+			retained, ok := getCOS(t, c, latest.Name)
+			require.True(t, ok)
+			require.Equal(t, latest.Spec, retained.Spec)
+			if tc.wantCreates == 1 {
+				created, ok := getCOS(t, c, fmt.Sprintf("%s-%d", cod.Name, ocv1.ClusterObjectSetMaxRevision))
+				require.True(t, ok)
+				require.Equal(t, ocv1.ClusterObjectSetMaxRevision, created.Spec.Revision)
+			}
+		})
+	}
 }

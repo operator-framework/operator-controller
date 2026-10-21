@@ -261,9 +261,11 @@ When a ClusterExtension is upgraded to a new version:
 4. Once the new revision has rolled out successfully, the old revision is archived
 5. Older archived revisions are garbage collected, keeping the last 5 for auditing
 
-Once a group reaches revision 9999999999, operator-controller reports an error
-instead of allocating another revision, before pruning history or creating new
-Secrets or ClusterObjectSets. Reconciliation of unchanged content still works.
+Once a group reaches revision 9999999999, both the ClusterObjectDeployment
+controller and operator-controller report an error instead of allocating another
+revision. The check happens before creating a ClusterObjectSet and, for
+operator-controller, before pruning history or creating Secrets. Reconciliation
+of unchanged content still works.
 
 ### Relationship with ClusterExtension
 
