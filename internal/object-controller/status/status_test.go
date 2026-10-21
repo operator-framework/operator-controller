@@ -1,11 +1,14 @@
 package status
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"pkg.package-operator.run/boxcutter/machinery"
 	boxcuttertypes "pkg.package-operator.run/boxcutter/machinery/types"
@@ -15,7 +18,9 @@ import (
 )
 
 func TestFromReconcile(t *testing.T) {
-	t.Run("complete sets available and completed at", func(t *testing.T) {
+	now := metav1.Now()
+
+	t.Run("incomplete phase with collision object is present but not synced", func(t *testing.T) {
 		cos := cosWithPhaseObjects(
 			struct {
 				name    string
@@ -32,17 +37,39 @@ func TestFromReconcile(t *testing.T) {
 					&fakeCollisionResult{
 						fakeObjectResult: fakeObjectResult{obj: obj, complete: false, probes: boxcuttertypes.ProbeResultContainer{}},
 					},
-				},
-				},
+				}},
 			},
 		}
-		FromReconcile(&cos, result)
+		FromReconcile(&cos, result, now)
 		require.NotNil(t, cos.Status.ObservedPhases)
 		assert.Equal(t, ocv1.ObjectCounts{Total: 1, Present: 1}, cos.Status.ObservedPhases[0].ObjectCounts)
+		assert.Equal(t, ocv1.PhaseStatusReconciling, cos.Status.ObservedPhases[0].Status)
+	})
+
+	t.Run("progressed marks all phases superseded and preserves total counts", func(t *testing.T) {
+		cos := cosWithPhaseObjects(
+			struct {
+				name    string
+				objects int
+			}{"p1", 2},
+			struct {
+				name    string
+				objects int
+			}{"p2", 3},
+		)
+		result := &fakeRevisionResult{progressed: true}
+		FromReconcile(&cos, result, now)
+		require.Len(t, cos.Status.ObservedPhases, 2)
+		assert.Equal(t, ocv1.PhaseStatusSuperseded, cos.Status.ObservedPhases[0].Status)
+		assert.Equal(t, int64(2), cos.Status.ObservedPhases[0].ObjectCounts.Total)
+		assert.Equal(t, ocv1.PhaseStatusSuperseded, cos.Status.ObservedPhases[1].Status)
+		assert.Equal(t, int64(3), cos.Status.ObservedPhases[1].ObjectCounts.Total)
 	})
 }
 
 func TestFromTeardown(t *testing.T) {
+	now := metav1.Now()
+
 	t.Run("teardown in progress", func(t *testing.T) {
 		cos := cosWithPhaseObjects(
 			struct {
@@ -56,7 +83,7 @@ func TestFromTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1", complete: false, waiting: []boxcuttertypes.ObjectRef{{}, {}}},
 			},
 		}
-		FromTeardown(&cos, result)
+		FromTeardown(&cos, result, now)
 		require.NotNil(t, cos.Status.ObservedPhases)
 		assert.Equal(t, ocv1.ObjectCounts{Total: 3, Present: 2}, cos.Status.ObservedPhases[0].ObjectCounts)
 	})
@@ -74,7 +101,7 @@ func TestFromTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1", complete: true},
 			},
 		}
-		FromTeardown(&cos, result)
+		FromTeardown(&cos, result, now)
 		require.NotNil(t, cos.Status.ObservedPhases)
 		assert.Equal(t, ocv1.ObjectCounts{Total: 5}, cos.Status.ObservedPhases[0].ObjectCounts)
 	})
@@ -103,16 +130,14 @@ func TestFromTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1", complete: false, waiting: []boxcuttertypes.ObjectRef{{}, {}}},
 			},
 		}
-		FromTeardown(&cos, result)
+		FromTeardown(&cos, result, now)
 		require.NotNil(t, cos.Status.ObservedPhases)
 
 		phases := cos.Status.ObservedPhases
 		require.Len(t, phases, 3)
 
 		assert.Equal(t, ocv1.ObjectCounts{Total: 2, Present: 2}, phases[0].ObjectCounts)
-
 		assert.Equal(t, ocv1.ObjectCounts{Total: 3, Present: 2}, phases[1].ObjectCounts)
-
 		assert.Equal(t, ocv1.ObjectCounts{Total: 4}, phases[2].ObjectCounts)
 	})
 }
@@ -199,6 +224,20 @@ func (f *fakePhaseTeardownResult) Gone() []boxcuttertypes.ObjectRef    { return 
 func (f *fakePhaseTeardownResult) Waiting() []boxcuttertypes.ObjectRef { return f.waiting }
 func (f *fakePhaseTeardownResult) String() string                      { return f.name }
 
+func cosSpecWithPhaseObjects(phaseDefs ...struct {
+	name    string
+	objects int
+}) ocv1.ClusterObjectSetSpec {
+	phases := make([]ocv1.ClusterObjectSetPhase, len(phaseDefs))
+	for i, pd := range phaseDefs {
+		objs := make([]ocv1.ClusterObjectSetObject, pd.objects)
+		phases[i] = ocv1.ClusterObjectSetPhase{Name: pd.name, Objects: objs}
+	}
+	return ocv1.ClusterObjectSetSpec{
+		Phases: phases,
+	}
+}
+
 func cosWithPhaseObjects(phaseDefs ...struct {
 	name    string
 	objects int
@@ -220,12 +259,59 @@ func cosWithPhaseObjects(phaseDefs ...struct {
 	}
 }
 
-func TestBuildObservedPhases_ReadOnly(t *testing.T) {
+func TestPreserveCompletionTimes(t *testing.T) {
+	now := metav1.NewTime(time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC))
+	earlier := metav1.NewTime(now.Add(-time.Hour))
+
+	t.Run("sets completedAt on Available phase with no completedAt", func(t *testing.T) {
+		phases := []ocv1.ObservedPhase{
+			{Name: "phase-1", Status: ocv1.PhaseStatusAvailable},
+		}
+		preserveCompletionTimes(&phases, now)
+		require.NotNil(t, phases[0].CompletedAt)
+		assert.Equal(t, now, *phases[0].CompletedAt)
+	})
+
+	t.Run("does not set completedAt on non-Available phase", func(t *testing.T) {
+		phases := []ocv1.ObservedPhase{
+			{Name: "phase-1", Status: ocv1.PhaseStatusReconciling},
+		}
+		preserveCompletionTimes(&phases, now)
+		assert.Nil(t, phases[0].CompletedAt)
+	})
+
+	t.Run("does not overwrite existing completedAt on Available phase", func(t *testing.T) {
+		phases := []ocv1.ObservedPhase{
+			{Name: "phase-1", Status: ocv1.PhaseStatusAvailable, CompletedAt: &earlier},
+		}
+		preserveCompletionTimes(&phases, now)
+		assert.Equal(t, earlier, *phases[0].CompletedAt)
+	})
+}
+
+func TestTruncateMessage(t *testing.T) {
+	t.Run("short message unchanged", func(t *testing.T) {
+		assert.Equal(t, "hello", truncateMessage("hello"))
+	})
+
+	t.Run("message at limit unchanged", func(t *testing.T) {
+		s := strings.Repeat("a", maxMessageLength)
+		assert.Equal(t, s, truncateMessage(s))
+	})
+
+	t.Run("message over limit truncated to maxMessageLength runes", func(t *testing.T) {
+		s := strings.Repeat("a", maxMessageLength+10)
+		result := truncateMessage(s)
+		assert.Len(t, []rune(result), maxMessageLength)
+	})
+}
+
+func TestBuildObservedPhases(t *testing.T) {
 	obj := &unstructured.Unstructured{}
 	obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 	obj.SetName("my-cm")
 
-	spec := cosWithPhaseObjects(
+	spec := cosSpecWithPhaseObjects(
 		struct {
 			name    string
 			objects int
@@ -234,31 +320,59 @@ func TestBuildObservedPhases_ReadOnly(t *testing.T) {
 			name    string
 			objects int
 		}{"phase-2", 3},
-	).Spec
+	)
 
-	t.Run("read-only phase all objects idle and complete", func(t *testing.T) {
+	t.Run("complete phase gets full counts and Available status", func(t *testing.T) {
 		results := []machinery.PhaseResult{
 			&fakePhaseResult{name: "phase-1", complete: true},
+		}
+		var observed []ocv1.ObservedPhase
+		buildObservedPhases(spec.Phases, &observed, results)
+		assert.Equal(t, ocv1.PhaseStatusAvailable, observed[0].Status)
+		assert.Equal(t, ocv1.ObjectCounts{Total: 2, Present: 2, Synced: 2, Ready: 2}, observed[0].ObjectCounts)
+	})
+
+	t.Run("unevaluated phase gets Unknown status and total only", func(t *testing.T) {
+		var observed []ocv1.ObservedPhase
+		buildObservedPhases(spec.Phases, &observed, nil)
+		assert.Equal(t, ocv1.PhaseStatusUnknown, observed[0].Status)
+		assert.Equal(t, ocv1.ObjectCounts{Total: 2}, observed[0].ObjectCounts)
+	})
+
+	t.Run("phase with all synced objects reports WaitingForAssertions", func(t *testing.T) {
+		results := []machinery.PhaseResult{
 			&fakePhaseResult{
-				name:     "phase-2",
-				complete: true,
+				name:     "phase-1",
+				complete: false,
 				objects: []machinery.ObjectResult{
-					&fakeObjectResult{obj: obj, complete: true, paused: true, action: machinery.ActionIdle},
-					&fakeObjectResult{obj: obj, complete: true, paused: true, action: machinery.ActionIdle},
-					&fakeObjectResult{obj: obj, complete: true, paused: true, action: machinery.ActionIdle},
+					&fakeObjectResult{obj: obj, complete: true, action: machinery.ActionIdle},
+					&fakeObjectResult{obj: obj, complete: false, action: machinery.ActionIdle},
 				},
 			},
 		}
-		observedPhases := []ocv1.ObservedPhase{
-			{Name: "phase-1"},
-			{Name: "phase-2"},
-		}
-		buildObservedPhases(spec.Phases, results, &observedPhases)
-		require.Len(t, observedPhases, 2)
-		assert.Equal(t, ocv1.ObjectCounts{Total: 3, Present: 3, Synced: 3, Ready: 3}, observedPhases[1].ObjectCounts)
+		var observed []ocv1.ObservedPhase
+		buildObservedPhases(spec.Phases, &observed, results)
+		assert.Equal(t, ocv1.PhaseStatusWaitingForAssertions, observed[0].Status)
+		assert.Equal(t, ocv1.ObjectCounts{Total: 2, Present: 2, Synced: 2, Ready: 1}, observed[0].ObjectCounts)
 	})
 
-	t.Run("read-only phase with objects needing updates", func(t *testing.T) {
+	t.Run("phase with collision object reports Reconciling", func(t *testing.T) {
+		results := []machinery.PhaseResult{
+			&fakePhaseResult{
+				name:     "phase-1",
+				complete: false,
+				objects: []machinery.ObjectResult{
+					&fakeCollisionResult{fakeObjectResult: fakeObjectResult{obj: obj, complete: false, probes: boxcuttertypes.ProbeResultContainer{}}},
+				},
+			},
+		}
+		var observed []ocv1.ObservedPhase
+		buildObservedPhases(spec.Phases, &observed, results)
+		assert.Equal(t, ocv1.PhaseStatusReconciling, observed[0].Status)
+		assert.Equal(t, ocv1.ObjectCounts{Total: 2, Present: 1}, observed[0].ObjectCounts)
+	})
+
+	t.Run("phase with paused objects reports Pending and tracks details", func(t *testing.T) {
 		results := []machinery.PhaseResult{
 			&fakePhaseResult{name: "phase-1", complete: true},
 			&fakePhaseResult{
@@ -271,71 +385,10 @@ func TestBuildObservedPhases_ReadOnly(t *testing.T) {
 				},
 			},
 		}
-		observedPhases := []ocv1.ObservedPhase{
-			{Name: "phase-1"},
-			{Name: "phase-2"},
-		}
-		buildObservedPhases(spec.Phases, results, &observedPhases)
-		require.Len(t, observedPhases, 2)
-		assert.Equal(t, ocv1.ObjectCounts{Total: 3, Present: 2, Synced: 1, Ready: 1}, observedPhases[1].ObjectCounts)
-	})
-
-	t.Run("active phase synced but one probe failing reports WaitingForAssertions", func(t *testing.T) {
-		results := []machinery.PhaseResult{
-			&fakePhaseResult{
-				name:     "phase-1",
-				complete: false,
-				objects: []machinery.ObjectResult{
-					&fakeObjectResult{obj: obj, complete: true, action: machinery.ActionIdle},
-					&fakeObjectResult{obj: obj, complete: false, action: machinery.ActionUpdated},
-				},
-			},
-		}
-		observedPhases := []ocv1.ObservedPhase{
-			{Name: "phase-1"},
-		}
-		buildObservedPhases(spec.Phases, results, &observedPhases)
-		require.Len(t, observedPhases, 2)
-		assert.Equal(t, ocv1.ObjectCounts{Total: 2, Present: 2, Synced: 2, Ready: 1}, observedPhases[0].ObjectCounts)
-	})
-
-	t.Run("active phase fully synced but probes failing", func(t *testing.T) {
-		results := []machinery.PhaseResult{
-			&fakePhaseResult{
-				name:     "phase-1",
-				complete: false,
-				objects: []machinery.ObjectResult{
-					&fakeObjectResult{obj: obj, complete: true, action: machinery.ActionIdle},
-					&fakeObjectResult{obj: obj, complete: false, action: machinery.ActionIdle},
-				},
-			},
-		}
-		observedPhases := []ocv1.ObservedPhase{
-			{Name: "phase-1"},
-		}
-		buildObservedPhases(spec.Phases, results, &observedPhases)
-		require.Len(t, observedPhases, 2)
-		assert.Equal(t, ocv1.ObjectCounts{Total: 2, Present: 2, Synced: 2, Ready: 1}, observedPhases[0].ObjectCounts)
-	})
-
-	t.Run("complete phase has all counts equal to total", func(t *testing.T) {
-		results := []machinery.PhaseResult{
-			&fakePhaseResult{name: "phase-1", complete: true},
-		}
-		observedPhases := []ocv1.ObservedPhase{
-			{Name: "phase-1"},
-		}
-		buildObservedPhases(spec.Phases, results, &observedPhases)
-		require.Len(t, observedPhases, 2)
-		assert.Equal(t, ocv1.ObjectCounts{Total: 2, Present: 2, Synced: 2, Ready: 2}, observedPhases[0].ObjectCounts)
-	})
-
-	t.Run("unknown phase has total but zero synced available and present", func(t *testing.T) {
-		observedPhases := []ocv1.ObservedPhase{
-			{Name: "phase-1"},
-		}
-		buildObservedPhases(spec.Phases, nil, &observedPhases)
-		require.Len(t, observedPhases, 2)
-		assert.Equal(t, ocv1.ObjectCounts{Total: 2}, observedPhases[0].ObjectCounts)
+		var observed []ocv1.ObservedPhase
+		buildObservedPhases(spec.Phases, &observed, results)
+		require.Len(t, observed, 2)
+		assert.Equal(t, ocv1.PhaseStatusPending, observed[1].Status)
+		assert.Equal(t, ocv1.ObjectCounts{Total: 3, Present: 2, Synced: 1, Ready: 1}, observed[1].ObjectCounts)
 	})
 }

@@ -494,7 +494,13 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.operator-framework.operator-controller.api.v1.ObservedPhase
   map:
     fields:
+    - name: completedAt
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
     - name: digest
+      type:
+        scalar: string
+    - name: message
       type:
         scalar: string
     - name: name
@@ -503,6 +509,11 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: objectCounts
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.ObjectCounts
+    - name: status
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.PhaseStatus
+- name: com.github.operator-framework.operator-controller.api.v1.PhaseStatus
+  scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.PreflightConfig
   map:
     fields:
