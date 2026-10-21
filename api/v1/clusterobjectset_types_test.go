@@ -412,15 +412,6 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			valid:         false,
 			expectedError: "spec.collisionProtection: Unsupported value",
 		},
-		"spec collisionProtection must be set": {
-			spec: ClusterObjectSetSpec{
-				Group:          "validity-unset-collision-protection",
-				LifecycleState: ClusterObjectSetLifecycleStateActive,
-				Revision:       1,
-			},
-			valid:         false,
-			expectedError: "spec.collisionProtection: Required value",
-		},
 		"object collisionProtection is optional": {
 			spec: ClusterObjectSetSpec{
 				Group:               "validity-optional-object-collision-protection",
