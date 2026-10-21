@@ -65,7 +65,7 @@ Feature: ClusterObjectSet object collision and adoption
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        name: owner-${TEST_NAMESPACE}
+        name: owner-${NAME}-1
       spec:
         lifecycleState: Active
         group: owner-${NAME}
@@ -83,13 +83,13 @@ Feature: ClusterObjectSet object collision and adoption
                 k: owned-by-owner
         revision: 1
       """
-    And ClusterObjectSet "owner-${TEST_NAMESPACE}" reports Ready as True with Reason AllObjectsReady
+    And ClusterObjectSet "owner-${NAME}-1" reports Ready as True with Reason AllObjectsReady
     When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        name: main-${TEST_NAMESPACE}
+        name: main-${NAME}-1
       spec:
         lifecycleState: Active
         group: main-${NAME}
@@ -107,7 +107,7 @@ Feature: ClusterObjectSet object collision and adoption
                 k: contested
         revision: 1
       """
-    Then ClusterObjectSet "main-${TEST_NAMESPACE}" reports Ready as False with Reason ObjectCollision and Message includes:
+    Then ClusterObjectSet "main-${NAME}-1" reports Ready as False with Reason ObjectCollision and Message includes:
     """
       Cannot take ownership of 1 object(s) in phase "resources" because they are owned by another controller or already exist.
     """
@@ -119,7 +119,7 @@ Feature: ClusterObjectSet object collision and adoption
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        name: owner-${TEST_NAMESPACE}
+        name: owner-${NAME}-1
       spec:
         lifecycleState: Active
         group: owner-${NAME}
@@ -137,13 +137,13 @@ Feature: ClusterObjectSet object collision and adoption
                 k: owned-by-owner
         revision: 1
       """
-    And ClusterObjectSet "owner-${TEST_NAMESPACE}" reports Ready as True with Reason AllObjectsReady
+    And ClusterObjectSet "owner-${NAME}-1" reports Ready as True with Reason AllObjectsReady
     When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        name: main-${TEST_NAMESPACE}
+        name: main-${NAME}-1
       spec:
         lifecycleState: Active
         group: main-${NAME}
@@ -161,7 +161,7 @@ Feature: ClusterObjectSet object collision and adoption
                 k: contested
         revision: 1
       """
-    Then ClusterObjectSet "main-${TEST_NAMESPACE}" reports Ready as False with Reason ObjectCollision and Message includes:
+    Then ClusterObjectSet "main-${NAME}-1" reports Ready as False with Reason ObjectCollision and Message includes:
     """
       Cannot take ownership of 1 object(s) in phase "resources" because they are owned by another controller or already exist.
     """
@@ -261,7 +261,7 @@ Feature: ClusterObjectSet object collision and adoption
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        name: owner-${TEST_NAMESPACE}
+        name: owner-${NAME}-1
       spec:
         lifecycleState: Active
         group: owner-${NAME}
@@ -279,13 +279,13 @@ Feature: ClusterObjectSet object collision and adoption
                 k: owned-by-owner
         revision: 1
       """
-    And ClusterObjectSet "owner-${TEST_NAMESPACE}" reports Ready as True with Reason AllObjectsReady
+    And ClusterObjectSet "owner-${NAME}-1" reports Ready as True with Reason AllObjectsReady
     When ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        name: main-${TEST_NAMESPACE}
+        name: main-${NAME}-1
       spec:
         lifecycleState: Active
         group: main-${NAME}
@@ -303,7 +303,7 @@ Feature: ClusterObjectSet object collision and adoption
                 k: contested
         revision: 1
       """
-    Then ClusterObjectSet "main-${TEST_NAMESPACE}" reports Ready as True with Reason AllObjectsReady
+    Then ClusterObjectSet "main-${NAME}-1" reports Ready as True with Reason AllObjectsReady
     And resource "configmap/shared-cm" matches
       """
       data:

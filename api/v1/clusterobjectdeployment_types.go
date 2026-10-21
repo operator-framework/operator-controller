@@ -133,7 +133,7 @@ type ClusterObjectDeployment struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// metadata is the standard object's metadata. Names are valid COS groups of at
-	// most 52 characters; generated child names also include an int64 revision suffix.
+	// most 52 characters; child names also include a hyphen and up to ten revision digits.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 

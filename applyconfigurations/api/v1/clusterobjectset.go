@@ -36,6 +36,9 @@ import (
 // single revision at a time. Ownership of objects is transitioned from one revision
 // to the next as new revisions are rolled out. Once the latest revision has rolled
 // out successfully, previous active revisions are archived for posterity.
+// Set metadata.name explicitly to <spec.group>-<spec.revision>, using decimal
+// notation without leading zeros. This ensures revision uniqueness within a group.
+// Name generation through metadata.generateName is not supported.
 type ClusterObjectSetApplyConfiguration struct {
 	metav1.TypeMetaApplyConfiguration `json:",inline"`
 	// metadata is the standard object's metadata.

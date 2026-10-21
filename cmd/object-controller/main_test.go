@@ -114,7 +114,7 @@ func TestStandaloneController(t *testing.T) {
 				obj = ocv1.ClusterObjectSetObject{Ref: ocv1.ObjectSourceRef{Name: secret.Name, Namespace: secret.Namespace, Key: "object"}}
 			}
 			cos := &ocv1.ClusterObjectSet{
-				ObjectMeta: metav1.ObjectMeta{Name: name},
+				ObjectMeta: metav1.ObjectMeta{Name: name + "-1"},
 				Spec: ocv1.ClusterObjectSetSpec{
 					Group:          name,
 					LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive, Revision: 1,

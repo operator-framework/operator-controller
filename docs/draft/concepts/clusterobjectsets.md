@@ -23,6 +23,12 @@ ClusterObjectSets can be used by any controller or system that needs to manage t
 
 The `group` value must be 1–52 characters long, start with a lowercase letter,
 contain only lowercase letters, digits or hyphens, and end with a letter or digit.
+Set `metadata.name` explicitly to `<group>-<revision>`, with the revision in decimal
+and without leading zeros. Revisions range from 1 to 9999999999, inclusive: ten digits plus
+the separating hyphen fit within a 63-character name even for a 52-character group.
+This naming rule ensures that a group cannot contain duplicate revision numbers.
+Name generation through `metadata.generateName` is not supported.
+
 Revisions in the same group can transfer managed objects between them even when
 they have different controller owners or no owner references. They share the
 server-side apply field manager `cos-group/<group>`. Different groups remain
@@ -255,6 +261,10 @@ When a ClusterExtension is upgraded to a new version:
 4. Once the new revision has rolled out successfully, the old revision is archived
 5. Older archived revisions are garbage collected, keeping the last 5 for auditing
 
+Once a group reaches revision 9999999999, operator-controller reports an error
+instead of allocating another revision, before pruning history or creating new
+Secrets or ClusterObjectSets. Reconciliation of unchanged content still works.
+
 ### Relationship with ClusterExtension
 
 A `ClusterExtension` owns one or more `ClusterObjectSet` resources.
@@ -284,7 +294,7 @@ This example shows a ClusterObjectSet with objects embedded directly in the spec
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterObjectSet
 metadata:
-  name: my-app-rev1
+  name: my-app-1
 spec:
   group: my-app
   revision: 1
@@ -365,7 +375,7 @@ Object manifests are stored in immutable Secrets. Secret names are content-addre
 apiVersion: v1
 kind: Secret
 metadata:
-  name: my-app-rev1-3a7f1b9c0e2d4f68
+  name: my-app-1-3a7f1b9c0e2d4f68
   namespace: olmv1-system
 immutable: true
 data:
@@ -376,7 +386,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: my-app-rev1-8b2e4a6c1d3f5097
+  name: my-app-1-8b2e4a6c1d3f5097
   namespace: olmv1-system
 immutable: true
 data:
@@ -392,7 +402,7 @@ The ClusterObjectSet references these Secrets:
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterObjectSet
 metadata:
-  name: my-app-rev1
+  name: my-app-1
 spec:
   group: my-app
   revision: 1
@@ -402,23 +412,23 @@ spec:
   - name: crds
     objects:
     - ref:
-        name: my-app-rev1-3a7f1b9c0e2d4f68
+        name: my-app-1-3a7f1b9c0e2d4f68
         namespace: olmv1-system
         key: "K8sTl2xQa0vNpR7mW4dYcJfHbE9gUiAoZX1sDj6wFCy"
   - name: rbac
     objects:
     - ref:
-        name: my-app-rev1-8b2e4a6c1d3f5097
+        name: my-app-1-8b2e4a6c1d3f5097
         namespace: olmv1-system
         key: "Pm5tRqLwXv8sCj3kFdNhYe7bUiA0oZG1x2W9acDfHJy"
     - ref:
-        name: my-app-rev1-8b2e4a6c1d3f5097
+        name: my-app-1-8b2e4a6c1d3f5097
         namespace: olmv1-system
         key: "Vn4mTsLwXp8rCk3jFdNhYe7bUiA0oZG1x2W9acDfHQy"
   - name: deploy
     objects:
     - ref:
-        name: my-app-rev1-8b2e4a6c1d3f5097
+        name: my-app-1-8b2e4a6c1d3f5097
         namespace: olmv1-system
         key: "Bq9nRtLxYw2sDk4lGePhZf8cVjB1pUiA0oZH3x5WaCdy"
 ```
@@ -445,6 +455,6 @@ Example output:
 
 ```
 NAME                   GROUP          READY     AGE
-my-extension-abc12     my-extension   Unknown   2d
-my-extension-def34     my-extension   True      1h
+my-extension-1         my-extension   Unknown   2d
+my-extension-2         my-extension   True      1h
 ```

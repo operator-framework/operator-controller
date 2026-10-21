@@ -48,8 +48,8 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	// revision is a required, immutable sequence number identifying a specific
 	// ClusterObjectSet within a sequence of related revisions.
 	//
-	// The revision field must be a positive integer.
-	// Each ClusterObjectSet in the same revision sequence must have a unique revision number.
+	// The revision field must be an integer from 1 to 9999999999, inclusive.
+	// Each ClusterObjectSet in the same group must have a unique revision number.
 	Revision *int64 `json:"revision,omitempty"`
 	// phases is an optional, immutable list of phases that group objects to be applied together.
 	//
