@@ -18,6 +18,11 @@ limitations under the License.
 
 package v1
 
+import (
+	apiv1 "github.com/operator-framework/operator-controller/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 // ObservedPhaseApplyConfiguration represents a declarative configuration of the ObservedPhase type for use
 // with apply.
 //
@@ -25,13 +30,26 @@ package v1
 type ObservedPhaseApplyConfiguration struct {
 	// name is the phase name matching a phase in spec.phases.
 	Name *string `json:"name,omitempty"`
+	// status is the current state of this phase in the rollout. Must be one of
+	// InvalidSpecification, Pending, Reconciling,
+	// Stabilizing, Ready, Unknown, Superseded, Archiving, or Archived.
+	Status *apiv1.PhaseStatus `json:"status,omitempty"`
+	// completedAt is the timestamp when this phase first became Ready.
+	// Set once and never modified. Nil means the phase has never been
+	// Ready.
+	CompletedAt *metav1.Time `json:"completedAt,omitempty"`
+	// message is a phase-level message providing context about the
+	// current status (e.g. a validation error for InvalidSpecification
+	// phases, or a summary for Pending phases). At most 1024 characters;
+	// longer messages are truncated by the controller.
+	Message *string `json:"message,omitempty"`
 	// digest is the digest of the phase's resolved object content
 	// at first successful resolution, in the format "<algorithm>:<hex>".
 	Digest *string `json:"digest,omitempty"`
 	// objectCounts reports the number of objects in this phase by state.
-	// It is omitted until counts have been computed; when present, all count
-	// fields are reported (including zeros).
 	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
+	// lastTransitionTime is the last time the phase transitioned from one status to another.
+	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
 }
 
 // ObservedPhaseApplyConfiguration constructs a declarative configuration of the ObservedPhase type for use with
@@ -48,6 +66,30 @@ func (b *ObservedPhaseApplyConfiguration) WithName(value string) *ObservedPhaseA
 	return b
 }
 
+// WithStatus sets the Status field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Status field is set to the value of the last call.
+func (b *ObservedPhaseApplyConfiguration) WithStatus(value apiv1.PhaseStatus) *ObservedPhaseApplyConfiguration {
+	b.Status = &value
+	return b
+}
+
+// WithCompletedAt sets the CompletedAt field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the CompletedAt field is set to the value of the last call.
+func (b *ObservedPhaseApplyConfiguration) WithCompletedAt(value metav1.Time) *ObservedPhaseApplyConfiguration {
+	b.CompletedAt = &value
+	return b
+}
+
+// WithMessage sets the Message field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Message field is set to the value of the last call.
+func (b *ObservedPhaseApplyConfiguration) WithMessage(value string) *ObservedPhaseApplyConfiguration {
+	b.Message = &value
+	return b
+}
+
 // WithDigest sets the Digest field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Digest field is set to the value of the last call.
@@ -61,5 +103,13 @@ func (b *ObservedPhaseApplyConfiguration) WithDigest(value string) *ObservedPhas
 // If called multiple times, the ObjectCounts field is set to the value of the last call.
 func (b *ObservedPhaseApplyConfiguration) WithObjectCounts(value *ObjectCountsApplyConfiguration) *ObservedPhaseApplyConfiguration {
 	b.ObjectCounts = value
+	return b
+}
+
+// WithLastTransitionTime sets the LastTransitionTime field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the LastTransitionTime field is set to the value of the last call.
+func (b *ObservedPhaseApplyConfiguration) WithLastTransitionTime(value metav1.Time) *ObservedPhaseApplyConfiguration {
+	b.LastTransitionTime = &value
 	return b
 }

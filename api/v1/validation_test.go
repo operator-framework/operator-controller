@@ -257,9 +257,11 @@ func TestClusterObjectSetDigestImmutable(t *testing.T) {
 	// A phase digest may be set once, from empty.
 	cos.Status.ObservedPhases = []ObservedPhase{
 		{
-			Name:         "deploy",
-			Digest:       "sha256:abc123",
-			ObjectCounts: ObjectCounts{Total: 1},
+			Name:               "deploy",
+			Digest:             "sha256:abc123",
+			ObjectCounts:       ObjectCounts{Total: 1},
+			Status:             PhaseStatusReady,
+			LastTransitionTime: metav1.Now(),
 		},
 	}
 	require.NoError(t, c.Status().Update(t.Context(), cos))
