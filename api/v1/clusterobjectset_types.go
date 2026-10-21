@@ -506,6 +506,7 @@ const (
 // update, which would otherwise allow the timestamp to be cleared and re-set.
 //
 // +kubebuilder:validation:XValidation:rule="!has(oldSelf.completedAt) || has(self.completedAt)",message="completedAt cannot be removed once set"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.observedPhases) || oldSelf.observedPhases.all(p, !has(p.completedAt) || (has(self.observedPhases) && self.observedPhases.exists(q, q.name == p.name)))",message="completed phases cannot be removed from observedPhases"
 type ClusterObjectSetStatus struct {
 	// conditions is an optional list of status conditions describing the state of the
 	// ClusterObjectSet.
@@ -560,7 +561,9 @@ type ClusterObjectSetStatus struct {
 	CompletedAt metav1.Time `json:"completedAt,omitempty,omitzero"`
 }
 
-// ObservedPhase records the observed content digest of a resolved phase.
+// ObservedPhase records the content and rollout progress of a resolved phase.
+//
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.completedAt) || has(self.completedAt)",message="completedAt cannot be removed once set"
 type ObservedPhase struct {
 	// name is the phase name matching a phase in spec.phases.
 	//
@@ -585,6 +588,15 @@ type ObservedPhase struct {
 	// fields are reported (including zeros).
 	// +optional
 	ObjectCounts ObjectCounts `json:"objectCounts,omitzero"`
+
+	// completedAt is the timestamp at which this phase was first observed to have
+	// successfully reconciled and passed its probes after all preceding phases
+	// completed. It is set once and is immutable thereafter, even if the phase
+	// later becomes unhealthy. ClusterObjectDeployment uses it as a progress
+	// milestone for its inactivity deadline.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable once set"
+	CompletedAt metav1.Time `json:"completedAt,omitempty,omitzero"`
 }
 
 // ObjectCounts reports the number of objects in a ClusterObjectSet or phase by state.

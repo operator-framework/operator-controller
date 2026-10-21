@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -238,6 +239,72 @@ func TestClusterObjectSetCompletedAtCannotBeRemoved(t *testing.T) {
 	cos.Status.CompletedAt = metav1.Time{}
 	err := c.Status().Update(t.Context(), cos)
 	require.True(t, errors.IsInvalid(err), "expected removal to fail as invalid, but got: %v", err)
+}
+
+func TestClusterObjectSetPhaseCompletedAt(t *testing.T) {
+	c := newClient(t)
+	firstReady := metav1.NewTime(time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC))
+
+	for i, tc := range []struct {
+		name              string
+		oldObservedPhases []ObservedPhase
+		newObservedPhases []ObservedPhase
+		wantErr           bool
+	}{
+		{
+			name:              "set the first completion timestamp",
+			oldObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123"}},
+			newObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123", CompletedAt: firstReady}},
+		},
+		{
+			name:              "reapply the same completion timestamp",
+			oldObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123", CompletedAt: firstReady}},
+			newObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123", CompletedAt: firstReady}},
+		},
+		{
+			name:              "reject changing the completion timestamp",
+			oldObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123", CompletedAt: firstReady}},
+			newObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123", CompletedAt: metav1.NewTime(firstReady.Add(time.Minute))}},
+			wantErr:           true,
+		},
+		{
+			name:              "reject removing the completion timestamp",
+			oldObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123", CompletedAt: firstReady}},
+			newObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123"}},
+			wantErr:           true,
+		},
+		{
+			name:              "reject removing a completed phase",
+			oldObservedPhases: []ObservedPhase{{Name: "deploy", Digest: "sha256:abc123", CompletedAt: firstReady}},
+			newObservedPhases: nil,
+			wantErr:           true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cos := &ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("cos-phase-completedat-%d", i)},
+				Spec: ClusterObjectSetSpec{
+					Group:               "test-group",
+					Revision:            1,
+					CollisionProtection: CollisionProtectionPrevent,
+					LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				},
+			}
+			require.NoError(t, c.Create(t.Context(), cos))
+			cos.Status.ObservedPhases = tc.oldObservedPhases
+			require.NoError(t, c.Status().Update(t.Context(), cos))
+
+			cos.Status.ObservedPhases = tc.newObservedPhases
+			err := c.Status().Update(t.Context(), cos)
+			if tc.wantErr {
+				require.True(t, errors.IsInvalid(err), "expected update to fail as invalid, but got: %v", err)
+				return
+			}
+			require.NoError(t, err)
+			require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(cos), cos))
+			require.True(t, apiequality.Semantic.DeepEqual(tc.newObservedPhases, cos.Status.ObservedPhases), "phase status must survive storage")
+		})
+	}
 }
 
 func TestClusterObjectSetDigestImmutable(t *testing.T) {
