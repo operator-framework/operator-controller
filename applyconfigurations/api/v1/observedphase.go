@@ -48,6 +48,15 @@ type ObservedPhaseApplyConfiguration struct {
 	Digest *string `json:"digest,omitempty"`
 	// objectCounts reports the number of objects in this phase by state.
 	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
+	// objectDetails lists objects in this phase that are not yet
+	// complete. For Reconciling and Pending phases, this includes probe
+	// failures, collisions, creation/update errors, and any other
+	// condition preventing completion. For TearingDown phases, this
+	// lists objects still awaiting deletion. Each entry identifies the
+	// object and carries failure messages. Empty when status is
+	// Available, TeardownComplete, or Unknown. The list may contain at
+	// most 50 entries, matching the maximum number of objects per phase.
+	ObjectDetails []ObjectStatusApplyConfiguration `json:"objectDetails,omitempty"`
 }
 
 // ObservedPhaseApplyConfiguration constructs a declarative configuration of the ObservedPhase type for use with
@@ -101,5 +110,18 @@ func (b *ObservedPhaseApplyConfiguration) WithDigest(value string) *ObservedPhas
 // If called multiple times, the ObjectCounts field is set to the value of the last call.
 func (b *ObservedPhaseApplyConfiguration) WithObjectCounts(value *ObjectCountsApplyConfiguration) *ObservedPhaseApplyConfiguration {
 	b.ObjectCounts = value
+	return b
+}
+
+// WithObjectDetails adds the given value to the ObjectDetails field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ObjectDetails field.
+func (b *ObservedPhaseApplyConfiguration) WithObjectDetails(values ...*ObjectStatusApplyConfiguration) *ObservedPhaseApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithObjectDetails")
+		}
+		b.ObjectDetails = append(b.ObjectDetails, *values[i])
+	}
 	return b
 }

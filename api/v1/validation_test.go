@@ -260,7 +260,7 @@ func TestClusterObjectSetDigestImmutable(t *testing.T) {
 			Name:         "deploy",
 			Digest:       "sha256:abc123",
 			ObjectCounts: ObjectCounts{Total: 1},
-			Status:       PhaseStatusAvailable,
+			Status:       PhaseStatusReady,
 		},
 	}
 	require.NoError(t, c.Status().Update(t.Context(), cos))

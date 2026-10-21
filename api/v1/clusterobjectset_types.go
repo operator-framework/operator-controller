@@ -565,7 +565,6 @@ type ClusterObjectSetStatus struct {
 }
 
 // ObservedPhase records the observed content digest of a resolved phase.
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.completedAt) || has(self.completedAt)",message="completedAt cannot be removed once set"
 type ObservedPhase struct {
 	// name is the phase name matching a phase in spec.phases.
 	//
@@ -579,12 +578,11 @@ type ObservedPhase struct {
 	// one of Invalid, Pending, Reconciling, WaitingForAssertions,
 	// Available, Unknown, Superseded, TearingDown, or TeardownComplete.
 	// +required
-	Status PhaseStatus `json:"status,omitempty"`
+	Status PhaseStatus `json:"status"`
 
 	// completedAt is the timestamp when this phase first became Available.
 	// Set once and never cleared. Nil means the phase has never been
 	// Available.
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable"
 	// +optional
 	CompletedAt *metav1.Time `json:"completedAt,omitempty"`
 
@@ -609,6 +607,19 @@ type ObservedPhase struct {
 	// objectCounts reports the number of objects in this phase by state.
 	// +optional
 	ObjectCounts ObjectCounts `json:"objectCounts,omitzero"`
+
+	// objectDetails lists objects in this phase that are not yet
+	// complete. For Reconciling and Pending phases, this includes probe
+	// failures, collisions, creation/update errors, and any other
+	// condition preventing completion. For TearingDown phases, this
+	// lists objects still awaiting deletion. Each entry identifies the
+	// object and carries failure messages. Empty when status is
+	// Available, TeardownComplete, or Unknown. The list may contain at
+	// most 50 entries, matching the maximum number of objects per phase.
+	// +kubebuilder:validation:MaxItems=50
+	// +listType=atomic
+	// +optional
+	ObjectDetails []ObjectStatus `json:"objectDetails,omitempty"`
 }
 
 // ObjectCounts reports the number of objects in a ClusterObjectSet or phase by state.
@@ -643,20 +654,68 @@ type ObjectCounts struct {
 	Ready int64 `json:"ready"`
 }
 
+// ObjectStatus identifies a managed object and its failure messages.
+type ObjectStatus struct {
+	// group is the API group of the object (empty string for core
+	// resources). At most 253 characters (DNS subdomain max).
+	// +kubebuilder:validation:MaxLength=253
+	// +optional
+	Group string `json:"group,omitempty"`
+
+	// version is the API version of the object. Must be between 1 and
+	// 63 characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +required
+	Version string `json:"version,omitempty"`
+
+	// kind is the kind of the object. Must be between 1 and 63
+	// characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +required
+	Kind string `json:"kind,omitempty"`
+
+	// namespace is the namespace of the object. Empty for cluster-scoped
+	// resources. At most 253 characters (DNS subdomain max).
+	// +kubebuilder:validation:MaxLength=253
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// name is the name of the object. Must be between 1 and 253
+	// characters (DNS subdomain max).
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +required
+	Name string `json:"name,omitempty"`
+
+	// messages lists the failure reasons for this object. The maximum
+	// of 17 entries accounts for up to 16 assertion probe failures
+	// plus one collision message. Each message is at most 1024
+	// characters; longer messages are truncated by the controller.
+	// +kubebuilder:validation:MaxItems=17
+	// +kubebuilder:validation:items:MaxLength=1024
+	// +listType=atomic
+	// +optional
+	Messages []string `json:"messages,omitempty"`
+}
+
 // PhaseStatus describes the current state of a phase in the rollout.
 //
-// +kubebuilder:validation:Enum=Invalid;Pending;Reconciling;WaitingForAssertions;Available;Unknown;Superseded;TearingDown;TeardownComplete
+// +kubebuilder:validation:Enum=Invalid;Pending;Reconciling;WaitingForAssertions;Ready;Unknown;Superseded;TearingDown;TeardownComplete
 type PhaseStatus string
 
 const (
 	// PhaseStatusInvalid indicates the phase failed preflight validation.
-	// Some errors are permanent (e.g. cross-phase duplication), while others
+	// The error and objectDetails fields describe what went wrong. Some
+	// errors are permanent (e.g. cross-phase duplication), while others
 	// may resolve on a future reconcile (e.g. a missing CRD is installed).
 	PhaseStatusInvalid PhaseStatus = "Invalid"
 
 	// PhaseStatusPending indicates the phase is not being actively
 	// reconciled, but the controller has checked and some objects do not
-	// match the desired state.
+	// match the desired state. The objectDetails field lists what would
+	// need to change.
 	PhaseStatusPending PhaseStatus = "Pending"
 
 	// PhaseStatusReconciling indicates the controller is actively applying
@@ -669,9 +728,9 @@ const (
 	// external actions to bring the objects into the expected state.
 	PhaseStatusWaitingForAssertions PhaseStatus = "WaitingForAssertions"
 
-	// PhaseStatusAvailable indicates all objects in this phase are synced
+	// PhaseStatusReady indicates all objects in this phase are synced
 	// and pass their assertions.
-	PhaseStatusAvailable PhaseStatus = "Available"
+	PhaseStatusReady PhaseStatus = "Ready"
 
 	// PhaseStatusUnknown indicates this phase was not evaluated during
 	// the most recent reconcile.
@@ -682,7 +741,8 @@ const (
 	PhaseStatusSuperseded PhaseStatus = "Superseded"
 
 	// PhaseStatusTearingDown indicates the controller is actively deleting
-	// objects in this phase.
+	// objects in this phase. Objects still awaiting deletion are listed
+	// in objectDetails.
 	PhaseStatusTearingDown PhaseStatus = "TearingDown"
 
 	// PhaseStatusTeardownComplete indicates all objects in this phase have

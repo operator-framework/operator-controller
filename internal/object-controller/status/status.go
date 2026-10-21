@@ -1,8 +1,15 @@
 package status
 
 import (
+	"fmt"
+	"maps"
+	"slices"
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"pkg.package-operator.run/boxcutter/machinery"
+	"pkg.package-operator.run/boxcutter/machinery/types"
+	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
@@ -62,8 +69,8 @@ func allPhasesWithStatus(specPhases []ocv1.ClusterObjectSetPhase, observedPhases
 	for i := range op {
 		op[i].ObjectCounts.Total = int64(objTotalCountMap[op[i].Name])
 		op[i].Status = status
-		// Clear any potentially outdated messages
 		op[i].Message = ""
+		op[i].ObjectDetails = nil
 	}
 	*observedPhases = op
 }
@@ -71,7 +78,7 @@ func allPhasesWithStatus(specPhases []ocv1.ClusterObjectSetPhase, observedPhases
 // buildObservedPhases constructs observed phases from reconcile phase results.
 // Complete phases receive full counts (Total=Present=Synced=Ready); incomplete phases are handled by incompletePhase.
 func buildObservedPhases(specPhases []ocv1.ClusterObjectSetPhase, observedPhases *[]ocv1.ObservedPhase, phaseResults []machinery.PhaseResult) {
-	mapSpecPhases(specPhases, observedPhases, phaseResults, ocv1.PhaseStatusAvailable, "Phase was not evaluated",
+	mapSpecPhases(specPhases, observedPhases, phaseResults, ocv1.PhaseStatusReady, "Phase was not evaluated",
 		func(total int64) ocv1.ObjectCounts {
 			return ocv1.ObjectCounts{Total: total, Present: total, Synced: total, Ready: total}
 		},
@@ -86,6 +93,7 @@ func incompletePhase(sp ocv1.ClusterObjectSetPhase, pr machinery.PhaseResult, ob
 	observedPhase.ObjectCounts = ocv1.ObjectCounts{Total: int64(len(sp.Objects))}
 
 	paused := false
+	objectDetails := make([]ocv1.ObjectStatus, 0, len(pr.GetObjects()))
 	for _, obj := range pr.GetObjects() {
 		if !obj.IsPaused() || obj.Action() != machinery.ActionCreated {
 			observedPhase.ObjectCounts.Present++
@@ -96,15 +104,19 @@ func incompletePhase(sp ocv1.ClusterObjectSetPhase, pr machinery.PhaseResult, ob
 				observedPhase.ObjectCounts.Synced++
 			}
 		} else {
-			switch obj.Action() {
-			case machinery.ActionIdle, machinery.ActionUpdated, machinery.ActionCreated, machinery.ActionRecovered:
+			if obj.Action() == machinery.ActionIdle {
 				observedPhase.ObjectCounts.Synced++
 			}
 		}
 		if obj.IsComplete() {
 			observedPhase.ObjectCounts.Ready++
+			continue
 		}
+		os := objectStatusFromRef(types.ToObjectRef(obj.Object()))
+		os.Messages = objectMessages(obj)
+		objectDetails = append(objectDetails, os)
 	}
+	observedPhase.ObjectDetails = objectDetails
 
 	switch {
 	case paused:
@@ -161,12 +173,19 @@ func tearingDownPhase(sp ocv1.ClusterObjectSetPhase, pr machinery.PhaseTeardownR
 		Present: int64(len(pr.Waiting())),
 	}
 
+	objectDetails := make([]ocv1.ObjectStatus, 0, len(pr.Waiting()))
 	if active {
 		op.Status = ocv1.PhaseStatusTearingDown
 	} else {
 		op.Status = ocv1.PhaseStatusPending
 		op.Message = "Waiting for later phases to complete teardown"
 	}
+	for _, ref := range pr.Waiting() {
+		os := objectStatusFromRef(ref)
+		os.Messages = []string{"awaiting deletion"}
+		objectDetails = append(objectDetails, os)
+	}
+	op.ObjectDetails = objectDetails
 }
 
 // mapSpecPhases merges spec phase definitions with evaluated phase results into observedPhases.
@@ -207,17 +226,18 @@ func mapSpecPhases[T interface {
 		if _, initialized := observedPhasesMap[sp.Name]; !initialized {
 			observedPhasesMap[sp.Name] = &ocv1.ObservedPhase{Name: sp.Name}
 		}
-		// Clear any potentially outdated messages
 		observedPhasesMap[sp.Name].Message = ""
 		if !evaluated {
 			observedPhasesMap[sp.Name].Status = ocv1.PhaseStatusUnknown
 			observedPhasesMap[sp.Name].Message = truncateMessage(unevaluatedMessage)
 			observedPhasesMap[sp.Name].ObjectCounts = ocv1.ObjectCounts{Total: total}
+			observedPhasesMap[sp.Name].ObjectDetails = nil
 			continue
 		}
 		if r.IsComplete() {
 			observedPhasesMap[sp.Name].Status = completeStatus
 			observedPhasesMap[sp.Name].ObjectCounts = completeObjectCounts(total)
+			observedPhasesMap[sp.Name].ObjectDetails = nil
 			continue
 		}
 		buildIncomplete(sp, r, observedPhasesMap[sp.Name])
@@ -232,18 +252,118 @@ func mapSpecPhases[T interface {
 	*observedPhases = result
 }
 
-// preserveCompletionTimes sets CompletedAt to now on any Available phase that
-// does not already have a completion time recorded.
+// objectStatusFromRef constructs an ObjectStatus identifying the object by
+// group, version, kind, namespace, and name.
+func objectStatusFromRef(ref types.ObjectRef) ocv1.ObjectStatus {
+	return ocv1.ObjectStatus{
+		Group:     ref.Group,
+		Version:   ref.Version,
+		Kind:      ref.Kind,
+		Namespace: ref.Namespace,
+		Name:      ref.Name,
+	}
+}
+
+// objectMessages returns messages describing why obj is not yet complete,
+// delegating to pausedObjectMessages for paused non-idle objects.
+func objectMessages(obj machinery.ObjectResult) []string {
+	if obj.IsPaused() && obj.Action() != machinery.ActionIdle {
+		return pausedObjectMessages(obj)
+	}
+
+	var msgs []string
+
+	if obj.Action() == machinery.ActionCollision {
+		msgs = append(msgs, "object ownership collision")
+	}
+
+	probes := obj.ProbeResults()
+	for _, probeType := range slices.Sorted(maps.Keys(probes)) {
+		result := probes[probeType]
+		if result.Status == types.ProbeStatusTrue {
+			continue
+		}
+		for _, m := range result.Messages {
+			msgs = append(msgs, truncateMessage(fmt.Sprintf("%s: %s", probeType, m)))
+		}
+		if len(result.Messages) == 0 {
+			msgs = append(msgs, truncateMessage(fmt.Sprintf("%s: %s", probeType, result.Status)))
+		}
+	}
+
+	if len(msgs) == 0 {
+		msgs = append(msgs, "not yet complete")
+	}
+
+	return msgs
+}
+
+// preserveCompletionTimes sets CompletedAt to now on any phase that does not
+// already have a completion time recorded.
 func preserveCompletionTimes(observedPhases *[]ocv1.ObservedPhase, now metav1.Time) {
 	if observedPhases == nil {
 		return
 	}
 	for i := range *observedPhases {
-		op := &(*observedPhases)[i]
-		if op.CompletedAt == nil && op.Status == ocv1.PhaseStatusAvailable {
-			op.CompletedAt = &now
+		if (*observedPhases)[i].CompletedAt == nil && (*observedPhases)[i].Status == ocv1.PhaseStatusReady {
+			(*observedPhases)[i].CompletedAt = &now
 		}
 	}
+}
+
+// compareResulter is implemented by ObjectResult types that expose field-level
+// comparison results.
+type compareResulter interface {
+	CompareResult() machinery.CompareResult
+}
+
+// pausedObjectMessages returns messages describing why a paused object is not
+// idle, including field-level diff details when available.
+func pausedObjectMessages(obj machinery.ObjectResult) []string {
+	var summary string
+	switch obj.Action() {
+	case machinery.ActionCreated:
+		return []string{"object does not exist"}
+	case machinery.ActionRecovered:
+		summary = "object was modified by another actor"
+	default:
+		summary = "object content has changed"
+	}
+
+	if details := compareDetails(obj); len(details) > 0 {
+		summary += "\n" + strings.Join(details, "\n")
+	}
+	return []string{truncateMessage(summary)}
+}
+
+// compareDetails extracts human-readable field diff lines (added, modified,
+// removed) from obj's CompareResult, if obj implements compareResulter.
+func compareDetails(obj machinery.ObjectResult) []string {
+	cr, ok := obj.(compareResulter)
+	if !ok {
+		return nil
+	}
+	comp := cr.CompareResult().Comparison
+	if comp == nil {
+		return nil
+	}
+	var details []string
+	if comp.Added != nil && !comp.Added.Empty() {
+		comp.Added.Leaves().Iterate(func(p fieldpath.Path) {
+			details = append(details, fmt.Sprintf(" - added: %s", p))
+		})
+	}
+	if comp.Modified != nil && !comp.Modified.Empty() {
+		comp.Modified.Leaves().Iterate(func(p fieldpath.Path) {
+			details = append(details, fmt.Sprintf(" - modified: %s", p))
+		})
+	}
+	if comp.Removed != nil && !comp.Removed.Empty() {
+		comp.Removed.Leaves().Iterate(func(p fieldpath.Path) {
+			details = append(details, fmt.Sprintf(" - removed: %s", p))
+		})
+	}
+	return details
 }
 
 const maxMessageLength = 1024
