@@ -26,10 +26,16 @@ const (
 
 	// Condition types.
 	ClusterObjectDeploymentTypeProgressing = "Progressing"
+	ClusterObjectDeploymentTypeAvailable   = "Available"
 
-	// Condition reasons.
+	// Progressing condition reasons.
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressed  = "NewClusterObjectSetProgressed"
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressing = "NewClusterObjectSetProgressing"
+
+	// Available condition reasons.
+	ClusterObjectDeploymentReasonAvailable        = "Available"
+	ClusterObjectDeploymentReasonUnavailable      = "Unavailable"
+	ClusterObjectDeploymentReasonNoActiveRevision = "NoActiveRevision"
 )
 
 // ClusterObjectDeploymentSpec defines the mutable desired state of a deployment.
@@ -77,11 +83,18 @@ type ClusterObjectDeploymentTemplateSpec struct {
 
 // ClusterObjectDeploymentStatus reports rollout progress.
 type ClusterObjectDeploymentStatus struct {
-	// conditions describes rollout progress for the observed generation.
+	// conditions describes rollout progress and availability for the observed generation.
+	//
 	// Progressing is True with reason NewClusterObjectSetProgressing while the desired
 	// rollout is incomplete, or False with reason NewClusterObjectSetProgressed after
 	// completion. Completion remains recorded even if the completed revision later
 	// becomes unhealthy.
+	//
+	// Available is True with reason Available when at least one active (non-archived)
+	// ClusterObjectSet revision is Ready, so the deployment remains available across
+	// rollouts while a previous revision is still Ready. It is False with reason
+	// Unavailable when active revisions exist but none are Ready yet, or with reason
+	// NoActiveRevision when no active revision exists.
 	// +optional
 	// +listType=map
 	// +listMapKey=type
@@ -95,6 +108,7 @@ type ClusterObjectDeploymentStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster,shortName=cod
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name=Available,type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
 // +kubebuilder:printcolumn:name=Progressing,type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 // +kubebuilder:validation:XValidation:rule="size(self.metadata.name) <= 52 && self.metadata.name.matches('^[a-z]([a-z0-9-]*[a-z0-9])?$')",message="name must be 1 to 52 lowercase alphanumeric or hyphen characters, starting with a letter and ending with an alphanumeric character"

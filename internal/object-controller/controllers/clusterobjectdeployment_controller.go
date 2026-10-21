@@ -80,6 +80,8 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 
 	hash := templateHash(cod.Spec.Template)
 
+	setAvailable(cod, revisions)
+
 	latest := latestActiveRevision(revisions)
 	if latest == nil || latest.Labels[labels.TemplateHashKey] != hash {
 		if err := c.createRevision(ctx, cod, revisions, hash); err != nil {
@@ -127,10 +129,41 @@ func (c *ClusterObjectDeploymentReconciler) createRevision(ctx context.Context, 
 	return nil
 }
 
+// setAvailable sets the deployment's Available condition. It is True when at least
+// one active (non-archived, non-deleting) revision is Ready, so the deployment
+// stays available across rollouts while a prior revision remains Ready.
+func setAvailable(cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) {
+	activeCount := 0
+	for i := range revisions {
+		rev := &revisions[i]
+		if !rev.DeletionTimestamp.IsZero() || rev.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {
+			continue
+		}
+		activeCount++
+		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady) {
+			setCondition(cod, ocv1.ClusterObjectDeploymentTypeAvailable, metav1.ConditionTrue,
+				ocv1.ClusterObjectDeploymentReasonAvailable, "an active revision is ready")
+			return
+		}
+	}
+	if activeCount == 0 {
+		setCondition(cod, ocv1.ClusterObjectDeploymentTypeAvailable, metav1.ConditionFalse,
+			ocv1.ClusterObjectDeploymentReasonNoActiveRevision, "no active revision exists")
+		return
+	}
+	setCondition(cod, ocv1.ClusterObjectDeploymentTypeAvailable, metav1.ConditionFalse,
+		ocv1.ClusterObjectDeploymentReasonUnavailable, "no active revision is ready")
+}
+
 // setProgressing sets the deployment's Progressing condition.
 func setProgressing(cod *ocv1.ClusterObjectDeployment, status metav1.ConditionStatus, reason, message string) {
+	setCondition(cod, ocv1.ClusterObjectDeploymentTypeProgressing, status, reason, message)
+}
+
+// setCondition sets a condition on the deployment status with the observed generation.
+func setCondition(cod *ocv1.ClusterObjectDeployment, condType string, status metav1.ConditionStatus, reason, message string) {
 	apimeta.SetStatusCondition(&cod.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterObjectDeploymentTypeProgressing,
+		Type:               condType,
 		Status:             status,
 		Reason:             reason,
 		Message:            message,
