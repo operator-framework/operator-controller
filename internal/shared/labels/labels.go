@@ -17,6 +17,13 @@ const (
 	// resource responsible for creating or managing a ClusterObjectSet.
 	OwnerNameKey = "olm.operatorframework.io/owner-name"
 
+	// TemplateHashKey is the label key used to record a digest of the
+	// ClusterObjectDeployment template that produced a ClusterObjectSet
+	// revision. The ClusterObjectDeployment controller compares the latest
+	// revision's digest to the current template to decide whether a new
+	// revision is required.
+	TemplateHashKey = "olm.operatorframework.io/template-hash"
+
 	// PackageNameKey is the label key used to record the package name
 	// associated with a ClusterObjectSet.
 	PackageNameKey = "olm.operatorframework.io/package-name"

@@ -127,6 +127,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectSetReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterObjectSetReportsConditionWithMsg)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterObjectSetReportsConditionWithMessageFragment)
+
+	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectDeploymentReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
 	sc.Step(`^(?i)ClusterObjectSet is applied(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterObjectSet with Namespace owner "([^"]*)" is applied$`, ClusterObjectSetWithNamespaceOwnerApplied)
@@ -1007,6 +1009,12 @@ func ClusterObjectSetReportsConditionWithMsg(ctx context.Context, revisionName, 
 // matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
 func ClusterObjectSetReportsConditionWithMessageFragment(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
 	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
+}
+
+// ClusterObjectDeploymentReportsConditionWithoutMsg waits for the named ClusterObjectDeployment to have a
+// condition matching type, status, and reason. Polls with timeout.
+func ClusterObjectDeploymentReportsConditionWithoutMsg(ctx context.Context, name, conditionType, conditionStatus, conditionReason string) error {
+	return waitForCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, nil)
 }
 
 // TriggerClusterObjectSetReconciliation annotates the named ClusterObjectSet

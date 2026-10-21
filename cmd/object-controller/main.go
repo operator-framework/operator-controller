@@ -202,6 +202,7 @@ func newManager(cfg *config, restConfig *rest.Config) (manager.Manager, error) {
 	}
 	if err := (&controllers.ClusterObjectDeploymentReconciler{
 		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("setting up ClusterObjectDeployment controller: %w", err)
 	}
