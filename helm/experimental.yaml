@@ -16,6 +16,7 @@ options:
         - BoxcutterRuntime
         - BundleReleaseSupport
         - DeploymentConfig
+        - RegistryV1DaemonSetSupport
         - SingleOwnNamespaceInstallSupport
         - WebhookProviderCertManager
       disabled:

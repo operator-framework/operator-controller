@@ -356,6 +356,10 @@ func CheckObjectSupport(rv1 *bundle.RegistryV1) []error {
 	var errs []error
 	for _, obj := range rv1.Others {
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
+		// DaemonSet support is feature-gated at render time, in BundleAdditionalResourcesGenerator.
+		if kind == "DaemonSet" {
+			continue
+		}
 		if ok, _ := regv1bundle.IsSupported(kind); !ok {
 			errs = append(errs, fmt.Errorf("unsupported resource %q with kind %q", obj.GetName(), kind))
 		}

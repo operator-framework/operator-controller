@@ -494,6 +494,7 @@ func run() error {
 		IsSingleOwnNamespaceEnabled:  features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
 		IsDeploymentConfigEnabled:    features.OperatorControllerFeatureGate.Enabled(features.DeploymentConfig),
 		IsNamespaceManagementEnabled: features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime),
+		IsDaemonSetSupportEnabled:    features.DaemonSetSupportEnabled(features.OperatorControllerFeatureGate),
 	}
 	var cerCfg reconcilerConfigurator
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {

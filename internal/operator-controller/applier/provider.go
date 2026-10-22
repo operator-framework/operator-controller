@@ -35,6 +35,7 @@ type RegistryV1ManifestProvider struct {
 	IsSingleOwnNamespaceEnabled  bool
 	IsDeploymentConfigEnabled    bool
 	IsNamespaceManagementEnabled bool
+	IsDaemonSetSupportEnabled    bool
 }
 
 func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -74,6 +75,9 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 
 	opts := []render.Option{
 		render.WithCertificateProvider(r.CertificateProvider),
+	}
+	if r.IsDaemonSetSupportEnabled {
+		opts = append(opts, render.WithDaemonSetSupport())
 	}
 
 	// When the user set spec.namespace, render into that caller-managed (already-existing)

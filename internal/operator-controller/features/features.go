@@ -17,6 +17,7 @@ const (
 	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
 	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
 	BundleReleaseSupport              featuregate.Feature = "BundleReleaseSupport"
+	RegistryV1DaemonSetSupport        featuregate.Feature = "RegistryV1DaemonSetSupport"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -76,12 +77,27 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
 	},
+
+	// RegistryV1DaemonSetSupport enables installing registry+v1 bundles
+	// that include a DaemonSet in manifests/, e.g. a CSI node plugin.
+	// It has no effect unless BoxcutterRuntime is also enabled.
+	RegistryV1DaemonSetSupport: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
 }
 
 var OperatorControllerFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()
 
 func init() {
 	utilruntime.Must(OperatorControllerFeatureGate.Add(operatorControllerFeatureGates))
+}
+
+// DaemonSetSupportEnabled reports whether registry+v1 bundles may include a DaemonSet.
+// It requires BoxcutterRuntime, which provides the DaemonSet progression probe.
+func DaemonSetSupportEnabled(fg featuregate.FeatureGate) bool {
+	return fg.Enabled(RegistryV1DaemonSetSupport) && fg.Enabled(BoxcutterRuntime)
 }
 
 // LogFeatureGateStates logs the state of all known feature gates.

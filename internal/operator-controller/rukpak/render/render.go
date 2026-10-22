@@ -77,6 +77,9 @@ type Options struct {
 	// annotation during Render setup and only consulted when SelfManagedInstallNamespace is false.
 	InstallNamespaceLabels      map[string]string
 	InstallNamespaceAnnotations map[string]string
+
+	// AllowDaemonSets permits DaemonSet objects in the bundle's manifests/.
+	AllowDaemonSets bool
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -143,6 +146,13 @@ func WithCertificateProvider(provider CertificateProvider) Option {
 func WithDeploymentConfig(deploymentConfig *config.DeploymentConfig) Option {
 	return func(o *Options) {
 		o.DeploymentConfig = deploymentConfig
+	}
+}
+
+// WithDaemonSetSupport permits DaemonSet objects in the bundle's manifests/.
+func WithDaemonSetSupport() Option {
+	return func(o *Options) {
+		o.AllowDaemonSets = true
 	}
 }
 

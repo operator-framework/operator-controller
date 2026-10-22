@@ -319,6 +319,9 @@ func BundleAdditionalResourcesGenerator(rv1 *bundle.RegistryV1, opts render.Opti
 	objs := make([]client.Object, 0, len(rv1.Others))
 	for _, res := range rv1.Others {
 		supported, namespaced := registrybundle.IsSupported(res.GetKind())
+		if res.GetKind() == "DaemonSet" && opts.AllowDaemonSets {
+			supported, namespaced = true, true
+		}
 		if !supported {
 			return nil, fmt.Errorf("bundle contains unsupported resource: Name: %v, Kind: %v", res.GetName(), res.GetKind())
 		}

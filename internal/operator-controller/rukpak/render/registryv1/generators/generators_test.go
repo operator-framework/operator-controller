@@ -1514,6 +1514,38 @@ func Test_BundleAdditionalResourcesGenerator_Succeeds(t *testing.T) {
 	require.Len(t, objs, 2)
 }
 
+func Test_BundleAdditionalResourcesGenerator_DaemonSet(t *testing.T) {
+	bundle := &bundle.RegistryV1{
+		Others: []unstructured.Unstructured{
+			*ToUnstructuredT(t,
+				&appsv1.DaemonSet{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "DaemonSet",
+						APIVersion: appsv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "node-plugin",
+					},
+				},
+			),
+		},
+	}
+
+	t.Run("rejected when not allowed", func(t *testing.T) {
+		objs, err := generators.BundleAdditionalResourcesGenerator(bundle, render.Options{InstallNamespace: "install-namespace"})
+		require.Nil(t, objs)
+		require.ErrorContains(t, err, "bundle contains unsupported resource: Name: node-plugin, Kind: DaemonSet")
+	})
+
+	t.Run("rendered into the install namespace when allowed", func(t *testing.T) {
+		objs, err := generators.BundleAdditionalResourcesGenerator(bundle, render.Options{InstallNamespace: "install-namespace", AllowDaemonSets: true})
+		require.NoError(t, err)
+		require.Len(t, objs, 1)
+		require.Equal(t, "node-plugin", objs[0].GetName())
+		require.Equal(t, "install-namespace", objs[0].GetNamespace())
+	})
+}
+
 func Test_BundleAdditionalResourcesGenerator_FailsOnNil(t *testing.T) {
 	objs, err := generators.BundleAdditionalResourcesGenerator(nil, render.Options{})
 	require.Nil(t, objs)

@@ -3718,6 +3718,7 @@ spec:
             - --feature-gates=BoxcutterRuntime=true
             - --feature-gates=BundleReleaseSupport=true
             - --feature-gates=DeploymentConfig=true
+            - --feature-gates=RegistryV1DaemonSetSupport=true
             - --feature-gates=SingleOwnNamespaceInstallSupport=true
             - --feature-gates=WebhookProviderCertManager=true
             - --feature-gates=WebhookProviderOpenshiftServiceCA=false

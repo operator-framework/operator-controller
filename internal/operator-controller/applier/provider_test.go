@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -253,6 +254,29 @@ func Test_RegistryV1ManifestProvider_BoxcutterRuntimeGate(t *testing.T) {
 		objs, err := provider.Get(bundleFS, ext)
 		require.NoError(t, err)
 		require.NotContains(t, collectKinds(objs), "Namespace")
+	})
+}
+
+func Test_RegistryV1ManifestProvider_DaemonSetSupportGate(t *testing.T) {
+	bundleFS := bundlefs.Builder().WithPackageName("test").
+		WithCSV(bundlecsv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
+		WithBundleResource("daemonset.yaml", &appsv1.DaemonSet{
+			TypeMeta:   metav1.TypeMeta{APIVersion: appsv1.SchemeGroupVersion.String(), Kind: "DaemonSet"},
+			ObjectMeta: metav1.ObjectMeta{Name: "node-plugin"},
+		}).Build()
+	ext := &ocv1.ClusterExtension{Spec: ocv1.ClusterExtensionSpec{Namespace: "install-namespace"}}
+
+	t.Run("rejects a DaemonSet when the RegistryV1DaemonSetSupport feature gate is disabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{BundleRenderer: registryv1.Renderer}
+		_, err := provider.Get(bundleFS, ext)
+		require.ErrorContains(t, err, "bundle contains unsupported resource: Name: node-plugin, Kind: DaemonSet")
+	})
+
+	t.Run("renders a DaemonSet when the RegistryV1DaemonSetSupport feature gate is enabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{BundleRenderer: registryv1.Renderer, IsDaemonSetSupportEnabled: true}
+		objs, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err)
+		require.Contains(t, collectKinds(objs), "DaemonSet")
 	})
 }
 

@@ -1245,6 +1245,15 @@ func Test_CheckObjectSupport(t *testing.T) {
 				errors.New(`unsupported resource "my-job" with kind "Job"`),
 			},
 		},
+		{
+			name: "leaves DaemonSet to the render-time feature gate",
+			bundle: &bundle.RegistryV1{
+				Others: []unstructured.Unstructured{
+					newUnstructuredObject(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "DaemonSet"}, "my-daemonset"),
+				},
+			},
+			expectedErrs: nil,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := validators.CheckObjectSupport(tc.bundle)

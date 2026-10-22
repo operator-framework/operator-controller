@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -157,4 +158,38 @@ func Test_Renderer_Failure_UnsupportedKind(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
 	require.Empty(t, objs)
+}
+
+func Test_Renderer_DaemonSet(t *testing.T) {
+	someBundle := bundle.RegistryV1{
+		PackageName: "my-package",
+		CSV: csv.Builder().
+			WithName("test-bundle").
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+		Others: []unstructured.Unstructured{
+			*ToUnstructuredT(t, &appsv1.DaemonSet{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "DaemonSet",
+					APIVersion: appsv1.SchemeGroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "node-plugin",
+				},
+			}),
+		},
+	}
+
+	t.Run("rejected without WithDaemonSetSupport", func(t *testing.T) {
+		objs, err := registryv1.Renderer.Render(someBundle, render.WithSelfManagedInstallNamespace("install-namespace"))
+		require.ErrorContains(t, err, "unsupported resource")
+		require.Empty(t, objs)
+	})
+
+	t.Run("rendered with WithDaemonSetSupport", func(t *testing.T) {
+		objs, err := registryv1.Renderer.Render(someBundle, render.WithSelfManagedInstallNamespace("install-namespace"), render.WithDaemonSetSupport())
+		require.NoError(t, err)
+		require.Len(t, objs, 1)
+		require.Equal(t, "DaemonSet", objs[0].GetObjectKind().GroupVersionKind().Kind)
+		require.Equal(t, "install-namespace", objs[0].GetNamespace())
+	})
 }
