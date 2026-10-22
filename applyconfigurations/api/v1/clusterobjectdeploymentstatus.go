@@ -32,7 +32,8 @@ type ClusterObjectDeploymentStatusApplyConfiguration struct {
 	// Progressing is True with reason NewClusterObjectSetProgressing while the desired
 	// rollout is incomplete, or False with reason NewClusterObjectSetProgressed after
 	// completion. Completion remains recorded even if the completed revision later
-	// becomes unhealthy.
+	// becomes unhealthy. Progressing is False with reason ProgressDeadlineExceeded when
+	// the latest revision does not roll out within its spec.progressDeadlineMinutes.
 	//
 	// Available is True with reason Available when at least one active (non-archived)
 	// ClusterObjectSet revision is Ready, so the deployment remains available across
