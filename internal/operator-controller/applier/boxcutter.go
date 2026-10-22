@@ -734,6 +734,25 @@ var (
 					Kind:  "Deployment",
 				}),
 		).WithAssertions(replicasUpdatedAssertion, availableConditionAssertion),
+		// DaemonSet probe; every scheduled pod is updated and available
+		ocv1ac.ProgressionProbe().WithSelector(
+			ocv1ac.ObjectSelector().WithType(ocv1.SelectorTypeGroupKind).
+				WithGroupKind(metav1.GroupKind{
+					Group: appsv1.GroupName,
+					Kind:  "DaemonSet",
+				}),
+		).WithAssertions(
+			ocv1ac.Assertion().
+				WithType(ocv1.ProbeTypeFieldsEqual).
+				WithFieldsEqual(ocv1ac.FieldsEqualProbe().
+					WithFieldA("status.updatedNumberScheduled").
+					WithFieldB("status.desiredNumberScheduled")),
+			ocv1ac.Assertion().
+				WithType(ocv1.ProbeTypeFieldsEqual).
+				WithFieldsEqual(ocv1ac.FieldsEqualProbe().
+					WithFieldA("status.numberAvailable").
+					WithFieldB("status.desiredNumberScheduled")),
+		),
 	}
 
 	// readyConditionAssertion checks that the Type: "Ready" Condition is "True"
