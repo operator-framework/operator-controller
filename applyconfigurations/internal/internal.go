@@ -262,6 +262,10 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentSpec
   map:
     fields:
+    - name: revisionHistoryLimit
+      type:
+        scalar: numeric
+      default: 5
     - name: template
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplate

@@ -23,6 +23,16 @@ package v1
 //
 // ClusterObjectDeploymentSpec defines the mutable desired state of a deployment.
 type ClusterObjectDeploymentSpecApplyConfiguration struct {
+	// revisionHistoryLimit is the maximum number of archived (superseded)
+	// ClusterObjectSet revisions to retain, so that rollout history can be
+	// inspected and earlier revisions rolled back to. Active revisions are never
+	// removed and do not count against this limit. When the number of archived
+	// revisions exceeds this value, the oldest archived revisions are deleted
+	// until the limit is met.
+	//
+	// A value of 0 retains no archived revisions. The minimum is 0, the maximum
+	// is 50, and the default is 5.
+	RevisionHistoryLimit *int32 `json:"revisionHistoryLimit,omitempty"`
 	// template is the desired content of newly created ClusterObjectSets.
 	// Changes to template create a new revision; existing revisions remain immutable.
 	Template *ClusterObjectDeploymentTemplateApplyConfiguration `json:"template,omitempty"`
@@ -32,6 +42,14 @@ type ClusterObjectDeploymentSpecApplyConfiguration struct {
 // apply.
 func ClusterObjectDeploymentSpec() *ClusterObjectDeploymentSpecApplyConfiguration {
 	return &ClusterObjectDeploymentSpecApplyConfiguration{}
+}
+
+// WithRevisionHistoryLimit sets the RevisionHistoryLimit field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RevisionHistoryLimit field is set to the value of the last call.
+func (b *ClusterObjectDeploymentSpecApplyConfiguration) WithRevisionHistoryLimit(value int32) *ClusterObjectDeploymentSpecApplyConfiguration {
+	b.RevisionHistoryLimit = &value
+	return b
 }
 
 // WithTemplate sets the Template field in the declarative configuration to the given value
