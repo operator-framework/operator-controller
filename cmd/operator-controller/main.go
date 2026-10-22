@@ -618,6 +618,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 	rg := &applier.SimpleRevisionGenerator{
 		Scheme:           c.mgr.GetScheme(),
 		ManifestProvider: c.regv1ManifestProvider,
+		SystemNamespace:  cfg.systemNamespace,
 	}
 	fieldOwner := fmt.Sprintf("%s/clusterextension-controller", fieldOwnerPrefix)
 	appl := &applier.Boxcutter{

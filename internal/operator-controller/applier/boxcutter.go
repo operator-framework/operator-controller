@@ -52,6 +52,7 @@ type ClusterObjectSetGenerator interface {
 type SimpleRevisionGenerator struct {
 	Scheme           *runtime.Scheme
 	ManifestProvider ManifestProvider
+	SystemNamespace  string
 }
 
 func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
@@ -139,7 +140,33 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		}
 	}
 
-	// objectLabels
+	// Prepare object annotations from revision annotations
+	annotationUpdates := map[string]string{}
+	if v := revisionAnnotations[labels.BundleVersionKey]; v != "" {
+		annotationUpdates[labels.BundleVersionKey] = v
+	}
+	if v := revisionAnnotations[labels.PackageNameKey]; v != "" {
+		annotationUpdates[labels.PackageNameKey] = v
+	}
+
+	// Render objects with labels and annotations
+	objs, err := r.renderObjects(ctx, plain, objectLabels, annotationUpdates)
+	if err != nil {
+		return nil, err
+	}
+
+	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
+	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionPrevent)
+	return rev, nil
+}
+
+// renderObjects converts plain client.Objects to ClusterObjectSetObjectApplyConfigurations
+// with labels and annotations applied. This is shared logic used by both COS and COD generation.
+func (r *SimpleRevisionGenerator) renderObjects(
+	ctx context.Context,
+	plain []client.Object,
+	objectLabels, objectAnnotations map[string]string,
+) ([]ocv1ac.ClusterObjectSetObjectApplyConfiguration, error) {
 	objs := make([]ocv1ac.ClusterObjectSetObjectApplyConfiguration, 0, len(plain))
 	for _, obj := range plain {
 		obj.SetLabels(mergeStringMaps(obj.GetLabels(), objectLabels))
@@ -162,23 +189,14 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		}
 		sanitizedUnstructured(ctx, &unstr)
 
-		annotationUpdates := map[string]string{}
-		if v := revisionAnnotations[labels.BundleVersionKey]; v != "" {
-			annotationUpdates[labels.BundleVersionKey] = v
-		}
-		if v := revisionAnnotations[labels.PackageNameKey]; v != "" {
-			annotationUpdates[labels.PackageNameKey] = v
-		}
-		if len(annotationUpdates) > 0 {
-			unstr.SetAnnotations(mergeStringMaps(unstr.GetAnnotations(), annotationUpdates))
+		if len(objectAnnotations) > 0 {
+			unstr.SetAnnotations(mergeStringMaps(unstr.GetAnnotations(), objectAnnotations))
 		}
 
 		objs = append(objs, *ocv1ac.ClusterObjectSetObject().
 			WithObject(unstr))
 	}
-	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
-	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionPrevent)
-	return rev, nil
+	return objs, nil
 }
 
 // sanitizedUnstructured takes an unstructured obj, removes status if present, and returns a sanitized copy containing only the allowed metadata entries set below.
