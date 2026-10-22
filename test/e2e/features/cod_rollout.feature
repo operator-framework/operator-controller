@@ -3,8 +3,8 @@ Feature: ClusterObjectDeployment revision rollout
 
   As an OLM user applying a ClusterObjectDeployment, I want the controller to roll
   out my template as an immutable ClusterObjectSet revision, create a new revision
-  when the template changes, and report rollout progress on the Progressing
-  condition.
+  when the template changes, report rollout progress on the Progressing condition,
+  and report availability on the Available condition.
 
   Background:
     Given OLM is available
@@ -36,6 +36,7 @@ Feature: ClusterObjectDeployment revision rollout
     Then ClusterObjectSet "${NAME}-1" has group "${NAME}"
     And ClusterObjectSet "${NAME}-1" reports Ready as True with Reason AllObjectsReady
     And ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason NewClusterObjectSetProgressed
+    And ClusterObjectDeployment "${NAME}" reports Available as True with Reason Available
 
   Scenario: Updating the template creates a new revision
     Given namespace "${TEST_NAMESPACE}" is available
@@ -95,3 +96,4 @@ Feature: ClusterObjectDeployment revision rollout
     Then ClusterObjectSet "${NAME}-2" has group "${NAME}"
     And ClusterObjectSet "${NAME}-2" reports Ready as True with Reason AllObjectsReady
     And ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason NewClusterObjectSetProgressed
+    And ClusterObjectDeployment "${NAME}" reports Available as True with Reason Available

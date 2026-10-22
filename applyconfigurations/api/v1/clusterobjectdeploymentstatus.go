@@ -27,11 +27,18 @@ import (
 //
 // ClusterObjectDeploymentStatus reports rollout progress.
 type ClusterObjectDeploymentStatusApplyConfiguration struct {
-	// conditions describes rollout progress for the observed generation.
+	// conditions describes rollout progress and availability for the observed generation.
+	//
 	// Progressing is True with reason NewClusterObjectSetProgressing while the desired
 	// rollout is incomplete, or False with reason NewClusterObjectSetProgressed after
 	// completion. Completion remains recorded even if the completed revision later
 	// becomes unhealthy.
+	//
+	// Available is True with reason Available when at least one active (non-archived)
+	// ClusterObjectSet revision is Ready, so the deployment remains available across
+	// rollouts while a previous revision is still Ready. It is False with reason
+	// Unavailable when active revisions exist but none are Ready yet, or with reason
+	// NoActiveRevision when no active revision exists.
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 }
 

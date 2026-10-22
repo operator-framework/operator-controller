@@ -18,6 +18,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Available')].status
+      name: Available
+      type: string
     - jsonPath: .status.conditions[?(@.type=='Progressing')].status
       name: Progressing
       type: string
@@ -482,11 +485,18 @@ spec:
             properties:
               conditions:
                 description: |-
-                  conditions describes rollout progress for the observed generation.
+                  conditions describes rollout progress and availability for the observed generation.
+
                   Progressing is True with reason NewClusterObjectSetProgressing while the desired
                   rollout is incomplete, or False with reason NewClusterObjectSetProgressed after
                   completion. Completion remains recorded even if the completed revision later
                   becomes unhealthy.
+
+                  Available is True with reason Available when at least one active (non-archived)
+                  ClusterObjectSet revision is Ready, so the deployment remains available across
+                  rollouts while a previous revision is still Ready. It is False with reason
+                  Unavailable when active revisions exist but none are Ready yet, or with reason
+                  NoActiveRevision when no active revision exists.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.

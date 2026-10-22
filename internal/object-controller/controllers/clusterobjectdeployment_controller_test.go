@@ -80,6 +80,93 @@ func progressing(t *testing.T, c client.Client) *metav1.Condition {
 	return apimeta.FindStatusCondition(cod.Status.Conditions, ocv1.ClusterObjectDeploymentTypeProgressing)
 }
 
+func available(t *testing.T, c client.Client) *metav1.Condition {
+	t.Helper()
+	cod := &ocv1.ClusterObjectDeployment{}
+	require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
+	return apimeta.FindStatusCondition(cod.Status.Conditions, ocv1.ClusterObjectDeploymentTypeAvailable)
+}
+
+func markCOSReady(t *testing.T, c client.Client, name string, ready bool) {
+	t.Helper()
+	cos, ok := getCOS(t, c, name)
+	require.True(t, ok)
+	status, reason := metav1.ConditionFalse, ocv1.ClusterObjectSetReasonObjectsNotReady
+	if ready {
+		status, reason = metav1.ConditionTrue, ocv1.ClusterObjectSetReasonAllObjectsReady
+	}
+	apimeta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
+		Type:    ocv1.ClusterObjectSetTypeReady,
+		Status:  status,
+		Reason:  reason,
+		Message: "test",
+	})
+	require.NoError(t, c.Status().Update(t.Context(), cos))
+}
+
+func Test_ClusterObjectDeploymentReconciler_Available(t *testing.T) {
+	t.Run("no active revision before the first revision exists", func(t *testing.T) {
+		c := newCODClient(t, codFixture())
+		_, err := reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		cond := available(t, c)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionFalse, cond.Status)
+		require.Equal(t, ocv1.ClusterObjectDeploymentReasonNoActiveRevision, cond.Reason)
+	})
+
+	t.Run("unavailable when the active revision is not Ready", func(t *testing.T) {
+		c := newCODClient(t, codFixture())
+		_, err := reconcileCOD(t, c) // creates revision 1
+		require.NoError(t, err)
+		_, err = reconcileCOD(t, c) // revision 1 is now listed but not Ready
+		require.NoError(t, err)
+
+		cond := available(t, c)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionFalse, cond.Status)
+		require.Equal(t, ocv1.ClusterObjectDeploymentReasonUnavailable, cond.Reason)
+	})
+
+	t.Run("available when an active revision is Ready", func(t *testing.T) {
+		c := newCODClient(t, codFixture())
+		_, err := reconcileCOD(t, c) // creates revision 1
+		require.NoError(t, err)
+		markCOSReady(t, c, clusterObjectDeploymentName+"-1", true)
+		_, err = reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		cond := available(t, c)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionTrue, cond.Status)
+		require.Equal(t, ocv1.ClusterObjectDeploymentReasonAvailable, cond.Reason)
+	})
+
+	t.Run("stays available while a new revision rolls out", func(t *testing.T) {
+		c := newCODClient(t, codFixture())
+		_, err := reconcileCOD(t, c) // creates revision 1
+		require.NoError(t, err)
+		markCOSReady(t, c, clusterObjectDeploymentName+"-1", true)
+		_, err = reconcileCOD(t, c)
+		require.NoError(t, err)
+		require.Equal(t, metav1.ConditionTrue, available(t, c).Status)
+
+		// Change the template so a new revision is created while revision 1 stays Ready.
+		cod := &ocv1.ClusterObjectDeployment{}
+		require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
+		cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"k": "v"}
+		require.NoError(t, c.Update(t.Context(), cod))
+
+		_, err = reconcileCOD(t, c) // creates revision 2; revision 1 is still active and Ready
+		require.NoError(t, err)
+
+		cond := available(t, c)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionTrue, cond.Status, "deployment must stay available while a prior revision is still Ready")
+	})
+}
+
 func Test_ClusterObjectDeploymentReconciler_CreatesFirstRevision(t *testing.T) {
 	c := newCODClient(t, codFixture())
 

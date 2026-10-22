@@ -458,7 +458,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions describes rollout progress for the observed generation.<br />Progressing is True with reason NewClusterObjectSetProgressing while the desired<br />rollout is incomplete, or False with reason NewClusterObjectSetProgressed after<br />completion. Completion remains recorded even if the completed revision later<br />becomes unhealthy. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions describes rollout progress and availability for the observed generation.<br />Progressing is True with reason NewClusterObjectSetProgressing while the desired<br />rollout is incomplete, or False with reason NewClusterObjectSetProgressed after<br />completion. Completion remains recorded even if the completed revision later<br />becomes unhealthy.<br />Available is True with reason Available when at least one active (non-archived)<br />ClusterObjectSet revision is Ready, so the deployment remains available across<br />rollouts while a previous revision is still Ready. It is False with reason<br />Unavailable when active revisions exist but none are Ready yet, or with reason<br />NoActiveRevision when no active revision exists. |  | Optional: \{\} <br /> |
 
 
 #### ClusterObjectDeploymentTemplate
