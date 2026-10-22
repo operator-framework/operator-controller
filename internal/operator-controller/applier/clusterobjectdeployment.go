@@ -9,7 +9,6 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
@@ -99,7 +98,7 @@ func (r *SimpleRevisionGenerator) GenerateClusterObjectDeployment(
 	}
 	// Add bundle properties annotations
 	for _, key := range []string{
-		source.PropertyOLMProperties,
+		labels.OLMPropertiesKey,
 	} {
 		if value, ok := bundleAnnotations[key]; ok {
 			codAnnotations[key] = value

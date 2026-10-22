@@ -18,10 +18,13 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	registry "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/operator-registry"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
 const (
-	PropertyOLMProperties = "olm.properties"
+	// PropertyOLMProperties is the annotation key for bundle OLM properties.
+	// This references the shared constant to ensure consistency across components.
+	PropertyOLMProperties = labels.OLMPropertiesKey
 )
 
 type BundleSource interface {

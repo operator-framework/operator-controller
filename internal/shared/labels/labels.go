@@ -59,4 +59,10 @@ const (
 	// that were created during migration from Helm releases. This label is used
 	// to distinguish migrated revisions from those created by normal Boxcutter operation.
 	MigratedFromHelmKey = "olm.operatorframework.io/migrated-from-helm"
+
+	// OLMPropertiesKey is the annotation key used to store bundle OLM properties
+	// (from metadata/properties.yaml) as a JSON array of property.Property objects.
+	// It is propagated from bundle metadata to ClusterObjectDeployments and their
+	// ClusterObjectSet revisions.
+	OLMPropertiesKey = "olm.properties"
 )

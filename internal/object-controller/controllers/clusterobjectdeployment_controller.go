@@ -46,6 +46,7 @@ var bundleAnnotationKeys = []string{
 	labels.BundleVersionKey,
 	labels.BundleReleaseKey,
 	labels.BundleReferenceKey,
+	labels.OLMPropertiesKey,
 }
 
 // ClusterObjectDeploymentReconciler reconciles ClusterObjectDeployment objects by

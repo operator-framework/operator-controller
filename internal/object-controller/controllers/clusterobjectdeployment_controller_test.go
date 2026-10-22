@@ -840,6 +840,7 @@ func Test_ClusterObjectDeploymentReconciler_PropagatesBundleAnnotations(t *testi
 		labels.BundleVersionKey:   "1.0.0+2",
 		labels.BundleReferenceKey: "registry.example.com/bundle@sha256:abcdef",
 		labels.BundleReleaseKey:   "2",
+		labels.OLMPropertiesKey:   `[{"type":"olm.package","value":{"packageName":"test-package","version":"1.0.0"}}]`,
 		"example.com/non-bundle":  "should-not-be-copied",
 	}
 
@@ -857,6 +858,7 @@ func Test_ClusterObjectDeploymentReconciler_PropagatesBundleAnnotations(t *testi
 	require.Equal(t, "1.0.0+2", cos.Annotations[labels.BundleVersionKey], "BundleVersionKey should be copied")
 	require.Equal(t, "registry.example.com/bundle@sha256:abcdef", cos.Annotations[labels.BundleReferenceKey], "BundleReferenceKey should be copied")
 	require.Equal(t, "2", cos.Annotations[labels.BundleReleaseKey], "BundleReleaseKey should be copied")
+	require.JSONEq(t, `[{"type":"olm.package","value":{"packageName":"test-package","version":"1.0.0"}}]`, cos.Annotations[labels.OLMPropertiesKey], "OLMPropertiesKey should be copied")
 
 	// Non-bundle annotation should NOT be copied
 	_, exists := cos.Annotations["example.com/non-bundle"]
