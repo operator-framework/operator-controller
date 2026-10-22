@@ -138,8 +138,7 @@ func (p *SecretPacker) newSecret(data map[string][]byte) corev1.Secret {
 			Name:      p.secretNameFromData(data),
 			Namespace: p.SystemNamespace,
 			Labels: map[string]string{
-				labels.RevisionNameKey: p.RevisionName,
-				labels.OwnerNameKey:    p.OwnerName,
+				labels.OwnerNameKey: p.OwnerName,
 			},
 		},
 		Immutable: ptr.To(true),
@@ -149,7 +148,7 @@ func (p *SecretPacker) newSecret(data map[string][]byte) corev1.Secret {
 }
 
 // secretNameFromData computes a content-addressable Secret name from the
-// data entries. The name is "<revisionName>-<hash>" where hash is the
+// data entries. The name is "<ownerName>-<hash>" where hash is the
 // first 16 hex characters of the SHA-256 digest of the sorted
 // concatenated keys and values.
 func (p *SecretPacker) secretNameFromData(data map[string][]byte) string {
@@ -164,7 +163,7 @@ func (p *SecretPacker) secretNameFromData(data map[string][]byte) string {
 		h.Write([]byte(k))
 		h.Write(data[k])
 	}
-	return fmt.Sprintf("%s-%x", p.RevisionName, h.Sum(nil)[:8])
+	return fmt.Sprintf("%s-%x", p.OwnerName, h.Sum(nil)[:8])
 }
 
 // contentHash returns a base64url-encoded (no padding) SHA-256 hash of data.
