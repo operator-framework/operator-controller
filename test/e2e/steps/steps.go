@@ -135,6 +135,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reconciliation is triggered$`, TriggerClusterObjectSetReconciliation)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has observed phase "([^"]+)" with a non-empty digest$`, ClusterObjectSetHasObservedPhase)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is archived$`, ClusterObjectSetIsArchived)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is eventually deleted$`, ClusterObjectSetIsEventuallyDeleted)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports phase "([^"]+)" object counts: total=(\d+), present=(\d+), synced=(\d+), ready=(\d+)$`, ClusterObjectSetPhaseHasObjectCounts)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports aggregate object counts: total=(\d+), present=(\d+), synced=(\d+), ready=(\d+)$`, ClusterObjectSetHasAggregateObjectCounts)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
@@ -1049,6 +1050,21 @@ func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName st
 // with reason Archived. Polls with timeout.
 func ClusterObjectSetIsArchived(ctx context.Context, revisionName string) error {
 	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Ready", "False", ptr.To("Archived"), nil)
+}
+
+// ClusterObjectSetIsEventuallyDeleted waits for the named ClusterObjectSet to be
+// removed from the cluster, e.g. garbage collected once it is archived beyond the
+// owning ClusterObjectDeployment's revisionHistoryLimit. Polls with timeout.
+func ClusterObjectSetIsEventuallyDeleted(ctx context.Context, revisionName string) error {
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), scenarioCtx(ctx))
+	waitFor(ctx, func() bool {
+		out, err := k8sClient(ctx, "get", "clusterobjectset", revisionName, "--ignore-not-found", "-o", "json")
+		if err != nil {
+			return false
+		}
+		return strings.TrimSpace(out) == ""
+	})
+	return nil
 }
 
 // ClusterObjectSetPhaseHasObjectCounts waits for a specific phase of the named ClusterObjectSet to

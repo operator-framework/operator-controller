@@ -2,12 +2,14 @@ package v1
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -181,6 +183,59 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+// newRevisionHistoryLimitCOD returns a minimal valid ClusterObjectDeployment with
+// the given revisionHistoryLimit (nil to leave it unset).
+func newRevisionHistoryLimitCOD(name string, limit *int32) *ClusterObjectDeployment {
+	return &ClusterObjectDeployment{
+		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Spec: ClusterObjectDeploymentSpec{
+			RevisionHistoryLimit: limit,
+			Template: ClusterObjectDeploymentTemplate{
+				Spec: ClusterObjectDeploymentTemplateSpec{
+					CollisionProtection: CollisionProtectionPrevent,
+					Phases: []ClusterObjectSetPhase{
+						{Name: "deploy", Objects: []ClusterObjectSetObject{{Object: configMap()}}},
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestClusterObjectDeploymentRevisionHistoryLimitBounds(t *testing.T) {
+	c := newClient(t)
+
+	for name, tc := range map[string]struct {
+		limit *int32
+		valid bool
+	}{
+		"below minimum is rejected": {limit: ptr.To(int32(-1)), valid: false},
+		"minimum of zero is valid":  {limit: ptr.To(int32(0)), valid: true},
+		"maximum of fifty is valid": {limit: ptr.To(int32(50)), valid: true},
+		"above maximum is rejected": {limit: ptr.To(int32(51)), valid: false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cod := newRevisionHistoryLimitCOD("cod-rhl-"+strings.ReplaceAll(name, " ", "-"), tc.limit)
+			err := c.Create(t.Context(), cod)
+			if tc.valid {
+				require.NoError(t, err)
+			} else {
+				require.True(t, errors.IsInvalid(err), "expected create to fail as invalid, but got: %v", err)
+			}
+		})
+	}
+}
+
+func TestClusterObjectDeploymentRevisionHistoryLimitDefault(t *testing.T) {
+	c := newClient(t)
+
+	cod := newRevisionHistoryLimitCOD("cod-rhl-default", nil)
+	require.NoError(t, c.Create(t.Context(), cod))
+
+	require.NotNil(t, cod.Spec.RevisionHistoryLimit, "revisionHistoryLimit should be defaulted on create when unset")
+	require.Equal(t, int32(5), *cod.Spec.RevisionHistoryLimit, "unset revisionHistoryLimit should default to 5")
 }
 
 func TestClusterObjectSetCompletedAtImmutable(t *testing.T) {

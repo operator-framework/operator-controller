@@ -1465,6 +1465,22 @@ spec:
           spec:
             description: spec defines the desired deployment template.
             properties:
+              revisionHistoryLimit:
+                default: 5
+                description: |-
+                  revisionHistoryLimit is the maximum number of archived (superseded)
+                  ClusterObjectSet revisions to retain, so that rollout history can be
+                  inspected and earlier revisions rolled back to. Active revisions are never
+                  removed and do not count against this limit. When the number of archived
+                  revisions exceeds this value, the oldest archived revisions are deleted
+                  until the limit is met.
+
+                  A value of 0 retains no archived revisions. The minimum is 0, the maximum
+                  is 50, and the default is 5.
+                format: int32
+                maximum: 50
+                minimum: 0
+                type: integer
               template:
                 description: |-
                   template is the desired content of newly created ClusterObjectSets.

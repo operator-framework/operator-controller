@@ -442,6 +442,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `revisionHistoryLimit` _integer_ | revisionHistoryLimit is the maximum number of archived (superseded)<br />ClusterObjectSet revisions to retain, so that rollout history can be<br />inspected and earlier revisions rolled back to. Active revisions are never<br />removed and do not count against this limit. When the number of archived<br />revisions exceeds this value, the oldest archived revisions are deleted<br />until the limit is met.<br />A value of 0 retains no archived revisions. The minimum is 0, the maximum<br />is 50, and the default is 5. | 5 | Maximum: 50 <br />Minimum: 0 <br />Optional: \{\} <br /> |
 | `template` _[ClusterObjectDeploymentTemplate](#clusterobjectdeploymenttemplate)_ | template is the desired content of newly created ClusterObjectSets.<br />Changes to template create a new revision; existing revisions remain immutable. |  | Required: \{\} <br /> |
 
 

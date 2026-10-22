@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,6 +27,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
+
+// defaultRevisionHistoryLimit is the number of archived revisions retained when
+// spec.revisionHistoryLimit is unset. It mirrors the CRD default and is applied
+// defensively for callers (e.g. tests) that bypass API-server defaulting.
+const defaultRevisionHistoryLimit = 5
 
 // ClusterObjectDeploymentReconciler reconciles ClusterObjectDeployment objects by
 // managing their owned ClusterObjectSet revisions.
@@ -68,9 +74,8 @@ func (c *ClusterObjectDeploymentReconciler) Reconcile(ctx context.Context, req c
 	return ctrl.Result{}, reconcileErr
 }
 
-// reconcile creates a new ClusterObjectSet revision when the template has changed
-// (or no active revision exists) and reflects the latest revision's rollout
-// progress in the deployment's Progressing condition. Requeues are driven by the
+// reconcile garbage-collects excess archived revisions and reconciles the
+// deployment's rollout (see reconcileRollout). Requeues are driven by the
 // controller's watch on owned ClusterObjectSets.
 func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *ocv1.ClusterObjectDeployment) error {
 	revisions, err := c.listRevisions(ctx, cod.Name)
@@ -78,6 +83,21 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 		return err
 	}
 
+	// Garbage collection is best-effort housekeeping and must not block rollout or
+	// status reconciliation: a persistently failing prune (e.g. a delete denied by
+	// an admission policy) would otherwise indefinitely stall deployment of an
+	// updated template and leave status stale even with a healthy active revision.
+	// Preserve the error, continue reconciling, and return it joined with the
+	// rollout outcome so the failure is still surfaced and retried.
+	gcErr := c.garbageCollectArchivedRevisions(ctx, cod, revisions)
+
+	return errors.Join(gcErr, c.reconcileRollout(ctx, cod, revisions))
+}
+
+// reconcileRollout creates a new ClusterObjectSet revision when the template has
+// changed (or no active revision exists) and reflects the latest revision's
+// rollout progress in the deployment's Available and Progressing conditions.
+func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
 	hash := templateHash(cod.Spec.Template)
 
 	setAvailable(cod, revisions)
@@ -111,6 +131,74 @@ func (c *ClusterObjectDeploymentReconciler) listRevisions(ctx context.Context, g
 		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
 	})
 	return list.Items, nil
+}
+
+// garbageCollectArchivedRevisions deletes the oldest archived ClusterObjectSet
+// revisions in excess of spec.revisionHistoryLimit. Active revisions are never
+// deleted and do not count against the limit. A nil limit falls back to
+// defaultRevisionHistoryLimit; a limit of 0 retains no archived revisions.
+//
+// Only archived revisions that have finished tearing down are candidates for
+// pruning (see archivedTeardownComplete). Deleting a revision mid-teardown would
+// send it down the ClusterObjectSet controller's deletion path, which removes the
+// teardown finalizer without calling RevisionEngine.Teardown and so bypasses
+// ordered reverse-phase cleanup (e.g. a controller could be removed before the
+// resources it finalizes have terminated). A revision still tearing down is
+// skipped and pruned on a later reconcile, which the controller's watch on owned
+// ClusterObjectSets triggers once teardown completes.
+//
+// revisions must be sorted ascending by revision number (oldest first), as
+// returned by listRevisions.
+//
+// NOTE: The candidate revisions come from listRevisions, which selects by
+// spec.group (equal to the deployment name) rather than by this deployment's
+// controller owner reference. This is deliberate and consistent with the rest of
+// OLMv1: sibling membership of a revision family is defined by spec.group, not by
+// ownership (see createRevision's naming/grouping and the ClusterObjectSet
+// controller's own sibling archival, both keyed on spec.group). A consequence is
+// that a ClusterObjectSet sharing this group but created by a different owner
+// would be counted toward the limit and could be deleted here. That is tolerated
+// because the deployment name is the group and is treated as an exclusive
+// namespace for its revisions — nothing else should create ClusterObjectSets in
+// it. If siblinghood is ever redefined in terms of ownership, this function and
+// listRevisions must be updated together to filter by owner reference and UID.
+func (c *ClusterObjectDeploymentReconciler) garbageCollectArchivedRevisions(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
+	limit := defaultRevisionHistoryLimit
+	if cod.Spec.RevisionHistoryLimit != nil {
+		limit = int(*cod.Spec.RevisionHistoryLimit)
+	}
+
+	archived := make([]*ocv1.ClusterObjectSet, 0, len(revisions))
+	for i := range revisions {
+		rev := &revisions[i]
+		if rev.DeletionTimestamp.IsZero() &&
+			rev.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived &&
+			archivedTeardownComplete(rev) {
+			archived = append(archived, rev)
+		}
+	}
+
+	// Delete the oldest archived revisions beyond the limit. Attempt every
+	// excess revision even if one fails, so a single revision that cannot be
+	// deleted (e.g. a denying webhook or a conflict) does not block pruning of
+	// the others on every reconcile.
+	var errs []error
+	for i := 0; i < len(archived)-limit; i++ {
+		if err := c.Client.Delete(ctx, archived[i]); err != nil && !apierrors.IsNotFound(err) {
+			errs = append(errs, fmt.Errorf("deleting archived revision %q: %w", archived[i].Name, err))
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// archivedTeardownComplete reports whether an archived revision has finished
+// tearing down its managed objects, as signalled by its Ready condition
+// (Ready=False/Archived). The ClusterObjectSet controller sets this reason only
+// after RevisionEngine.Teardown completes; while teardown is still in progress it
+// reports Ready=False/Archiving.
+func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
+	cond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	return cond != nil && cond.Reason == ocv1.ClusterObjectSetReasonArchived
 }
 
 // createRevision builds and creates the next ClusterObjectSet revision owned by
