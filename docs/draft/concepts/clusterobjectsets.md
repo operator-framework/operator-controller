@@ -233,6 +233,26 @@ Indicates whether all objects in the revision have been successfully rolled out 
 
 On a revision's first reconciliation the `Ready` condition is initialized to `Unknown`/`Pending`, so it is always present. A transient internal error (e.g. an API read failure) leaves the `Ready` condition unchanged and is retried with backoff; it is not reported as a distinct reason (while the revision is still `Pending`, it stays `Unknown`/`Pending`).
 
+### Progress deadline
+
+`spec.progressDeadlineMinutes` sets one time budget for the entire revision,
+measured from the ClusterObjectSet's creation timestamp. Completing a phase does
+not restart the timer. For example, a five-phase revision with a ten-minute
+deadline reports `Ready=False` with reason `ProgressDeadlineExceeded` if it is
+still incomplete ten minutes after creation, even if four phases have completed.
+
+ClusterObjectDeployments configure this budget through
+`spec.template.spec.progressDeadlineMinutes` and pass it to each new revision.
+Time spent waiting for the deployment controller to create a ClusterObjectSet
+is not counted. Each revision receives its own budget. The deployment reports
+`Progressing=False` with reason `ProgressDeadlineExceeded` when its latest
+revision exceeds the deadline. It can remain `Available=True` if an older active
+revision is still ready.
+
+Omitting the field disables the deadline. Reconciliation continues after a
+timeout, so a revision can recover when all its objects become ready. Once a
+revision has completed, later health regressions do not restart deadline timing.
+
 ### Completion (`status.completedAt`)
 
 The first time a revision becomes ready, the controller stamps `status.completedAt` with the current time. This timestamp is set once and never changes, marking that this revision successfully rolled out at least once — it persists even if the revision later becomes not ready. The ClusterExtension controller uses it to determine the installed revision.
