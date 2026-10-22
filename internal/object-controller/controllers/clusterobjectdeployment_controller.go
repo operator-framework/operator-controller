@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,9 +16,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/workqueue"
+	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -38,6 +42,7 @@ const defaultRevisionHistoryLimit = 5
 type ClusterObjectDeploymentReconciler struct {
 	Client client.Client
 	Scheme *runtime.Scheme
+	Clock  clock.Clock
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterobjectdeployments,verbs=get;list;watch;update;patch;create;delete
@@ -48,6 +53,9 @@ type ClusterObjectDeploymentReconciler struct {
 func (c *ClusterObjectDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("cluster-object-deployment")
 	ctx = log.IntoContext(ctx, l)
+	if c.Clock == nil {
+		c.Clock = clock.RealClock{}
+	}
 
 	existing := &ocv1.ClusterObjectDeployment{}
 	if err := c.Client.Get(ctx, req.NamespacedName, existing); err != nil {
@@ -63,7 +71,7 @@ func (c *ClusterObjectDeploymentReconciler) Reconcile(ctx context.Context, req c
 	defer l.Info("reconcile ending")
 
 	reconciled := existing.DeepCopy()
-	reconcileErr := c.reconcile(ctx, reconciled)
+	result, reconcileErr := c.reconcile(ctx, reconciled)
 
 	if !equality.Semantic.DeepEqual(existing.Status, reconciled.Status) {
 		if err := c.Client.Status().Update(ctx, reconciled); err != nil {
@@ -71,16 +79,16 @@ func (c *ClusterObjectDeploymentReconciler) Reconcile(ctx context.Context, req c
 		}
 	}
 
-	return ctrl.Result{}, reconcileErr
+	return result, reconcileErr
 }
 
 // reconcile garbage-collects excess archived revisions and reconciles the
-// deployment's rollout (see reconcileRollout). Requeues are driven by the
-// controller's watch on owned ClusterObjectSets.
-func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *ocv1.ClusterObjectDeployment) error {
+// deployment's rollout (see reconcileRollout). Child events and the revision's
+// fixed deadline drive subsequent reconciliations.
+func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *ocv1.ClusterObjectDeployment) (ctrl.Result, error) {
 	revisions, err := c.listRevisions(ctx, cod.Name)
 	if err != nil {
-		return err
+		return ctrl.Result{}, err
 	}
 
 	// Garbage collection is best-effort housekeeping and must not block rollout or
@@ -91,43 +99,46 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 	// rollout outcome so the failure is still surfaced and retried.
 	gcErr := c.garbageCollectArchivedRevisions(ctx, cod, revisions)
 
-	return errors.Join(gcErr, c.reconcileRollout(ctx, cod, revisions))
+	result, rolloutErr := c.reconcileRollout(ctx, cod, revisions)
+	return result, errors.Join(gcErr, rolloutErr)
 }
 
 // reconcileRollout creates a new ClusterObjectSet revision when the template has
 // changed (or no active revision exists) and reflects the latest revision's
 // rollout progress in the deployment's Available and Progressing conditions.
-func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
+func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) (ctrl.Result, error) {
 	hash := templateHash(cod.Spec.Template)
 
 	setAvailable(cod, revisions)
 
 	latest := latestActiveRevision(revisions)
 	if latest == nil || latest.Labels[labels.TemplateHashKey] != hash {
-		if err := c.createRevision(ctx, cod, revisions, hash); err != nil {
+		var err error
+		latest, err = c.createRevision(ctx, cod, revisions, hash)
+		if err != nil {
 			setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "waiting for new revision to be created")
-			return err
+			return ctrl.Result{}, err
 		}
-		setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "waiting for new revision to be created")
-		return nil
 	}
 
-	// A revision that has exceeded its progress deadline reports Ready=False with
-	// reason ProgressDeadlineExceeded and never records completedAt. Surface that
-	// terminal rollout state on the deployment's Progressing condition so it is
-	// actionable, rather than reporting an indefinitely-progressing rollout.
-	if ready := apimeta.FindStatusCondition(latest.Status.Conditions, ocv1.ClusterObjectSetTypeReady); ready != nil &&
-		ready.Status == metav1.ConditionFalse && ready.Reason == ocv1.ReasonProgressDeadlineExceeded {
-		setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded, "latest revision exceeded its progress deadline")
-		return nil
-	}
-
-	if latest.Status.CompletedAt.IsZero() {
-		setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "latest revision is progressing")
-	} else {
+	// Completion is historical: later health changes cannot restart the deadline
+	// or turn an already completed rollout into a failed rollout.
+	if !latest.Status.CompletedAt.IsZero() {
 		setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed, "latest revision has progressed")
+		return ctrl.Result{}, nil
 	}
-	return nil
+
+	remaining, hasDeadline := durationUntilDeploymentDeadline(c.Clock, cod, latest)
+	if hasDeadline && remaining <= 0 {
+		setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded, "latest revision exceeded its progress deadline")
+		return ctrl.Result{}, nil
+	}
+
+	setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "latest revision is progressing")
+	if hasDeadline {
+		return ctrl.Result{RequeueAfter: remaining}, nil
+	}
+	return ctrl.Result{}, nil
 }
 
 // listRevisions returns all ClusterObjectSets in the deployment's group, sorted
@@ -215,19 +226,64 @@ func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
 // the deployment. Any create error, including AlreadyExists, is returned.
 //
 // TODO: revisit AlreadyExists handling under the adoption use-case.
-func (c *ClusterObjectDeploymentReconciler) createRevision(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet, hash string) error {
+func (c *ClusterObjectDeploymentReconciler) createRevision(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet, hash string) (*ocv1.ClusterObjectSet, error) {
 	revision, err := nextRevisionNumber(revisions)
 	if err != nil {
-		return fmt.Errorf("allocating revision for group %q: %w", cod.Name, err)
+		return nil, fmt.Errorf("allocating revision for group %q: %w", cod.Name, err)
 	}
 	cos := buildClusterObjectSet(cod, revision, hash)
 	if err := controllerutil.SetControllerReference(cod, cos, c.Scheme); err != nil {
-		return fmt.Errorf("setting controller reference: %w", err)
+		return nil, fmt.Errorf("setting controller reference: %w", err)
 	}
 	if err := c.Client.Create(ctx, cos); err != nil {
-		return fmt.Errorf("creating revision %d: %w", revision, err)
+		return nil, fmt.Errorf("creating revision %d: %w", revision, err)
 	}
-	return nil
+	return cos, nil
+}
+
+// durationUntilDeploymentDeadline excludes time before the revision has its
+// server-assigned creation timestamp. The deployment supplies the budget, while
+// the revision's completion latch ends it independently of current readiness.
+func durationUntilDeploymentDeadline(clk clock.Clock, cod *ocv1.ClusterObjectDeployment, cos *ocv1.ClusterObjectSet) (time.Duration, bool) {
+	if cos == nil || cos.CreationTimestamp.IsZero() || !cos.Status.CompletedAt.IsZero() ||
+		cos.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived || !cos.DeletionTimestamp.IsZero() {
+		return 0, false
+	}
+	pd := cod.Spec.Template.Spec.ProgressDeadlineMinutes
+	if pd <= 0 {
+		return 0, false
+	}
+	deadline := cos.CreationTimestamp.Add(time.Duration(pd) * time.Minute)
+	return deadline.Sub(clk.Now()), true
+}
+
+// newCODDeadlineAwareRateLimiter bounds error backoff as well as successful
+// reconciles: controller-runtime ignores RequeueAfter when an error is returned.
+func newCODDeadlineAwareRateLimiter(delegate workqueue.TypedRateLimiter[ctrl.Request], reader client.Reader, clk clock.Clock) *deadlineAwareRateLimiter {
+	return &deadlineAwareRateLimiter{
+		delegate: delegate,
+		remaining: func(req ctrl.Request) (time.Duration, bool, error) {
+			ctx := context.Background()
+			cod := &ocv1.ClusterObjectDeployment{}
+			if err := reader.Get(ctx, req.NamespacedName, cod); err != nil {
+				return 0, false, client.IgnoreNotFound(err)
+			}
+			if !cod.DeletionTimestamp.IsZero() {
+				return 0, false, nil
+			}
+			var revisions ocv1.ClusterObjectSetList
+			if err := reader.List(ctx, &revisions, client.MatchingFields{clusterObjectSetGroupIndex: cod.Name}); err != nil {
+				return 0, false, err
+			}
+			latest := latestActiveRevision(revisions.Items)
+			if latest == nil || latest.Labels[labels.TemplateHashKey] != templateHash(cod.Spec.Template) {
+				// Creating the desired revision is outside the MVP deadline.
+				return 0, false, nil
+			}
+			remaining, hasDeadline := durationUntilDeploymentDeadline(clk, cod, latest)
+			return remaining, hasDeadline, nil
+		},
+	}
 }
 
 // setAvailable sets the deployment's Available condition. It is True when at least
@@ -273,7 +329,16 @@ func setCondition(cod *ocv1.ClusterObjectDeployment, condType string, status met
 }
 
 func (c *ClusterObjectDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if c.Clock == nil {
+		c.Clock = clock.RealClock{}
+	}
 	return ctrl.NewControllerManagedBy(mgr).
+		WithOptions(controller.Options{
+			RateLimiter: newCODDeadlineAwareRateLimiter(
+				workqueue.DefaultTypedControllerRateLimiter[ctrl.Request](),
+				mgr.GetClient(), c.Clock,
+			),
+		}).
 		For(
 			&ocv1.ClusterObjectDeployment{},
 			builder.WithPredicates(
@@ -363,13 +428,12 @@ func buildClusterObjectSet(cod *ocv1.ClusterObjectDeployment, revision int64, ha
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
-			Group:                   cod.Name,
-			Revision:                revision,
-			LifecycleState:          ocv1.ClusterObjectSetLifecycleStateActive,
-			Phases:                  cod.Spec.Template.Spec.Phases,
-			ProgressDeadlineMinutes: cod.Spec.Template.Spec.ProgressDeadlineMinutes,
-			ProgressionProbes:       cod.Spec.Template.Spec.ProgressionProbes,
-			CollisionProtection:     cod.Spec.Template.Spec.CollisionProtection,
+			Group:               cod.Name,
+			Revision:            revision,
+			LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
+			Phases:              cod.Spec.Template.Spec.Phases,
+			ProgressionProbes:   cod.Spec.Template.Spec.ProgressionProbes,
+			CollisionProtection: cod.Spec.Template.Spec.CollisionProtection,
 		},
 	}
 }
