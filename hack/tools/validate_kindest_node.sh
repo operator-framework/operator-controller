@@ -17,6 +17,7 @@ case "${K8S_MINOR}" in
   1.34) IMAGE="kindest/node:v1.34.8" ;;
   1.35) IMAGE="kindest/node:v1.35.5" ;;
   1.36) IMAGE="kindest/node:v1.36.1" ;;
+  1.37) IMAGE="kindest/node:v1.37.0" ;;
   *) IMAGE="" ;;
 esac
 # --- END KIND IMAGES ---

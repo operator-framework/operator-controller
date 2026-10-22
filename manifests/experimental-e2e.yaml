@@ -1414,7 +1414,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.22.0
     olm.operatorframework.io/generator: experimental
   name: clusterobjectdeployments.olm.operatorframework.io
 spec:
@@ -1610,8 +1610,8 @@ spec:
                                 x-kubernetes-validations:
                                 - message: exactly one of the fields in [object ref]
                                     must be set
-                                  rule: '[has(self.object),has(self.ref)].filter(x,x==true).size()
-                                    == 1'
+                                  rule: (has(self.object)?1:0)+(has(self.ref)?1:0)
+                                    == 1
                               maxItems: 50
                               type: array
                           required:
@@ -1984,7 +1984,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.22.0
     olm.operatorframework.io/generator: experimental
   name: clusterobjectsets.olm.operatorframework.io
 spec:
@@ -2247,8 +2247,7 @@ spec:
                         x-kubernetes-validations:
                         - message: exactly one of the fields in [object ref] must
                             be set
-                          rule: '[has(self.object),has(self.ref)].filter(x,x==true).size()
-                            == 1'
+                          rule: (has(self.object)?1:0)+(has(self.ref)?1:0) == 1
                       maxItems: 50
                       type: array
                   required:
