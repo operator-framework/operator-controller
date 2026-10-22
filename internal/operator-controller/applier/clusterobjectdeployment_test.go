@@ -15,9 +15,9 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	bundlecsv "github.com/operator-framework/operator-controller/internal/testing/bundle/csv"
 	bundlefs "github.com/operator-framework/operator-controller/internal/testing/bundle/fs"
-	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
 // fakeManifestProvider is a test double that returns a fixed list of objects
