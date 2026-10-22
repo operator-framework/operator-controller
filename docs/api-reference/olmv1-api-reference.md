@@ -383,7 +383,6 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions represents the current state of the ClusterExtension.<br />The set of condition types which apply to all spec.source variations are Installed and Progressing.<br />The Installed condition represents whether the bundle has been installed for this ClusterExtension:<br />  - When Installed is True and the Reason is Succeeded, the bundle has been successfully installed.<br />  - When Installed is False and the Reason is Failed, the bundle has failed to install.<br />The Progressing condition represents whether or not the ClusterExtension is advancing towards a new state.<br />When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.<br />When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.<br />When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.<br />**Experimental channel:** <br />When Progressing is True and Reason is RollingOut, the ClusterExtension has one or more ClusterObjectSets in active roll out.<br /><br />When the ClusterExtension is sourced from a catalog, it surfaces deprecation conditions based on catalog metadata.<br />These are indications from a package owner to guide users away from a particular package, channel, or bundle:<br />  - BundleDeprecated is True if the installed bundle is marked deprecated, False if not deprecated, or Unknown if no bundle is installed yet or if catalog data is unavailable.<br />  - ChannelDeprecated is True if any requested channel is marked deprecated, False if not deprecated, or Unknown if catalog data is unavailable.<br />  - PackageDeprecated is True if the requested package is marked deprecated, False if not deprecated, or Unknown if catalog data is unavailable.<br />  - Deprecated is a rollup condition that is True when any deprecation exists, False when none exist, or Unknown when catalog data is unavailable. |  | Optional: \{\} <br /> |
 | `install` _[ClusterExtensionInstallStatus](#clusterextensioninstallstatus)_ | install is a representation of the current installation status for this ClusterExtension. |  | Optional: \{\} <br /> |
-| `activeRevisions` _[RevisionStatus](#revisionstatus) array_ | activeRevisions holds a list of currently active (non-archived) ClusterObjectSets,<br />including both installed and rolling out revisions.<br />**Experimental channel:**  |  | Optional: \{\} <br /> |
 
 
 #### ClusterObjectDeployment
@@ -751,23 +750,6 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `ref` _string_ | ref contains the resolved image digest-based reference.<br />The digest format allows you to use other tooling to fetch the exact OCI manifests<br />that were used to extract the catalog contents. |  | MaxLength: 1000 <br />Required: \{\} <br /> |
-
-
-#### RevisionStatus
-
-
-
-RevisionStatus defines the observed state of a ClusterObjectSet.
-
-
-
-_Appears in:_
-- [ClusterExtensionStatus](#clusterextensionstatus)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `name` _string_ | name of the ClusterObjectSet resource |  |  |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions optionally expose the Available condition of the revision,<br />in case when it is not yet marked as successfully installed (completedAt is not set).<br />Given that a ClusterExtension should remain available during upgrades, an observer may use these conditions<br />to get more insights about reasons for its current state. |  | Optional: \{\} <br /> |
 
 
 #### SelectorType

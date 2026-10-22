@@ -316,38 +316,11 @@ Feature: Update ClusterExtension
     Then bundle "${PACKAGE:test}.1.2.0" is installed in version "1.2.0"
     And ClusterExtension is rolled out
     And ClusterExtension is available
-    And ClusterExtension reports "${NAME}-2" as active revision
     And ClusterObjectSet "${NAME}-2" reports Ready as True with Reason AllObjectsReady
     And ClusterObjectSet "${NAME}-1" is archived
     And ClusterObjectSet "${NAME}-1" phase objects are not found or not owned by the revision
     And ClusterObjectSet "${NAME}-2" has group "${NAME}"
     And ClusterObjectSet "${NAME}-2" phase objects use SSA manager "cos-group/${NAME}"
-
-  @BoxcutterRuntime
-  Scenario: Report all active revisions on ClusterExtension
-    Given ClusterExtension is applied
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: ${PACKAGE:test}
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
-            version: 1.0.0
-            upgradeConstraintPolicy: SelfCertified
-      """
-    And ClusterExtension is rolled out
-    And ClusterExtension is available
-    When ClusterExtension version is updated to "1.0.2"
-    Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
-    And ClusterObjectSet "${NAME}-2" reports Ready as False with Reason ObjectsNotReady
 
   Scenario: Clearing deprecated serviceAccount field is reconciled without warnings
     Given ClusterExtension is applied

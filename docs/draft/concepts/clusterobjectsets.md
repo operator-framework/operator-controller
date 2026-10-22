@@ -257,7 +257,7 @@ When a ClusterExtension is upgraded to a new version:
 
 ### Relationship with ClusterExtension
 
-A `ClusterExtension` owns one or more `ClusterObjectSet` resources. The ClusterExtension's `.status.activeRevisions` field lists all currently active (non-archived) revisions along with their status conditions.
+A `ClusterExtension` owns one or more `ClusterObjectSet` resources.
 
 Operator-controller sets `spec.group` to the ClusterExtension's name and retains
 the ClusterExtension controller owner reference for garbage collection. Revision

@@ -126,8 +126,6 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 			return nil, err
 		}
 
-		setActiveRevisionsFromRevisionStates(ext, state.revisionStates)
-
 		setAvailableFromRevisionStates(ext, state.revisionStates)
 		setProgressingFromRevisionStates(ext, state.revisionStates)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)

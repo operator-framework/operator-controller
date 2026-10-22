@@ -106,8 +106,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1.ResolvedCatalogSourceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ResolvedImageSource"):
 		return &apiv1.ResolvedImageSourceApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("RevisionStatus"):
-		return &apiv1.RevisionStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ServiceAccountReference"):
 		return &apiv1.ServiceAccountReferenceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("SourceConfig"):

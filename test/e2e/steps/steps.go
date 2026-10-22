@@ -119,7 +119,6 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension is removed$`, ClusterExtensionIsRemoved)
 	sc.Step(`^(?i)ClusterExtension (?:latest generation )?has (?:been )?reconciled(?: the latest generation)?$`, ClusterExtensionReconciledLatestGeneration)
 	sc.Step(`^(?i)the ClusterExtension's constituent resources are removed$`, ClusterExtensionResourcesRemoved)
-	sc.Step(`^(?i)ClusterExtension reports "([^"]+)" as active revision(s?)$`, ClusterExtensionReportsActiveRevisions)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterExtensionReportsCondition)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterExtensionReportsConditionWithMessageFragment)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutMsg)
@@ -963,33 +962,6 @@ func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditi
 	require.LessOrEqual(t, transitionDuration, maxDuration,
 		"condition %s transitioned too late: %v since creation (expected <= %v)", conditionType, transitionDuration, maxDuration)
 
-	return nil
-}
-
-// ClusterExtensionReportsActiveRevisions waits for the ClusterExtension's active revisions to match the expected
-// set of revision names. Polls with timeout.
-func ClusterExtensionReportsActiveRevisions(ctx context.Context, rawRevisionNames string) error {
-	sc := scenarioCtx(ctx)
-	expectedRevisionNames := sets.New[string]()
-	for _, rev := range strings.Split(rawRevisionNames, ",") {
-		expectedRevisionNames.Insert(substituteScenarioVars(strings.TrimSpace(rev), sc))
-	}
-
-	waitFor(ctx, func() bool {
-		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.activeRevisions}")
-		if err != nil {
-			return false
-		}
-		var activeRevisions []ocv1.RevisionStatus
-		if err := json.Unmarshal([]byte(v), &activeRevisions); err != nil {
-			return false
-		}
-		activeRevisionsNames := sets.New[string]()
-		for _, rev := range activeRevisions {
-			activeRevisionsNames.Insert(rev.Name)
-		}
-		return activeRevisionsNames.Equal(expectedRevisionNames)
-	})
 	return nil
 }
 

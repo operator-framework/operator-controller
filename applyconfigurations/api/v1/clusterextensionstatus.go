@@ -52,10 +52,6 @@ type ClusterExtensionStatusApplyConfiguration struct {
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// install is a representation of the current installation status for this ClusterExtension.
 	Install *ClusterExtensionInstallStatusApplyConfiguration `json:"install,omitempty"`
-	// activeRevisions holds a list of currently active (non-archived) ClusterObjectSets,
-	// including both installed and rolling out revisions.
-	// <opcon:experimental>
-	ActiveRevisions []RevisionStatusApplyConfiguration `json:"activeRevisions,omitempty"`
 }
 
 // ClusterExtensionStatusApplyConfiguration constructs a declarative configuration of the ClusterExtensionStatus type for use with
@@ -82,18 +78,5 @@ func (b *ClusterExtensionStatusApplyConfiguration) WithConditions(values ...*met
 // If called multiple times, the Install field is set to the value of the last call.
 func (b *ClusterExtensionStatusApplyConfiguration) WithInstall(value *ClusterExtensionInstallStatusApplyConfiguration) *ClusterExtensionStatusApplyConfiguration {
 	b.Install = value
-	return b
-}
-
-// WithActiveRevisions adds the given value to the ActiveRevisions field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the ActiveRevisions field.
-func (b *ClusterExtensionStatusApplyConfiguration) WithActiveRevisions(values ...*RevisionStatusApplyConfiguration) *ClusterExtensionStatusApplyConfiguration {
-	for i := range values {
-		if values[i] == nil {
-			panic("nil value passed to WithActiveRevisions")
-		}
-		b.ActiveRevisions = append(b.ActiveRevisions, *values[i])
-	}
 	return b
 }
