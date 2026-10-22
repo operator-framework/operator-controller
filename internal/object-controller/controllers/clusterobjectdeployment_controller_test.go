@@ -831,3 +831,34 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 		})
 	}
 }
+
+func Test_ClusterObjectDeploymentReconciler_PropagatesBundleAnnotations(t *testing.T) {
+	cod := codFixture()
+	cod.Annotations = map[string]string{
+		labels.PackageNameKey:     "test-package",
+		labels.BundleNameKey:      "test-bundle",
+		labels.BundleVersionKey:   "1.0.0+2",
+		labels.BundleReferenceKey: "registry.example.com/bundle@sha256:abcdef",
+		labels.BundleReleaseKey:   "2",
+		"example.com/non-bundle":  "should-not-be-copied",
+	}
+
+	c := newCODClient(t, cod)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.True(t, ok, "revision 1 should be created")
+
+	// Bundle-metadata annotations should be copied
+	require.Equal(t, "test-package", cos.Annotations[labels.PackageNameKey], "PackageNameKey should be copied")
+	require.Equal(t, "test-bundle", cos.Annotations[labels.BundleNameKey], "BundleNameKey should be copied")
+	require.Equal(t, "1.0.0+2", cos.Annotations[labels.BundleVersionKey], "BundleVersionKey should be copied")
+	require.Equal(t, "registry.example.com/bundle@sha256:abcdef", cos.Annotations[labels.BundleReferenceKey], "BundleReferenceKey should be copied")
+	require.Equal(t, "2", cos.Annotations[labels.BundleReleaseKey], "BundleReleaseKey should be copied")
+
+	// Non-bundle annotation should NOT be copied
+	_, exists := cos.Annotations["example.com/non-bundle"]
+	require.False(t, exists, "non-bundle annotations must not be copied from COD to COS")
+}

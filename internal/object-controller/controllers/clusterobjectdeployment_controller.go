@@ -38,6 +38,16 @@ import (
 // defensively for callers (e.g. tests) that bypass API-server defaulting.
 const defaultRevisionHistoryLimit = 5
 
+// bundleAnnotationKeys lists the bundle-metadata annotation keys that are
+// propagated from a ClusterObjectDeployment onto each ClusterObjectSet it creates.
+var bundleAnnotationKeys = []string{
+	labels.PackageNameKey,
+	labels.BundleNameKey,
+	labels.BundleVersionKey,
+	labels.BundleReleaseKey,
+	labels.BundleReferenceKey,
+}
+
 // ClusterObjectDeploymentReconciler reconciles ClusterObjectDeployment objects by
 // managing their owned ClusterObjectSet revisions.
 type ClusterObjectDeploymentReconciler struct {
@@ -439,11 +449,25 @@ func buildClusterObjectSet(cod *ocv1.ClusterObjectDeployment, revision int64, ha
 	}
 	revLabels[labels.TemplateHashKey] = hash
 
+	revAnnotations := maps.Clone(cod.Spec.Template.Metadata.Annotations)
+	if revAnnotations == nil {
+		revAnnotations = map[string]string{}
+	}
+	// Also copy bundle-metadata annotations from the deployment's own annotations so the
+	// ClusterExtension status reader (which reads these annotations off the COS) keeps
+	// working during the refactor to make operator-controller write CODs instead of
+	// managing COSes directly.
+	for _, key := range bundleAnnotationKeys {
+		if value, ok := cod.Annotations[key]; ok {
+			revAnnotations[key] = value
+		}
+	}
+
 	return &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%d", cod.Name, revision),
 			Labels:      revLabels,
-			Annotations: maps.Clone(cod.Spec.Template.Metadata.Annotations),
+			Annotations: revAnnotations,
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
 			Group:                   cod.Name,
