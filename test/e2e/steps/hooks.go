@@ -220,7 +220,7 @@ func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Con
 		scenarioName:         sc.Name,
 		namespace:            fmt.Sprintf("ns-%s", sc.Id),
 		clusterExtensionName: fmt.Sprintf("ce-%s", sc.Id),
-		clusterObjectSetName: fmt.Sprintf("cos-%s", sc.Id),
+		clusterObjectSetName: fmt.Sprintf("ce-%s-1", sc.Id),
 		catalogs:             make(map[string]string),
 		catalogPackageNames:  make(map[string]string),
 		metricsResponse:      make(map[string]string),

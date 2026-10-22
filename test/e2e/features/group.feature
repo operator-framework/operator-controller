@@ -178,7 +178,7 @@ Feature: Track ClusterObjectSet revisions by group
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterObjectSet
       metadata:
-        name: ${COS_NAME}
+        name: ${NAME}-other-1
         labels:
           olm.operatorframework.io/owner-name: ${NAME}
       spec:

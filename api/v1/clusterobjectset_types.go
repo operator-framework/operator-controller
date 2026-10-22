@@ -25,6 +25,11 @@ import (
 const (
 	ClusterObjectSetKind = "ClusterObjectSet"
 
+	// ClusterObjectSetMaxRevision is the largest revision whose canonical name fits
+	// in a 63-character label value with a 52-character group and a separating hyphen.
+	// Keep the revision validation maximum below in sync with this value.
+	ClusterObjectSetMaxRevision int64 = 9999999999
+
 	// Condition Types
 	ClusterObjectSetTypeReady = "Ready"
 
@@ -75,11 +80,12 @@ type ClusterObjectSetSpec struct {
 	// revision is a required, immutable sequence number identifying a specific
 	// ClusterObjectSet within a sequence of related revisions.
 	//
-	// The revision field must be a positive integer.
-	// Each ClusterObjectSet in the same revision sequence must have a unique revision number.
+	// The revision field must be an integer from 1 to 9999999999, inclusive.
+	// Each ClusterObjectSet in the same group must have a unique revision number.
 	//
 	// +required
 	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Maximum:=9999999999
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision"`
 
@@ -627,6 +633,7 @@ type ObjectCounts struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:validation:XValidation:rule="self.metadata.name == '%s-%d'.format([self.spec.group, self.spec.revision])",message="metadata.name must be <spec.group>-<spec.revision>"
 // +kubebuilder:selectablefield:JSONPath=`.spec.group`
 // +kubebuilder:printcolumn:name="Group",type=string,JSONPath=`.spec.group`
 // +kubebuilder:printcolumn:name="Revision",type=integer,JSONPath=`.spec.revision`
@@ -644,6 +651,9 @@ type ObjectCounts struct {
 // single revision at a time. Ownership of objects is transitioned from one revision
 // to the next as new revisions are rolled out. Once the latest revision has rolled
 // out successfully, previous active revisions are archived for posterity.
+// Set metadata.name explicitly to <spec.group>-<spec.revision>, using decimal
+// notation without leading zeros. This ensures revision uniqueness within a group.
+// Name generation through metadata.generateName is not supported.
 type ClusterObjectSet struct {
 	metav1.TypeMeta `json:",inline"`
 

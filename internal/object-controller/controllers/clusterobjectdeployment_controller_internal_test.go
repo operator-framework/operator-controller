@@ -63,12 +63,16 @@ func Test_templateHash_isStableAndSensitive(t *testing.T) {
 }
 
 func Test_nextRevisionNumber(t *testing.T) {
-	require.Equal(t, int64(1), nextRevisionNumber(nil))
+	revision, err := nextRevisionNumber(nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), revision)
 	revs := []ocv1.ClusterObjectSet{
 		{Spec: ocv1.ClusterObjectSetSpec{Revision: 1}},
 		{Spec: ocv1.ClusterObjectSetSpec{Revision: 3, LifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived}},
 	}
-	require.Equal(t, int64(4), nextRevisionNumber(revs), "must count archived revisions so numbers never repeat")
+	revision, err = nextRevisionNumber(revs)
+	require.NoError(t, err)
+	require.Equal(t, int64(4), revision, "must count archived revisions so numbers never repeat")
 }
 
 func Test_latestActiveRevision(t *testing.T) {

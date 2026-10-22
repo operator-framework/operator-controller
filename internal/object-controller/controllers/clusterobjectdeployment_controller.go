@@ -216,7 +216,10 @@ func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
 //
 // TODO: revisit AlreadyExists handling under the adoption use-case.
 func (c *ClusterObjectDeploymentReconciler) createRevision(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet, hash string) error {
-	revision := nextRevisionNumber(revisions)
+	revision, err := nextRevisionNumber(revisions)
+	if err != nil {
+		return fmt.Errorf("allocating revision for group %q: %w", cod.Name, err)
+	}
 	cos := buildClusterObjectSet(cod, revision, hash)
 	if err := controllerutil.SetControllerReference(cod, cos, c.Scheme); err != nil {
 		return fmt.Errorf("setting controller reference: %w", err)
@@ -315,15 +318,18 @@ func templateHash(template ocv1.ClusterObjectDeploymentTemplate) string {
 
 // nextRevisionNumber returns the revision number for a new revision: one greater
 // than the highest revision across all revisions in the group (including archived
-// ones, so revision numbers are never reused).
-func nextRevisionNumber(revisions []ocv1.ClusterObjectSet) int64 {
+// ones, so revision numbers are never reused). It returns an error at the limit.
+func nextRevisionNumber(revisions []ocv1.ClusterObjectSet) (int64, error) {
 	var max int64
 	for i := range revisions {
 		if revisions[i].Spec.Revision > max {
 			max = revisions[i].Spec.Revision
 		}
 	}
-	return max + 1
+	if max >= ocv1.ClusterObjectSetMaxRevision {
+		return 0, fmt.Errorf("revision limit %d reached", ocv1.ClusterObjectSetMaxRevision)
+	}
+	return max + 1, nil
 }
 
 // latestActiveRevision returns the highest-revision ClusterObjectSet that is

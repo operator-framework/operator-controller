@@ -584,7 +584,11 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 // It follows a crash-safe three-step sequence: create Secrets, create COS, patch ownerRefs.
 func (bc *Boxcutter) createExternalizedRevision(ctx context.Context, ext *ocv1.ClusterExtension, desiredRevision *ocv1ac.ClusterObjectSetApplyConfiguration, existingRevisions []ocv1.ClusterObjectSet) error {
 	prevRevisions := existingRevisions
-	revisionNumber := latestRevisionNumber(prevRevisions) + 1
+	latest := latestRevisionNumber(prevRevisions)
+	if latest >= ocv1.ClusterObjectSetMaxRevision {
+		return fmt.Errorf("revision limit %d reached for group %q", ocv1.ClusterObjectSetMaxRevision, ext.Name)
+	}
+	revisionNumber := latest + 1
 
 	revisionName := fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
 	desiredRevision.WithName(revisionName)

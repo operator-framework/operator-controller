@@ -1981,6 +1981,9 @@ spec:
           single revision at a time. Ownership of objects is transitioned from one revision
           to the next as new revisions are rolled out. Once the latest revision has rolled
           out successfully, previous active revisions are archived for posterity.
+          Set metadata.name explicitly to <spec.group>-<spec.revision>, using decimal
+          notation without leading zeros. This ensures revision uniqueness within a group.
+          Name generation through metadata.generateName is not supported.
         properties:
           apiVersion:
             description: |-
@@ -2489,9 +2492,10 @@ spec:
                   revision is a required, immutable sequence number identifying a specific
                   ClusterObjectSet within a sequence of related revisions.
 
-                  The revision field must be a positive integer.
-                  Each ClusterObjectSet in the same revision sequence must have a unique revision number.
+                  The revision field must be an integer from 1 to 9999999999, inclusive.
+                  Each ClusterObjectSet in the same group must have a unique revision number.
                 format: int64
+                maximum: 9999999999
                 minimum: 1
                 type: integer
                 x-kubernetes-validations:
@@ -2734,6 +2738,9 @@ spec:
         required:
         - spec
         type: object
+        x-kubernetes-validations:
+        - message: metadata.name must be <spec.group>-<spec.revision>
+          rule: self.metadata.name == '%s-%d'.format([self.spec.group, self.spec.revision])
     selectableFields:
     - jsonPath: .spec.group
     served: true

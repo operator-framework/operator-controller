@@ -32,10 +32,10 @@ func TestBoxcutterRevisionStatesGetter_GroupIndex(t *testing.T) {
 		succeeded bool
 		ownerName string
 	}{
-		{name: "cache-installed", group: group, revision: 1, succeeded: true, ownerName: "other-owner"},
-		{name: "cache-rolling", group: group, revision: 2},
-		{name: "cache-archived", group: group, revision: 3, archived: true, succeeded: true, ownerName: group},
-		{name: "cache-other-group", group: "other-group", revision: 99, succeeded: true, ownerName: group},
+		{name: "cache-group-1", group: group, revision: 1, succeeded: true, ownerName: "other-owner"},
+		{name: "cache-group-2", group: group, revision: 2},
+		{name: "cache-group-3", group: group, revision: 3, archived: true, succeeded: true, ownerName: group},
+		{name: "other-group-99", group: "other-group", revision: 99, succeeded: true, ownerName: group},
 	} {
 		cos := &ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{Name: tc.name},
@@ -89,11 +89,11 @@ func TestBoxcutterRevisionStatesGetter_GroupIndex(t *testing.T) {
 	states, err := getter.GetRevisionStates(ctx, ext)
 	require.NoError(t, err)
 	require.NotNil(t, states.Installed)
-	require.Equal(t, "cache-installed", states.Installed.RevisionName)
+	require.Equal(t, "cache-group-1", states.Installed.RevisionName)
 	require.Len(t, states.RollingOut, 1)
-	require.Equal(t, "cache-rolling", states.RollingOut[0].RevisionName)
+	require.Equal(t, "cache-group-2", states.RollingOut[0].RevisionName)
 
-	require.NoError(t, cl.Delete(ctx, &ocv1.ClusterObjectSet{ObjectMeta: metav1.ObjectMeta{Name: "cache-rolling"}}))
+	require.NoError(t, cl.Delete(ctx, &ocv1.ClusterObjectSet{ObjectMeta: metav1.ObjectMeta{Name: "cache-group-2"}}))
 	require.Eventually(t, func() bool {
 		states, err := getter.GetRevisionStates(ctx, ext)
 		return err == nil && len(states.RollingOut) == 0

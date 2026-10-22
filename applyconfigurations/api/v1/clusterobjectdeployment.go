@@ -35,7 +35,7 @@ import (
 type ClusterObjectDeploymentApplyConfiguration struct {
 	metav1.TypeMetaApplyConfiguration `json:",inline"`
 	// metadata is the standard object's metadata. Names are valid COS groups of at
-	// most 52 characters; generated child names also include an int64 revision suffix.
+	// most 52 characters; child names also include a hyphen and up to ten revision digits.
 	*metav1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	// spec defines the desired deployment template.
 	Spec *ClusterObjectDeploymentSpecApplyConfiguration `json:"spec,omitempty"`
