@@ -19,7 +19,6 @@ import (
 
 func TestSecretPacker_Pack(t *testing.T) {
 	packer := SecretPacker{
-		RevisionName:    "my-ext-3",
 		OwnerName:       "my-ext",
 		SystemNamespace: "olmv1-system",
 	}
@@ -221,29 +220,27 @@ func TestSecretPacker_NameIsRevisionIndependent(t *testing.T) {
 		},
 	}}
 
-	// Pack with first packer (OwnerName: "ext", RevisionName: "ext-1")
+	// Pack the same content twice with independent packers.
 	packer1 := SecretPacker{
 		OwnerName:       "ext",
-		RevisionName:    "ext-1",
 		SystemNamespace: "olmv1-system",
 	}
 	result1, err := packer1.Pack(phases)
 	require.NoError(t, err)
 	require.Len(t, result1.Secrets, 1)
 
-	// Pack with second packer (same OwnerName, different RevisionName)
 	packer2 := SecretPacker{
 		OwnerName:       "ext",
-		RevisionName:    "ext-2",
 		SystemNamespace: "olmv1-system",
 	}
 	result2, err := packer2.Pack(phases)
 	require.NoError(t, err)
 	require.Len(t, result2.Secrets, 1)
 
-	// Assert both Secret names are identical and begin with "ext-"
+	// Assert both Secret names are identical and begin with "ext-". Names are
+	// content-addressed, so identical content yields identical names.
 	assert.Equal(t, result1.Secrets[0].Name, result2.Secrets[0].Name,
-		"Secret names should be identical regardless of RevisionName")
+		"Secret names should be content-addressed, not revision-dependent")
 	assert.True(t, strings.HasPrefix(result1.Secrets[0].Name, "ext-"),
 		"Secret name should be prefixed with OwnerName")
 

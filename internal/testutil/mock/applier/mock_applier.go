@@ -19,6 +19,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 	chart "helm.sh/helm/v3/pkg/chart"
 	release "helm.sh/helm/v3/pkg/release"
+	v11 "k8s.io/api/core/v1"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -176,19 +177,20 @@ func (m *MockClusterObjectSetGenerator) EXPECT() *MockClusterObjectSetGeneratorM
 	return m.recorder
 }
 
-// GenerateRevision mocks base method.
-func (m *MockClusterObjectSetGenerator) GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *v1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*v10.ClusterObjectSetApplyConfiguration, error) {
+// GenerateClusterObjectDeployment mocks base method.
+func (m *MockClusterObjectSetGenerator) GenerateClusterObjectDeployment(ctx context.Context, bundleFS fs.FS, ext *v1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*v10.ClusterObjectDeploymentApplyConfiguration, []v11.Secret, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateRevision", ctx, bundleFS, ext, objectLabels, revisionAnnotations)
-	ret0, _ := ret[0].(*v10.ClusterObjectSetApplyConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GenerateClusterObjectDeployment", ctx, bundleFS, ext, objectLabels, revisionAnnotations)
+	ret0, _ := ret[0].(*v10.ClusterObjectDeploymentApplyConfiguration)
+	ret1, _ := ret[1].([]v11.Secret)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// GenerateRevision indicates an expected call of GenerateRevision.
-func (mr *MockClusterObjectSetGeneratorMockRecorder) GenerateRevision(ctx, bundleFS, ext, objectLabels, revisionAnnotations any) *gomock.Call {
+// GenerateClusterObjectDeployment indicates an expected call of GenerateClusterObjectDeployment.
+func (mr *MockClusterObjectSetGeneratorMockRecorder) GenerateClusterObjectDeployment(ctx, bundleFS, ext, objectLabels, revisionAnnotations any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateRevision", reflect.TypeOf((*MockClusterObjectSetGenerator)(nil).GenerateRevision), ctx, bundleFS, ext, objectLabels, revisionAnnotations)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateClusterObjectDeployment", reflect.TypeOf((*MockClusterObjectSetGenerator)(nil).GenerateClusterObjectDeployment), ctx, bundleFS, ext, objectLabels, revisionAnnotations)
 }
 
 // GenerateRevisionFromHelmRelease mocks base method.

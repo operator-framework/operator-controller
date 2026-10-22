@@ -18,7 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	metav1ac "k8s.io/client-go/applyconfigurations/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,17 +30,16 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/revisions"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
 )
 
-const (
-	ClusterObjectSetRetentionLimit = 5
-)
-
 type ClusterObjectSetGenerator interface {
-	GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterObjectSetApplyConfiguration, error)
+	GenerateClusterObjectDeployment(
+		ctx context.Context,
+		bundleFS fs.FS, ext *ocv1.ClusterExtension,
+		objectLabels, revisionAnnotations map[string]string,
+	) (*ocv1ac.ClusterObjectDeploymentApplyConfiguration, []corev1.Secret, error)
 	GenerateRevisionFromHelmRelease(
 		ctx context.Context,
 		helmRelease *release.Release, ext *ocv1.ClusterExtension,
@@ -105,58 +103,6 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	rev.WithName(fmt.Sprintf("%s-1", ext.Name))
 	rev.Spec.WithRevision(1)
 	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionNone) // allow to adopt objects from previous release
-	return rev, nil
-}
-
-func (r *SimpleRevisionGenerator) GenerateRevision(
-	ctx context.Context,
-	bundleFS fs.FS, ext *ocv1.ClusterExtension,
-	objectLabels, revisionAnnotations map[string]string,
-) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-	// extract plain manifests
-	plain, err := r.ManifestProvider.Get(bundleFS, ext)
-	if err != nil {
-		return nil, err
-	}
-
-	if revisionAnnotations == nil {
-		revisionAnnotations = map[string]string{}
-	}
-
-	// add bundle properties of interest to revision annotations
-	bundleAnnotations, err := getBundleAnnotations(bundleFS)
-	if err != nil {
-		return nil, fmt.Errorf("error getting bundle annotations: %w", err)
-	}
-
-	// we don't care about all of the bundle and csv annotations as they can be quite confusing
-	// e.g. 'createdAt', 'capabilities', etc.
-	for _, key := range []string{
-		// used by other operators that care about the bundle properties (e.g. maxOpenShiftVersion)
-		source.PropertyOLMProperties,
-	} {
-		if value, ok := bundleAnnotations[key]; ok {
-			revisionAnnotations[key] = value
-		}
-	}
-
-	// Prepare object annotations from revision annotations
-	annotationUpdates := map[string]string{}
-	if v := revisionAnnotations[labels.BundleVersionKey]; v != "" {
-		annotationUpdates[labels.BundleVersionKey] = v
-	}
-	if v := revisionAnnotations[labels.PackageNameKey]; v != "" {
-		annotationUpdates[labels.PackageNameKey] = v
-	}
-
-	// Render objects with labels and annotations
-	objs, err := r.renderObjects(ctx, plain, objectLabels, annotationUpdates)
-	if err != nil {
-		return nil, err
-	}
-
-	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
-	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionPrevent)
 	return rev, nil
 }
 
@@ -479,31 +425,27 @@ type Boxcutter struct {
 }
 
 func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
-	// List existing revisions first to validate cluster connectivity before checking contentFS.
-	// This ensures we fail fast on API errors rather than attempting fallback behavior when
-	// cluster access is unavailable (since the ClusterObjectSet controller also requires
-	// API access to maintain resources). The revision list is also needed to determine if fallback
-	// is possible when contentFS is nil (at least one revision must exist).
-	existingRevisions, err := revisions.ListForGroup(ctx, bc.Client, ext.Name)
-	if err != nil {
-		return false, "", fmt.Errorf("listing revisions: %w", err)
-	}
-
 	// If contentFS is nil, we're maintaining the current state without catalog access.
-	// In this case, we should use the existing installed revision without generating a new one.
+	// In this case, we rely on the already-installed ClusterObjectDeployment (and its
+	// ClusterObjectDeployment controller) to keep reconciling the workload.
 	if contentFS == nil {
-		if len(existingRevisions) == 0 {
-			return false, "", fmt.Errorf("catalog content unavailable and no revision installed")
+		existing := &ocv1.ClusterObjectDeployment{}
+		err := bc.Client.Get(ctx, client.ObjectKey{Name: ext.Name}, existing)
+		switch {
+		case err == nil:
+			// Returning true signals that the rollout has succeeded using the current
+			// deployment, which the ClusterObjectDeployment controller continues to
+			// reconcile even when catalog access is unavailable.
+			return true, "", nil
+		case apierrors.IsNotFound(err):
+			return false, "", fmt.Errorf("catalog content unavailable and no deployment installed")
+		default:
+			return false, "", fmt.Errorf("getting ClusterObjectDeployment %q: %w", ext.Name, err)
 		}
-		// Returning true here signals that the rollout has succeeded using the current revision.
-		// This assumes the ClusterObjectSet controller is running and will continue to
-		// reconcile, apply, and maintain the resources defined in that revision via Server-Side Apply,
-		// ensuring the workload keeps running even when catalog access is unavailable.
-		return true, "", nil
 	}
 
-	// Generate desired revision
-	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionAnnotations)
+	// Generate the desired ClusterObjectDeployment and the Secrets its template refs.
+	cod, secrets, err := bc.RevisionGenerator.GenerateClusterObjectDeployment(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
 		return false, "", err
 	}
@@ -512,7 +454,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	if err != nil {
 		return false, "", fmt.Errorf("get GVK for owner: %w", err)
 	}
-	desiredRevision.WithOwnerReferences(metav1ac.OwnerReference().
+	cod.WithOwnerReferences(metav1ac.OwnerReference().
 		WithAPIVersion(gvk.GroupVersion().String()).
 		WithKind(gvk.Kind).
 		WithName(ext.Name).
@@ -520,159 +462,70 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		WithBlockOwnerDeletion(true).
 		WithController(true))
 
-	currentRevision := &ocv1.ClusterObjectSet{}
-	state := StateNeedsInstall
-	if len(existingRevisions) > 0 {
-		currentRevision = &existingRevisions[len(existingRevisions)-1]
-		desiredRevision.Spec.WithRevision(currentRevision.Spec.Revision)
-		desiredRevision.WithName(currentRevision.Name)
-
-		// Save inline objects before externalization (needed for preflights + createExternalizedRevision)
-		savedInline := saveInlineObjects(desiredRevision)
-
-		// Externalize with CURRENT revision name so refs match existing COS
-		phases := extractPhasesForPacking(desiredRevision.Spec.Phases)
-		packer := &SecretPacker{
-			RevisionName:    currentRevision.Name,
-			OwnerName:       ext.Name,
-			SystemNamespace: bc.SystemNamespace,
-		}
-		packResult, err := packer.Pack(phases)
-		if err != nil {
-			return false, "", fmt.Errorf("packing for SSA comparison: %w", err)
-		}
-		replaceInlineWithRefs(desiredRevision, packResult)
-
-		// SSA patch (refs-vs-refs) — just checking for changes.
-		err = bc.Client.Apply(ctx, desiredRevision, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
-
-		// Restore inline objects for preflights + createExternalizedRevision
-		restoreInlineObjects(desiredRevision, savedInline)
-
-		switch {
-		case apierrors.IsInvalid(err):
-			state = StateNeedsUpgrade
-		case err == nil:
-			state = StateUnchanged
-		default:
-			return false, "", fmt.Errorf("patching %s Revision: %w", currentRevision.Name, err)
-		}
+	// Preflights run on the rendered objects. Choose Install vs Upgrade based on whether
+	// the extension has recorded a prior successful install.
+	state := StateNeedsUpgrade
+	if ext.Status.Install == nil {
+		state = StateNeedsInstall
 	}
-
-	// Preflights
-	plainObjs := getObjects(desiredRevision)
+	plainObjs, err := objectsFromSecrets(secrets)
+	if err != nil {
+		return false, "", fmt.Errorf("decoding packed objects for preflights: %w", err)
+	}
 	for _, preflight := range bc.Preflights {
 		if shouldSkipPreflight(ctx, preflight, ext, state) {
 			continue
 		}
 		switch state {
 		case StateNeedsInstall:
-			err := preflight.Install(ctx, plainObjs)
-			if err != nil {
+			if err := preflight.Install(ctx, plainObjs); err != nil {
 				return false, "", err
 			}
-		// TODO: jlanford's IDE says that "StateNeedsUpgrade" condition is always true, but
-		//   it isn't immediately obvious why that is. Perhaps len(existingRevisions) is
-		//   always greater than 0 (seems unlikely), or shouldSkipPreflight always returns
-		//   true (and we continue) when state == StateNeedsInstall?
 		case StateNeedsUpgrade:
-			err := preflight.Upgrade(ctx, plainObjs)
-			if err != nil {
+			if err := preflight.Upgrade(ctx, plainObjs); err != nil {
 				return false, "", err
 			}
 		}
 	}
 
-	if state != StateUnchanged {
-		if err := bc.createExternalizedRevision(ctx, ext, desiredRevision, existingRevisions); err != nil {
-			return false, "", err
+	// Create the referenced Secrets before applying the COD so the referenced content
+	// always exists for the ClusterObjectDeployment controller. Secrets are
+	// content-addressed and immutable, so AlreadyExists is expected and tolerated.
+	secretOwnerRef := metav1.OwnerReference{
+		APIVersion:         gvk.GroupVersion().String(),
+		Kind:               gvk.Kind,
+		Name:               ext.Name,
+		UID:                ext.UID,
+		Controller:         ptr.To(true),
+		BlockOwnerDeletion: ptr.To(true),
+	}
+	for i := range secrets {
+		ensureOwnerReference(&secrets[i], secretOwnerRef)
+		if err := bc.Client.Create(ctx, &secrets[i]); err != nil {
+			if !apierrors.IsAlreadyExists(err) {
+				return false, "", fmt.Errorf("creating ref Secret %q: %w", secrets[i].Name, err)
+			}
 		}
-	} else if currentRevision.Name != "" {
-		// In-place patch succeeded. Ensure any existing ref Secrets have ownerReferences
-		// (crash recovery for Step 3 failures).
-		if err := bc.ensureSecretOwnerReferences(ctx, currentRevision); err != nil {
-			return false, "", fmt.Errorf("ensuring ownerReferences on ref Secrets: %w", err)
-		}
+	}
+
+	// Server-side apply the ClusterObjectDeployment. The ClusterObjectDeployment
+	// controller owns revision (ClusterObjectSet) creation, rollout and retention.
+	if err := bc.Client.Apply(ctx, cod, client.FieldOwner(bc.FieldOwner), client.ForceOwnership); err != nil {
+		return false, "", fmt.Errorf("applying ClusterObjectDeployment: %w", err)
 	}
 
 	return true, "", nil
 }
 
-// createExternalizedRevision creates a new COS with all objects externalized to Secrets.
-// It follows a crash-safe three-step sequence: create Secrets, create COS, patch ownerRefs.
-func (bc *Boxcutter) createExternalizedRevision(ctx context.Context, ext *ocv1.ClusterExtension, desiredRevision *ocv1ac.ClusterObjectSetApplyConfiguration, existingRevisions []ocv1.ClusterObjectSet) error {
-	prevRevisions := existingRevisions
-	latest := latestRevisionNumber(prevRevisions)
-	if latest >= ocv1.ClusterObjectSetMaxRevision {
-		return fmt.Errorf("revision limit %d reached for group %q", ocv1.ClusterObjectSetMaxRevision, ext.Name)
-	}
-	revisionNumber := latest + 1
-
-	revisionName := fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
-	desiredRevision.WithName(revisionName)
-	desiredRevision.Spec.WithRevision(revisionNumber)
-
-	if err := bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
-		return fmt.Errorf("garbage collecting old revisions: %w", err)
-	}
-
-	// Externalize: pack inline objects into Secrets and replace with refs
-	phases := extractPhasesForPacking(desiredRevision.Spec.Phases)
-	packer := &SecretPacker{
-		RevisionName:    revisionName,
-		OwnerName:       ext.Name,
-		SystemNamespace: bc.SystemNamespace,
-	}
-	packResult, err := packer.Pack(phases)
-	if err != nil {
-		return fmt.Errorf("packing objects into Secrets: %w", err)
-	}
-	replaceInlineWithRefs(desiredRevision, packResult)
-
-	// Step 1: Create Secrets (skip AlreadyExists)
-	for i := range packResult.Secrets {
-		if err := bc.Client.Create(ctx, &packResult.Secrets[i]); err != nil {
-			if !apierrors.IsAlreadyExists(err) {
-				return fmt.Errorf("creating ref Secret %q: %w", packResult.Secrets[i].Name, err)
-			}
+// ensureOwnerReference appends the given owner reference to the object if an owner
+// reference with the same UID is not already present.
+func ensureOwnerReference(obj metav1.Object, ref metav1.OwnerReference) {
+	for _, existing := range obj.GetOwnerReferences() {
+		if existing.UID == ref.UID {
+			return
 		}
 	}
-
-	// Step 2: Create COS with refs via SSA
-	if err := bc.Client.Apply(ctx, desiredRevision, client.FieldOwner(bc.FieldOwner), client.ForceOwnership); err != nil {
-		return fmt.Errorf("creating new Revision: %w", err)
-	}
-
-	// Step 3: Patch ownerReferences onto Secrets using the COS's UID
-	if err := bc.patchSecretOwnerReferences(ctx, desiredRevision, packResult.Secrets); err != nil {
-		return fmt.Errorf("patching ownerReferences on ref Secrets: %w", err)
-	}
-	return nil
-}
-
-// garbageCollectOldRevisions deletes archived revisions beyond ClusterObjectSetRetentionLimit.
-// Active revisions are never deleted. revisionList must be sorted oldest to newest.
-func (bc *Boxcutter) garbageCollectOldRevisions(ctx context.Context, revisionList []ocv1.ClusterObjectSet) error {
-	for index, r := range revisionList {
-		// Only delete archived revisions that are beyond the limit
-		if index < len(revisionList)-ClusterObjectSetRetentionLimit && r.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {
-			if err := bc.Client.Delete(ctx, &ocv1.ClusterObjectSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: r.Name,
-				},
-			}); err != nil && !apierrors.IsNotFound(err) {
-				return fmt.Errorf("deleting archived revision: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-func latestRevisionNumber(prevRevisions []ocv1.ClusterObjectSet) int64 {
-	if len(prevRevisions) == 0 {
-		return 0
-	}
-	return prevRevisions[len(prevRevisions)-1].Spec.Revision
+	obj.SetOwnerReferences(append(obj.GetOwnerReferences(), ref))
 }
 
 var (
@@ -798,53 +651,11 @@ func splitManifestDocuments(file string) []string {
 	return docs
 }
 
-// getObjects returns a slice of all objects in the revision
-func getObjects(rev *ocv1ac.ClusterObjectSetApplyConfiguration) []client.Object {
-	if rev.Spec == nil {
-		return nil
-	}
-	totalObjects := 0
-	for _, phase := range rev.Spec.Phases {
-		totalObjects += len(phase.Objects)
-	}
-	objs := make([]client.Object, 0, totalObjects)
-	for _, phase := range rev.Spec.Phases {
-		for i := range phase.Objects {
-			if phase.Objects[i].Object != nil {
-				objs = append(objs, phase.Objects[i].Object)
-			}
-		}
-	}
-	return objs
-}
-
 func mergeStringMaps(m1, m2 map[string]string) map[string]string {
 	merged := make(map[string]string, len(m1)+len(m2))
 	maps.Copy(merged, m1)
 	maps.Copy(merged, m2)
 	return merged
-}
-
-// saveInlineObjects saves Object pointers from each phase/object position.
-func saveInlineObjects(rev *ocv1ac.ClusterObjectSetApplyConfiguration) [][]*unstructured.Unstructured {
-	saved := make([][]*unstructured.Unstructured, len(rev.Spec.Phases))
-	for i, p := range rev.Spec.Phases {
-		saved[i] = make([]*unstructured.Unstructured, len(p.Objects))
-		for j, o := range p.Objects {
-			saved[i][j] = o.Object
-		}
-	}
-	return saved
-}
-
-// restoreInlineObjects restores saved inline objects and clears refs.
-func restoreInlineObjects(rev *ocv1ac.ClusterObjectSetApplyConfiguration, saved [][]*unstructured.Unstructured) {
-	for i := range saved {
-		for j := range saved[i] {
-			rev.Spec.Phases[i].Objects[j].Object = saved[i][j]
-			rev.Spec.Phases[i].Objects[j].Ref = nil
-		}
-	}
 }
 
 // extractPhasesForPacking converts apply configuration phases to API types for SecretPacker.
@@ -889,86 +700,4 @@ func replaceInlineWithRefs(rev *ocv1ac.ClusterObjectSetApplyConfiguration, pack 
 				WithKey(ref.Key)
 		}
 	}
-}
-
-// patchSecretOwnerReferences fetches the COS to get its UID, then patches ownerReferences onto all Secrets.
-func (bc *Boxcutter) patchSecretOwnerReferences(ctx context.Context, rev *ocv1ac.ClusterObjectSetApplyConfiguration, secrets []corev1.Secret) error {
-	if len(secrets) == 0 {
-		return nil
-	}
-
-	// Fetch the COS to get its UID
-	cos := &ocv1.ClusterObjectSet{}
-	if err := bc.Client.Get(ctx, client.ObjectKey{Name: *rev.GetName()}, cos); err != nil {
-		return fmt.Errorf("getting COS %q for ownerReference: %w", *rev.GetName(), err)
-	}
-
-	return bc.patchOwnerRefsOnSecrets(ctx, cos.Name, cos.UID, secrets)
-}
-
-// ensureSecretOwnerReferences checks referenced Secrets on an existing COS and patches missing ownerReferences.
-// This handles crash recovery when Step 3 (patching ownerRefs) failed on a previous reconciliation.
-func (bc *Boxcutter) ensureSecretOwnerReferences(ctx context.Context, cos *ocv1.ClusterObjectSet) error {
-	// List Secrets with the revision-name label
-	secretList := &corev1.SecretList{}
-	if err := bc.Client.List(ctx, secretList,
-		client.InNamespace(bc.SystemNamespace),
-		client.MatchingLabels{labels.RevisionNameKey: cos.Name},
-	); err != nil {
-		return fmt.Errorf("listing ref Secrets for revision %q: %w", cos.Name, err)
-	}
-
-	var needsPatch []corev1.Secret
-	for _, s := range secretList.Items {
-		hasOwnerRef := false
-		for _, ref := range s.OwnerReferences {
-			if ref.UID == cos.UID {
-				hasOwnerRef = true
-				break
-			}
-		}
-		if !hasOwnerRef {
-			needsPatch = append(needsPatch, s)
-		}
-	}
-
-	if len(needsPatch) == 0 {
-		return nil
-	}
-
-	return bc.patchOwnerRefsOnSecrets(ctx, cos.Name, cos.UID, needsPatch)
-}
-
-// patchOwnerRefsOnSecrets patches ownerReferences onto the given Secrets, pointing to the COS.
-func (bc *Boxcutter) patchOwnerRefsOnSecrets(ctx context.Context, cosName string, cosUID types.UID, secrets []corev1.Secret) error {
-	ownerRef := metav1.OwnerReference{
-		APIVersion:         ocv1.GroupVersion.String(),
-		Kind:               ocv1.ClusterObjectSetKind,
-		Name:               cosName,
-		UID:                cosUID,
-		Controller:         ptr.To(true),
-		BlockOwnerDeletion: ptr.To(true),
-	}
-
-	for i := range secrets {
-		s := &secrets[i]
-		// Check if ownerRef already set
-		alreadySet := false
-		for _, ref := range s.OwnerReferences {
-			if ref.UID == cosUID {
-				alreadySet = true
-				break
-			}
-		}
-		if alreadySet {
-			continue
-		}
-
-		patch := client.MergeFrom(s.DeepCopy())
-		s.OwnerReferences = append(s.OwnerReferences, ownerRef)
-		if err := bc.Client.Patch(ctx, s, patch); err != nil {
-			return fmt.Errorf("patching ownerReference on Secret %s/%s: %w", s.Namespace, s.Name, err)
-		}
-	}
-	return nil
 }
