@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -892,4 +893,69 @@ func TestBoxcutterApply_UnchangedIsNoop(t *testing.T) {
 
 	t.Log("by checking applying identical content twice does not bump the COD generation")
 	assert.Equal(t, first.Generation, second.Generation)
+}
+
+func TestBoxcutterApply_AdoptsExistingRevisionWithoutReroll(t *testing.T) {
+	scheme := codTestScheme(t)
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"},
+	}
+	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}, &ocv1.ClusterObjectDeployment{}).
+		Build()
+	bc := newCODBoxcutter(t, scheme, cl, []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "test-cm", Namespace: "test-ns"}},
+	})
+
+	t.Log("by applying the COD for the first time to get the template")
+	_, _, err := bc.Apply(t.Context(), dummyBundle, ext, nil, map[string]string{})
+	require.NoError(t, err)
+
+	t.Log("by reading the COD to extract its template")
+	cod := &ocv1.ClusterObjectDeployment{}
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: ext.Name}, cod))
+	require.NotNil(t, cod.Spec.Template)
+
+	t.Log("by computing the template hash that the COD controller would compute")
+	templateHash := coscontrollers.TemplateHash(cod.Spec.Template)
+
+	t.Log("by creating a pre-existing COS in the same group with the matching template hash")
+	existingCOS := &ocv1.ClusterObjectSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ext.Name + "-1",
+			Labels: map[string]string{
+				labels.TemplateHashKey: templateHash,
+			},
+		},
+		Spec: ocv1.ClusterObjectSetSpec{
+			Group:          ext.Name,
+			Revision:       1,
+			LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+			Phases:         cod.Spec.Template.Spec.Phases,
+		},
+	}
+	require.NoError(t, cl.Create(t.Context(), existingCOS))
+
+	t.Log("by reconciling the COD controller")
+	reconciler := &coscontrollers.ClusterObjectDeploymentReconciler{
+		Client: cl,
+		Scheme: scheme,
+	}
+	_, err = reconciler.Reconcile(t.Context(), ctrl.Request{NamespacedName: client.ObjectKey{Name: ext.Name}})
+	require.NoError(t, err)
+
+	t.Log("by verifying no new revision was created")
+	cosList := &ocv1.ClusterObjectSetList{}
+	require.NoError(t, cl.List(t.Context(), cosList))
+	assert.Len(t, cosList.Items, 1, "should have exactly one COS (the pre-existing one)")
+	assert.Equal(t, existingCOS.Name, cosList.Items[0].Name)
+
+	t.Log("by verifying the existing COS was adopted (has controller owner ref pointing to the COD)")
+	adoptedCOS := &ocv1.ClusterObjectSet{}
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(existingCOS), adoptedCOS))
+	require.Len(t, adoptedCOS.OwnerReferences, 1)
+	assert.Equal(t, cod.Name, adoptedCOS.OwnerReferences[0].Name)
+	assert.Equal(t, cod.UID, adoptedCOS.OwnerReferences[0].UID)
+	assert.Equal(t, ocv1.ClusterObjectDeploymentKind, adoptedCOS.OwnerReferences[0].Kind)
+	assert.Equal(t, ptr.To(true), adoptedCOS.OwnerReferences[0].Controller)
 }

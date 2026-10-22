@@ -42,18 +42,18 @@ func testTemplate() ocv1.ClusterObjectDeploymentTemplate {
 func Test_templateHash_isStableAndSensitive(t *testing.T) {
 	tmpl := testTemplate()
 
-	h1 := templateHash(tmpl)
+	h1 := TemplateHash(tmpl)
 	require.NotEmpty(t, h1)
 	require.LessOrEqual(t, len(h1), 63, "digest must fit within the label-value length limit")
 	require.Regexp(t, "^[0-9a-z]+$", h1, "digest must be label-value safe")
 
-	h2 := templateHash(tmpl)
+	h2 := TemplateHash(tmpl)
 	require.Equal(t, h1, h2, "same template must hash the same")
 
 	// A change to a phase object changes the hash.
 	changed := testTemplate()
 	changed.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"k": "v"}
-	require.NotEqual(t, h1, templateHash(changed))
+	require.NotEqual(t, h1, TemplateHash(changed))
 
 	// A change to ONLY progressionProbes (a mutable COS field) still changes the hash.
 	probesChanged := testTemplate()
@@ -61,7 +61,7 @@ func Test_templateHash_isStableAndSensitive(t *testing.T) {
 		Selector:   ocv1.ObjectSelector{Type: ocv1.SelectorTypeGroupKind, GroupKind: metav1.GroupKind{Kind: "ConfigMap"}},
 		Assertions: []ocv1.Assertion{{Type: ocv1.ProbeTypeFieldValue}},
 	}}
-	require.NotEqual(t, h1, templateHash(probesChanged), "a progressionProbes-only change must create a new revision")
+	require.NotEqual(t, h1, TemplateHash(probesChanged), "a progressionProbes-only change must create a new revision")
 }
 
 func Test_nextRevisionNumber(t *testing.T) {

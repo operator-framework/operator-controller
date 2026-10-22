@@ -113,7 +113,7 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 // changed (or no active revision exists) and reflects the latest revision's
 // rollout progress in the deployment's Available and Progressing conditions.
 func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
-	hash := templateHash(cod.Spec.Template)
+	hash := TemplateHash(cod.Spec.Template)
 
 	setAvailable(cod, revisions)
 
@@ -134,6 +134,13 @@ func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context
 		}
 		setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "waiting for new revision to be created")
 		return nil
+	}
+
+	// Adopt the latest revision if it's not already owned by this deployment.
+	// This handles the case where a ClusterObjectSet with the correct template hash
+	// exists but doesn't have an owner reference to this ClusterObjectDeployment.
+	if err := c.ensureRevisionOwnership(ctx, cod, latest); err != nil {
+		return err
 	}
 
 	// A revision that has exceeded its progress deadline reports Ready=False with
@@ -235,6 +242,33 @@ func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
 	return cond != nil && cond.Reason == ocv1.ClusterObjectSetReasonArchived
 }
 
+// ensureRevisionOwnership ensures the given revision has a controller owner
+// reference pointing to the deployment. If the revision already has the correct
+// owner reference, this is a no-op.
+func (c *ClusterObjectDeploymentReconciler) ensureRevisionOwnership(ctx context.Context, cod *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) error {
+	// Check if the revision already has the correct controller owner reference
+	for _, ref := range rev.OwnerReferences {
+		if ref.Controller != nil && *ref.Controller &&
+			ref.UID == cod.UID {
+			// Already owned by this deployment
+			return nil
+		}
+	}
+
+	// Set the controller owner reference
+	updated := rev.DeepCopy()
+	if err := controllerutil.SetControllerReference(cod, updated, c.Scheme); err != nil {
+		return fmt.Errorf("setting controller reference on revision %q: %w", rev.Name, err)
+	}
+
+	// Update the revision
+	if err := c.Client.Update(ctx, updated); err != nil {
+		return fmt.Errorf("adopting revision %q: %w", rev.Name, err)
+	}
+
+	return nil
+}
+
 // createRevision builds and creates the next ClusterObjectSet revision owned by
 // the deployment. Any create error, including AlreadyExists, is returned.
 //
@@ -332,13 +366,13 @@ func mapClusterObjectSetToClusterObjectDeployment(_ context.Context, obj client.
 	return []ctrl.Request{{NamespacedName: types.NamespacedName{Name: cos.Spec.Group}}}
 }
 
-// templateHash returns a stable digest of the deployment template. Any change to
+// TemplateHash returns a stable digest of the deployment template. Any change to
 // the template (including changes to fields that are mutable on a ClusterObjectSet)
 // produces a different digest, which is how the controller decides a new revision
 // is required. The shared DeepHashObject helper base36-encodes a sha224 of the
 // template's JSON, which is label-safe and short enough to use as a label value
 // without truncation.
-func templateHash(template ocv1.ClusterObjectDeploymentTemplate) string {
+func TemplateHash(template ocv1.ClusterObjectDeploymentTemplate) string {
 	return hashutil.DeepHashObject(template)
 }
 
