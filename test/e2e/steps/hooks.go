@@ -205,6 +205,14 @@ func BeforeSuite() {
 
 func CheckFeatureTags(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	for _, tag := range sc.Tags {
+		// A tag of the form @<FeatureGate>=false runs the scenario only when that feature gate is disabled.
+		if gate, ok := strings.CutSuffix(tag.Name[1:], "=false"); ok {
+			if enabled, found := featureGates[featuregate.Feature(gate)]; found && enabled {
+				logger.Info(fmt.Sprintf("Skipping scenario %q because feature gate %q is enabled", sc.Name, gate))
+				return ctx, godog.ErrSkip
+			}
+			continue
+		}
 		if enabled, found := featureGates[featuregate.Feature(tag.Name[1:])]; found && !enabled {
 			logger.Info(fmt.Sprintf("Skipping scenario %q because feature gate %q is disabled", sc.Name, tag.Name[1:]))
 			return ctx, godog.ErrSkip

@@ -592,3 +592,85 @@ Feature: Install ClusterExtension
       """
     And ClusterExtension is rolled out
     And ClusterExtension is available
+
+  @BoxcutterRuntime
+  @RegistryV1DaemonSetSupport
+  Scenario: Install a bundle that ships a DaemonSet
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, DaemonSet |
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+      """
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "${PACKAGE:test}.1.2.0" is installed in version "1.2.0"
+    And resource "deployment/test-operator-${SCENARIO_ID}" is installed
+    And resource "daemonset/test-daemonset-${SCENARIO_ID}" is installed
+
+  @RegistryV1DaemonSetSupport=false
+  Scenario: Report that a bundle with a DaemonSet cannot be installed when DaemonSet support is disabled
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                   |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, DaemonSet |
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+      """
+    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+      """
+      bundle contains unsupported resource: Name: test-daemonset-${SCENARIO_ID}, Kind: DaemonSet
+      """
+
+  @BoxcutterRuntime
+  @RegistryV1DaemonSetSupport
+  Scenario: Report ClusterExtension as not progressing if a DaemonSet does not become available within given timeout
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents                      |
+      | test    | 1.2.0   | beta    |          | CRD, Deployment, BadDaemonSet |
+    And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
+    And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        progressDeadlineMinutes: 1
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+      """
+    Then ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ProgressDeadlineExceeded
+    And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded

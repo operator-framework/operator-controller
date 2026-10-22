@@ -35,6 +35,8 @@ type bundleConfig struct {
 	hasCRD                  bool
 	hasDeployment           bool
 	hasConfigMap            bool
+	hasDaemonSet            bool
+	badDaemonSetImage       bool
 	badContainerImage       bool
 	properties              []bundleProperty
 	installModes            []v1alpha1.InstallModeType // if nil, defaults to AllNamespaces + SingleNamespace
@@ -64,6 +66,16 @@ func WithDeployment() BundleOption {
 // WithConfigMap includes an additional test ConfigMap in the bundle.
 func WithConfigMap() BundleOption {
 	return func(c *bundleConfig) { c.hasConfigMap = true }
+}
+
+// WithDaemonSet includes a DaemonSet in the bundle.
+func WithDaemonSet() BundleOption {
+	return func(c *bundleConfig) { c.hasDaemonSet = true }
+}
+
+// WithBadDaemonSetImage includes a DaemonSet whose image cannot be pulled, so it never becomes available.
+func WithBadDaemonSetImage() BundleOption {
+	return func(c *bundleConfig) { c.hasDaemonSet, c.badDaemonSetImage = true, true }
 }
 
 // WithInstallMode sets the supported install modes for the bundle's CSV.
@@ -292,6 +304,42 @@ func buildBundle(scenarioID, packageName, version string, opts []BundleOption) (
 			Data: map[string]string{
 				"version": version,
 				"name":    testCMName,
+			},
+		})
+	}
+
+	// Add DaemonSet if requested
+	if cfg.hasDaemonSet {
+		dsName := fmt.Sprintf("test-daemonset-%s", scenarioID)
+		dsLabels := map[string]string{"app": dsName}
+		dsImage := containerImage
+		if cfg.badDaemonSetImage {
+			dsImage = "wrong/image"
+		}
+		fsBuilder = fsBuilder.WithBundleResource("daemonset.yaml", &appsv1.DaemonSet{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "apps/v1",
+				Kind:       "DaemonSet",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: dsName,
+			},
+			Spec: appsv1.DaemonSetSpec{
+				Selector: &metav1.LabelSelector{MatchLabels: dsLabels},
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{Labels: dsLabels},
+					Spec: corev1.PodSpec{
+						TerminationGracePeriodSeconds: ptr.To(int64(0)),
+						Tolerations:                   []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
+						Containers: []corev1.Container{
+							{
+								Name:    "node-agent",
+								Image:   dsImage,
+								Command: []string{"sleep", "3600"},
+							},
+						},
+					},
+				},
 			},
 		})
 	}

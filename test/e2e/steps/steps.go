@@ -2055,6 +2055,10 @@ func parseContents(contents string) ([]catalog.BundleOption, error) {
 			opts = append(opts, catalog.WithDeployment())
 		case part == "ConfigMap":
 			opts = append(opts, catalog.WithConfigMap())
+		case part == "DaemonSet":
+			opts = append(opts, catalog.WithDaemonSet())
+		case part == "BadDaemonSet":
+			opts = append(opts, catalog.WithBadDaemonSetImage())
 		case strings.HasPrefix(part, "Property(") && strings.HasSuffix(part, ")"):
 			// Property(type=value)
 			inner := part[len("Property(") : len(part)-1]
