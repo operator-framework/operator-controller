@@ -296,6 +296,9 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - name
+    - name: progressDeadlineMinutes
+      type:
+        scalar: numeric
     - name: progressionProbes
       type:
         list:

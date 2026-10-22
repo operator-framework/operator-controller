@@ -92,6 +92,16 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 		return nil
 	}
 
+	// A revision that has exceeded its progress deadline reports Ready=False with
+	// reason ProgressDeadlineExceeded and never records completedAt. Surface that
+	// terminal rollout state on the deployment's Progressing condition so it is
+	// actionable, rather than reporting an indefinitely-progressing rollout.
+	if ready := apimeta.FindStatusCondition(latest.Status.Conditions, ocv1.ClusterObjectSetTypeReady); ready != nil &&
+		ready.Status == metav1.ConditionFalse && ready.Reason == ocv1.ReasonProgressDeadlineExceeded {
+		setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded, "latest revision exceeded its progress deadline")
+		return nil
+	}
+
 	if latest.Status.CompletedAt.IsZero() {
 		setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "latest revision is progressing")
 	} else {
@@ -259,12 +269,13 @@ func buildClusterObjectSet(cod *ocv1.ClusterObjectDeployment, revision int64, ha
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
-			Group:               cod.Name,
-			Revision:            revision,
-			LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
-			Phases:              cod.Spec.Template.Spec.Phases,
-			ProgressionProbes:   cod.Spec.Template.Spec.ProgressionProbes,
-			CollisionProtection: cod.Spec.Template.Spec.CollisionProtection,
+			Group:                   cod.Name,
+			Revision:                revision,
+			LifecycleState:          ocv1.ClusterObjectSetLifecycleStateActive,
+			Phases:                  cod.Spec.Template.Spec.Phases,
+			ProgressDeadlineMinutes: cod.Spec.Template.Spec.ProgressDeadlineMinutes,
+			ProgressionProbes:       cod.Spec.Template.Spec.ProgressionProbes,
+			CollisionProtection:     cod.Spec.Template.Spec.CollisionProtection,
 		},
 	}
 }

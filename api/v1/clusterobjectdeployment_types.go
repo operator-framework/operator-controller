@@ -31,6 +31,7 @@ const (
 	// Progressing condition reasons.
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressed  = "NewClusterObjectSetProgressed"
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressing = "NewClusterObjectSetProgressing"
+	ClusterObjectDeploymentReasonProgressDeadlineExceeded       = ReasonProgressDeadlineExceeded
 
 	// Available condition reasons.
 	ClusterObjectDeploymentReasonAvailable        = "Available"
@@ -66,6 +67,18 @@ type ClusterObjectDeploymentTemplateSpec struct {
 	// +listMapKey=name
 	Phases []ClusterObjectSetPhase `json:"phases"` //nolint:kubeapilinter // These are ordered groups of objects, not an enum describing lifecycle state.
 
+	// progressDeadlineMinutes is an optional field that defines the maximum period
+	// of time in minutes after which an installation should be considered failed and
+	// require manual intervention. This functionality is disabled when no value
+	// is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
+	//
+	// The value is passed through to each ClusterObjectSet revision created from this template.
+	//
+	// +kubebuilder:validation:Minimum:=10
+	// +kubebuilder:validation:Maximum:=720
+	// +optional
+	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
+
 	// progressionProbes supplies custom readiness probes for objects in every phase.
 	// The existing ClusterObjectSet selector and assertion semantics apply.
 	// +optional
@@ -88,7 +101,8 @@ type ClusterObjectDeploymentStatus struct {
 	// Progressing is True with reason NewClusterObjectSetProgressing while the desired
 	// rollout is incomplete, or False with reason NewClusterObjectSetProgressed after
 	// completion. Completion remains recorded even if the completed revision later
-	// becomes unhealthy.
+	// becomes unhealthy. Progressing is False with reason ProgressDeadlineExceeded when
+	// the latest revision does not roll out within its spec.progressDeadlineMinutes.
 	//
 	// Available is True with reason Available when at least one active (non-archived)
 	// ClusterObjectSet revision is Ready, so the deployment remains available across

@@ -31,6 +31,13 @@ type ClusterObjectDeploymentTemplateSpecApplyConfiguration struct {
 	// at most 50 objects using the existing inline object or immutable Secret reference
 	// representation. Phase, object, and probe order participate in template identity.
 	Phases []ClusterObjectSetPhaseApplyConfiguration `json:"phases,omitempty"`
+	// progressDeadlineMinutes is an optional field that defines the maximum period
+	// of time in minutes after which an installation should be considered failed and
+	// require manual intervention. This functionality is disabled when no value
+	// is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
+	//
+	// The value is passed through to each ClusterObjectSet revision created from this template.
+	ProgressDeadlineMinutes *int32 `json:"progressDeadlineMinutes,omitempty"`
 	// progressionProbes supplies custom readiness probes for objects in every phase.
 	// The existing ClusterObjectSet selector and assertion semantics apply.
 	ProgressionProbes []ProgressionProbeApplyConfiguration `json:"progressionProbes,omitempty"`
@@ -55,6 +62,14 @@ func (b *ClusterObjectDeploymentTemplateSpecApplyConfiguration) WithPhases(value
 		}
 		b.Phases = append(b.Phases, *values[i])
 	}
+	return b
+}
+
+// WithProgressDeadlineMinutes sets the ProgressDeadlineMinutes field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ProgressDeadlineMinutes field is set to the value of the last call.
+func (b *ClusterObjectDeploymentTemplateSpecApplyConfiguration) WithProgressDeadlineMinutes(value int32) *ClusterObjectDeploymentTemplateSpecApplyConfiguration {
+	b.ProgressDeadlineMinutes = &value
 	return b
 }
 

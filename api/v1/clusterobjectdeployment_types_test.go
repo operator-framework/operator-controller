@@ -238,18 +238,32 @@ func TestClusterObjectDeploymentTemplateSchema(t *testing.T) {
 		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cod)
 		require.NoError(t, err)
 		for field, value := range map[string]interface{}{
-			"group": "example", "revision": int64(42), "lifecycleState": "Active", "progressDeadlineMinutes": int64(10),
+			"group": "example", "revision": int64(42), "lifecycleState": "Active",
 		} {
 			require.NoError(t, unstructured.SetNestedField(raw, value, "spec", "template", "spec", field))
 		}
 		obj := &unstructured.Unstructured{Object: raw}
 		require.NoError(t, c.Create(t.Context(), obj))
 		require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(obj), obj))
-		for _, field := range []string{"group", "revision", "lifecycleState", "progressDeadlineMinutes"} {
+		for _, field := range []string{"group", "revision", "lifecycleState"} {
 			_, found, err := unstructured.NestedFieldNoCopy(obj.Object, "spec", "template", "spec", field)
 			require.NoError(t, err)
 			require.False(t, found, "template must not expose %s", field)
 		}
+	})
+
+	t.Run("progressDeadlineMinutes is retained and passed through", func(t *testing.T) {
+		cod := newTestClusterObjectDeployment("cod-template-progress-deadline")
+		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cod)
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedField(raw, int64(10), "spec", "template", "spec", "progressDeadlineMinutes"))
+		obj := &unstructured.Unstructured{Object: raw}
+		require.NoError(t, c.Create(t.Context(), obj))
+		require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(obj), obj))
+		value, found, err := unstructured.NestedInt64(obj.Object, "spec", "template", "spec", "progressDeadlineMinutes")
+		require.NoError(t, err)
+		require.True(t, found, "template must expose progressDeadlineMinutes")
+		require.Equal(t, int64(10), value)
 	})
 }
 

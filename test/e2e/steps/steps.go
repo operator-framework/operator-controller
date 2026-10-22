@@ -203,7 +203,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
 
-	sc.Step(`^(?i)min value for (ClusterExtension|ClusterObjectSet) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)
+	sc.Step(`^(?i)min value for (ClusterExtension|ClusterObjectSet|ClusterObjectDeployment) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)
 
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" owns (\d+) ClusterObjectSets?$`, ClusterExtensionOwnsClusterObjectSets)
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, NamedClusterExtensionReportsCondition)
@@ -2162,6 +2162,8 @@ func SetCRDFieldMinValue(ctx context.Context, resourceType, jsonPath string, min
 		crdName = "clusterextensions.olm.operatorframework.io"
 	case "ClusterObjectSet":
 		crdName = "clusterobjectsets.olm.operatorframework.io"
+	case "ClusterObjectDeployment":
+		crdName = "clusterobjectdeployments.olm.operatorframework.io"
 	default:
 		return fmt.Errorf("unsupported resource type: %s", resourceType)
 	}

@@ -39,6 +39,13 @@ func TestValidate(t *testing.T) {
 		s.CollisionProtection = CollisionProtectionPrevent
 		return s
 	}
+	defaultDeploymentSpec := func(s *ClusterObjectDeploymentSpec) *ClusterObjectDeploymentSpec {
+		s.Template.Spec.CollisionProtection = CollisionProtectionPrevent
+		s.Template.Spec.Phases = []ClusterObjectSetPhase{
+			{Name: "deploy", Objects: []ClusterObjectSetObject{{Object: configMap()}}},
+		}
+		return s
+	}
 	c := newClient(t)
 	i := 0
 
@@ -142,6 +149,52 @@ func TestValidate(t *testing.T) {
 			},
 			want: want{valid: true},
 		},
+		"ClusterObjectDeployment: invalid progress deadline < 10": {
+			args: args{
+				object: ClusterObjectDeploymentSpec{
+					Template: ClusterObjectDeploymentTemplate{
+						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 9},
+					},
+				},
+			},
+			want: want{valid: false},
+		},
+		"ClusterObjectDeployment: valid progress deadline = 10": {
+			args: args{
+				object: ClusterObjectDeploymentSpec{
+					Template: ClusterObjectDeploymentTemplate{
+						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 10},
+					},
+				},
+			},
+			want: want{valid: true},
+		},
+		"ClusterObjectDeployment: valid progress deadline = 720": {
+			args: args{
+				object: ClusterObjectDeploymentSpec{
+					Template: ClusterObjectDeploymentTemplate{
+						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 720},
+					},
+				},
+			},
+			want: want{valid: true},
+		},
+		"ClusterObjectDeployment: invalid progress deadline > 720": {
+			args: args{
+				object: ClusterObjectDeploymentSpec{
+					Template: ClusterObjectDeploymentTemplate{
+						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 721},
+					},
+				},
+			},
+			want: want{valid: false},
+		},
+		"ClusterObjectDeployment: no progress deadline set": {
+			args: args{
+				object: ClusterObjectDeploymentSpec{},
+			},
+			want: want{valid: true},
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			var obj client.Object
@@ -168,6 +221,17 @@ func TestValidate(t *testing.T) {
 					defaultRevisionSpec(&cos.Spec)
 				}
 				obj = cos
+			case ClusterObjectDeploymentSpec:
+				cod := &ClusterObjectDeployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: fmt.Sprintf("cod-%d", i),
+					},
+					Spec: s,
+				}
+				if !tc.args.skipDefaulting {
+					defaultDeploymentSpec(&cod.Spec)
+				}
+				obj = cod
 			default:
 				t.Fatalf("unknown type %T", s)
 			}

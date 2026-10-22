@@ -31,7 +31,8 @@ func codFixture() *ocv1.ClusterObjectDeployment {
 		Spec: ocv1.ClusterObjectDeploymentSpec{
 			Template: ocv1.ClusterObjectDeploymentTemplate{
 				Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
-					CollisionProtection: ocv1.CollisionProtectionPrevent,
+					CollisionProtection:     ocv1.CollisionProtectionPrevent,
+					ProgressDeadlineMinutes: 15,
 					Phases: []ocv1.ClusterObjectSetPhase{{
 						Name: "resources",
 						Objects: []ocv1.ClusterObjectSetObject{{
@@ -104,6 +105,22 @@ func markCOSReady(t *testing.T, c client.Client, name string, ready bool) {
 	require.NoError(t, c.Status().Update(t.Context(), cos))
 }
 
+// markCOSProgressDeadlineExceeded sets the named revision's Ready condition to
+// False with reason ProgressDeadlineExceeded, mirroring what the ClusterObjectSet
+// controller records when a revision does not roll out within its deadline.
+func markCOSProgressDeadlineExceeded(t *testing.T, c client.Client, name string) {
+	t.Helper()
+	cos, ok := getCOS(t, c, name)
+	require.True(t, ok)
+	apimeta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
+		Type:    ocv1.ClusterObjectSetTypeReady,
+		Status:  metav1.ConditionFalse,
+		Reason:  ocv1.ReasonProgressDeadlineExceeded,
+		Message: "test",
+	})
+	require.NoError(t, c.Status().Update(t.Context(), cos))
+}
+
 func Test_ClusterObjectDeploymentReconciler_Available(t *testing.T) {
 	t.Run("no active revision before the first revision exists", func(t *testing.T) {
 		c := newCODClient(t, codFixture())
@@ -165,6 +182,39 @@ func Test_ClusterObjectDeploymentReconciler_Available(t *testing.T) {
 		require.NotNil(t, cond)
 		require.Equal(t, metav1.ConditionTrue, cond.Status, "deployment must stay available while a prior revision is still Ready")
 	})
+
+	t.Run("stays available when a new revision exceeds its progress deadline but a prior revision is Ready", func(t *testing.T) {
+		c := newCODClient(t, codFixture())
+		_, err := reconcileCOD(t, c) // creates revision 1
+		require.NoError(t, err)
+		markCOSReady(t, c, clusterObjectDeploymentName+"-1", true)
+		_, err = reconcileCOD(t, c)
+		require.NoError(t, err)
+		require.Equal(t, metav1.ConditionTrue, available(t, c).Status)
+
+		// Change the template so a new revision is created while revision 1 stays Ready.
+		cod := &ocv1.ClusterObjectDeployment{}
+		require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
+		cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"k": "v"}
+		require.NoError(t, c.Update(t.Context(), cod))
+
+		_, err = reconcileCOD(t, c) // creates revision 2
+		require.NoError(t, err)
+
+		// Revision 2 blows its deadline while revision 1 is still Active and Ready.
+		markCOSProgressDeadlineExceeded(t, c, clusterObjectDeploymentName+"-2")
+		_, err = reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		require.Equal(t, metav1.ConditionTrue, available(t, c).Status,
+			"deployment must stay available while a prior revision is still Ready, even if the new revision exceeds its deadline")
+
+		prog := progressing(t, c)
+		require.NotNil(t, prog)
+		require.Equal(t, metav1.ConditionFalse, prog.Status)
+		require.Equal(t, ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded, prog.Reason,
+			"Progressing must surface the deadline breach of the latest revision")
+	})
 }
 
 func Test_ClusterObjectDeploymentReconciler_CreatesFirstRevision(t *testing.T) {
@@ -178,6 +228,8 @@ func Test_ClusterObjectDeploymentReconciler_CreatesFirstRevision(t *testing.T) {
 	require.Equal(t, clusterObjectDeploymentName, cos.Spec.Group)
 	require.Equal(t, int64(1), cos.Spec.Revision)
 	require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, cos.Spec.LifecycleState)
+	require.Equal(t, ocv1.CollisionProtectionPrevent, cos.Spec.CollisionProtection)
+	require.Equal(t, int32(15), cos.Spec.ProgressDeadlineMinutes, "progressDeadlineMinutes should pass through to the revision")
 	require.NotEmpty(t, cos.Labels[labels.TemplateHashKey])
 
 	ref := metav1.GetControllerOf(cos)
@@ -194,21 +246,32 @@ func Test_ClusterObjectDeploymentReconciler_CreatesFirstRevision(t *testing.T) {
 func Test_ClusterObjectDeploymentReconciler_NoNewRevisionWhenTemplateUnchanged(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
-		completed  bool
+		prep       func(t *testing.T, c client.Client, cosName string)
 		wantStatus metav1.ConditionStatus
 		wantReason string
 	}{
 		{
-			name:       "completed latest revision reports Progressed",
-			completed:  true,
+			name: "completed latest revision reports Progressed",
+			prep: func(t *testing.T, c client.Client, cosName string) {
+				cos, ok := getCOS(t, c, cosName)
+				require.True(t, ok)
+				cos.Status.CompletedAt = metav1.Now()
+				require.NoError(t, c.Status().Update(t.Context(), cos))
+			},
 			wantStatus: metav1.ConditionFalse,
 			wantReason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed,
 		},
 		{
 			name:       "not-yet-completed latest revision reports Progressing",
-			completed:  false,
+			prep:       nil,
 			wantStatus: metav1.ConditionTrue,
 			wantReason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing,
+		},
+		{
+			name:       "deadline-exceeded latest revision reports ProgressDeadlineExceeded",
+			prep:       func(t *testing.T, c client.Client, cosName string) { markCOSProgressDeadlineExceeded(t, c, cosName) },
+			wantStatus: metav1.ConditionFalse,
+			wantReason: ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -218,11 +281,8 @@ func Test_ClusterObjectDeploymentReconciler_NoNewRevisionWhenTemplateUnchanged(t
 			_, err := reconcileCOD(t, c)
 			require.NoError(t, err)
 
-			if tc.completed {
-				cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
-				require.True(t, ok)
-				cos.Status.CompletedAt = metav1.Now()
-				require.NoError(t, c.Status().Update(t.Context(), cos))
+			if tc.prep != nil {
+				tc.prep(t, c, clusterObjectDeploymentName+"-1")
 			}
 
 			// Second reconcile must not create a new revision.
