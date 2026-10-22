@@ -9,6 +9,7 @@ import (
 	"math"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -111,20 +112,14 @@ func markCOSReady(t *testing.T, c client.Client, name string, ready bool) {
 	require.NoError(t, c.Status().Update(t.Context(), cos))
 }
 
-// markCOSProgressDeadlineExceeded sets the named revision's Ready condition to
-// False with reason ProgressDeadlineExceeded, mirroring what the ClusterObjectSet
-// controller records when a revision does not roll out within its deadline.
-func markCOSProgressDeadlineExceeded(t *testing.T, c client.Client, name string) {
+// expireRevisionDeadline moves the revision's creation timestamp before the
+// deployment's deadline without changing the revision's readiness condition.
+func expireRevisionDeadline(t *testing.T, c client.Client, name string) {
 	t.Helper()
 	cos, ok := getCOS(t, c, name)
 	require.True(t, ok)
-	apimeta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
-		Type:    ocv1.ClusterObjectSetTypeReady,
-		Status:  metav1.ConditionFalse,
-		Reason:  ocv1.ReasonProgressDeadlineExceeded,
-		Message: "test",
-	})
-	require.NoError(t, c.Status().Update(t.Context(), cos))
+	cos.CreationTimestamp = metav1.NewTime(time.Now().Add(-time.Hour))
+	require.NoError(t, c.Update(t.Context(), cos))
 }
 
 func Test_ClusterObjectDeploymentReconciler_Available(t *testing.T) {
@@ -208,7 +203,7 @@ func Test_ClusterObjectDeploymentReconciler_Available(t *testing.T) {
 		require.NoError(t, err)
 
 		// Revision 2 blows its deadline while revision 1 is still Active and Ready.
-		markCOSProgressDeadlineExceeded(t, c, clusterObjectDeploymentName+"-2")
+		expireRevisionDeadline(t, c, clusterObjectDeploymentName+"-2")
 		_, err = reconcileCOD(t, c)
 		require.NoError(t, err)
 
@@ -235,7 +230,7 @@ func Test_ClusterObjectDeploymentReconciler_CreatesFirstRevision(t *testing.T) {
 	require.Equal(t, int64(1), cos.Spec.Revision)
 	require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, cos.Spec.LifecycleState)
 	require.Equal(t, ocv1.CollisionProtectionPrevent, cos.Spec.CollisionProtection)
-	require.Equal(t, int32(15), cos.Spec.ProgressDeadlineMinutes, "progressDeadlineMinutes should pass through to the revision")
+	require.Zero(t, cos.Spec.ProgressDeadlineMinutes, "the deployment enforces its own progress deadline")
 	require.NotEmpty(t, cos.Labels[labels.TemplateHashKey])
 
 	ref := metav1.GetControllerOf(cos)
@@ -410,7 +405,7 @@ func Test_ClusterObjectDeploymentReconciler_NoNewRevisionWhenTemplateUnchanged(t
 		},
 		{
 			name:       "deadline-exceeded latest revision reports ProgressDeadlineExceeded",
-			prep:       func(t *testing.T, c client.Client, cosName string) { markCOSProgressDeadlineExceeded(t, c, cosName) },
+			prep:       func(t *testing.T, c client.Client, cosName string) { expireRevisionDeadline(t, c, cosName) },
 			wantStatus: metav1.ConditionFalse,
 			wantReason: ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded,
 		},

@@ -16,17 +16,16 @@ import (
 )
 
 // deadlineAwareRateLimiter wraps a delegate rate limiter and caps the backoff
-// duration to the time remaining until the COS progress deadline, ensuring
+// duration to the time remaining until a revision's progress deadline, ensuring
 // that ProgressDeadlineExceeded is set promptly even during exponential backoff.
 //
 // After the deadline passes, it allows one immediate requeue (returning 0) so
 // the reconciler can set the ProgressDeadlineExceeded condition, then falls
 // back to the delegate's normal backoff. This avoids both tight-looping and
-// coupling to the COS's status conditions.
+// coupling to status conditions.
 type deadlineAwareRateLimiter struct {
 	delegate     workqueue.TypedRateLimiter[ctrl.Request]
-	client       client.Reader
-	clock        clock.Clock
+	remaining    func(ctrl.Request) (time.Duration, bool, error)
 	pastDeadline sync.Map
 }
 
@@ -35,22 +34,33 @@ func newDeadlineAwareRateLimiter(
 	c client.Reader,
 	clk clock.Clock,
 ) *deadlineAwareRateLimiter {
-	return &deadlineAwareRateLimiter{delegate: delegate, client: c, clock: clk}
+	return &deadlineAwareRateLimiter{
+		delegate: delegate,
+		remaining: func(req ctrl.Request) (time.Duration, bool, error) {
+			cos := &ocv1.ClusterObjectSet{}
+			if err := c.Get(context.Background(), req.NamespacedName, cos); err != nil {
+				return 0, false, client.IgnoreNotFound(err)
+			}
+			remaining, hasDeadline := durationUntilDeadline(clk, cos)
+			return remaining, hasDeadline, nil
+		},
+	}
 }
 
 func (r *deadlineAwareRateLimiter) When(item ctrl.Request) time.Duration {
 	backoff := r.delegate.When(item)
 
-	cos := &ocv1.ClusterObjectSet{}
-	if err := r.client.Get(context.Background(), item.NamespacedName, cos); err != nil {
+	remaining, hasDeadline, err := r.remaining(item)
+	if err != nil {
+		// An unknown deadline must not re-arm the immediate requeue after expiry.
 		return backoff
 	}
-
-	remaining, hasDeadline := durationUntilDeadline(r.clock, cos)
 	if !hasDeadline {
+		r.pastDeadline.Delete(item)
 		return backoff
 	}
 	if remaining > 0 {
+		r.pastDeadline.Delete(item)
 		if remaining < backoff {
 			return remaining
 		}

@@ -235,23 +235,34 @@ On a revision's first reconciliation the `Ready` condition is initialized to `Un
 
 ### Progress deadline
 
-`spec.progressDeadlineMinutes` sets one time budget for the entire revision,
-measured from the ClusterObjectSet's creation timestamp. Completing a phase does
-not restart the timer. For example, a five-phase revision with a ten-minute
-deadline reports `Ready=False` with reason `ProgressDeadlineExceeded` if it is
-still incomplete ten minutes after creation, even if four phases have completed.
+`spec.progressDeadlineMinutes` sets one time budget for the entire
+ClusterObjectSet (COS) revision, measured from its creation timestamp until its
+first successful rollout, recorded in `status.completedAt`. Completing a phase
+does not reset the timer.
 
-ClusterObjectDeployments configure this budget through
-`spec.template.spec.progressDeadlineMinutes` and pass it to each new revision.
-Time spent waiting for the deployment controller to create a ClusterObjectSet
-is not counted. Each revision receives its own budget. The deployment reports
-`Progressing=False` with reason `ProgressDeadlineExceeded` when its latest
-revision exceeds the deadline. It can remain `Available=True` if an older active
-revision is still ready.
+For a ClusterObjectDeployment (COD), this is the time allowed for the deployment to
+progress to its desired new revision. Configure it through
+`spec.template.spec.progressDeadlineMinutes`. The COD enforces this budget without
+setting `spec.progressDeadlineMinutes` on the ClusterObjectSets it creates. Time
+spent waiting for the ClusterObjectSet to be created is not counted. Each new
+revision receives its own budget.
+
+If the desired revision is still incomplete when that budget expires, the COD
+reports `Progressing=False` with reason `ProgressDeadlineExceeded`. A five-phase
+revision with a ten-minute deadline has ten minutes total, even if four phases
+have completed. The COD schedules a deadline check even if the COS emits no
+further events.
+
+The COS's `Ready` condition continues to report readiness failures, such as
+`ObjectsNotReady`, `PreconditionsNotMet`, or `InvalidSpecification`. The COD checks
+elapsed time independently of the COS's readiness condition.
 
 Omitting the field disables the deadline. Reconciliation continues after a
-timeout, so a revision can recover when all its objects become ready. Once a
-revision has completed, later health regressions do not restart deadline timing.
+timeout, so a revision can still complete later. Once `status.completedAt` is
+recorded, the COD reports `Progressing=False` with reason
+`NewClusterObjectSetProgressed`. Later health regressions do not restart deadline
+timing. The COD can remain `Available=True` if an older active revision is still
+ready.
 
 ### Completion (`status.completedAt`)
 
