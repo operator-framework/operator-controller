@@ -11,12 +11,16 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func testTemplate() ocv1.ClusterObjectDeploymentTemplate {
@@ -211,4 +215,96 @@ func Test_mapClusterObjectSetToClusterObjectDeployment(t *testing.T) {
 			require.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func Test_ensureRevisionOwnership(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(scheme))
+
+	cod := &ocv1.ClusterObjectDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cod",
+			UID:  "cod-uid",
+		},
+		Spec: ocv1.ClusterObjectDeploymentSpec{Template: testTemplate()},
+	}
+
+	newClient := func(t *testing.T, objs ...client.Object) client.Client {
+		t.Helper()
+		return testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), SetupIndexes).
+			WithStatusSubresource(&ocv1.ClusterObjectDeployment{}, &ocv1.ClusterObjectSet{}).
+			WithObjects(objs...).
+			Build()
+	}
+
+	t.Run("rejects revision with mismatched group", func(t *testing.T) {
+		// A revision from a different group must not be adopted.
+		rev := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{Name: "other-group-1"},
+			Spec:       ocv1.ClusterObjectSetSpec{Group: "other-group", Revision: 1},
+		}
+		c := newClient(t, cod, rev)
+		reconciler := &ClusterObjectDeploymentReconciler{Client: c, Scheme: scheme}
+
+		err := reconciler.ensureRevisionOwnership(t.Context(), cod, rev)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot adopt revision")
+		require.Contains(t, err.Error(), "spec.group \"other-group\" does not match deployment name \"test-cod\"")
+
+		// Verify the revision was NOT adopted (no owner reference added)
+		updated := &ocv1.ClusterObjectSet{}
+		require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(rev), updated))
+		require.Empty(t, updated.OwnerReferences)
+	})
+
+	t.Run("adopts revision with matching group", func(t *testing.T) {
+		// A revision in the same group can be adopted.
+		rev := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-cod-1"},
+			Spec:       ocv1.ClusterObjectSetSpec{Group: "test-cod", Revision: 1},
+		}
+		c := newClient(t, cod, rev)
+		reconciler := &ClusterObjectDeploymentReconciler{Client: c, Scheme: scheme}
+
+		err := reconciler.ensureRevisionOwnership(t.Context(), cod, rev)
+		require.NoError(t, err)
+
+		// Verify the revision was adopted (owner reference set)
+		updated := &ocv1.ClusterObjectSet{}
+		require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(rev), updated))
+		require.Len(t, updated.OwnerReferences, 1)
+		require.Equal(t, cod.Name, updated.OwnerReferences[0].Name)
+		require.Equal(t, cod.UID, updated.OwnerReferences[0].UID)
+		require.Equal(t, ptr.To(true), updated.OwnerReferences[0].Controller)
+	})
+
+	t.Run("no-op when already owned", func(t *testing.T) {
+		// A revision already owned by the deployment should not be updated.
+		rev := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-cod-1",
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion: ocv1.GroupVersion.String(),
+						Kind:       "ClusterObjectDeployment",
+						Name:       cod.Name,
+						UID:        cod.UID,
+						Controller: ptr.To(true),
+					},
+				},
+			},
+			Spec: ocv1.ClusterObjectSetSpec{Group: "test-cod", Revision: 1},
+		}
+		c := newClient(t, cod, rev)
+		reconciler := &ClusterObjectDeploymentReconciler{Client: c, Scheme: scheme}
+
+		err := reconciler.ensureRevisionOwnership(t.Context(), cod, rev)
+		require.NoError(t, err)
+
+		// Verify the revision still has the same owner reference (no update)
+		updated := &ocv1.ClusterObjectSet{}
+		require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(rev), updated))
+		require.Len(t, updated.OwnerReferences, 1)
+		require.Equal(t, cod.UID, updated.OwnerReferences[0].UID)
+	})
 }

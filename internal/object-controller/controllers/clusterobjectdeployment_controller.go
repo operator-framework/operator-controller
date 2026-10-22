@@ -246,6 +246,12 @@ func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
 // reference pointing to the deployment. If the revision already has the correct
 // owner reference, this is a no-op.
 func (c *ClusterObjectDeploymentReconciler) ensureRevisionOwnership(ctx context.Context, cod *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) error {
+	// Defensive guard: only adopt revisions that belong to this deployment's group.
+	// The group is the deployment name, and siblinghood is defined by spec.group.
+	if rev.Spec.Group != cod.Name {
+		return fmt.Errorf("cannot adopt revision %q: spec.group %q does not match deployment name %q", rev.Name, rev.Spec.Group, cod.Name)
+	}
+
 	// Check if the revision already has the correct controller owner reference
 	for _, ref := range rev.OwnerReferences {
 		if ref.Controller != nil && *ref.Controller &&
@@ -258,7 +264,7 @@ func (c *ClusterObjectDeploymentReconciler) ensureRevisionOwnership(ctx context.
 	// Set the controller owner reference
 	updated := rev.DeepCopy()
 	if err := controllerutil.SetControllerReference(cod, updated, c.Scheme); err != nil {
-		return fmt.Errorf("setting controller reference on revision %q: %w", rev.Name, err)
+		return fmt.Errorf("cannot adopt revision %q: %w (may already be owned by another controller)", rev.Name, err)
 	}
 
 	// Update the revision
