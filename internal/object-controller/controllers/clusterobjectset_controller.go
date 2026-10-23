@@ -417,8 +417,10 @@ func (c *ClusterObjectSetReconciler) delete(ctx context.Context, cos *ocv1.Clust
 func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine RevisionEngine, cos *ocv1.ClusterObjectSet, revision boxcutter.RevisionBuilder) (ctrl.Result, error) {
 	tdres, err := revisionEngine.Teardown(ctx, revision, machinerytypes.WithObserveAfterIncomplete{})
 	if err != nil {
-		// Transient teardown error: leave the Ready condition unchanged and return
-		// the error for rate-limited backoff.
+		// Teardown is still in progress: surface Archiving so the status reflects that
+		// cleanup has not completed (never Archived, which the deployment GC treats as
+		// torn-down), then return the error for rate-limited backoff.
+		markAsArchiving(cos)
 		return ctrl.Result{}, fmt.Errorf("error archiving revision: %v", err)
 	}
 	// Set object counts

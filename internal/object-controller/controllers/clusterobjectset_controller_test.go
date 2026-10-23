@@ -1299,7 +1299,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 			},
 		},
 		{
-			name:           "return error and leave Ready untouched when archived revision teardown fails",
+			name:           "set Ready:False:Archiving and return error when archived revision teardown fails",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{}),
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -1322,9 +1322,13 @@ func Test_ClusterObjectSetReconciler_Reconcile_ArchivalAndDeletion(t *testing.T)
 					Name: clusterObjectSetName,
 				}, rev)
 				require.NoError(t, err)
-				// A teardown error is transient: the error is returned for backoff and the
-				// Ready condition is left untouched (absent here).
-				require.Nil(t, meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady))
+				// A teardown error means cleanup is still in progress: the error is returned
+				// for backoff and Ready reports Archiving (never Archived, which the deployment
+				// GC would treat as fully torn down).
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectSetReasonArchiving, cond.Reason)
 
 				// Finalizer should still be present
 				require.Contains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
