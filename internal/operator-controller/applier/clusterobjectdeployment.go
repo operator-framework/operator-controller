@@ -27,6 +27,11 @@ func buildClusterObjectDeployment(
 
 	phases := PhaseSort(objects)
 
+	ownerLabels := map[string]string{
+		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+		labels.OwnerNameKey: ext.Name,
+	}
+
 	templateSpec := ocv1ac.ClusterObjectDeploymentTemplateSpec().
 		WithPhases(phases...).
 		WithProgressionProbes(defaultProgressionProbes...).
@@ -36,7 +41,12 @@ func buildClusterObjectDeployment(
 		templateSpec.WithProgressDeadlineMinutes(p)
 	}
 
+	// Propagate the owner labels to each revision through the template metadata so every
+	// ClusterObjectSet the deployment creates carries them, matching the labeling the
+	// direct-ClusterObjectSet path applied before the ClusterObjectDeployment refactor.
 	template := ocv1ac.ClusterObjectDeploymentTemplate().
+		WithMetadata(ocv1ac.ClusterObjectDeploymentTemplateMetadata().
+			WithLabels(ownerLabels)).
 		WithSpec(templateSpec)
 
 	spec := ocv1ac.ClusterObjectDeploymentSpec().
@@ -44,10 +54,7 @@ func buildClusterObjectDeployment(
 
 	return ocv1ac.ClusterObjectDeployment(ext.Name).
 		WithAnnotations(annotations).
-		WithLabels(map[string]string{
-			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
-			labels.OwnerNameKey: ext.Name,
-		}).
+		WithLabels(ownerLabels).
 		WithSpec(spec)
 }
 

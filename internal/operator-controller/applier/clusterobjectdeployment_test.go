@@ -77,6 +77,13 @@ func TestBuildClusterObjectDeployment(t *testing.T) {
 	require.NotNil(t, result.Spec.Template)
 	require.NotNil(t, result.Spec.Template.Spec)
 
+	// The owner labels must be propagated to each revision via the template metadata so
+	// every ClusterObjectSet the deployment creates carries them, matching the labeling
+	// the direct-ClusterObjectSet path used before the ClusterObjectDeployment refactor.
+	require.NotNil(t, result.Spec.Template.Metadata)
+	assert.Equal(t, ocv1.ClusterExtensionKind, result.Spec.Template.Metadata.Labels[labels.OwnerKindKey])
+	assert.Equal(t, "ext", result.Spec.Template.Metadata.Labels[labels.OwnerNameKey])
+
 	templateSpec := result.Spec.Template.Spec
 	assert.Len(t, templateSpec.Phases, 1)
 	assert.Equal(t, ocv1.CollisionProtectionPrevent, *templateSpec.CollisionProtection)
