@@ -1,0 +1,1920 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>E2E Per-Component Test Suites - Operator Lifecycle Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/extra.css">
+    
+      <link rel="stylesheet" href="../../css/terminal-player.css">
+    
+      <link rel="stylesheet" href="../../css/asciinema-player.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#e2e-per-component-test-suites" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Operator Lifecycle Manager" class="md-header__button md-logo" aria-label="Operator Lifecycle Manager" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Operator Lifecycle Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              E2E Per-Component Test Suites
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Operator Lifecycle Manager" class="md-nav__button md-logo" aria-label="Operator Lifecycle Manager" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Operator Lifecycle Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Overview
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_community/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_design_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/public-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Public API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/olmv1_getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/add-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a Catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/explore-available-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore Content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/install-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/upgrade-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/downgrade-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Downgrade an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/uninstall-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/catalog-queries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catalog queries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-channel-based-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Channel-Based Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-pin-version/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Pinning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-version-range-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Range Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-z-stream-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Z-Stream Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-grant-api-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grant Access to Your Extension's API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conceptual Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Conceptual Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/single-owner-objects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Owner Objects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/upgrade-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crd-upgrade-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CRD Upgrade Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/controlling-catalog-selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Content Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/version-ranges/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Ranges
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-reference/olmv1-api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OLMv1 API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-reference/catalogd-webserver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CatalogD Web Server reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contribute
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developing OLM v1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#problem-intent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem &amp; Intent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problem &amp; Intent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-Goals
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chosen-approach-directory-per-component-shared-library-approach-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chosen Approach: Directory-per-component + shared library (Approach A)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Chosen Approach: Directory-per-component + shared library (Approach A)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#target-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-run-one-and-run-all-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How "run one" and "run all" work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-over-the-alternatives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this over the alternatives
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-cutting-feature-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Cutting Feature Ownership
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-shared-library-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Shared Library Boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pr-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR Sequence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PR Sequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pr1-reroot-layout-establish-shared-mechanical-behavior-preserving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR1 — Reroot layout + establish shared (mechanical, behavior-preserving)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pr2-sort-features-into-component-suites-may-split-per-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR2 — Sort features into component suites (may split per component)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pr3-split-the-step-library-per-component-judgment-heavy-incremental" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR3 — Split the step library per component (judgment-heavy, incremental)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sequencing-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sequencing summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing &amp; Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-decisions-for-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open Decisions (for review)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="e2e-per-component-test-suites">E2E Per-Component Test Suites</h1>
+<p><strong>Date:</strong> 2026-10-15
+<strong>Status:</strong> Draft (design)
+<strong>Topic:</strong> Reorganize the e2e test suite so each API/component (catalogd, operator-controller, object-controller) is independently testable with its own features, while still supporting a single run across all of them.</p>
+<hr />
+<h2 id="problem-intent">Problem &amp; Intent</h2>
+<p>The project has grown three distinct APIs and controllers:</p>
+<ul>
+<li><strong>catalogd</strong> — <code>ClusterCatalog</code></li>
+<li><strong>operator-controller</strong> — <code>ClusterExtension</code></li>
+<li><strong>object-controller</strong> — <code>ClusterObjectSet</code> (and soon <code>ClusterObjectDeployment</code>)</li>
+</ul>
+<p>Today all e2e tests live in a single Godog (Gherkin/BDD) suite at <code>test/e2e</code>:</p>
+<ul>
+<li>One entrypoint, <code>test/e2e/features_test.go</code>, globs every <code>*.feature</code> under <code>test/e2e/features/</code> and runs them together.</li>
+<li>Features are organized <strong>by concern</strong> (<code>install</code>, <code>update</code>, <code>status</code>, <code>metrics</code>, <code>namespace</code>, …), not by component. These cut across all three APIs.</li>
+<li>Step definitions live in a single shared package <code>test/e2e/steps</code> (~5,000 lines total; <code>steps.go</code> alone is ~2,800), consumed by both the e2e suite <strong>and</strong> <code>test/upgrade-e2e</code>.</li>
+<li>Selection is driven by <code>--godog.tags</code> and feature paths from the Makefile. Existing tags: <code>@Serial</code>, <code>@demo</code>, <code>@BoxcutterRuntime</code>, <code>@TLSProfile</code>.</li>
+</ul>
+<p><strong>Driver:</strong> Each API/controller should be treated as its own thing — independently testable, with its own set of features — while keeping a way to run everything together. This favors <strong>physical separation</strong> (per-component test packages, features, and suite entrypoints) over logical tag-only separation: it keeps each component's tests self-contained today, and if the controllers are ever split into separate projects, moving a component's tests out is close to a <code>git mv</code>.</p>
+<h3 id="goals">Goals</h3>
+<ul>
+<li>Each component has its own <code>features/</code> directory and its own suite entrypoint, runnable in isolation.</li>
+<li>A single command still runs the entire suite across all components.</li>
+<li>A future repo split is mechanical: move a component directory out; the shared library becomes a vendored/published dependency.</li>
+<li>No change to test behavior during the reorganization — moves are behavior-preserving.</li>
+</ul>
+<h3 id="non-goals">Non-Goals</h3>
+<ul>
+<li><strong>True dependency isolation / mocking.</strong> These are e2e tests against a real cluster. "Independently testable" means <em>a component's suite can be run on its own and contains the scenarios it owns</em> — not that operator-controller is tested without a real catalogd. The install path legitimately depends on catalogd serving a catalog; that remains an integration reality.</li>
+<li>Rewriting or changing the semantics of any existing scenario.</li>
+<li>Introducing new test frameworks. We stay on Godog.</li>
+</ul>
+<hr />
+<h2 id="chosen-approach-directory-per-component-shared-library-approach-a">Chosen Approach: Directory-per-component + shared library (Approach A)</h2>
+<h3 id="target-layout">Target layout</h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>test/e2e/
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  shared/                       # extractable library: everything reusable
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    world/hooks/helpers         # world state, hooks, "OLM is available", registry + catalog helpers
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    runner                      # TestMain boilerplate: options, --e2e.scenario filter, summary wiring
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    steps/                      # (post-PR3) truly-shared step definitions
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    support-bundle.yaml         # shared diagnostics (moved from test/e2e/)
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  operator-controller/
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    features/                   # install, update, uninstall, status, namespace, recover, vap-access-control
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    suite_test.go               # entrypoint: shared runner + shared steps + OC-specific steps
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    steps/                      # (post-PR3) ClusterExtension-specific steps
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  catalogd/
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    features/                   # ha, proxy, tls
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    suite_test.go
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    steps/                      # (post-PR3) catalog-specific steps
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>  object-controller/
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    features/                   # revision, user-managed-fields
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    suite_test.go
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    steps/                      # (post-PR3) COS/COD-specific steps
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  platform/                     # genuinely cross-component features
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    features/                   # metrics (OC + catalogd), demos
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    suite_test.go
+</span></code></pre></div>
+<p>Each <code>*/suite_test.go</code> is a thin Go test package that calls the shared runner, pointing it at its own <code>features/</code> directory and registering the shared step set plus any component-specific steps.</p>
+<h3 id="how-run-one-and-run-all-work">How "run one" and "run all" work</h3>
+<ul>
+<li><strong>Run all:</strong> Go's <code>...</code> wildcard (<code>go test ./test/e2e/...</code>) discovers and runs every component subpackage automatically — no central list to maintain. The canonical run-all stays the <code>make test-e2e</code> target, which already carries the established invocation: <code>-count=1</code> (test caching off, so every run actually contacts the cluster) and the two-pass tag policy — <code>~@Serial &amp;&amp; ~@demo</code> concurrently, then <code>@Serial &amp;&amp; ~@demo</code> serially, with <code>@demo</code> run only by <code>update-demos.yaml</code>.</li>
+<li><strong>Run one component:</strong> <code>go test ./test/e2e/catalogd/...</code> (etc.), carrying the same <code>-count=1</code> and <code>--godog.tags</code> flags as the run-all invocation.</li>
+<li>Existing tag-based selection (<code>@Serial</code> serial vs. concurrent, <code>~@demo</code> exclusion) is preserved <strong>within</strong> each suite via <code>--godog.tags</code>.</li>
+</ul>
+<h3 id="why-this-over-the-alternatives">Why this over the alternatives</h3>
+<ul>
+<li><strong>Tag-only on a single suite (rejected):</strong> smallest change, but leaves everything in one package/dir — it does <em>not</em> create the clean boundary a repo split needs, and features are not physically owned. Weakest match to the driver.</li>
+<li><strong>Hybrid single parameterized runner (rejected):</strong> physically separates features/steps but keeps one runner selected by flag. The runner becomes a shared choke point that accretes <code>if component == …</code> conditionals the moment components need different suite-level behavior, and the conversion to per-entrypoint has to happen at split time anyway. We pay the cost later without the clean boundary now.</li>
+</ul>
+<p>The expensive work — partitioning features and (eventually) factoring the step library — is identical across these options. Approach A is the only one that makes the repo split mechanical and avoids the shared-runner-conditionals risk, so we do it directly.</p>
+<hr />
+<h2 id="cross-cutting-feature-ownership">Cross-Cutting Feature Ownership</h2>
+<p>Some features are not cleanly owned by a single component. Assignment is by the <strong>primary user-facing API under test</strong>, with a dedicated <code>platform/</code> bucket for genuinely cross-component features.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Owner</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>install</code>, <code>update</code>, <code>uninstall</code>, <code>status</code>, <code>namespace</code>, <code>recover</code>, <code>vap-access-control</code></td>
+<td>operator-controller</td>
+<td>Exercise <code>ClusterExtension</code>; catalogd is an assumed dependency, not the subject.</td>
+</tr>
+<tr>
+<td><code>revision</code>, <code>user-managed-fields</code></td>
+<td>object-controller</td>
+<td>Already <code>@BoxcutterRuntime</code>.</td>
+</tr>
+<tr>
+<td><code>ha</code>, <code>proxy</code>, <code>tls</code></td>
+<td>catalogd</td>
+<td><code>tls.feature</code> comments confirm all scenarios test catalogd only. All <code>@Serial</code>.</td>
+</tr>
+<tr>
+<td><code>metrics</code></td>
+<td><strong>platform</strong></td>
+<td>Single scenario outline tests both <code>operator-controller</code> and <code>catalogd</code> via an Examples table. Splitting would duplicate the scenario; keep as one cross-component feature.</td>
+</tr>
+<tr>
+<td><code>demos</code></td>
+<td><strong>platform</strong></td>
+<td><code>@demo</code>, cross-cutting, already excluded from normal runs via <code>~@demo</code>. Governed by <code>update-demos.yaml</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Decision:</strong> Introduce a <code>platform/</code> suite for cross-component features rather than forcing <code>metrics</code>/<code>demos</code> into a single owner. The "run all" target (<code>go test ./test/e2e/...</code>) covers it automatically. This is the one design choice most worth confirming on review; the alternative (split <code>metrics</code> per component, drop <code>platform/</code>) is viable but duplicates the metrics scenario.</p>
+<hr />
+<h2 id="the-shared-library-boundary">The Shared Library Boundary</h2>
+<p><code>test/e2e/shared</code> is the seam a repo split will cut along, so it must hold everything reusable and nothing component-specific:</p>
+<ul>
+<li><strong>World/state + hooks</strong> (<code>hooks.go</code>): scenario setup/teardown, namespace lifecycle.</li>
+<li><strong>Common Given steps:</strong> "OLM is available", "an image registry is available", "a catalog … with packages", generic apply/assert helpers. These are prerequisites every component needs.</li>
+<li><strong>Runner boilerplate:</strong> the Godog <code>Options</code>, the <code>--e2e.scenario</code> prefix filter (<code>findScenarioFirstLineNumberByPrefix</code>), and summary wiring (<code>test/internal/summary</code>) — currently inlined in <code>features_test.go:36-134</code>. Lifted into a shared helper so each <code>suite_test.go</code> is a few lines. <strong>Caveat:</strong> <code>test/internal/summary</code> is a Go <code>internal</code> package, importable only within this repo's tree; the shared runner can import it today, but a repo split would make that import illegal. Either move the summary code under <code>shared/</code> as part of the extraction, or keep the summary callback in each repo's <code>suite_test.go</code> so the shared runner carries no <code>internal</code> dependency.</li>
+<li><strong>Diagnostics:</strong> <code>support-bundle.yaml</code>.</li>
+</ul>
+<p><code>test/upgrade-e2e</code> already imports <code>test/e2e/steps</code>; after the move it becomes another consumer of <code>test/e2e/shared/steps</code>. This is expected and reinforces the shared-library design.</p>
+<hr />
+<h2 id="pr-sequence">PR Sequence</h2>
+<p>The ordering is deliberate: <strong>PR2 is safe precisely because PR3 has not happened yet.</strong> Through PR1–PR2 the step definitions remain one monolithic package, so every component suite can register the <em>entire</em> shared step set. A feature moved into <code>catalogd/features/</code> still resolves all its steps. Godog <code>Strict: true</code> fails only on <em>undefined/pending</em> steps, never on <em>registered-but-unused</em> ones, so over-registering is free. The step split (PR3) therefore blocks nothing.</p>
+<h3 id="pr1-reroot-layout-establish-shared-mechanical-behavior-preserving">PR1 — Reroot layout + establish <code>shared</code> (mechanical, behavior-preserving)</h3>
+<ul>
+<li><code>git mv test/e2e/features/</code> → <code>test/e2e/operator-controller/features/</code> (all features stay together for now).</li>
+<li><code>git mv test/e2e/steps/</code> → <code>test/e2e/shared/steps/</code>.</li>
+<li>Lift runner boilerplate (<code>TestMain</code>, <code>--e2e.scenario</code> filter, summary wiring) from <code>features_test.go</code> into <code>test/e2e/shared</code> so later suites reuse it.</li>
+<li>Create the operator-controller <code>suite_test.go</code> calling the shared runner.</li>
+<li>Move <code>support-bundle.yaml</code> into <code>shared/</code>.</li>
+<li><strong>Update all references in the same PR:</strong></li>
+<li><code>test/upgrade-e2e/upgrade_test.go</code> import path for the steps package.</li>
+<li>Makefile targets referencing <code>./test/e2e/features_test.go</code> (lines ~431, 435, 446, 479, 740) and the <code>e2e/%</code> scenario path.</li>
+<li><code>.github/workflows/update-demos.yaml</code> paths (<code>features/demos.feature</code>, <code>steps/demo_steps.go</code>, <code>steps/asciicast_*.go</code>) and the <code>support-bundle.yaml</code> path in <code>e2e.yaml:72</code>.</li>
+<li><strong>Constraint:</strong> no behavior change. The suite still runs the same scenarios; only locations and import paths move.</li>
+<li>⚠️ <strong>CI workflow edits require maintainer sign-off</strong> (per AGENTS.md "never modify <code>.github/workflows/*</code> without explicit permission"). Flag this explicitly in the PR; the demos/support-bundle path updates are unavoidable consequences of the move.</li>
+</ul>
+<h3 id="pr2-sort-features-into-component-suites-may-split-per-component">PR2 — Sort features into component suites (may split per component)</h3>
+<ul>
+<li>Create <code>catalogd/</code>, <code>object-controller/</code>, and <code>platform/</code> suites, each with a thin <code>suite_test.go</code> that calls the shared runner and registers the full shared step set.</li>
+<li><code>git mv</code> features to their owners per the ownership table. Moving <code>demos.feature</code> into <code>platform/features/</code> shifts a path tracked by <code>.github/workflows/update-demos.yaml</code>; update that workflow in the same PR (maintainer sign-off, as in PR1).</li>
+<li>The operator-controller suite shrinks as features leave; <code>go test ./test/e2e/...</code> now runs four suites.</li>
+<li>Can be landed as separate PRs per component (e.g. object-controller first, then catalogd, then platform).</li>
+<li><strong>Still no step refactor</strong> — every suite registers everything, so all steps resolve.</li>
+</ul>
+<h3 id="pr3-split-the-step-library-per-component-judgment-heavy-incremental">PR3 — Split the step library per component (judgment-heavy, incremental)</h3>
+<ul>
+<li>Partition <code>shared/steps</code> into truly-shared vs. component-specific. Rough starting map:</li>
+<li><strong>Shared:</strong> <code>hooks.go</code>, world setup, "OLM is available"/registry/catalog Given steps, generic apply/assert (the shared portion of <code>steps.go</code>).</li>
+<li><strong>operator-controller:</strong> <code>ClusterExtension</code>-specific steps from <code>steps.go</code>.</li>
+<li><strong>catalogd:</strong> <code>ha_steps.go</code>, <code>proxy_steps.go</code>, <code>tls_steps.go</code>.</li>
+<li><strong>platform/demos:</strong> <code>demo_steps.go</code>, <code>asciicast_hooks.go</code>, <code>asciicast_recorder.go</code>.</li>
+<li><strong>upgrade-e2e:</strong> <code>upgrade_steps.go</code> (consider relocating to the upgrade suite).</li>
+<li>Moving the demo step files (<code>demo_steps.go</code>, <code>asciicast_*.go</code>) again shifts paths tracked by <code>.github/workflows/update-demos.yaml</code>; update that workflow in the same PR.</li>
+<li>Each suite registers shared + its own steps.</li>
+<li>Can land one component at a time; nothing depends on it completing. This is where a future repo split becomes trivial.</li>
+</ul>
+<h3 id="sequencing-summary">Sequencing summary</h3>
+<table>
+<thead>
+<tr>
+<th>PR</th>
+<th>Scope</th>
+<th>Risk</th>
+<th>Splittable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PR1</td>
+<td>Reroot + <code>shared</code>, update refs</td>
+<td>Low (mechanical)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>PR2</td>
+<td>Sort features into suites</td>
+<td>Low (moves; over-registered steps)</td>
+<td>Up to 3–4 PRs</td>
+</tr>
+<tr>
+<td>PR3</td>
+<td>Split step library</td>
+<td>Medium (judgment)</td>
+<td>Up to 3–4 PRs, incremental</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="testing-verification">Testing &amp; Verification</h2>
+<ul>
+<li><strong>Each PR:</strong> <code>make test-e2e</code> (and <code>make test-experimental-e2e</code> for object-controller / <code>@BoxcutterRuntime</code> features) must stay green. Because PR1–PR2 are behavior-preserving moves, the same scenario set runs with the same pass/fail.</li>
+<li><strong>Run-all:</strong> verify <code>go test ./test/e2e/...</code> discovers and runs every component suite.</li>
+<li><strong>Run-one:</strong> verify <code>go test ./test/e2e/&lt;component&gt;/...</code> runs only that component's features.</li>
+<li><strong>Tag behavior:</strong> confirm <code>@Serial</code> scenarios still run serially and <code>~@demo</code> exclusion still applies within each suite.</li>
+<li><strong>upgrade-e2e:</strong> confirm it still builds and runs after the steps package moves.</li>
+<li><code>make verify</code> / <code>make lint</code> for import and formatting correctness.</li>
+</ul>
+<hr />
+<h2 id="open-decisions-for-review">Open Decisions (for review)</h2>
+<ol>
+<li><strong><code>platform/</code> bucket vs. splitting <code>metrics</code>/<code>demos</code> per component.</strong> Recommended: keep <code>platform/</code>. Alternative: duplicate the metrics scenario outline per component and drop <code>platform/</code>.</li>
+<li><strong>Per-component Makefile targets.</strong> Whether to add <code>test-e2e-&lt;component&gt;</code> convenience targets, or rely on <code>go test ./test/e2e/&lt;component&gt;/...</code> directly. (Leaning: add thin targets mirroring the existing <code>test-e2e</code> env setup, since cluster/manifest env wiring is non-trivial.)</li>
+<li><strong><code>upgrade_steps.go</code> home.</strong> Relocate into the upgrade suite during PR3, or keep in <code>shared/steps</code>.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.top", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../js/asciinema-player.min.js"></script>
+      
+    
+  </body>
+</html>
