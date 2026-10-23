@@ -243,9 +243,11 @@ func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
 	return cond != nil && cond.Reason == ocv1.ClusterObjectSetReasonArchived
 }
 
-// ensureRevisionOwnership ensures the given revision has a controller owner
-// reference pointing to the deployment. If the revision already has the correct
-// owner reference, this is a no-op.
+// ensureRevisionOwnership adopts an orphan revision (one with no controller owner)
+// by setting this deployment as its controller. It is a no-op if the revision is
+// already owned by this deployment, or if it is already controlled by a different
+// controller — a foreign-controlled revision sharing this group is tolerated, not
+// stolen and not treated as an error.
 func (c *ClusterObjectDeploymentReconciler) ensureRevisionOwnership(ctx context.Context, cod *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) error {
 	// Defensive guard: only adopt revisions that belong to this deployment's group.
 	// The group is the deployment name, and siblinghood is defined by spec.group.
@@ -253,19 +255,25 @@ func (c *ClusterObjectDeploymentReconciler) ensureRevisionOwnership(ctx context.
 		return fmt.Errorf("cannot adopt revision %q: spec.group %q does not match deployment name %q", rev.Name, rev.Spec.Group, cod.Name)
 	}
 
-	// Check if the revision already has the correct controller owner reference
+	// Inspect any existing controller owner reference.
 	for _, ref := range rev.OwnerReferences {
-		if ref.Controller != nil && *ref.Controller &&
-			ref.UID == cod.UID {
-			// Already owned by this deployment
+		if ref.Controller != nil && *ref.Controller {
+			if ref.UID == cod.UID {
+				// Already owned by this deployment.
+				return nil
+			}
+			// Owned by a different controller. Siblinghood is defined by spec.group,
+			// so a foreign-controlled revision may legitimately share this group; we
+			// do not steal it, and we do not treat it as an error (that would wedge
+			// reconciliation). Leave it untouched.
 			return nil
 		}
 	}
 
-	// Set the controller owner reference
+	// No controller owner: adopt this orphan revision.
 	updated := rev.DeepCopy()
 	if err := controllerutil.SetControllerReference(cod, updated, c.Scheme); err != nil {
-		return fmt.Errorf("cannot adopt revision %q: %w (may already be owned by another controller)", rev.Name, err)
+		return fmt.Errorf("adopting orphan revision %q: %w", rev.Name, err)
 	}
 
 	// Update the revision
