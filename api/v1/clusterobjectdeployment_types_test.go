@@ -283,14 +283,10 @@ func TestClusterObjectDeploymentDeferredFieldsArePruned(t *testing.T) {
 	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cod)
 	require.NoError(t, err)
 	require.NoError(t, unstructured.SetNestedField(raw, int64(10), "spec", "progressDeadlineMinutes"))
-	require.NoError(t, unstructured.SetNestedField(raw, map[string]interface{}{
-		"labels":      map[string]interface{}{"app": "example"},
-		"annotations": map[string]interface{}{"note": "deferred"},
-	}, "spec", "template", "metadata"))
 	obj := &unstructured.Unstructured{Object: raw}
 	require.NoError(t, c.Create(t.Context(), obj))
 	require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(obj), obj))
-	for _, path := range [][]string{{"spec", "progressDeadlineMinutes"}, {"spec", "template", "metadata"}} {
+	for _, path := range [][]string{{"spec", "progressDeadlineMinutes"}} {
 		_, found, err := unstructured.NestedFieldNoCopy(obj.Object, path...)
 		require.NoError(t, err)
 		require.False(t, found, "deployment must not expose %s", strings.Join(path, "."))
@@ -309,6 +305,30 @@ func TestClusterObjectDeploymentDeferredFieldsArePruned(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, found, "deployment status must not expose %s", field)
 	}
+}
+
+func TestClusterObjectDeploymentTemplateMetadataIsRetained(t *testing.T) {
+	c := newClient(t)
+	cod := newTestClusterObjectDeployment("cod-template-metadata")
+	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cod)
+	require.NoError(t, err)
+	require.NoError(t, unstructured.SetNestedField(raw, map[string]interface{}{
+		"labels":      map[string]interface{}{"team": "platform"},
+		"annotations": map[string]interface{}{"note": "hello"},
+	}, "spec", "template", "metadata"))
+	obj := &unstructured.Unstructured{Object: raw}
+	require.NoError(t, c.Create(t.Context(), obj))
+	require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(obj), obj))
+
+	label, found, err := unstructured.NestedString(obj.Object, "spec", "template", "metadata", "labels", "team")
+	require.NoError(t, err)
+	require.True(t, found, "template must expose metadata.labels")
+	require.Equal(t, "platform", label)
+
+	annotation, found, err := unstructured.NestedString(obj.Object, "spec", "template", "metadata", "annotations", "note")
+	require.NoError(t, err)
+	require.True(t, found, "template must expose metadata.annotations")
+	require.Equal(t, "hello", annotation)
 }
 
 func getTestClusterObjectDeployment(t *testing.T, c client.Client, name string) *ClusterObjectDeployment {

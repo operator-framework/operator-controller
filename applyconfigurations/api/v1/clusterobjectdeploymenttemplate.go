@@ -23,6 +23,12 @@ package v1
 //
 // ClusterObjectDeploymentTemplate describes the caller-controlled part of a revision.
 type ClusterObjectDeploymentTemplateApplyConfiguration struct {
+	// metadata contains labels and annotations propagated to each ClusterObjectSet
+	// created from this template, except the reserved
+	// olm.operatorframework.io/template-hash label, whose value is always set by the
+	// controller. Changes to metadata change template identity and therefore create
+	// a new revision.
+	Metadata *ClusterObjectDeploymentTemplateMetadataApplyConfiguration `json:"metadata,omitempty"`
 	// spec contains the desired revision content. Group, revision, lifecycle state,
 	// and ownership are assigned by the controller and cannot be set here.
 	Spec *ClusterObjectDeploymentTemplateSpecApplyConfiguration `json:"spec,omitempty"`
@@ -32,6 +38,14 @@ type ClusterObjectDeploymentTemplateApplyConfiguration struct {
 // apply.
 func ClusterObjectDeploymentTemplate() *ClusterObjectDeploymentTemplateApplyConfiguration {
 	return &ClusterObjectDeploymentTemplateApplyConfiguration{}
+}
+
+// WithMetadata sets the Metadata field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Metadata field is set to the value of the last call.
+func (b *ClusterObjectDeploymentTemplateApplyConfiguration) WithMetadata(value *ClusterObjectDeploymentTemplateMetadataApplyConfiguration) *ClusterObjectDeploymentTemplateApplyConfiguration {
+	b.Metadata = value
+	return b
 }
 
 // WithSpec sets the Spec field in the declarative configuration to the given value

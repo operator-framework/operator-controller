@@ -4,8 +4,10 @@ package controllers_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -245,6 +247,141 @@ func Test_ClusterObjectDeploymentReconciler_CreatesFirstRevision(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionTrue, cond.Status)
 	require.Equal(t, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, cond.Reason)
+}
+
+func Test_ClusterObjectDeploymentReconciler_PropagatesTemplateMetadata(t *testing.T) {
+	cod := codFixture()
+	cod.Spec.Template.Metadata = ocv1.ClusterObjectDeploymentTemplateMetadata{
+		Labels:      map[string]string{"team": "platform"},
+		Annotations: map[string]string{"note": "hello"},
+	}
+	c := newCODClient(t, cod)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.True(t, ok, "revision 1 should be created")
+	require.Equal(t, "platform", cos.Labels["team"], "template.metadata.labels should propagate to the revision")
+	require.Equal(t, "hello", cos.Annotations["note"], "template.metadata.annotations should propagate to the revision")
+	require.NotEmpty(t, cos.Labels[labels.TemplateHashKey], "controller-managed template-hash label should still be set")
+}
+
+func Test_ClusterObjectDeploymentReconciler_NoTemplateMetadata(t *testing.T) {
+	// codFixture sets no template.metadata, so the revision must carry only the
+	// controller-managed template-hash label and no annotations.
+	c := newCODClient(t, codFixture())
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.True(t, ok, "revision 1 should be created")
+	require.Len(t, cos.Labels, 1, "only the controller-managed template-hash label should be set")
+	require.NotEmpty(t, cos.Labels[labels.TemplateHashKey])
+	require.Empty(t, cos.Annotations, "no annotations should be set when template.metadata has none")
+}
+
+func Test_ClusterObjectDeploymentReconciler_InvalidLabelMetadataSetsInvalidSpecification(t *testing.T) {
+	cod := codFixture()
+	cod.Spec.Template.Metadata = ocv1.ClusterObjectDeploymentTemplateMetadata{
+		Labels: map[string]string{"not a valid key": "v"},
+	}
+	c := newCODClient(t, cod)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cond := progressing(t, c)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectDeploymentReasonInvalidSpecification, cond.Reason)
+	require.NotEmpty(t, cond.Message)
+
+	_, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.False(t, ok, "no revision should be created while the template metadata is invalid")
+}
+
+func Test_ClusterObjectDeploymentReconciler_InvalidAnnotationMetadataSetsInvalidSpecification(t *testing.T) {
+	cod := codFixture()
+	cod.Spec.Template.Metadata = ocv1.ClusterObjectDeploymentTemplateMetadata{
+		Annotations: map[string]string{"not a valid key": "v"},
+	}
+	c := newCODClient(t, cod)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cond := progressing(t, c)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectDeploymentReasonInvalidSpecification, cond.Reason)
+
+	_, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.False(t, ok, "no revision should be created while the template metadata is invalid")
+}
+
+func Test_ClusterObjectDeploymentReconciler_OversizedAnnotationsSetInvalidSpecification(t *testing.T) {
+	// Each value is individually under the 256 KiB limit, but their combined size
+	// (keys + values) exceeds the Kubernetes total annotation limit, which only the
+	// aggregate check catches.
+	big := strings.Repeat("a", 150*1024)
+	cod := codFixture()
+	cod.Spec.Template.Metadata = ocv1.ClusterObjectDeploymentTemplateMetadata{
+		Annotations: map[string]string{"a": big, "b": big},
+	}
+	c := newCODClient(t, cod)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cond := progressing(t, c)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status)
+	require.Equal(t, ocv1.ClusterObjectDeploymentReasonInvalidSpecification, cond.Reason)
+
+	_, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.False(t, ok, "no revision should be created when annotations exceed the total size limit")
+}
+
+func Test_ClusterObjectDeploymentReconciler_TemplateHashLabelOverridesCaller(t *testing.T) {
+	cod := codFixture()
+	cod.Spec.Template.Metadata = ocv1.ClusterObjectDeploymentTemplateMetadata{
+		Labels: map[string]string{labels.TemplateHashKey: "caller-wins-NOT"},
+	}
+	c := newCODClient(t, cod)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+	require.True(t, ok, "revision 1 should be created")
+	require.Equal(t, hashutil.DeepHashObject(cod.Spec.Template), cos.Labels[labels.TemplateHashKey],
+		"controller-managed template-hash must win over a caller-supplied value")
+	require.NotEqual(t, "caller-wins-NOT", cos.Labels[labels.TemplateHashKey])
+}
+
+func Test_TemplateHash_MetadataParticipates(t *testing.T) {
+	base := codFixture().Spec.Template
+
+	withLabelA := base
+	withLabelA.Metadata = ocv1.ClusterObjectDeploymentTemplateMetadata{Labels: map[string]string{"app": "a"}}
+	withLabelB := base
+	withLabelB.Metadata = ocv1.ClusterObjectDeploymentTemplateMetadata{Labels: map[string]string{"app": "b"}}
+	require.NotEqual(t, hashutil.DeepHashObject(withLabelA), hashutil.DeepHashObject(withLabelB),
+		"metadata must participate in the template hash")
+
+	// No-churn guarantee: a template that sets no metadata must serialize without a
+	// "metadata" key, so its hash is identical to the pre-field serialization and
+	// existing CODs are not re-rolled out on upgrade. This asserts the omitzero
+	// mechanism directly; it fails if omitzero is ever dropped from the field.
+	raw, err := json.Marshal(base)
+	require.NoError(t, err)
+	var top map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(raw, &top))
+	_, hasMetadata := top["metadata"]
+	require.False(t, hasMetadata,
+		"zero-value template metadata must be omitted (omitzero) so metadata-less CODs keep the same hash")
 }
 
 func Test_ClusterObjectDeploymentReconciler_NoNewRevisionWhenTemplateUnchanged(t *testing.T) {

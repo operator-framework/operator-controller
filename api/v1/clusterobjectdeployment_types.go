@@ -32,6 +32,7 @@ const (
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressed  = "NewClusterObjectSetProgressed"
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressing = "NewClusterObjectSetProgressing"
 	ClusterObjectDeploymentReasonProgressDeadlineExceeded       = ReasonProgressDeadlineExceeded
+	ClusterObjectDeploymentReasonInvalidSpecification           = "InvalidSpecification"
 
 	// Available condition reasons.
 	ClusterObjectDeploymentReasonAvailable        = "Available"
@@ -65,10 +66,35 @@ type ClusterObjectDeploymentSpec struct {
 
 // ClusterObjectDeploymentTemplate describes the caller-controlled part of a revision.
 type ClusterObjectDeploymentTemplate struct {
+	// metadata contains labels and annotations propagated to each ClusterObjectSet
+	// created from this template, except the reserved
+	// olm.operatorframework.io/template-hash label, whose value is always set by the
+	// controller. Changes to metadata change template identity and therefore create
+	// a new revision.
+	// +optional
+	Metadata ClusterObjectDeploymentTemplateMetadata `json:"metadata,omitzero"`
+
 	// spec contains the desired revision content. Group, revision, lifecycle state,
 	// and ownership are assigned by the controller and cannot be set here.
 	// +required
 	Spec ClusterObjectDeploymentTemplateSpec `json:"spec,omitzero"`
+}
+
+// ClusterObjectDeploymentTemplateMetadata contains labels and annotations
+// propagated to each ClusterObjectSet revision created from the template.
+type ClusterObjectDeploymentTemplateMetadata struct {
+	// labels is a set of key/value pairs propagated to each revision's metadata.
+	// +optional
+	// +kubebuilder:validation:MaxProperties=32
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// annotations is a set of key/value pairs propagated to each revision's
+	// metadata. The controller validates them against the Kubernetes annotation
+	// rules (key format and total size) before creating a revision; invalid
+	// annotations are reported on the deployment's Progressing condition.
+	// +optional
+	// +kubebuilder:validation:MaxProperties=32
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // ClusterObjectDeploymentTemplateSpec contains mutable ClusterObjectSet content.
@@ -119,6 +145,9 @@ type ClusterObjectDeploymentStatus struct {
 	// completion. Completion remains recorded even if the completed revision later
 	// becomes unhealthy. Progressing is False with reason ProgressDeadlineExceeded when
 	// the latest revision does not roll out within its spec.progressDeadlineMinutes.
+	// Progressing is False with reason InvalidSpecification when spec.template.metadata
+	// contains labels or annotations that are not valid for the resulting
+	// ClusterObjectSet; no new revision is created until the metadata is corrected.
 	//
 	// Available is True with reason Available when at least one active (non-archived)
 	// ClusterObjectSet revision is Ready, so the deployment remains available across

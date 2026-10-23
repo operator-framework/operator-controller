@@ -20,6 +20,9 @@ func TestValidate(t *testing.T) {
 	}
 	type want struct {
 		valid bool
+		// errContains is the substring expected in the invalid-create error.
+		// Required for every case with valid: false.
+		errContains string
 	}
 	type testCase struct {
 		args args
@@ -42,6 +45,13 @@ func TestValidate(t *testing.T) {
 		}
 		return s
 	}
+	manyEntries := func(n int) map[string]string {
+		m := make(map[string]string, n)
+		for j := 0; j < n; j++ {
+			m[fmt.Sprintf("k%d", j)] = "v"
+		}
+		return m
+	}
 	c := newClient(t)
 	i := 0
 
@@ -52,7 +62,7 @@ func TestValidate(t *testing.T) {
 					ProgressDeadlineMinutes: 9,
 				},
 			},
-			want: want{valid: false},
+			want: want{valid: false, errContains: "spec.progressDeadlineMinutes"},
 		},
 		"ClusterExtension: valid progress deadline = 10": {
 			args: args{
@@ -84,7 +94,7 @@ func TestValidate(t *testing.T) {
 					ProgressDeadlineMinutes: 721,
 				},
 			},
-			want: want{valid: false},
+			want: want{valid: false, errContains: "spec.progressDeadlineMinutes"},
 		},
 		"ClusterExtension: no progress deadline set": {
 			args: args{
@@ -102,7 +112,7 @@ func TestValidate(t *testing.T) {
 					ProgressDeadlineMinutes: 9,
 				},
 			},
-			want: want{valid: false},
+			want: want{valid: false, errContains: "spec.progressDeadlineMinutes"},
 		},
 		"ClusterObjectSet: valid progress deadline = 10": {
 			args: args{
@@ -150,7 +160,7 @@ func TestValidate(t *testing.T) {
 					ProgressDeadlineMinutes: 721,
 				},
 			},
-			want: want{valid: false},
+			want: want{valid: false, errContains: "spec.progressDeadlineMinutes"},
 		},
 		"ClusterObjectSet: no progress deadline set": {
 			args: args{
@@ -171,7 +181,7 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			want: want{valid: false},
+			want: want{valid: false, errContains: "spec.progressDeadlineMinutes"},
 		},
 		"ClusterObjectDeployment: valid progress deadline = 10": {
 			args: args{
@@ -201,13 +211,38 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			want: want{valid: false},
+			want: want{valid: false, errContains: "spec.progressDeadlineMinutes"},
 		},
 		"ClusterObjectDeployment: no progress deadline set": {
 			args: args{
 				object: ClusterObjectDeploymentSpec{},
 			},
 			want: want{valid: true},
+		},
+		"ClusterObjectDeployment: valid template metadata": {
+			args: args{
+				object: ClusterObjectDeploymentSpec{
+					Template: ClusterObjectDeploymentTemplate{
+						Metadata: ClusterObjectDeploymentTemplateMetadata{
+							Labels:      map[string]string{"team": "platform"},
+							Annotations: map[string]string{"note": "hello"},
+						},
+					},
+				},
+			},
+			want: want{valid: true},
+		},
+		"ClusterObjectDeployment: too many template metadata labels": {
+			args: args{
+				object: ClusterObjectDeploymentSpec{
+					Template: ClusterObjectDeploymentTemplate{
+						Metadata: ClusterObjectDeploymentTemplateMetadata{
+							Labels: manyEntries(33),
+						},
+					},
+				},
+			},
+			want: want{valid: false, errContains: "spec.template.metadata.labels"},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -253,7 +288,8 @@ func TestValidate(t *testing.T) {
 			}
 			if !tc.want.valid {
 				require.True(t, errors.IsInvalid(err), "%v", err)
-				require.ErrorContains(t, err, "spec.progressDeadlineMinutes")
+				require.NotEmpty(t, tc.want.errContains, "invalid cases must specify want.errContains")
+				require.ErrorContains(t, err, tc.want.errContains)
 			}
 		})
 	}

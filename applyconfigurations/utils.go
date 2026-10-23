@@ -68,6 +68,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1.ClusterObjectDeploymentStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ClusterObjectDeploymentTemplate"):
 		return &apiv1.ClusterObjectDeploymentTemplateApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectDeploymentTemplateMetadata"):
+		return &apiv1.ClusterObjectDeploymentTemplateMetadataApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ClusterObjectDeploymentTemplateSpec"):
 		return &apiv1.ClusterObjectDeploymentTemplateSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ClusterObjectSet"):

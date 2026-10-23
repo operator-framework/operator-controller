@@ -7,14 +7,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
+	"unicode/utf8"
 
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	apivalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -101,6 +106,15 @@ func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context
 	hash := templateHash(cod.Spec.Template)
 
 	setAvailable(cod, revisions)
+
+	// The template metadata is propagated verbatim onto each revision's
+	// ClusterObjectSet. Invalid labels or annotations would make that revision
+	// rejected by the API server and stall the rollout with the real cause buried
+	// in logs, so validate here and surface it on the Progressing condition instead.
+	if msg := validateTemplateMetadata(cod.Spec.Template.Metadata); msg != "" {
+		setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonInvalidSpecification, msg)
+		return nil
+	}
 
 	latest := latestActiveRevision(revisions)
 	if latest == nil || latest.Labels[labels.TemplateHashKey] != hash {
@@ -262,12 +276,14 @@ func setProgressing(cod *ocv1.ClusterObjectDeployment, status metav1.ConditionSt
 }
 
 // setCondition sets a condition on the deployment status with the observed generation.
+// The message is capped (see maxConditionMessageBytes) so Status().Update is never
+// rejected for an oversized message, which would drop the condition entirely.
 func setCondition(cod *ocv1.ClusterObjectDeployment, condType string, status metav1.ConditionStatus, reason, message string) {
 	apimeta.SetStatusCondition(&cod.Status.Conditions, metav1.Condition{
 		Type:               condType,
 		Status:             status,
 		Reason:             reason,
-		Message:            message,
+		Message:            capBytes(message, maxConditionMessageBytes),
 		ObservedGeneration: cod.Generation,
 	})
 }
@@ -348,19 +364,86 @@ func latestActiveRevision(revisions []ocv1.ClusterObjectSet) *ocv1.ClusterObject
 	return latest
 }
 
+// maxConditionMessageBytes caps condition messages written by this controller. The API
+// server rejects a condition message longer than 32768 bytes (metav1.Condition.message
+// carries +kubebuilder:validation:MaxLength=32768), which would drop the condition
+// entirely; 1024 bytes is ample for a human-readable diagnostic and stays well clear of
+// that limit.
+const maxConditionMessageBytes = 1024
+
+// maxBadValueBytes is the largest rejected label/annotation value echoed in a
+// diagnostic. Longer values are omitted so a single value cannot bloat the message.
+const maxBadValueBytes = 64
+
+// validateTemplateMetadata validates the labels and annotations the deployment
+// would propagate to each revision, using the same rules the API server applies
+// to object metadata (key/value format for labels, key format and total size for
+// annotations). It returns a user-facing message describing the problem, or an
+// empty string if the metadata is valid.
+func validateTemplateMetadata(md ocv1.ClusterObjectDeploymentTemplateMetadata) string {
+	base := field.NewPath("spec", "template", "metadata")
+	var errs field.ErrorList
+	errs = append(errs, metav1validation.ValidateLabels(md.Labels, base.Child("labels"))...)
+	errs = append(errs, apivalidation.ValidateAnnotations(md.Annotations, base.Child("annotations"))...)
+	if len(errs) == 0 {
+		return ""
+	}
+	// Field errors echo the rejected value, and a label value is not length-bounded by
+	// the template schema. Omit oversized values rather than echoing them; the aggregated
+	// message is additionally capped when written to a condition (see setCondition).
+	for _, err := range errs {
+		if v, ok := err.BadValue.(string); ok && len(v) > maxBadValueBytes {
+			err.BadValue = fmt.Sprintf("<%d bytes omitted>", len(v))
+		}
+	}
+	return fmt.Sprintf("template metadata is invalid: %v", errs.ToAggregate())
+}
+
+// capBytes truncates s to at most maxBytes bytes, appending a marker when it does so.
+func capBytes(s string, maxBytes int) string {
+	if len(s) <= maxBytes {
+		return s
+	}
+	const marker = "...[truncated]"
+	return truncateBytes(s, maxBytes-len(marker)) + marker
+}
+
+// truncateBytes returns the longest prefix of s that is at most maxBytes long without
+// splitting a multi-byte UTF-8 rune.
+func truncateBytes(s string, maxBytes int) string {
+	if maxBytes <= 0 {
+		return ""
+	}
+	if len(s) <= maxBytes {
+		return s
+	}
+	b := s[:maxBytes]
+	for len(b) > 0 && !utf8.ValidString(b) {
+		b = b[:len(b)-1]
+	}
+	return b
+}
+
 // buildClusterObjectSet constructs the ClusterObjectSet for a revision from the
 // deployment template. It does not set the owner reference; the caller does.
 func buildClusterObjectSet(cod *ocv1.ClusterObjectDeployment, revision int64, hash string) *ocv1.ClusterObjectSet {
+	// Propagate the template's metadata labels and annotations verbatim to the
+	// revision. The controller-managed TemplateHashKey label is set last so it
+	// always wins over any caller-supplied value; it records which template produced
+	// this revision so the controller can detect template changes. Ownership is
+	// expressed through the controller owner reference and the revision's spec.group,
+	// so no owner-kind/owner-name labels are set.
+	revLabels := maps.Clone(cod.Spec.Template.Metadata.Labels)
+	if revLabels == nil {
+		revLabels = map[string]string{}
+	}
+	revLabels[labels.TemplateHashKey] = hash
+
 	return &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%d", cod.Name, revision),
-			Labels: map[string]string{
-				// TemplateHashKey records which template produced this revision so the
-				// controller can detect template changes. Ownership is expressed through
-				// the controller owner reference and the revision's spec.group, so no
-				// owner-kind/owner-name labels are set.
-				labels.TemplateHashKey: hash,
-			},
+			Name:        fmt.Sprintf("%s-%d", cod.Name, revision),
+			Labels:      revLabels,
+			Annotations: maps.Clone(cod.Spec.Template.Metadata.Annotations),
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
 			Group:                   cod.Name,

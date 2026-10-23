@@ -3,10 +3,12 @@
 package controllers
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -116,6 +118,65 @@ func Test_buildClusterObjectSet(t *testing.T) {
 	require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, cos.Spec.LifecycleState)
 	require.Equal(t, cod.Spec.Template.Spec.Phases, cos.Spec.Phases)
 	require.Equal(t, ocv1.CollisionProtectionNone, cos.Spec.CollisionProtection, "template collisionProtection must be copied through")
+}
+
+func Test_validateTemplateMetadata(t *testing.T) {
+	// A label value is not length-bounded by the template schema (only MaxProperties is
+	// enforced on labels), so an oversized value must be omitted from the diagnostic
+	// rather than echoed verbatim. Otherwise it bloats the message that is written to
+	// the Progressing condition.
+	oversizedValue := strings.Repeat("a", 40000)
+
+	for _, tc := range []struct {
+		name          string
+		md            ocv1.ClusterObjectDeploymentTemplateMetadata
+		wantDiag      bool // whether a non-empty diagnostic is expected
+		omitsOversize bool // whether the oversized value must be omitted from the diagnostic
+	}{
+		{
+			name: "valid metadata returns no diagnostic",
+			md: ocv1.ClusterObjectDeploymentTemplateMetadata{
+				Labels:      map[string]string{"team": "platform"},
+				Annotations: map[string]string{"note": "hello"},
+			},
+			wantDiag: false,
+		},
+		{
+			name:     "invalid label key is reported",
+			md:       ocv1.ClusterObjectDeploymentTemplateMetadata{Labels: map[string]string{"not a valid key": "v"}},
+			wantDiag: true,
+		},
+		{
+			name:          "oversized label value is omitted",
+			md:            ocv1.ClusterObjectDeploymentTemplateMetadata{Labels: map[string]string{"team": oversizedValue}},
+			wantDiag:      true,
+			omitsOversize: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			msg := validateTemplateMetadata(tc.md)
+			if !tc.wantDiag {
+				require.Empty(t, msg)
+				return
+			}
+			require.NotEmpty(t, msg)
+			if tc.omitsOversize {
+				require.NotContains(t, msg, oversizedValue, "the oversized rejected value must not be echoed verbatim")
+				require.Contains(t, msg, "bytes omitted", "the diagnostic should note that the value was omitted")
+			}
+		})
+	}
+}
+
+func Test_setCondition_capsMessage(t *testing.T) {
+	// setCondition must bound the message so Status().Update is never rejected for an
+	// oversized condition message (the API server caps it at 32768 bytes).
+	cod := &ocv1.ClusterObjectDeployment{}
+	setCondition(cod, ocv1.ClusterObjectDeploymentTypeProgressing, metav1.ConditionFalse, "Reason", strings.Repeat("x", 5000))
+
+	cond := apimeta.FindStatusCondition(cod.Status.Conditions, ocv1.ClusterObjectDeploymentTypeProgressing)
+	require.NotNil(t, cond)
+	require.LessOrEqual(t, len(cond.Message), maxConditionMessageBytes)
 }
 
 func Test_mapClusterObjectSetToClusterObjectDeployment(t *testing.T) {

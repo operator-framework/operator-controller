@@ -458,7 +458,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions describes rollout progress and availability for the observed generation.<br />Progressing is True with reason NewClusterObjectSetProgressing while the desired<br />rollout is incomplete, or False with reason NewClusterObjectSetProgressed after<br />completion. Completion remains recorded even if the completed revision later<br />becomes unhealthy. Progressing is False with reason ProgressDeadlineExceeded when<br />the latest revision does not roll out within its spec.progressDeadlineMinutes.<br />Available is True with reason Available when at least one active (non-archived)<br />ClusterObjectSet revision is Ready, so the deployment remains available across<br />rollouts while a previous revision is still Ready. It is False with reason<br />Unavailable when active revisions exist but none are Ready yet, or with reason<br />NoActiveRevision when no active revision exists. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions describes rollout progress and availability for the observed generation.<br />Progressing is True with reason NewClusterObjectSetProgressing while the desired<br />rollout is incomplete, or False with reason NewClusterObjectSetProgressed after<br />completion. Completion remains recorded even if the completed revision later<br />becomes unhealthy. Progressing is False with reason ProgressDeadlineExceeded when<br />the latest revision does not roll out within its spec.progressDeadlineMinutes.<br />Progressing is False with reason InvalidSpecification when spec.template.metadata<br />contains labels or annotations that are not valid for the resulting<br />ClusterObjectSet; no new revision is created until the metadata is corrected.<br />Available is True with reason Available when at least one active (non-archived)<br />ClusterObjectSet revision is Ready, so the deployment remains available across<br />rollouts while a previous revision is still Ready. It is False with reason<br />Unavailable when active revisions exist but none are Ready yet, or with reason<br />NoActiveRevision when no active revision exists. |  | Optional: \{\} <br /> |
 
 
 #### ClusterObjectDeploymentTemplate
@@ -474,7 +474,26 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `metadata` _[ClusterObjectDeploymentTemplateMetadata](#clusterobjectdeploymenttemplatemetadata)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
 | `spec` _[ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)_ | spec contains the desired revision content. Group, revision, lifecycle state,<br />and ownership are assigned by the controller and cannot be set here. |  | Required: \{\} <br /> |
+
+
+#### ClusterObjectDeploymentTemplateMetadata
+
+
+
+ClusterObjectDeploymentTemplateMetadata contains labels and annotations
+propagated to each ClusterObjectSet revision created from the template.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplate](#clusterobjectdeploymenttemplate)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `labels` _object (keys:string, values:string)_ | labels is a set of key/value pairs propagated to each revision's metadata. |  | MaxProperties: 32 <br />Optional: \{\} <br /> |
+| `annotations` _object (keys:string, values:string)_ | annotations is a set of key/value pairs propagated to each revision's<br />metadata. The controller validates them against the Kubernetes annotation<br />rules (key format and total size) before creating a revision; invalid<br />annotations are reported on the deployment's Progressing condition. |  | MaxProperties: 32 <br />Optional: \{\} <br /> |
 
 
 #### ClusterObjectDeploymentTemplateSpec
