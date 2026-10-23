@@ -34,6 +34,9 @@ type ClusterObjectDeploymentStatusApplyConfiguration struct {
 	// completion. Completion remains recorded even if the completed revision later
 	// becomes unhealthy. Progressing is False with reason ProgressDeadlineExceeded when
 	// the latest revision does not roll out within its spec.progressDeadlineMinutes.
+	// Progressing is False with reason InvalidSpecification when spec.template.metadata
+	// contains labels or annotations that are not valid for the resulting
+	// ClusterObjectSet; no new revision is created until the metadata is corrected.
 	//
 	// Available is True with reason Available when at least one active (non-archived)
 	// ClusterObjectSet revision is Ready, so the deployment remains available across

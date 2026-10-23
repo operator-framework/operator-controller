@@ -283,9 +283,25 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplate
   map:
     fields:
+    - name: metadata
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplateMetadata
     - name: spec
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplateSpec
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplateMetadata
+  map:
+    fields:
+    - name: annotations
+      type:
+        map:
+          elementType:
+            scalar: string
+    - name: labels
+      type:
+        map:
+          elementType:
+            scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentTemplateSpec
   map:
     fields:
