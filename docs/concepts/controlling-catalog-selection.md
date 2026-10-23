@@ -133,7 +133,7 @@ This selects catalogs that do not have the `example.com/support` label.
 
 ### Setting Catalog Priority
 
-When multiple catalogs provide the same package, you can set priorities to resolve ambiguities. Higher priority catalogs are preferred.
+When multiple available catalogs selected by a `ClusterExtension` provide the same package, you can set priorities to choose which catalog supplies it. Higher priority catalogs are considered first.
 
 #### Defining Catalog Priority
 
@@ -152,23 +152,26 @@ spec:
       ref: quay.io/example/high-priority-content-management:latest
 ```
 
-Catalogs have a default priority of `0`. The priority can be any 32-bit integer. Catalogs with higher priority values are preferred during bundle resolution.
+Catalogs have a default priority of `0`. The priority can be any 32-bit integer. Catalogs with higher priority values are considered first when selecting a catalog for a package.
 
 #### How Priority Resolves Ambiguity
 
-When multiple bundles match your criteria:
+Catalogs are grouped by priority, from highest to lowest. For each group:
 
-1. **Bundles from catalogs with higher priority are selected.**
-2. **If multiple bundles are from catalogs with the same highest priority, and there is still ambiguity, an error is generated.**
-3. **Deprecated bundles are deprioritized.** If non-deprecated bundles are available, deprecated ones are ignored.
+1. If no catalog in the group contains the requested package, consider the next lower-priority group.
+2. If exactly one catalog contains the package, select that catalog. Only its bundles are filtered by the requested version, channels, and upgrade constraints. If none qualifies, resolution fails rather than switching to a lower-priority catalog.
+3. If multiple catalogs in the group contain the package, resolution fails due to ambiguity, even if only one has a bundle matching the requested criteria.
+
+Within the selected catalog, non-deprecated bundles are preferred over deprecated bundles, then the highest eligible version and release is chosen. Deprecation in another catalog does not affect catalog selection.
 
 ### Handling Ambiguity Errors
 
-If the system cannot resolve to a single bundle due to ambiguity, it will generate an error. You can resolve this by:
+If multiple catalogs with the same priority contain the package, resolution fails. You can resolve this by:
 
-- **Refining your catalog selection criteria.**
-- **Adjusting catalog priorities.**
-- **Ensuring that only one bundle matches your package name and version requirements.**
+- **Selecting only one catalog by name or label.**
+- **Assigning different catalog priorities.**
+
+Changing the requested version or channel does not resolve package-level catalog ambiguity. If the selected catalog has no matching bundle, adjust the version, channel, or upgrade constraints, or explicitly select another catalog.
 
 ## End to End Example
 
@@ -195,7 +198,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
     metadata:
       name: catalog-b
       labels:
-        example.com/support: "false"
+        example.com/support: "true"
     spec:
       priority: 500
       source:
@@ -241,13 +244,13 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
     kubectl get clusterextension install-my-operator -o yaml
     ```
 
-    The status should indicate that the bundle was resolved from `catalog-a` due to the higher priority and matching label.
+    Both catalogs match the selector. If both contain `my-operator`, the higher-priority `catalog-a` is selected. Check `.status.install.bundle.name` and `.status.install.bundle.version` against the bundle content published in `catalog-a`. The `ClusterExtension` status does not directly report the name of the catalog used for resolution.
 
 ## Important Notes
 
-- **Default Behavior**: If you do not specify any catalog selection criteria, the system may select any available catalog that provides the requested package, and the choice is undefined.
+- **Default Behavior**: Without a selector, every available catalog is considered. The package is resolved from the highest-priority catalog that contains it; if multiple catalogs at that priority contain it, resolution fails due to ambiguity.
 - **Logical AND of Selectors**: When using both `matchLabels` and `matchExpressions`, catalogs must satisfy all criteria.
-- **Deprecation Status**: Non-deprecated bundles are preferred over deprecated ones during resolution.
+- **Deprecation Status**: Within the selected catalog, non-deprecated bundles are preferred over deprecated ones. Deprecation conditions reflect that catalog's package metadata even if no bundle matches the requested criteria.
 - **Error Messages**: The system will update the `.status.conditions` of the `ClusterExtension` with meaningful messages if resolution fails due to ambiguity or no catalogs being selected.
 
 ## References

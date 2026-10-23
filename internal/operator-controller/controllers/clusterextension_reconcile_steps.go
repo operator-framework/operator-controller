@@ -163,19 +163,10 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 			installedBundleName = state.revisionStates.Installed.Name
 		}
 
-		// Set deprecation status based on resolution results:
-		//  - If resolution succeeds: hasCatalogData=true, deprecation shows catalog data (nil=not deprecated)
-		//  - If resolution fails but returns deprecation: hasCatalogData=true, show package/channel deprecation warnings
-		//  - If resolution fails with nil deprecation: hasCatalogData=false, all conditions go Unknown
-		//
-		// Note: We DO check for deprecation data even when resolution fails (hasCatalogData = err == nil || resolvedDeprecation != nil).
-		// This allows us to show package/channel deprecation warnings even when we can't resolve a specific bundle.
-		//
-		// TODO: Open question - what if different catalogs have different opinions of what's deprecated?
-		//   If we can't resolve a bundle, how do we know which catalog to trust for deprecation information?
-		//   Perhaps if the package shows up in multiple catalogs and deprecations don't match, we can set
-		//   the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
-		//   all catalogs? This needs a follow-up discussion and PR.
+		// Once the catalog resolver selects one package, it returns that catalog's deprecation
+		// data even when no bundle matches. An empty, non-nil deprecation means the selected
+		// catalog has no deprecation entries; nil on failure means no catalog was selected.
+		// Keep the success check for other resolver implementations that may return nil.
 		hasCatalogData := err == nil || resolvedDeprecation != nil
 		state.resolvedDeprecation = resolvedDeprecation
 		state.hasCatalogData = hasCatalogData

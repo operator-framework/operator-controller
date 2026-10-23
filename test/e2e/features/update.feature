@@ -80,7 +80,7 @@ Feature: Update ClusterExtension
       """
     Then ClusterExtension reports Progressing as True with Reason Retrying and Message:
       """
-      error upgrading from currently installed version "1.0.0": no bundles found for package "${PACKAGE:test}" matching version "1.2.0"
+      resolving package "${PACKAGE:test}" from catalog "${CATALOG:test}": error upgrading from currently installed version "1.0.0": no bundles found for package "${PACKAGE:test}" matching version "1.2.0"
       """
 
   Scenario: Force update to non successor version
