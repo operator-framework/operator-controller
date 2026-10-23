@@ -688,6 +688,10 @@ _Appears in:_
 | `key` _string_ | key is the data key within the referenced Secret containing the<br />object manifest content. The value at this key must be a<br />JSON-serialized Kubernetes object manifest. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
 
 
+
+
+
+
 #### PreflightConfig
 
 

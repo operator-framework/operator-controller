@@ -2685,6 +2685,13 @@ spec:
                   description: ObservedPhase records the observed content digest of
                     a resolved phase.
                   properties:
+                    completedAt:
+                      description: |-
+                        completedAt is the timestamp when this phase first became Available.
+                        Set once and never cleared. Nil means the phase has never been
+                        Available.
+                      format: date-time
+                      type: string
                     digest:
                       description: |-
                         digest is the digest of the phase's resolved object content
@@ -2697,6 +2704,14 @@ spec:
                         rule: self == oldSelf || oldSelf.size() == 0
                       - message: digest must be in the format '<algorithm>:<hex>'
                         rule: self.matches('^[a-z0-9]+:[a-f0-9]+$')
+                    message:
+                      description: |-
+                        message is a phase-level message providing context about the
+                        current status (e.g. a validation error for Invalid phases, or
+                        a summary for Pending phases). At most 1024 characters; longer
+                        messages are truncated by the controller.
+                      maxLength: 1024
+                      type: string
                     name:
                       description: name is the phase name matching a phase in spec.phases.
                       maxLength: 63
@@ -2708,10 +2723,8 @@ spec:
                           character.
                         rule: '!format.dns1123Label().validate(self).hasValue()'
                     objectCounts:
-                      description: |-
-                        objectCounts reports the number of objects in this phase by state.
-                        It is omitted until counts have been computed; when present, all count
-                        fields are reported (including zeros).
+                      description: objectCounts reports the number of objects in this
+                        phase by state.
                       properties:
                         present:
                           description: |-
@@ -2751,9 +2764,93 @@ spec:
                       - synced
                       - total
                       type: object
+                    objectDetails:
+                      description: |-
+                        objectDetails lists objects in this phase that are not yet
+                        complete. For Reconciling and Pending phases, this includes probe
+                        failures, collisions, creation/update errors, and any other
+                        condition preventing completion. For TearingDown phases, this
+                        lists objects still awaiting deletion. Each entry identifies the
+                        object and carries failure messages. Empty when status is
+                        Available, TeardownComplete, or Unknown. The list may contain at
+                        most 50 entries, matching the maximum number of objects per phase.
+                      items:
+                        description: ObjectStatus identifies a managed object and
+                          its failure messages.
+                        properties:
+                          group:
+                            description: |-
+                              group is the API group of the object (empty string for core
+                              resources). At most 253 characters (DNS subdomain max).
+                            maxLength: 253
+                            type: string
+                          kind:
+                            description: |-
+                              kind is the kind of the object. Must be between 1 and 63
+                              characters.
+                            maxLength: 63
+                            minLength: 1
+                            type: string
+                          messages:
+                            description: |-
+                              messages lists the failure reasons for this object. The maximum
+                              of 17 entries accounts for up to 16 assertion probe failures
+                              plus one collision message. Each message is at most 1024
+                              characters; longer messages are truncated by the controller.
+                            items:
+                              maxLength: 1024
+                              type: string
+                            maxItems: 17
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          name:
+                            description: |-
+                              name is the name of the object. Must be between 1 and 253
+                              characters (DNS subdomain max).
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                          namespace:
+                            description: |-
+                              namespace is the namespace of the object. Empty for cluster-scoped
+                              resources. At most 253 characters (DNS subdomain max).
+                            maxLength: 253
+                            type: string
+                          version:
+                            description: |-
+                              version is the API version of the object. Must be between 1 and
+                              63 characters.
+                            maxLength: 63
+                            minLength: 1
+                            type: string
+                        required:
+                        - kind
+                        - name
+                        - version
+                        type: object
+                      maxItems: 50
+                      type: array
+                      x-kubernetes-list-type: atomic
+                    status:
+                      description: |-
+                        status is the current state of this phase in the rollout. Must be
+                        one of Invalid, Pending, Reconciling, WaitingForAssertions,
+                        Available, Unknown, Superseded, TearingDown, or TeardownComplete.
+                      enum:
+                      - Invalid
+                      - Pending
+                      - Reconciling
+                      - WaitingForAssertions
+                      - Ready
+                      - Unknown
+                      - Superseded
+                      - TearingDown
+                      - TeardownComplete
+                      type: string
                   required:
                   - digest
                   - name
+                  - status
                   type: object
                 maxItems: 20
                 type: array

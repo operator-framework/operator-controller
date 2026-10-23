@@ -243,8 +243,10 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 
-	// Set object counts
-	status.FromReconcile(cos, rres)
+	reconcileTime := metav1.NewTime(c.Clock.Now())
+	// Set object counts and phase status
+	// TODO: refactor and move condition setting operations into status pkg
+	status.FromReconcile(cos, rres, reconcileTime)
 
 	// Report revision-level preflight validation failures and re-check on a flat timer:
 	// the dry-run can be rejected for reasons that clear without a spec change (e.g. RBAC
@@ -344,7 +346,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		// It also serves as the signal that the revision has completed its rollout,
 		// which the ClusterExtension controller uses to determine the installed revision.
 		if cos.Status.CompletedAt.IsZero() {
-			cos.Status.CompletedAt = metav1.NewTime(c.Clock.Now())
+			cos.Status.CompletedAt = reconcileTime
 		}
 	} else {
 		var notReadyMsgs []string
@@ -423,8 +425,9 @@ func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine
 		markAsArchiving(cos)
 		return ctrl.Result{}, fmt.Errorf("error archiving revision: %v", err)
 	}
+	teardownTime := metav1.NewTime(c.Clock.Now())
 	// Set object counts
-	status.FromTeardown(cos, tdres)
+	status.FromTeardown(cos, tdres, teardownTime)
 	if tdres != nil && !tdres.IsComplete() {
 		markAsArchiving(cos)
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
