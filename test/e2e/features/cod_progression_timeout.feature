@@ -3,16 +3,15 @@
 Feature: ClusterObjectDeployment progression timeout
 
   As an OLM user applying a ClusterObjectDeployment, I want spec.template.spec.progressDeadlineMinutes
-  to be passed through to the ClusterObjectSet revisions it creates, so that a revision that does not
-  roll out within the deadline is reported as failed and the deployment is reported unavailable.
+  to bound the rollout of the desired ClusterObjectSet revision, so that a revision that does not
+  roll out within the deadline is reported as stalled while its readiness failures remain visible.
 
   Background:
     Given OLM is available
 
-  Scenario: ClusterObjectDeployment passes progressDeadlineMinutes through to its revision and times out
+  Scenario: ClusterObjectDeployment times out while its revision retains its readiness failure
     Given namespace "${TEST_NAMESPACE}" is available
     And min value for ClusterObjectDeployment .spec.template.spec.progressDeadlineMinutes is set to 1
-    And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
     When resource is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -59,6 +58,6 @@ Feature: ClusterObjectDeployment progression timeout
                           image: does-not-exist:latest
       """
     Then ClusterObjectSet "${NAME}-1" has group "${NAME}"
-    And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ProgressDeadlineExceeded
     And ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason ProgressDeadlineExceeded
+    And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ObjectsNotReady
     And ClusterObjectDeployment "${NAME}" reports Available as False with Reason Unavailable

@@ -31,12 +31,13 @@ type ClusterObjectDeploymentTemplateSpecApplyConfiguration struct {
 	// at most 50 objects using the existing inline object or immutable Secret reference
 	// representation. Phase, object, and probe order participate in template identity.
 	Phases []ClusterObjectSetPhaseApplyConfiguration `json:"phases,omitempty"`
-	// progressDeadlineMinutes is an optional field that defines the maximum period
-	// of time in minutes after which an installation should be considered failed and
-	// require manual intervention. This functionality is disabled when no value
-	// is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
-	//
-	// The value is passed through to each ClusterObjectSet revision created from this template.
+	// progressDeadlineMinutes is the maximum number of minutes a revision may take
+	// to roll out, measured from the ClusterObjectSet's creation timestamp. Time
+	// spent waiting for the ClusterObjectSet to be created is not counted. The
+	// deadline covers all phases together; completing a phase does not reset it.
+	// Once a revision has completed, the deadline no longer applies, even if it
+	// later becomes unhealthy. When omitted, no deadline is enforced. The minimum
+	// period is 10 minutes, and the maximum is 720 minutes (12 hours).
 	ProgressDeadlineMinutes *int32 `json:"progressDeadlineMinutes,omitempty"`
 	// progressionProbes supplies custom readiness probes for objects in every phase.
 	// The existing ClusterObjectSet selector and assertion semantics apply.
