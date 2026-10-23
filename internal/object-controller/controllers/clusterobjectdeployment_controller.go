@@ -38,6 +38,17 @@ import (
 // defensively for callers (e.g. tests) that bypass API-server defaulting.
 const defaultRevisionHistoryLimit = 5
 
+// bundleAnnotationKeys lists the bundle-metadata annotation keys that are
+// propagated from a ClusterObjectDeployment onto each ClusterObjectSet it creates.
+var bundleAnnotationKeys = []string{
+	labels.PackageNameKey,
+	labels.BundleNameKey,
+	labels.BundleVersionKey,
+	labels.BundleReleaseKey,
+	labels.BundleReferenceKey,
+	labels.OLMPropertiesKey,
+}
+
 // ClusterObjectDeploymentReconciler reconciles ClusterObjectDeployment objects by
 // managing their owned ClusterObjectSet revisions.
 type ClusterObjectDeploymentReconciler struct {
@@ -103,7 +114,7 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 // changed (or no active revision exists) and reflects the latest revision's
 // rollout progress in the deployment's Available and Progressing conditions.
 func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
-	hash := templateHash(cod.Spec.Template)
+	hash := TemplateHash(cod.Spec.Template)
 
 	setAvailable(cod, revisions)
 
@@ -124,6 +135,13 @@ func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context
 		}
 		setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "waiting for new revision to be created")
 		return nil
+	}
+
+	// Adopt the latest revision if it's not already owned by this deployment.
+	// This handles the case where a ClusterObjectSet with the correct template hash
+	// exists but doesn't have an owner reference to this ClusterObjectDeployment.
+	if err := c.ensureRevisionOwnership(ctx, cod, latest); err != nil {
+		return err
 	}
 
 	// A revision that has exceeded its progress deadline reports Ready=False with
@@ -225,6 +243,47 @@ func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
 	return cond != nil && cond.Reason == ocv1.ClusterObjectSetReasonArchived
 }
 
+// ensureRevisionOwnership adopts an orphan revision (one with no controller owner)
+// by setting this deployment as its controller. It is a no-op if the revision is
+// already owned by this deployment, or if it is already controlled by a different
+// controller — a foreign-controlled revision sharing this group is tolerated, not
+// stolen and not treated as an error.
+func (c *ClusterObjectDeploymentReconciler) ensureRevisionOwnership(ctx context.Context, cod *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) error {
+	// Defensive guard: only adopt revisions that belong to this deployment's group.
+	// The group is the deployment name, and siblinghood is defined by spec.group.
+	if rev.Spec.Group != cod.Name {
+		return fmt.Errorf("cannot adopt revision %q: spec.group %q does not match deployment name %q", rev.Name, rev.Spec.Group, cod.Name)
+	}
+
+	// Inspect any existing controller owner reference.
+	for _, ref := range rev.OwnerReferences {
+		if ref.Controller != nil && *ref.Controller {
+			if ref.UID == cod.UID {
+				// Already owned by this deployment.
+				return nil
+			}
+			// Owned by a different controller. Siblinghood is defined by spec.group,
+			// so a foreign-controlled revision may legitimately share this group; we
+			// do not steal it, and we do not treat it as an error (that would wedge
+			// reconciliation). Leave it untouched.
+			return nil
+		}
+	}
+
+	// No controller owner: adopt this orphan revision.
+	updated := rev.DeepCopy()
+	if err := controllerutil.SetControllerReference(cod, updated, c.Scheme); err != nil {
+		return fmt.Errorf("adopting orphan revision %q: %w", rev.Name, err)
+	}
+
+	// Update the revision
+	if err := c.Client.Update(ctx, updated); err != nil {
+		return fmt.Errorf("adopting revision %q: %w", rev.Name, err)
+	}
+
+	return nil
+}
+
 // createRevision builds and creates the next ClusterObjectSet revision owned by
 // the deployment. Any create error, including AlreadyExists, is returned.
 //
@@ -322,13 +381,13 @@ func mapClusterObjectSetToClusterObjectDeployment(_ context.Context, obj client.
 	return []ctrl.Request{{NamespacedName: types.NamespacedName{Name: cos.Spec.Group}}}
 }
 
-// templateHash returns a stable digest of the deployment template. Any change to
+// TemplateHash returns a stable digest of the deployment template. Any change to
 // the template (including changes to fields that are mutable on a ClusterObjectSet)
 // produces a different digest, which is how the controller decides a new revision
 // is required. The shared DeepHashObject helper base36-encodes a sha224 of the
 // template's JSON, which is label-safe and short enough to use as a label value
 // without truncation.
-func templateHash(template ocv1.ClusterObjectDeploymentTemplate) string {
+func TemplateHash(template ocv1.ClusterObjectDeploymentTemplate) string {
 	return hashutil.DeepHashObject(template)
 }
 
@@ -439,11 +498,25 @@ func buildClusterObjectSet(cod *ocv1.ClusterObjectDeployment, revision int64, ha
 	}
 	revLabels[labels.TemplateHashKey] = hash
 
+	revAnnotations := maps.Clone(cod.Spec.Template.Metadata.Annotations)
+	if revAnnotations == nil {
+		revAnnotations = map[string]string{}
+	}
+	// Also copy bundle-metadata annotations from the deployment's own annotations so the
+	// ClusterExtension status reader (which reads these annotations off the COS) keeps
+	// working during the refactor to make operator-controller write CODs instead of
+	// managing COSes directly.
+	for _, key := range bundleAnnotationKeys {
+		if value, ok := cod.Annotations[key]; ok {
+			revAnnotations[key] = value
+		}
+	}
+
 	return &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%d", cod.Name, revision),
 			Labels:      revLabels,
-			Annotations: maps.Clone(cod.Spec.Template.Metadata.Annotations),
+			Annotations: revAnnotations,
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
 			Group:                   cod.Name,

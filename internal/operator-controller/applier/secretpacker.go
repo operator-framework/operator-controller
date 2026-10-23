@@ -7,11 +7,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sort"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
@@ -31,7 +34,6 @@ const (
 // SecretPacker packs serialized objects from COS phases into one or more
 // immutable Secrets.
 type SecretPacker struct {
-	RevisionName    string
 	OwnerName       string
 	SystemNamespace string
 }
@@ -138,8 +140,7 @@ func (p *SecretPacker) newSecret(data map[string][]byte) corev1.Secret {
 			Name:      p.secretNameFromData(data),
 			Namespace: p.SystemNamespace,
 			Labels: map[string]string{
-				labels.RevisionNameKey: p.RevisionName,
-				labels.OwnerNameKey:    p.OwnerName,
+				labels.OwnerNameKey: p.OwnerName,
 			},
 		},
 		Immutable: ptr.To(true),
@@ -149,7 +150,7 @@ func (p *SecretPacker) newSecret(data map[string][]byte) corev1.Secret {
 }
 
 // secretNameFromData computes a content-addressable Secret name from the
-// data entries. The name is "<revisionName>-<hash>" where hash is the
+// data entries. The name is "<ownerName>-<hash>" where hash is the
 // first 16 hex characters of the SHA-256 digest of the sorted
 // concatenated keys and values.
 func (p *SecretPacker) secretNameFromData(data map[string][]byte) string {
@@ -164,7 +165,7 @@ func (p *SecretPacker) secretNameFromData(data map[string][]byte) string {
 		h.Write([]byte(k))
 		h.Write(data[k])
 	}
-	return fmt.Sprintf("%s-%x", p.RevisionName, h.Sum(nil)[:8])
+	return fmt.Sprintf("%s-%x", p.OwnerName, h.Sum(nil)[:8])
 }
 
 // contentHash returns a base64url-encoded (no padding) SHA-256 hash of data.
@@ -172,6 +173,39 @@ func (p *SecretPacker) secretNameFromData(data map[string][]byte) string {
 func contentHash(data []byte) string {
 	h := sha256.Sum256(data)
 	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
+// objectsFromSecrets reconstructs the packed objects stored in the given Secrets.
+// It is the inverse of SecretPacker.Pack and is used to recover the rendered
+// objects (e.g. for preflight checks) without re-rendering the bundle. Objects
+// are returned in a deterministic order (by Secret order, then by sorted data key).
+func objectsFromSecrets(secrets []corev1.Secret) ([]client.Object, error) {
+	var objs []client.Object
+	for i := range secrets {
+		data := secrets[i].Data
+		keys := make([]string, 0, len(data))
+		for k := range data {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			raw := data[k]
+			// Large objects are gzip-compressed by Pack; detect via the gzip magic bytes.
+			if len(raw) >= 2 && raw[0] == 0x1f && raw[1] == 0x8b {
+				decompressed, err := gunzipData(raw)
+				if err != nil {
+					return nil, fmt.Errorf("decompressing packed object %q in Secret %q: %w", k, secrets[i].Name, err)
+				}
+				raw = decompressed
+			}
+			u := &unstructured.Unstructured{}
+			if err := u.UnmarshalJSON(raw); err != nil {
+				return nil, fmt.Errorf("decoding packed object %q in Secret %q: %w", k, secrets[i].Name, err)
+			}
+			objs = append(objs, u)
+		}
+	}
+	return objs, nil
 }
 
 func gzipData(data []byte) ([]byte, error) {
@@ -187,4 +221,13 @@ func gzipData(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func gunzipData(data []byte) ([]byte, error) {
+	r, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+	return io.ReadAll(r)
 }
