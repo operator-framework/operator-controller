@@ -18,10 +18,14 @@ limitations under the License.
 
 package v1
 
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 // ObservedPhaseApplyConfiguration represents a declarative configuration of the ObservedPhase type for use
 // with apply.
 //
-// ObservedPhase records the observed content digest of a resolved phase.
+// ObservedPhase records the content and rollout progress of a resolved phase.
 type ObservedPhaseApplyConfiguration struct {
 	// name is the phase name matching a phase in spec.phases.
 	Name *string `json:"name,omitempty"`
@@ -32,6 +36,12 @@ type ObservedPhaseApplyConfiguration struct {
 	// It is omitted until counts have been computed; when present, all count
 	// fields are reported (including zeros).
 	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
+	// completedAt is the timestamp at which this phase was first observed to have
+	// successfully reconciled and passed its probes after all preceding phases
+	// completed. It is set once and is immutable thereafter, even if the phase
+	// later becomes unhealthy. ClusterObjectDeployment uses it as a progress
+	// milestone for its inactivity deadline.
+	CompletedAt *metav1.Time `json:"completedAt,omitempty"`
 }
 
 // ObservedPhaseApplyConfiguration constructs a declarative configuration of the ObservedPhase type for use with
@@ -61,5 +71,13 @@ func (b *ObservedPhaseApplyConfiguration) WithDigest(value string) *ObservedPhas
 // If called multiple times, the ObjectCounts field is set to the value of the last call.
 func (b *ObservedPhaseApplyConfiguration) WithObjectCounts(value *ObjectCountsApplyConfiguration) *ObservedPhaseApplyConfiguration {
 	b.ObjectCounts = value
+	return b
+}
+
+// WithCompletedAt sets the CompletedAt field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the CompletedAt field is set to the value of the last call.
+func (b *ObservedPhaseApplyConfiguration) WithCompletedAt(value metav1.Time) *ObservedPhaseApplyConfiguration {
+	b.CompletedAt = &value
 	return b
 }

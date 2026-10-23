@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"time"
 
@@ -245,6 +246,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 	// Set object counts
 	status.FromReconcile(cos, rres)
+	c.recordPhaseCompletions(cos, rres)
 
 	// Report revision-level preflight validation failures and re-check on a flat timer:
 	// the dry-run can be rejected for reasons that clear without a spec change (e.g. RBAC
@@ -795,6 +797,26 @@ func markAsNotReady(cos *ocv1.ClusterObjectSet, reason, message string) bool {
 		Message:            message,
 		ObservedGeneration: cos.Generation,
 	})
+}
+
+// recordPhaseCompletions records each phase's first successful rollout. Read-only
+// downstream phases and phases superseded by a newer revision are not milestones.
+// Existing timestamps survive retries, drift, and controller restarts.
+func (c *ClusterObjectSetReconciler) recordPhaseCompletions(cos *ocv1.ClusterObjectSet, result machinery.RevisionResult) {
+	now := metav1.NewTime(c.Clock.Now())
+	for _, phase := range result.GetPhases() {
+		if !phase.IsComplete() || slices.ContainsFunc(phase.GetObjects(), func(obj machinery.ObjectResult) bool {
+			return obj.Action() == machinery.ActionProgressed
+		}) {
+			break
+		}
+		for i := range cos.Status.ObservedPhases {
+			observed := &cos.Status.ObservedPhases[i]
+			if observed.Name == phase.GetName() && observed.CompletedAt.IsZero() {
+				observed.CompletedAt = now
+			}
+		}
+	}
 }
 
 // hasSupersededObject reports whether any object in the revision has been adopted

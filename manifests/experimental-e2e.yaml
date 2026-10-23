@@ -2682,9 +2682,21 @@ spec:
                   different content. Each entry covers all fully-resolved object
                   manifests within a phase, making it source-agnostic.
                 items:
-                  description: ObservedPhase records the observed content digest of
-                    a resolved phase.
+                  description: ObservedPhase records the content and rollout progress
+                    of a resolved phase.
                   properties:
+                    completedAt:
+                      description: |-
+                        completedAt is the timestamp at which this phase was first observed to have
+                        successfully reconciled and passed its probes after all preceding phases
+                        completed. It is set once and is immutable thereafter, even if the phase
+                        later becomes unhealthy. ClusterObjectDeployment uses it as a progress
+                        milestone for its inactivity deadline.
+                      format: date-time
+                      type: string
+                      x-kubernetes-validations:
+                      - message: completedAt is immutable once set
+                        rule: self == oldSelf || oldSelf == null
                     digest:
                       description: |-
                         digest is the digest of the phase's resolved object content
@@ -2755,6 +2767,9 @@ spec:
                   - digest
                   - name
                   type: object
+                  x-kubernetes-validations:
+                  - message: completedAt cannot be removed once set
+                    rule: '!has(oldSelf.completedAt) || has(self.completedAt)'
                 maxItems: 20
                 type: array
                 x-kubernetes-list-map-keys:
@@ -2764,6 +2779,10 @@ spec:
             x-kubernetes-validations:
             - message: completedAt cannot be removed once set
               rule: '!has(oldSelf.completedAt) || has(self.completedAt)'
+            - message: completed phases cannot be removed from observedPhases
+              rule: '!has(oldSelf.observedPhases) || oldSelf.observedPhases.all(p,
+                !has(p.completedAt) || (has(self.observedPhases) && self.observedPhases.exists(q,
+                q.name == p.name)))'
         required:
         - spec
         type: object

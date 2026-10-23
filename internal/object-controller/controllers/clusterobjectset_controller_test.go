@@ -763,6 +763,80 @@ func Test_ClusterObjectSetReconciler_Reconcile_CompletedAt(t *testing.T) {
 	}
 }
 
+func Test_ClusterObjectSetReconciler_Reconcile_PhaseCompletedAt(t *testing.T) {
+	firstReady := metav1.NewTime(time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC))
+	now := metav1.NewTime(firstReady.Add(time.Minute))
+	for _, tc := range []struct {
+		name           string
+		firstComplete  bool
+		secondComplete bool
+		superseded     bool
+		existing       metav1.Time
+		wantFirst      metav1.Time
+		wantSecond     metav1.Time
+	}{
+		{name: "records progress before the revision completes", firstComplete: true, wantFirst: now},
+		{name: "does not count read-only downstream phases", secondComplete: true},
+		{name: "preserves an earlier milestone when the next phase completes", firstComplete: true, secondComplete: true, existing: firstReady, wantFirst: firstReady, wantSecond: now},
+		{name: "preserves completion after drift", existing: firstReady, wantFirst: firstReady},
+		{name: "a partially superseded phase is not progress", firstComplete: true, secondComplete: true, superseded: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			testScheme := newScheme(t)
+			ext := newTestClusterExtension()
+			rev := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
+			rev.Finalizers = []string{"olm.operatorframework.io/teardown"}
+			second := rev.Spec.Phases[0]
+			second.Name = "later"
+			rev.Spec.Phases = append(rev.Spec.Phases, second)
+			c := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), controllers.SetupIndexes).
+				WithStatusSubresource(&ocv1.ClusterObjectSet{}).
+				WithObjects(ext, rev).
+				Build()
+			var objects []machinery.ObjectResult
+			if tc.superseded {
+				objects = []machinery.ObjectResult{
+					newMockObjectResult(mockCtrl, objectResultConfig{action: machinery.ActionProgressed, complete: true}),
+					newMockObjectResult(mockCtrl, objectResultConfig{action: machinery.ActionIdle, complete: true}),
+				}
+			}
+			phases := []machinery.PhaseResult{
+				newMockPhaseResult(mockCtrl, phaseResultConfig{name: "everything", isComplete: tc.firstComplete, objects: objects}),
+				newMockPhaseResult(mockCtrl, phaseResultConfig{name: "later", isComplete: tc.secondComplete}),
+			}
+			result := newMockRevisionResult(mockCtrl, revisionResultConfig{phases: phases})
+			nextResult := newMockRevisionResult(mockCtrl, revisionResultConfig{phases: []machinery.PhaseResult{
+				newMockPhaseResult(mockCtrl, phaseResultConfig{name: "everything", isComplete: !tc.existing.IsZero()}),
+				newMockPhaseResult(mockCtrl, phaseResultConfig{name: "later"}),
+			}})
+			engine := newMockRevisionEngineWithReconcile(mockCtrl,
+				func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+					current := nextResult
+					nextResult = result
+					return current, nil
+				}, nil)
+			clk := clocktesting.NewFakeClock(firstReady.Time)
+			reconciler := &controllers.ClusterObjectSetReconciler{
+				Client: c, Clock: clk,
+				RevisionEngineFactory: newMockRevisionEngineFactoryWithEngine(mockCtrl, engine, nil),
+				TrackingCache:         newMockTrackingCache(mockCtrl, c, nil),
+			}
+			req := ctrl.Request{NamespacedName: client.ObjectKeyFromObject(rev)}
+			_, err := reconciler.Reconcile(t.Context(), req)
+			require.NoError(t, err)
+			require.NoError(t, c.Get(t.Context(), req.NamespacedName, rev))
+			clk.SetTime(now.Time)
+			_, err = reconciler.Reconcile(t.Context(), req)
+			require.NoError(t, err)
+			require.NoError(t, c.Get(t.Context(), req.NamespacedName, rev))
+			require.Len(t, rev.Status.ObservedPhases, 2)
+			require.True(t, tc.wantFirst.Equal(&rev.Status.ObservedPhases[0].CompletedAt), "first phase: %v", rev.Status.ObservedPhases[0].CompletedAt)
+			require.True(t, tc.wantSecond.Equal(&rev.Status.ObservedPhases[1].CompletedAt), "second phase: %v", rev.Status.ObservedPhases[1].CompletedAt)
+		})
+	}
+}
+
 func Test_ClusterObjectSetReconciler_Reconcile_ValidationError_Retries(t *testing.T) {
 	const (
 		clusterExtensionName = "test-ext"
