@@ -563,10 +563,11 @@ type ClusterObjectSetStatus struct {
 	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable"
 	// +optional
-	CompletedAt metav1.Time `json:"completedAt,omitempty,omitzero"`
+	CompletedAt metav1.Time `json:"completedAt,omitzero"`
 }
 
 // ObservedPhase records the observed content digest of a resolved phase.
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.completedAt) || has(self.completedAt)",message="completedAt cannot be removed once set"
 type ObservedPhase struct {
 	// name is the phase name matching a phase in spec.phases.
 	//
@@ -575,6 +576,28 @@ type ObservedPhase struct {
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start and end with an alphanumeric character."
 	Name string `json:"name"`
+
+	// status is the current state of this phase in the rollout. Must be one of
+	// InvalidSpecification, PreconditionsNotMet, Pending, Reconciling,
+	// Stabilizing, Ready, Unknown, Superseded, Archiving, or Archived.
+	// +required
+	Status PhaseStatus `json:"status"`
+
+	// completedAt is the timestamp when this phase first became Ready.
+	// Set once and never cleared. Nil means the phase has never been
+	// Ready.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable"
+	CompletedAt metav1.Time `json:"completedAt,omitzero"`
+
+	// message is a phase-level message providing context about the
+	// current status (e.g. a validation error for Invalid phases, or
+	// a summary for Pending phases). At most 1024 characters; longer
+	// messages are truncated by the controller.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1024
+	// +optional
+	Message string `json:"message,omitempty"`
 
 	// digest is the digest of the phase's resolved object content
 	// at first successful resolution, in the format "<algorithm>:<hex>".
@@ -587,10 +610,14 @@ type ObservedPhase struct {
 	Digest string `json:"digest"`
 
 	// objectCounts reports the number of objects in this phase by state.
-	// It is omitted until counts have been computed; when present, all count
-	// fields are reported (including zeros).
 	// +optional
 	ObjectCounts ObjectCounts `json:"objectCounts,omitzero"`
+
+	// lastTransitionTime is the last time the phase transitioned from one status to another.
+	// +required
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=date-time
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitzero"`
 }
 
 // ObjectCounts reports the number of objects in a ClusterObjectSet or phase by state.
@@ -602,16 +629,16 @@ type ObjectCounts struct {
 	Total int64 `json:"total"`
 
 	// present is the number of objects in this phase that exist on the
-	// cluster. During reconcile, this counts objects that the controller
-	// has found or created. During teardown, this decrements toward zero
-	// as objects are deleted.
+	// cluster and are owned by this object set, or another in the same group.
+	// During reconcile, this counts objects that the controller has found or
+	// created. During teardown, this decrements toward zero as objects are deleted.
 	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
 	Present int64 `json:"present"`
 
 	// synced is the number of objects in this phase whose cluster state
-	// matches the desired state.
+	// matches the desired state. Set to zero during teardown.
 	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
@@ -624,6 +651,54 @@ type ObjectCounts struct {
 	// +kubebuilder:validation:Maximum:=1000
 	Ready int64 `json:"ready"`
 }
+
+// PhaseStatus describes the current state of a phase in the rollout.
+//
+// +kubebuilder:validation:Enum=InvalidSpecification;Pending;Reconciling;Stabilizing;Ready;Unknown;Superseded;Archiving;Archived
+type PhaseStatus string
+
+const (
+	// PhaseStatusInvalidSpecification indicates the phase failed preflight validation
+	// in a permanent way (e.g. cross-phase duplication).
+	PhaseStatusInvalidSpecification PhaseStatus = "InvalidSpecification"
+
+	// PhaseStatusPending indicates the phase is not being actively
+	// reconciled, but the controller has checked and some objects do not
+	// match the desired state. The objectDetails field lists what would
+	// need to change.
+	PhaseStatusPending PhaseStatus = "Pending"
+
+	// PhaseStatusReconciling indicates the controller is actively applying
+	// objects in this phase and not all objects are synced yet.
+	PhaseStatusReconciling PhaseStatus = "Reconciling"
+
+	// PhaseStatusStabilizing indicates all objects in this phase are
+	// synced but some assertions are not yet passing. The controller is
+	// not actively writing; it is waiting for other controllers or
+	// external actions to bring the objects into the expected state.
+	PhaseStatusStabilizing PhaseStatus = "Stabilizing"
+
+	// PhaseStatusReady indicates all objects in this phase are synced
+	// and pass their assertions.
+	PhaseStatusReady PhaseStatus = "Ready"
+
+	// PhaseStatusUnknown indicates this phase was not evaluated during
+	// the most recent reconcile.
+	PhaseStatusUnknown PhaseStatus = "Unknown"
+
+	// PhaseStatusSuperseded indicates all objects in this phase have been
+	// adopted by a newer revision.
+	PhaseStatusSuperseded PhaseStatus = "Superseded"
+
+	// PhaseStatusArchiving indicates the controller is actively deleting
+	// objects in this phase. Objects still awaiting deletion are listed
+	// in objectDetails.
+	PhaseStatusArchiving PhaseStatus = "Archiving"
+
+	// PhaseStatusArchived indicates all objects in this phase have
+	// been deleted from the cluster.
+	PhaseStatusArchived PhaseStatus = "Archived"
+)
 
 // TODO(COD): Update the archival description below when archival decisions move
 // to ClusterObjectDeployment reconciliation.

@@ -243,8 +243,10 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 
-	// Set object counts
-	status.FromReconcile(cos, rres)
+	reconcileTime := metav1.NewTime(c.Clock.Now())
+	// Set object counts and phase status
+	// TODO: refactor and move condition setting operations into status pkg
+	status.UpdateObservedPhasesForReconcile(cos, rres, reconcileTime)
 
 	// Report revision-level preflight validation failures and re-check on a flat timer:
 	// the dry-run can be rejected for reasons that clear without a spec change (e.g. RBAC
@@ -344,7 +346,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		// It also serves as the signal that the revision has completed its rollout,
 		// which the ClusterExtension controller uses to determine the installed revision.
 		if cos.Status.CompletedAt.IsZero() {
-			cos.Status.CompletedAt = metav1.NewTime(c.Clock.Now())
+			cos.Status.CompletedAt = reconcileTime
 		}
 	} else {
 		var notReadyMsgs []string
@@ -421,8 +423,8 @@ func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine
 		// the error for rate-limited backoff.
 		return ctrl.Result{}, fmt.Errorf("error archiving revision: %v", err)
 	}
-	// Set object counts
-	status.FromTeardown(cos, tdres)
+	teardownTime := metav1.NewTime(c.Clock.Now())
+	status.UpdateObservedPhasesForTeardown(cos, tdres, teardownTime)
 	if tdres != nil && !tdres.IsComplete() {
 		markAsArchiving(cos)
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
@@ -631,7 +633,14 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("computing phase digest: %w", err)
 		}
-		observedPhases = append(observedPhases, ocv1.ObservedPhase{Name: specPhase.Name, Digest: digest})
+		// Make sure we set all the required fields
+		observedPhases = append(observedPhases, ocv1.ObservedPhase{
+			Name:               specPhase.Name,
+			Digest:             digest,
+			Status:             ocv1.PhaseStatusUnknown,
+			LastTransitionTime: metav1.NewTime(c.Clock.Now()),
+			Message:            "phase has not been evaluated",
+		})
 
 		// Managed objects are labeled app.kubernetes.io/managed-by by the boxcutter
 		// revision engine; the controller does not add owner labels of its own.
