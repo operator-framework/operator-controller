@@ -67,7 +67,7 @@ func (s *githubSummary) PerformanceQuery(title, pod, query, yLabel string, scale
 	defer cancel()
 
 	fullQuery := fmt.Sprintf(query, pod)
-	result, warnings, err := v1api.Query(ctx, fullQuery, time.Now())
+	result, warnings, _, err := v1api.Query(ctx, fullQuery, time.Now())
 	if err != nil {
 		return "", err
 	} else if len(warnings) > 0 {
