@@ -42,7 +42,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 				err = cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: tc.sourceType,
-						Catalog: &ocv1.CatalogFilter{
+						Catalog: ocv1.CatalogFilter{
 							PackageName: "test-package",
 						},
 					},
@@ -76,6 +76,89 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 	}
 }
 
+func TestClusterExtensionOCIImageSourceConfig(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name      string
+		source    ocv1.SourceConfig
+		wantError bool
+	}{
+		{
+			name: "valid tagged image",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "quay.io/example/operator:latest"},
+			},
+		},
+		{
+			name: "valid tagged image with registry port",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "quay.io:5000/example/operator:latest"},
+			},
+		},
+		{
+			name: "valid digested image with registry port",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "quay.io:5000/example/operator@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+			},
+		},
+		{
+			name: "valid tagged image with IPv4 registry host",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "192.0.2.1/example/operator:latest"},
+			},
+		},
+		{
+			name: "valid tagged image with IPv4 registry host and port",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "192.0.2.1:5000/example/operator:latest"},
+			},
+		},
+		{
+			name: "valid digested image with IPv4 registry host",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "192.0.2.1/example/operator@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+			},
+		},
+		{
+			name: "valid digested image with IPv4 registry host and port",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "192.0.2.1:5000/example/operator@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+			},
+		},
+		{
+			name: "uppercase repository segment",
+			source: ocv1.SourceConfig{
+				SourceType: ocv1.SourceTypeOCIImage,
+				OCIImage:   ocv1.OCIImageSource{Ref: "quay.io/example/Operator:latest"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source:    tc.source,
+				Namespace: "default",
+			}))
+			if tc.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 	tooLongError := "spec.source.catalog.packageName: Too long: may not be more than 253"
 	regexMismatchError := "packageName must be a valid DNS1123 subdomain"
@@ -85,7 +168,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		pkgName string
 		errMsg  string
 	}{
-		{"no package name", "", regexMismatchError},
+		{"no package name", "", "catalog is required when sourceType is Catalog"},
 		{"long package name", strings.Repeat("x", 254), tooLongError},
 		{"leading digits with hypens", "0my-1package-9name", ""},
 		{"trailing digits with hypens", "my0-package1-name9", ""},
@@ -114,7 +197,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: tc.pkgName,
 					},
 				},
@@ -208,7 +291,7 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "package",
 						Version:     tc.version,
 					},
@@ -260,7 +343,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "package",
 						Channels:    tc.channels,
 					},
@@ -311,7 +394,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "package",
 					},
 				},
@@ -332,7 +415,7 @@ func TestClusterExtensionAdmissionNamespaceImmutability(t *testing.T) {
 		return ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: "package",
 				},
 			},
@@ -492,7 +575,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "package",
 					},
 				},
@@ -522,7 +605,7 @@ func TestClusterExtensionAdmissionServiceAccountLifecycle(t *testing.T) {
 		return ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog:    &ocv1.CatalogFilter{PackageName: "package"},
+				Catalog:    ocv1.CatalogFilter{PackageName: "package"},
 			},
 			Namespace: "default",
 		}
@@ -619,7 +702,7 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "package",
 					},
 				},
@@ -668,7 +751,7 @@ func Test_ClusterExtensionAdmissionInlineConfig(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogFilter{
+					Catalog: ocv1.CatalogFilter{
 						PackageName: "package",
 					},
 				},

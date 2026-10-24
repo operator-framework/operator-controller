@@ -263,7 +263,7 @@ func newTestClusterExtensionInternal() *ocv1.ClusterExtension {
 			Namespace: "some-namespace",
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
+				Catalog: ocv1.CatalogFilter{
 					PackageName: "my-package",
 				},
 			},
