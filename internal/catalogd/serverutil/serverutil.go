@@ -36,7 +36,7 @@ type CatalogServerConfig struct {
 // a readiness check that passes once the server has started serving.  Because
 // NeedLeaderElection returns false, Start() is called on every pod immediately, so all
 // replicas bind the catalog port and become ready.  Non-leader pods serve requests but
-// return 404 (empty local cache); callers are expected to retry.
+// return 503 Service Unavailable (empty local cache); callers are expected to retry.
 func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig) error {
 	shutdownTimeout := 30 * time.Second
 	r := &catalogServerRunnable{
@@ -57,7 +57,7 @@ func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig) error 
 
 	// Register a readiness check that passes once Start() has been called and the
 	// server is actively serving.  All pods reach Start() (NeedLeaderElection=false),
-	// so all replicas become ready and receive traffic; non-leaders return 404 until
+	// so all replicas become ready and receive traffic; non-leaders return 503 until
 	// they win the leader lease and populate their local cache.
 	if err := mgr.AddReadyzCheck("catalog-server", r.readyzCheck()); err != nil {
 		return fmt.Errorf("error adding catalog server readiness check: %w", err)
@@ -68,7 +68,7 @@ func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig) error 
 
 // catalogServerRunnable is a Runnable that binds the catalog HTTP port on every pod.
 // Because NeedLeaderElection returns false, Start() is called on all replicas immediately;
-// non-leader pods serve the catalog port but return 404 (empty local cache).
+// non-leader pods serve the catalog port but return 503 Service Unavailable (empty local cache).
 type catalogServerRunnable struct {
 	cfg             CatalogServerConfig
 	server          *http.Server
@@ -85,7 +85,7 @@ type catalogServerRunnable struct {
 //
 // Non-leader pods serve the catalog HTTP port but have an empty local cache
 // (only the leader's reconciler downloads catalog content), so requests to a
-// non-leader return 404.  Callers are expected to retry.
+// non-leader return 503 Service Unavailable.  Callers are expected to retry.
 func (r *catalogServerRunnable) NeedLeaderElection() bool { return false }
 
 func (r *catalogServerRunnable) Start(ctx context.Context) error {
