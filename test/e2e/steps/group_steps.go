@@ -180,12 +180,35 @@ func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, man
 func RememberClusterObjectSetSecrets(ctx context.Context, revisionName string) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(revisionName, sc)
-	names, err := collectReferredSecretNames(ctx, revisionName)
+	refs, err := collectReferredSecretRefs(ctx, revisionName)
 	if err != nil {
 		return err
 	}
-	for _, name := range names {
-		sc.revisionSecrets = append(sc.revisionSecrets, resource{kind: "secret", name: name, namespace: olmNamespace})
+	for _, ref := range refs {
+		sc.revisionSecrets = append(sc.revisionSecrets, resource{kind: "secret", name: ref.name, namespace: ref.namespace})
+	}
+	return nil
+}
+
+// RememberCODRevisionSecrets remembers all secrets from all ClusterObjectSet revisions
+// belonging to the named ClusterObjectDeployment's group for later GC verification.
+func RememberCODRevisionSecrets(ctx context.Context, codName string) error {
+	sc := scenarioCtx(ctx)
+	codName = substituteScenarioVars(codName, sc)
+
+	revisions, err := listClusterObjectSetsInGroup(ctx, codName)
+	if err != nil {
+		return fmt.Errorf("listing revisions for COD %q: %w", codName, err)
+	}
+
+	for _, rev := range revisions {
+		refs, err := collectReferredSecretRefs(ctx, rev.Name)
+		if err != nil {
+			return fmt.Errorf("collecting secret refs for revision %q: %w", rev.Name, err)
+		}
+		for _, ref := range refs {
+			sc.revisionSecrets = append(sc.revisionSecrets, resource{kind: "secret", name: ref.name, namespace: ref.namespace})
+		}
 	}
 	return nil
 }

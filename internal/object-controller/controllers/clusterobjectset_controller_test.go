@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/clock"
 	clocktesting "k8s.io/utils/clock/testing"
+	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
@@ -2346,5 +2347,235 @@ func Test_ClusterObjectSetReconciler_getScopedClient_Errors(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to create revision engine")
 		require.Contains(t, err.Error(), "token getter failed")
+	})
+}
+
+// Test_ClusterObjectSetReconciler_claimReferencedSecrets_Envtest validates the
+// claim-write behavior against a real API server, specifically that the ownerRef
+// patch is accepted on immutable Secrets, is idempotent, and coexists with
+// controller=true ownerRefs.
+func Test_ClusterObjectSetReconciler_claimReferencedSecrets_Envtest(t *testing.T) {
+	scheme := newScheme(t)
+	require.NoError(t, corev1.AddToScheme(scheme))
+
+	cl, err := client.New(config, client.Options{Scheme: scheme})
+	require.NoError(t, err)
+
+	ctx := t.Context()
+	cosUID := types.UID("test-cos-uid")
+
+	t.Run("patch is accepted on immutable Secret", func(t *testing.T) {
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "cos-claim-test-"}}
+		require.NoError(t, cl.Create(ctx, ns))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), ns))
+		})
+
+		secretName := "immutable-secret-1"
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: ns.Name,
+			},
+			Type:      corev1.SecretType("olm.operatorframework.io/object-data"),
+			Immutable: ptr.To(true),
+			Data: map[string][]byte{
+				"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+			},
+		}
+		require.NoError(t, cl.Create(ctx, secret))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), secret))
+		})
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-group-1",
+				UID:  cosUID + "-1",
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Revision:            1,
+				Group:               "test-group",
+				CollisionProtection: ocv1.CollisionProtectionPrevent,
+				LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      secretName,
+							Namespace: ns.Name,
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+		require.NoError(t, cl.Create(ctx, cos))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), cos))
+		})
+
+		// Build a minimal reconciler and trigger reconcile
+		reconciler := &controllers.ClusterObjectSetReconciler{
+			Client: cl,
+		}
+
+		// The reconcile may fail at factory/cache usage, but claimReferencedSecrets
+		// should execute first (it only uses Client).
+		_, _ = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: cos.Name}})
+
+		// Verify the patch succeeded: exactly one non-controller ownerRef
+		updatedSecret := &corev1.Secret{}
+		require.NoError(t, cl.Get(ctx, client.ObjectKey{Name: secretName, Namespace: ns.Name}, updatedSecret))
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		require.Equal(t, ocv1.GroupVersion.String(), updatedSecret.OwnerReferences[0].APIVersion)
+		require.Equal(t, ocv1.ClusterObjectSetKind, updatedSecret.OwnerReferences[0].Kind)
+		require.Equal(t, cos.Name, updatedSecret.OwnerReferences[0].Name)
+		require.Equal(t, cos.UID, updatedSecret.OwnerReferences[0].UID)
+		require.False(t, *updatedSecret.OwnerReferences[0].Controller)
+	})
+
+	t.Run("idempotent across real Get/Patch roundtrip", func(t *testing.T) {
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "cos-claim-test-"}}
+		require.NoError(t, cl.Create(ctx, ns))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), ns))
+		})
+
+		secretName := "idempotent-secret-2" //nolint:gosec // G101 false positive: a test Secret resource name, not a credential
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: ns.Name,
+			},
+			Type:      corev1.SecretType("olm.operatorframework.io/object-data"),
+			Immutable: ptr.To(true),
+			Data: map[string][]byte{
+				"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+			},
+		}
+		require.NoError(t, cl.Create(ctx, secret))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), secret))
+		})
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-group-2-1",
+				UID:  cosUID + "-2",
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Revision:            1,
+				Group:               "test-group-2",
+				CollisionProtection: ocv1.CollisionProtectionPrevent,
+				LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      secretName,
+							Namespace: ns.Name,
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+		require.NoError(t, cl.Create(ctx, cos))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), cos))
+		})
+
+		reconciler := &controllers.ClusterObjectSetReconciler{
+			Client: cl,
+		}
+
+		// First claim
+		_, _ = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: cos.Name}})
+
+		// Second claim (idempotency check)
+		_, _ = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: cos.Name}})
+
+		// Still exactly one ownerRef
+		updatedSecret := &corev1.Secret{}
+		require.NoError(t, cl.Get(ctx, client.ObjectKey{Name: secretName, Namespace: ns.Name}, updatedSecret))
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		require.Equal(t, cos.UID, updatedSecret.OwnerReferences[0].UID)
+	})
+
+	// TODO: this case covers coexistence with the operator-controller applier, which currently
+	// sets a Controller=true ownerRef on content Secrets. Once the applier is updated to drop/convert
+	// that controller ownerRef (deferred CE-side work), this subtest can be removed.
+	t.Run("coexists with controller=true ownerRef", func(t *testing.T) {
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "cos-claim-test-"}}
+		require.NoError(t, cl.Create(ctx, ns))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), ns))
+		})
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-group-3-1",
+				UID:  cosUID + "-3",
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Revision:            1,
+				Group:               "test-group-3",
+				CollisionProtection: ocv1.CollisionProtectionPrevent,
+				LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "coexist-secret-3",
+							Namespace: ns.Name,
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+		require.NoError(t, cl.Create(ctx, cos))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), cos))
+		})
+
+		// Pre-seed Secret with a pre-existing controller=true ownerRef to this COS
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "coexist-secret-3",
+				Namespace: ns.Name,
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion: ocv1.GroupVersion.String(),
+					Kind:       ocv1.ClusterObjectSetKind,
+					Name:       cos.Name,
+					UID:        cos.UID,
+					Controller: ptr.To(true),
+				}},
+			},
+			Type:      corev1.SecretType("olm.operatorframework.io/object-data"),
+			Immutable: ptr.To(true),
+			Data: map[string][]byte{
+				"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+			},
+		}
+		require.NoError(t, cl.Create(ctx, secret))
+		t.Cleanup(func() {
+			require.NoError(t, cl.Delete(context.Background(), secret))
+		})
+
+		reconciler := &controllers.ClusterObjectSetReconciler{
+			Client: cl,
+		}
+
+		// Claim should recognize the existing ownerRef and leave it unchanged
+		_, _ = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: cos.Name}})
+
+		// Still exactly one ownerRef, unchanged (controller=true)
+		updatedSecret := &corev1.Secret{}
+		require.NoError(t, cl.Get(ctx, client.ObjectKey{Name: "coexist-secret-3", Namespace: ns.Name}, updatedSecret))
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		require.Equal(t, cos.UID, updatedSecret.OwnerReferences[0].UID)
+		require.True(t, *updatedSecret.OwnerReferences[0].Controller)
 	})
 }

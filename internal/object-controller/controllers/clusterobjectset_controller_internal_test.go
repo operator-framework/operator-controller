@@ -569,3 +569,362 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 		assert.Equal(t, int32(1), secretGetCount.Load(), "secret should be fetched only once despite multiple references")
 	})
 }
+
+func Test_ClusterObjectSetReconciler_claimReferencedSecrets(t *testing.T) {
+	testScheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(testScheme))
+	require.NoError(t, corev1.AddToScheme(testScheme))
+
+	cosUID := types.UID("test-cos-uid")
+	cosName := "test-cos"
+
+	t.Run("object-data secret gets a non-controller ownerRef to the COS", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-secret",
+				Namespace: "test-ns",
+			},
+			Type: corev1.SecretType("olm.operatorframework.io/object-data"),
+			Data: map[string][]byte{
+				"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+			},
+		}
+
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(secret).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cosName,
+				UID:  cosUID,
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "test-secret",
+							Namespace: "test-ns",
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+
+		err := reconciler.claimReferencedSecrets(context.Background(), cos)
+		require.NoError(t, err)
+
+		// Verify the secret has the expected ownerRef
+		updatedSecret := &corev1.Secret{}
+		err = testClient.Get(context.Background(), client.ObjectKey{Name: "test-secret", Namespace: "test-ns"}, updatedSecret)
+		require.NoError(t, err)
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		assert.Equal(t, ocv1.GroupVersion.String(), updatedSecret.OwnerReferences[0].APIVersion)
+		assert.Equal(t, ocv1.ClusterObjectSetKind, updatedSecret.OwnerReferences[0].Kind)
+		assert.Equal(t, cosName, updatedSecret.OwnerReferences[0].Name)
+		assert.Equal(t, cosUID, updatedSecret.OwnerReferences[0].UID)
+		assert.False(t, *updatedSecret.OwnerReferences[0].Controller)
+		assert.Nil(t, updatedSecret.OwnerReferences[0].BlockOwnerDeletion)
+	})
+
+	t.Run("idempotent: re-running adds no second ref", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-secret",
+				Namespace: "test-ns",
+			},
+			Type: corev1.SecretType("olm.operatorframework.io/object-data"),
+			Data: map[string][]byte{
+				"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+			},
+		}
+
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(secret).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cosName,
+				UID:  cosUID,
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "test-secret",
+							Namespace: "test-ns",
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+
+		// Call claim twice
+		err := reconciler.claimReferencedSecrets(context.Background(), cos)
+		require.NoError(t, err)
+		err = reconciler.claimReferencedSecrets(context.Background(), cos)
+		require.NoError(t, err)
+
+		// Verify still exactly one ownerRef
+		updatedSecret := &corev1.Secret{}
+		err = testClient.Get(context.Background(), client.ObjectKey{Name: "test-secret", Namespace: "test-ns"}, updatedSecret)
+		require.NoError(t, err)
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		assert.Equal(t, cosUID, updatedSecret.OwnerReferences[0].UID)
+	})
+
+	// TODO: this case covers coexistence with the operator-controller applier, which currently
+	// sets a Controller=true ownerRef on content Secrets. Once the applier is updated to drop/convert
+	// that controller ownerRef (deferred CE-side work), this subtest can be removed.
+	t.Run("already owned by this UID (pre-existing Controller=true ref) is left untouched", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-secret",
+				Namespace: "test-ns",
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion: ocv1.GroupVersion.String(),
+					Kind:       ocv1.ClusterObjectSetKind,
+					Name:       cosName,
+					UID:        cosUID,
+					Controller: ptr.To(true),
+				}},
+			},
+			Type: corev1.SecretType("olm.operatorframework.io/object-data"),
+			Data: map[string][]byte{
+				"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+			},
+		}
+
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(secret).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cosName,
+				UID:  cosUID,
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "test-secret",
+							Namespace: "test-ns",
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+
+		err := reconciler.claimReferencedSecrets(context.Background(), cos)
+		require.NoError(t, err)
+
+		// Verify still exactly one ownerRef, Controller still true
+		updatedSecret := &corev1.Secret{}
+		err = testClient.Get(context.Background(), client.ObjectKey{Name: "test-secret", Namespace: "test-ns"}, updatedSecret)
+		require.NoError(t, err)
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		assert.Equal(t, cosUID, updatedSecret.OwnerReferences[0].UID)
+		assert.True(t, *updatedSecret.OwnerReferences[0].Controller, "Controller should still be true")
+	})
+
+	t.Run("non-object-data (Opaque) secret is also claimed", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-secret",
+				Namespace: "test-ns",
+			},
+			Type: corev1.SecretTypeOpaque,
+			Data: map[string][]byte{
+				"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+			},
+		}
+
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(secret).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cosName,
+				UID:  cosUID,
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "test-secret",
+							Namespace: "test-ns",
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+
+		err := reconciler.claimReferencedSecrets(context.Background(), cos)
+		require.NoError(t, err)
+
+		// Verify the secret has the expected ownerRef
+		updatedSecret := &corev1.Secret{}
+		err = testClient.Get(context.Background(), client.ObjectKey{Name: "test-secret", Namespace: "test-ns"}, updatedSecret)
+		require.NoError(t, err)
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		assert.False(t, *updatedSecret.OwnerReferences[0].Controller)
+	})
+
+	t.Run("missing secret is skipped", func(t *testing.T) {
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cosName,
+				UID:  cosUID,
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "missing-secret",
+							Namespace: "test-ns",
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+
+		err := reconciler.claimReferencedSecrets(context.Background(), cos)
+		require.NoError(t, err, "should not error when secret is missing")
+	})
+
+	t.Run("same secret referenced by two objects is claimed once", func(t *testing.T) {
+		var patchCount atomic.Int32
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-secret",
+				Namespace: "test-ns",
+			},
+			Type: corev1.SecretType("olm.operatorframework.io/object-data"),
+			Data: map[string][]byte{
+				"obj":  []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+				"obj2": []byte(`{"apiVersion":"v1","kind":"Secret"}`),
+			},
+		}
+
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(secret).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Patch: func(ctx context.Context, c client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					if _, ok := obj.(*corev1.Secret); ok {
+						patchCount.Add(1)
+					}
+					return c.Patch(ctx, obj, patch, opts...)
+				},
+			}).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cosName,
+				UID:  cosUID,
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{
+						{Ref: ocv1.ObjectSourceRef{Name: "test-secret", Namespace: "test-ns", Key: "obj"}},
+						{Ref: ocv1.ObjectSourceRef{Name: "test-secret", Namespace: "test-ns", Key: "obj2"}},
+					},
+				}},
+			},
+		}
+
+		err := reconciler.claimReferencedSecrets(context.Background(), cos)
+		require.NoError(t, err)
+
+		// Verify the secret has exactly one ownerRef and was patched only once
+		updatedSecret := &corev1.Secret{}
+		err = testClient.Get(context.Background(), client.ObjectKey{Name: "test-secret", Namespace: "test-ns"}, updatedSecret)
+		require.NoError(t, err)
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		assert.Equal(t, int32(1), patchCount.Load(), "secret should be patched only once despite multiple references")
+	})
+
+	t.Run("empty-namespace ref is resolved at ref.Namespace verbatim", func(t *testing.T) {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-secret",
+				Namespace: "",
+			},
+			Type: corev1.SecretType("olm.operatorframework.io/object-data"),
+			Data: map[string][]byte{
+				"obj": []byte(`{"apiVersion":"v1","kind":"ConfigMap"}`),
+			},
+		}
+
+		testClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(secret).
+			Build()
+
+		reconciler := &ClusterObjectSetReconciler{Client: testClient}
+
+		cos := &ocv1.ClusterObjectSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cosName,
+				UID:  cosUID,
+			},
+			Spec: ocv1.ClusterObjectSetSpec{
+				Phases: []ocv1.ClusterObjectSetPhase{{
+					Name: "phase1",
+					Objects: []ocv1.ClusterObjectSetObject{{
+						Ref: ocv1.ObjectSourceRef{
+							Name:      "test-secret",
+							Namespace: "",
+							Key:       "obj",
+						},
+					}},
+				}},
+			},
+		}
+
+		err := reconciler.claimReferencedSecrets(context.Background(), cos)
+		require.NoError(t, err)
+
+		// Verify the secret has the expected ownerRef
+		updatedSecret := &corev1.Secret{}
+		err = testClient.Get(context.Background(), client.ObjectKey{Name: "test-secret", Namespace: ""}, updatedSecret)
+		require.NoError(t, err)
+		require.Len(t, updatedSecret.OwnerReferences, 1)
+		assert.Equal(t, cosUID, updatedSecret.OwnerReferences[0].UID)
+	})
+}

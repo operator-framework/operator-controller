@@ -129,6 +129,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectDeploymentReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterObjectDeploymentReportsConditionWithMessageFragment)
+	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" revision secrets are remembered$`, RememberCODRevisionSecrets)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
 	sc.Step(`^(?i)ClusterObjectSet is applied(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterObjectSet with Namespace owner "([^"]*)" is applied$`, ClusterObjectSetWithNamespaceOwnerApplied)
@@ -152,6 +153,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are immutable$`, ClusterObjectSetReferredSecretsAreImmutable)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets contain labels$`, ClusterObjectSetReferredSecretsContainLabels)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are owned by the object set$`, ClusterObjectSetReferredSecretsOwnedByObjectSet)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets have a non-controller owner reference to the object set$`, ClusterObjectSetReferredSecretsHaveNonControllerOwnerReference)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets have type "([^"]+)"$`, ClusterObjectSetReferredSecretsHaveType)
 
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
@@ -1334,6 +1336,7 @@ func ClusterObjectSetReferredSecretsContainLabels(ctx context.Context, revisionN
 
 // ClusterObjectSetReferredSecretsOwnedByObjectSet verifies that all referred Secrets for the named
 // ClusterObjectSet have an ownerReference pointing to the ClusterObjectSet with controller=true.
+// This step is for CE-flow scenarios where secrets are in olmNamespace with revision-name labels.
 func ClusterObjectSetReferredSecretsOwnedByObjectSet(ctx context.Context, revisionName string) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
@@ -1370,6 +1373,48 @@ func ClusterObjectSetReferredSecretsOwnedByObjectSet(ctx context.Context, revisi
 	return nil
 }
 
+// ClusterObjectSetReferredSecretsHaveNonControllerOwnerReference verifies that all Secrets
+// referenced in the named ClusterObjectSet's spec.phases[].objects[].ref have a non-controller
+// ownerReference pointing to the ClusterObjectSet. This is for standalone COS scenarios where
+// secrets are created in arbitrary namespaces without labels and claimed with Controller=false.
+func ClusterObjectSetReferredSecretsHaveNonControllerOwnerReference(ctx context.Context, revisionName string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+
+	cosObj, err := getResource("clusterobjectset", revisionName, "")
+	if err != nil {
+		return fmt.Errorf("getting ClusterObjectSet %q: %w", revisionName, err)
+	}
+	cosUID := cosObj.GetUID()
+
+	refs, err := collectReferredSecretRefs(ctx, revisionName)
+	if err != nil {
+		return err
+	}
+
+	for _, ref := range refs {
+		secret, err := getResource("secret", ref.name, ref.namespace)
+		if err != nil {
+			return fmt.Errorf("getting Secret %s/%s: %w", ref.namespace, ref.name, err)
+		}
+
+		found := false
+		for _, ownerRef := range secret.GetOwnerReferences() {
+			if ownerRef.Kind == ocv1.ClusterObjectSetKind && ownerRef.Name == revisionName && ownerRef.UID == cosUID {
+				if ownerRef.Controller != nil && *ownerRef.Controller {
+					return fmt.Errorf("secret %s/%s has ownerReference to ClusterObjectSet with controller=true, expected non-controller", ref.namespace, ref.name)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("secret %s/%s does not have ownerReference to ClusterObjectSet %q (uid %s)", ref.namespace, ref.name, revisionName, cosUID)
+		}
+	}
+	return nil
+}
+
 // ClusterObjectSetReferredSecretsHaveType verifies that all referred Secrets for the named
 // ClusterObjectSet have the specified Secret type.
 func ClusterObjectSetReferredSecretsHaveType(ctx context.Context, revisionName, expectedType string) error {
@@ -1392,9 +1437,16 @@ func ClusterObjectSetReferredSecretsHaveType(ctx context.Context, revisionName, 
 	return nil
 }
 
-// collectReferredSecretNames returns the unique set of Secret names referenced by the ClusterObjectSet's phase objects.
-func collectReferredSecretNames(ctx context.Context, revisionName string) ([]string, error) {
-	var names []string
+// secretRef represents a Secret reference with its namespace.
+type secretRef struct {
+	name      string
+	namespace string
+}
+
+// collectReferredSecretRefs returns the unique set of Secret name+namespace pairs
+// referenced by the ClusterObjectSet's phase objects. Empty namespace defaults to olmNamespace.
+func collectReferredSecretRefs(ctx context.Context, revisionName string) ([]secretRef, error) {
+	var refs []secretRef
 	seen := sets.New[string]()
 
 	var obj *unstructured.Unstructured
@@ -1417,14 +1469,34 @@ func collectReferredSecretNames(ctx context.Context, revisionName string) ([]str
 				continue
 			}
 			name, _, _ := unstructured.NestedString(phaseObj, "ref", "name")
-			if name != "" && !seen.Has(name) {
-				seen.Insert(name)
-				names = append(names, name)
+			namespace, _, _ := unstructured.NestedString(phaseObj, "ref", "namespace")
+			if namespace == "" {
+				namespace = olmNamespace
+			}
+			key := namespace + "/" + name
+			if name != "" && !seen.Has(key) {
+				seen.Insert(key)
+				refs = append(refs, secretRef{name: name, namespace: namespace})
 			}
 		}
 	}
-	if len(names) == 0 {
-		return nil, fmt.Errorf("no referred secret names found in ClusterObjectSet %q", revisionName)
+	if len(refs) == 0 {
+		return nil, fmt.Errorf("no referred secret refs found in ClusterObjectSet %q", revisionName)
+	}
+	return refs, nil
+}
+
+// collectReferredSecretNames returns the unique set of Secret names referenced by the ClusterObjectSet's phase objects.
+// Deprecated: use collectReferredSecretRefs for namespace-aware collection. Will be removed after all CE-flow
+// scenarios are verified to work with the namespace-aware version (target: v1.2 or later).
+func collectReferredSecretNames(ctx context.Context, revisionName string) ([]string, error) {
+	refs, err := collectReferredSecretRefs(ctx, revisionName)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, len(refs))
+	for i, ref := range refs {
+		names[i] = ref.name
 	}
 	return names, nil
 }

@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/utils/clock"
+	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
@@ -75,7 +76,7 @@ type trackingCache interface {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterobjectsets,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterobjectsets/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterobjectsets/finalizers,verbs=update
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;patch
 
 func (c *ClusterObjectSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("cluster-extension-revision")
@@ -146,6 +147,10 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 	if !cos.DeletionTimestamp.IsZero() {
 		return c.delete(ctx, cos)
+	}
+
+	if err := c.claimReferencedSecrets(ctx, cos); err != nil {
+		return ctrl.Result{}, fmt.Errorf("claiming referenced Secrets: %w", err)
 	}
 
 	remaining, hasDeadline := durationUntilDeadline(c.Clock, cos)
@@ -895,14 +900,25 @@ func (e *mutableSecretError) Error() string { return e.msg }
 // have Immutable set to true. A confirmed mutable Secret is returned as a
 // *mutableSecretError listing every misconfigured Secret; a failure to read a
 // Secret is returned as a plain (retryable) error.
-func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx context.Context, cos *ocv1.ClusterObjectSet) error {
-	type secretRef struct {
-		name      string
-		namespace string
-	}
+// secretRef identifies a referenced Secret by name and namespace.
+type secretRef struct {
+	name      string
+	namespace string
+}
+
+// referencedSecretRefs returns the deduplicated Secrets referenced by the
+// ClusterObjectSet's phase objects, in first-seen order. Objects with no Secret
+// reference are skipped.
+//
+// TODO: the ObjectSourceRef.namespace API doc says an empty namespace "defaults to the
+// OLM system namespace during ref resolution", but that defaulting is not implemented
+// anywhere (there is no system namespace available to this controller). Namespaces are
+// used verbatim here to match resolveObjectRef and verifyReferencedSecretsImmutable, so
+// ownership targets exactly the Secret resolution reads. If the documented defaulting is
+// implemented, apply it here so claim, verification, and resolution stay consistent.
+func referencedSecretRefs(cos *ocv1.ClusterObjectSet) []secretRef {
 	seen := make(map[secretRef]struct{})
 	var refs []secretRef
-
 	for _, phase := range cos.Spec.Phases {
 		for _, obj := range phase.Objects {
 			if obj.Ref.Name == "" {
@@ -915,10 +931,13 @@ func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx contex
 			}
 		}
 	}
+	return refs
+}
 
+func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx context.Context, cos *ocv1.ClusterObjectSet) error {
 	var mutableSecrets []string
 	var readErr error
-	for _, ref := range refs {
+	for _, ref := range referencedSecretRefs(cos) {
 		secret := &corev1.Secret{}
 		key := client.ObjectKey{Name: ref.name, Namespace: ref.namespace}
 		if err := c.Client.Get(ctx, key, secret); err != nil {
@@ -949,6 +968,61 @@ func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx contex
 
 	if readErr != nil {
 		return readErr
+	}
+
+	return nil
+}
+
+// claimReferencedSecrets adds a non-controller ownerReference from the ClusterObjectSet
+// to each referenced Secret for garbage collection. It is idempotent: if the Secret already
+// has an ownerReference with the COS's UID, no change is made (so a pre-existing owner
+// reference to this COS is left untouched). Claiming is best-effort: Secrets that cannot be
+// read (NotFound or other read errors) are skipped and will be claimed on a later reconcile.
+// Only transient Patch failures return an error.
+func (c *ClusterObjectSetReconciler) claimReferencedSecrets(ctx context.Context, cos *ocv1.ClusterObjectSet) error {
+	// Claim each unique referenced Secret.
+	for _, ref := range referencedSecretRefs(cos) {
+		secret := &corev1.Secret{}
+		key := client.ObjectKey{Name: ref.name, Namespace: ref.namespace}
+		if err := c.Client.Get(ctx, key, secret); err != nil {
+			// Best-effort: skip any Secret we cannot read (NotFound or transient read error).
+			// The Secret will be claimed on a later reconcile once readable. Claiming must not
+			// preempt downstream reconcile logic (e.g., verifyReferencedSecretsImmutable's
+			// precedence handling for mutable Secrets over read errors).
+			continue
+		}
+
+		// Check if already owned by this COS UID (idempotency)
+		alreadyOwned := false
+		for _, owner := range secret.OwnerReferences {
+			if owner.UID == cos.UID {
+				alreadyOwned = true
+				break
+			}
+		}
+		if alreadyOwned {
+			continue
+		}
+
+		// Add non-controller ownerRef
+		ownerRef := metav1.OwnerReference{
+			APIVersion: ocv1.GroupVersion.String(),
+			Kind:       ocv1.ClusterObjectSetKind,
+			Name:       cos.Name,
+			UID:        cos.UID,
+			Controller: ptr.To(false),
+		}
+
+		// Apply a merge patch with an optimistic lock. The merge patch replaces the
+		// ownerReferences list, so the resourceVersion precondition is required to avoid
+		// overwriting a concurrent writer's owner reference (e.g. a sibling revision
+		// claiming the same content-addressed Secret) from a stale read: a conflicting
+		// write returns a Conflict error and is retried on the next reconcile.
+		patch := client.MergeFromWithOptions(secret.DeepCopy(), client.MergeFromWithOptimisticLock{})
+		secret.OwnerReferences = append(secret.OwnerReferences, ownerRef)
+		if err := c.Client.Patch(ctx, secret, patch); err != nil {
+			return fmt.Errorf("patching Secret %s/%s: %w", ref.namespace, ref.name, err)
+		}
 	}
 
 	return nil
