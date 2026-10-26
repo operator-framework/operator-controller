@@ -970,4 +970,28 @@ func Test_ClusterObjectDeploymentReconciler_RevisionOwnership(t *testing.T) {
 		owner := metav1.GetControllerOf(other)
 		require.Nil(t, owner, "ClusterObjectSet in a different group should remain orphaned")
 	})
+
+	t.Run("adopting a label-less orphan rolls the next revision", func(t *testing.T) {
+		orphan := revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateActive)
+		c := newCODClient(t, codFixture(), orphan)
+
+		_, err := reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		// The orphan should be adopted
+		adopted, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+		require.True(t, ok)
+		owner := metav1.GetControllerOf(adopted)
+		require.NotNil(t, owner)
+		require.Equal(t, ocv1.ClusterObjectDeploymentKind, owner.Kind)
+		require.Equal(t, clusterObjectDeploymentName, owner.Name)
+
+		// Because the orphan lacks the template-hash label, a new revision should be created
+		rev2, ok := getCOS(t, c, clusterObjectDeploymentName+"-2")
+		require.True(t, ok, "expected rev-2 to be created because the adopted orphan lacks template-hash label")
+		owner2 := metav1.GetControllerOf(rev2)
+		require.NotNil(t, owner2)
+		require.Equal(t, ocv1.ClusterObjectDeploymentKind, owner2.Kind)
+		require.Equal(t, clusterObjectDeploymentName, owner2.Name)
+	})
 }
