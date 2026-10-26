@@ -375,7 +375,7 @@ Feature: Install ClusterExtension
       """
       Revision has not rolled out for 1 minute(s). Last status: Objects are not yet ready.
       """
-    And ClusterExtension reports Progressing transition between 1 and 2 minutes since its creation
+    And ClusterExtension reports Progressing transition between 1 and 2 minutes since ClusterObjectSet "${NAME}-1" was created
 
   @BoxcutterRuntime
   @ProgressDeadline
@@ -409,7 +409,7 @@ Feature: Install ClusterExtension
       """
       Revision has not rolled out for 1 minute(s). Last status: Objects are not yet ready.
       """
-    And ClusterExtension reports Progressing transition between 1 and 2 minutes since its creation
+    And ClusterExtension reports Progressing transition between 1 and 2 minutes since ClusterObjectSet "${NAME}-1" was created
 
   @BoxcutterRuntime
   Scenario:  ClusterObjectSet is annotated with bundle properties
