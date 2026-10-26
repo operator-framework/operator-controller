@@ -129,7 +129,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectDeploymentReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterObjectDeploymentReportsConditionWithMessageFragment)
-	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
+	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since ClusterObjectSet "([^"]+)" was created$`, ClusterExtensionReportsConditionTransitionTime)
 	sc.Step(`^(?i)ClusterObjectSet is applied(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterObjectSet with Namespace owner "([^"]*)" is applied$`, ClusterObjectSetWithNamespaceOwnerApplied)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reconciliation is triggered$`, TriggerClusterObjectSetReconciliation)
@@ -936,33 +936,31 @@ func ClusterExtensionReportsConditionWithoutReason(ctx context.Context, conditio
 }
 
 // ClusterExtensionReportsConditionTransitionTime asserts that a condition's lastTransitionTime falls within
-// the specified minute range since the ClusterExtension's creation.
-func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditionType string, minMinutes, maxMinutes int) error {
+// the specified minute range since the ClusterObjectSet's creation, when its progress deadline starts.
+func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditionType string, minMinutes, maxMinutes int, revisionName string) error {
 	sc := scenarioCtx(ctx)
 	t := godog.T(ctx)
 
-	// Get the ClusterExtension's creation timestamp and condition's lastTransitionTime
-	v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o",
-		fmt.Sprintf("jsonpath={.metadata.creationTimestamp},{.status.conditions[?(@.type==\"%s\")].lastTransitionTime}", conditionType))
+	revisionName = substituteScenarioVars(revisionName, sc)
+	creationTimestampValue, err := k8sClient(ctx, "get", "clusterobjectset", revisionName, "-o", "jsonpath={.metadata.creationTimestamp}")
 	require.NoError(t, err)
+	creationTimestamp, err := time.Parse(time.RFC3339, creationTimestampValue)
+	require.NoError(t, err, "failed to parse ClusterObjectSet creationTimestamp")
 
-	parts := strings.Split(v, ",")
-	require.Len(t, parts, 2, "expected creationTimestamp and lastTransitionTime but got: %s", v)
-
-	creationTimestamp, err := time.Parse(time.RFC3339, parts[0])
-	require.NoError(t, err, "failed to parse creationTimestamp")
-
-	lastTransitionTime, err := time.Parse(time.RFC3339, parts[1])
-	require.NoError(t, err, "failed to parse lastTransitionTime")
+	lastTransitionTimeValue, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o",
+		fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")].lastTransitionTime}", conditionType))
+	require.NoError(t, err)
+	lastTransitionTime, err := time.Parse(time.RFC3339, lastTransitionTimeValue)
+	require.NoError(t, err, "failed to parse ClusterExtension lastTransitionTime")
 
 	transitionDuration := lastTransitionTime.Sub(creationTimestamp)
 	minDuration := time.Duration(minMinutes) * time.Minute
 	maxDuration := time.Duration(maxMinutes) * time.Minute
 
 	require.GreaterOrEqual(t, transitionDuration, minDuration,
-		"condition %s transitioned too early: %v since creation (expected >= %v)", conditionType, transitionDuration, minDuration)
+		"condition %s transitioned too early: %v since ClusterObjectSet %s creation (expected >= %v)", conditionType, transitionDuration, revisionName, minDuration)
 	require.LessOrEqual(t, transitionDuration, maxDuration,
-		"condition %s transitioned too late: %v since creation (expected <= %v)", conditionType, transitionDuration, maxDuration)
+		"condition %s transitioned too late: %v since ClusterObjectSet %s creation (expected <= %v)", conditionType, transitionDuration, revisionName, maxDuration)
 
 	return nil
 }
