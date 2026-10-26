@@ -578,7 +578,7 @@ type ObservedPhase struct {
 	Name string `json:"name"`
 
 	// status is the current state of this phase in the rollout. Must be one of
-	// InvalidSpecification, Pending, Reconciling,
+	// InvalidSpecification, PreconditionsNotMet, Pending, Reconciling,
 	// Stabilizing, Ready, Unknown, Superseded, Archiving, or Archived.
 	// +required
 	Status PhaseStatus `json:"status"`
@@ -618,6 +618,19 @@ type ObservedPhase struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Format=date-time
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitzero"`
+
+	// objectDetails lists objects in this phase that are not yet
+	// complete. For Reconciling, Pending, and Stabilizing phases, this
+	// includes probe failures, collisions, creation/update errors, and
+	// any other condition preventing completion. For Archiving phases,
+	// this lists objects still awaiting deletion. Each entry identifies
+	// the object and carries failure messages. Empty when status is
+	// Ready, Superseded, Archived, or Unknown. The list may contain at
+	// most 50 entries, matching the maximum number of objects per phase.
+	// +kubebuilder:validation:MaxItems=50
+	// +listType=atomic
+	// +optional
+	ObjectDetails []ObjectStatus `json:"objectDetails,omitempty"`
 }
 
 // ObjectCounts reports the number of objects in a ClusterObjectSet or phase by state.
@@ -652,15 +665,69 @@ type ObjectCounts struct {
 	Ready int64 `json:"ready"`
 }
 
+// ObjectStatus identifies a managed object and its failure messages.
+type ObjectStatus struct {
+	// group is the API group of the object (empty string for core
+	// resources). At most 253 characters (DNS subdomain max).
+	// +kubebuilder:validation:MaxLength=253
+	// +optional
+	Group string `json:"group,omitempty"`
+
+	// version is the API version of the object. Must be between 1 and
+	// 63 characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +required
+	Version string `json:"version"`
+
+	// kind is the kind of the object. Must be between 1 and 63
+	// characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +required
+	Kind string `json:"kind"`
+
+	// namespace is the namespace of the object. Empty for cluster-scoped
+	// resources. At most 253 characters (DNS subdomain max).
+	// +kubebuilder:validation:MaxLength=253
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// name is the name of the object. Must be between 1 and 253
+	// characters (DNS subdomain max).
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +required
+	Name string `json:"name"`
+
+	// messages lists the failure reasons for this object. The maximum
+	// of 18 entries accounts for up to 16 assertion probe failures,
+	// one collision message, and one message to note truncation if necessary.
+	// Each message is at most 1024 characters; longer messages are truncated
+	// by the controller.
+	// +kubebuilder:validation:MaxItems=18
+	// +kubebuilder:validation:items:MaxLength=1024
+	// +listType=atomic
+	// +optional
+	Messages []string `json:"messages,omitempty"`
+}
+
 // PhaseStatus describes the current state of a phase in the rollout.
 //
-// +kubebuilder:validation:Enum=InvalidSpecification;Pending;Reconciling;Stabilizing;Ready;Unknown;Superseded;Archiving;Archived
+// +kubebuilder:validation:Enum=InvalidSpecification;PreconditionsNotMet;Pending;Reconciling;Stabilizing;Ready;Unknown;Superseded;Archiving;Archived
 type PhaseStatus string
 
 const (
 	// PhaseStatusInvalidSpecification indicates the phase failed preflight validation
-	// in a permanent way (e.g. cross-phase duplication).
+	// in a permanent way that requires a spec change to resolve (e.g. a schema
+	// violation, cross-phase object duplication, or an invalid phase name).
 	PhaseStatusInvalidSpecification PhaseStatus = "InvalidSpecification"
+
+	// PhaseStatusPreconditionsNotMet indicates the phase failed a recoverable preflight
+	// dry-run check — for example, RBAC permissions or a dependency CRD that has not
+	// yet propagated to the cluster. The controller retries automatically; no spec
+	// change is required.
+	PhaseStatusPreconditionsNotMet PhaseStatus = "PreconditionsNotMet"
 
 	// PhaseStatusPending indicates the phase is not being actively
 	// reconciled, but the controller has checked and some objects do not

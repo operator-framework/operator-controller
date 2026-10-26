@@ -1,10 +1,18 @@
 package status
 
 import (
+	"fmt"
+	"maps"
 	"slices"
+	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"pkg.package-operator.run/boxcutter/machinery"
+	"pkg.package-operator.run/boxcutter/machinery/types"
+	"pkg.package-operator.run/boxcutter/validation"
+	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
@@ -62,6 +70,9 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 			if !precedingPhasesComplete {
 				observedPhase.Status = ocv1.PhaseStatusPending
 				observedPhase.Message = "waiting for earlier phases to complete"
+			} else if isRecoverablePhaseValidation(pres.GetValidationError()) {
+				observedPhase.Status = ocv1.PhaseStatusPreconditionsNotMet
+				observedPhase.Message = truncateMessage(pres.GetValidationError().Error())
 			} else {
 				observedPhase.Status = ocv1.PhaseStatusInvalidSpecification
 				observedPhase.Message = truncateMessage(pres.GetValidationError().Error())
@@ -109,7 +120,7 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 
 		var (
 			// TODO: consider reframing as one or more objects have transitioned (rather than all - since there can be differences b/w the revisions)
-			isSuperseded  = (HasSupersededObject(pres) && pres.IsComplete()) || pres.HasProgressed()
+			isSuperseded  = (HasSupersededObject(pres) && pres.IsComplete()) || (len(pres.GetObjects()) > 0 && pres.HasProgressed())
 			isReady       = pres.IsComplete() && !isSuperseded
 			isSynced      = observedPhase.ObjectCounts.Synced == observedPhase.ObjectCounts.Total
 			isReconciling = !isSynced && !isPaused
@@ -123,7 +134,6 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 			observedPhase.Status = ocv1.PhaseStatusSuperseded
 			observedPhase.Message = "all objects have progressed to a new revision"
 		case isSynced:
-			// TODO: collect assertion failures and add to status
 			observedPhase.Status = ocv1.PhaseStatusStabilizing
 			observedPhase.Message = "all objects are synced; waiting for them to become ready"
 		case isReconciling:
@@ -135,6 +145,15 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 			// read-only while an earlier phase is still rolling out.
 			observedPhase.Status = ocv1.PhaseStatusPending
 			observedPhase.Message = "waiting for previous phases to be ready"
+		}
+
+		if !isReady && !isSuperseded {
+			for _, obj := range pres.GetObjects() {
+				if obj.IsComplete() || obj.Action() == machinery.ActionProgressed {
+					continue
+				}
+				observedPhase.ObjectDetails = append(observedPhase.ObjectDetails, objectStatus(obj))
+			}
 		}
 		updateObservedPhaseStatus(objSet, observedPhase, now)
 	}
@@ -170,6 +189,16 @@ func UpdateObservedPhasesForTeardown(objSet *ocv1.ClusterObjectSet, tres machine
 		} else {
 			observedPhase.Status = ocv1.PhaseStatusPending
 			observedPhase.Message = "waiting for later phases to complete teardown"
+		}
+		for _, ref := range pres.Waiting() {
+			observedPhase.ObjectDetails = append(observedPhase.ObjectDetails, ocv1.ObjectStatus{
+				Group:     ref.Group,
+				Version:   ref.Version,
+				Kind:      ref.Kind,
+				Namespace: ref.Namespace,
+				Name:      ref.Name,
+				Messages:  []string{"awaiting deletion"},
+			})
 		}
 		updateObservedPhaseStatus(objSet, observedPhase, now)
 	}
@@ -224,6 +253,141 @@ func HasSupersededObject(pres machinery.PhaseResult) bool {
 		}
 	}
 	return false
+}
+
+// objectStatus returns details describing why obj is not yet complete.
+func objectStatus(obj machinery.ObjectResult) ocv1.ObjectStatus {
+	ref := types.ToObjectRef(obj.Object())
+	objStatus := ocv1.ObjectStatus{
+		Group:     ref.Group,
+		Version:   ref.Version,
+		Kind:      ref.Kind,
+		Namespace: ref.Namespace,
+		Name:      ref.Name,
+	}
+
+	if obj.IsPaused() && obj.Action() != machinery.ActionIdle {
+		objStatus.Messages = pausedObjectMessages(obj)
+		return objStatus
+	}
+
+	var msgs []string
+
+	if obj.Action() == machinery.ActionCollision {
+		msgs = append(msgs, "object ownership collision")
+	}
+
+	probes := obj.ProbeResults()
+	for _, probeType := range slices.Sorted(maps.Keys(probes)) {
+		result := probes[probeType]
+		if result.Status == types.ProbeStatusTrue {
+			continue
+		}
+		for _, m := range result.Messages {
+			msgs = append(msgs, truncateMessage(fmt.Sprintf("%s: %s", probeType, m)))
+		}
+		if len(result.Messages) == 0 {
+			msgs = append(msgs, truncateMessage(fmt.Sprintf("%s: %s", probeType, result.Status)))
+		}
+	}
+
+	if len(msgs) == 0 {
+		msgs = append(msgs, "not yet complete")
+	} else if len(msgs) > 18 {
+		msgs = msgs[:17]
+		msgs = append(msgs, "additional objectDetails messages were removed for size constraints")
+	}
+
+	objStatus.Messages = msgs
+	return objStatus
+}
+
+// pausedObjectMessages returns messages describing why a paused object is not
+// idle, including field-level diff details when available.
+func pausedObjectMessages(obj machinery.ObjectResult) []string {
+	var summary string
+	switch obj.Action() {
+	case machinery.ActionCreated:
+		return []string{"object does not exist"}
+	case machinery.ActionRecovered:
+		summary = "object was modified by another actor"
+	case machinery.ActionCollision:
+		summary = "object ownership collision"
+	default:
+		summary = "object content has changed"
+	}
+
+	if details := compareDetails(obj); len(details) > 0 {
+		summary += "\n" + strings.Join(details, "\n")
+	}
+	return []string{truncateMessage(summary)}
+}
+
+// compareResulter is implemented by ObjectResult types that expose field-level
+// comparison results.
+type compareResulter interface {
+	CompareResult() machinery.CompareResult
+}
+
+// compareDetails extracts human-readable field diff lines (added, modified,
+// removed) from obj's CompareResult, if obj implements compareResulter.
+func compareDetails(obj machinery.ObjectResult) []string {
+	cr, ok := obj.(compareResulter)
+	if !ok {
+		return nil
+	}
+	comp := cr.CompareResult().Comparison
+	if comp == nil {
+		return nil
+	}
+	var details []string
+	if comp.Added != nil && !comp.Added.Empty() {
+		comp.Added.Leaves().Iterate(func(p fieldpath.Path) {
+			details = append(details, fmt.Sprintf(" - added: %s", p))
+		})
+	}
+	if comp.Modified != nil && !comp.Modified.Empty() {
+		comp.Modified.Leaves().Iterate(func(p fieldpath.Path) {
+			details = append(details, fmt.Sprintf(" - modified: %s", p))
+		})
+	}
+	if comp.Removed != nil && !comp.Removed.Empty() {
+		comp.Removed.Leaves().Iterate(func(p fieldpath.Path) {
+			details = append(details, fmt.Sprintf(" - removed: %s", p))
+		})
+	}
+	return details
+}
+
+// isRecoverablePhaseValidation reports whether a PhaseValidationError represents a
+// recoverable precondition failure — specifically, a dry-run rejection caused by RBAC
+// not yet propagated (Forbidden/Unauthorized) or a dependency CRD not yet registered
+// (NoMatch). The controller retries automatically; no spec change is required.
+// Returns false for permanent failures (invalid phase name, schema violations,
+// duplicate objects) or any mixture of recoverable and permanent errors.
+func isRecoverablePhaseValidation(verr *validation.PhaseValidationError) bool {
+	if verr == nil || verr.PhaseError != nil || len(verr.Objects) == 0 {
+		return false
+	}
+	for _, obj := range verr.Objects {
+		for _, e := range obj.Errors {
+			if !isRecoverableObjectError(e) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// isRecoverableObjectError reports whether an object-level error is a recoverable
+// dry-run rejection: Forbidden or Unauthorized (RBAC not yet propagated) or a
+// NoMatch error (dependency CRD not yet registered). errors.As traverses the unwrap
+// chain, so this works whether or not the error is further wrapped in a
+// validation.DryRunValidationError.
+func isRecoverableObjectError(err error) bool {
+	return apierrors.IsForbidden(err) ||
+		apierrors.IsUnauthorized(err) ||
+		apimeta.IsNoMatchError(err)
 }
 
 const maxMessageLength = 1024
