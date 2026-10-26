@@ -112,6 +112,27 @@ func ClusterObjectSetHasGroup(ctx context.Context, revisionName, group string) e
 	return nil
 }
 
+// ClusterObjectSetIsControllerOwnedByClusterObjectDeployment waits for the named ClusterObjectSet
+// to be controller-owned by the specified ClusterObjectDeployment. Polls with timeout.
+func ClusterObjectSetIsControllerOwnedByClusterObjectDeployment(ctx context.Context, cosName, codName string) error {
+	sc := scenarioCtx(ctx)
+	cosName = substituteScenarioVars(cosName, sc)
+	codName = substituteScenarioVars(codName, sc)
+	waitFor(ctx, func() bool {
+		cos, err := getResource("clusterobjectset", cosName, "")
+		if err != nil {
+			return false
+		}
+		cod, err := getResource("clusterobjectdeployment", codName, "")
+		if err != nil {
+			return false
+		}
+		owner := metav1.GetControllerOf(cos)
+		return owner != nil && owner.Kind == ocv1.ClusterObjectDeploymentKind && owner.Name == codName && owner.UID == cod.GetUID()
+	})
+	return nil
+}
+
 // ClusterObjectSetObjectsUseSSAManager checks actual managed fields on every
 // inline or externally stored phase object, including their revision owner.
 func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, manager string) error {

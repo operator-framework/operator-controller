@@ -141,6 +141,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterObjectSetHasLabelWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has group "([^"]+)"$`, ClusterObjectSetHasGroup)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is controller-owned by ClusterObjectDeployment "([^"]+)"$`, ClusterObjectSetIsControllerOwnedByClusterObjectDeployment)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" phase objects use SSA manager "([^"]+)"$`, ClusterObjectSetObjectsUseSSAManager)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are remembered$`, RememberClusterObjectSetSecrets)
 	sc.Step(`^(?i)the remembered revision secrets are removed$`, RememberedRevisionSecretsRemoved)
