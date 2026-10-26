@@ -26,12 +26,12 @@ type ObjectCountsApplyConfiguration struct {
 	// total is the number of objects in this phase.
 	Total *int64 `json:"total,omitempty"`
 	// present is the number of objects in this phase that exist on the
-	// cluster. During reconcile, this counts objects that the controller
-	// has found or created. During teardown, this decrements toward zero
-	// as objects are deleted.
+	// cluster and are owned by this object set, or another in the same group.
+	// During reconcile, this counts objects that the controller has found or
+	// created. During teardown, this decrements toward zero as objects are deleted.
 	Present *int64 `json:"present,omitempty"`
 	// synced is the number of objects in this phase whose cluster state
-	// matches the desired state.
+	// matches the desired state. Set to zero during teardown.
 	Synced *int64 `json:"synced,omitempty"`
 	// ready is the number of objects in this phase that are synced
 	// and pass their assertions.

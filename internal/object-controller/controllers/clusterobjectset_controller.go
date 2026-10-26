@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"time"
 
@@ -243,8 +244,10 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 
-	// Set object counts
-	status.FromReconcile(cos, rres)
+	reconcileTime := metav1.NewTime(c.Clock.Now())
+	// Set object counts and phase status
+	// TODO: refactor and move condition setting operations into status pkg
+	status.UpdateObservedPhasesForReconcile(cos, rres, reconcileTime)
 
 	// Report revision-level preflight validation failures and re-check on a flat timer:
 	// the dry-run can be rejected for reasons that clear without a spec change (e.g. RBAC
@@ -316,8 +319,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 	// not successfully rolled out: skip the completion branch so it does not archive
 	// previous revisions, report AllObjectsReady, or record a first completion
 	// (completedAt) that would identify it as the installed revision.
-	superseded := hasSupersededObject(rres)
-
+	superseded := slices.ContainsFunc(rres.GetPhases(), status.HasSupersededObject)
 	//nolint:nestif
 	if rres.IsComplete() && !superseded {
 		// Archive previous revisions.
@@ -344,7 +346,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		// It also serves as the signal that the revision has completed its rollout,
 		// which the ClusterExtension controller uses to determine the installed revision.
 		if cos.Status.CompletedAt.IsZero() {
-			cos.Status.CompletedAt = metav1.NewTime(c.Clock.Now())
+			cos.Status.CompletedAt = reconcileTime
 		}
 	} else {
 		var notReadyMsgs []string
@@ -423,8 +425,8 @@ func (c *ClusterObjectSetReconciler) archive(ctx context.Context, revisionEngine
 		markAsArchiving(cos)
 		return ctrl.Result{}, fmt.Errorf("error archiving revision: %v", err)
 	}
-	// Set object counts
-	status.FromTeardown(cos, tdres)
+	teardownTime := metav1.NewTime(c.Clock.Now())
+	status.UpdateObservedPhasesForTeardown(cos, tdres, teardownTime)
 	if tdres != nil && !tdres.IsComplete() {
 		markAsArchiving(cos)
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
@@ -633,7 +635,14 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("computing phase digest: %w", err)
 		}
-		observedPhases = append(observedPhases, ocv1.ObservedPhase{Name: specPhase.Name, Digest: digest})
+		// Make sure we set all the required fields
+		observedPhases = append(observedPhases, ocv1.ObservedPhase{
+			Name:               specPhase.Name,
+			Digest:             digest,
+			Status:             ocv1.PhaseStatusUnknown,
+			LastTransitionTime: metav1.NewTime(c.Clock.Now()),
+			Message:            "phase has not been evaluated",
+		})
 
 		// Managed objects are labeled app.kubernetes.io/managed-by by the boxcutter
 		// revision engine; the controller does not add owner labels of its own.
@@ -795,21 +804,6 @@ func markAsNotReady(cos *ocv1.ClusterObjectSet, reason, message string) bool {
 		Message:            message,
 		ObservedGeneration: cos.Generation,
 	})
-}
-
-// hasSupersededObject reports whether any object in the revision has been adopted
-// by a newer sibling revision (machinery.ActionProgressed). boxcutter only emits
-// ActionProgressed for a newer sibling (a foreign owner is a collision), so no
-// revision comparison is needed here.
-func hasSupersededObject(rres machinery.RevisionResult) bool {
-	for _, pres := range rres.GetPhases() {
-		for _, ores := range pres.GetObjects() {
-			if ores.Action() == machinery.ActionProgressed {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // markAsPending initializes Ready=Unknown/Pending. It is only used before the first
