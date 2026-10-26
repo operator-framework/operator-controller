@@ -35,12 +35,16 @@ Feature: Uninstall ClusterExtension
     Then the ClusterExtension's constituent resources are removed
 
   @BoxcutterRuntime
-  Scenario: Removing ClusterExtension cascades to grouped revisions and their content Secrets
+  Scenario: Removing ClusterExtension cascades to its ClusterObjectDeployment, revisions, and content Secrets
+    # Ownership chain is ClusterExtension -> ClusterObjectDeployment -> ClusterObjectSet, and the
+    # ClusterExtension owns the content Secrets directly, so deleting the ClusterExtension
+    # garbage-collects the whole tree including the Secrets.
     Given ClusterObjectSet "${NAME}-1" has group "${NAME}"
-    And ClusterExtension "${NAME}" owns 1 ClusterObjectSet
-    And ClusterObjectSet "${NAME}-1" referred secrets are owned by the object set
+    And ClusterObjectDeployment "${NAME}" is owned by ClusterExtension "${NAME}"
+    And ClusterObjectDeployment "${NAME}" owns 1 ClusterObjectSet
     And ClusterObjectSet "${NAME}-1" referred secrets are remembered
     When ClusterExtension is removed
     Then resource "clusterobjectset/${NAME}-1" is eventually not found
+    And resource "clusterobjectdeployment/${NAME}" is eventually not found
     And the ClusterExtension's constituent resources are removed
     And the remembered revision secrets are removed

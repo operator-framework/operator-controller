@@ -30,16 +30,21 @@ Feature: Report status of the managed ClusterExtension workload
     And ClusterExtension is rolled out
     And ClusterExtension is available
 
+  # The ClusterExtension Available condition is derived from the ClusterObjectDeployment's
+  # (summarized) Available condition, which reports Reason=Unavailable when no active revision
+  # is ready. The more granular revision-level reason (ObjectsNotReady) is still available on the
+  # ClusterObjectSet. TODO: surface the degraded revision's reason on the COD's Available
+  # condition so the ClusterExtension can report it too (tracked for a future PR).
   @BoxcutterRuntime
   Scenario: Report availability change when managed workload is not ready
     When deployment "test-operator-${SCENARIO_ID}" reports as not ready
-    Then ClusterExtension reports Available as False with Reason ObjectsNotReady
+    Then ClusterExtension reports Available as False with Reason Unavailable
     And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ObjectsNotReady
 
   @BoxcutterRuntime
   Scenario: Report availability change when managed workload restores its readiness
     Given deployment "test-operator-${SCENARIO_ID}" reports as not ready
-    And ClusterExtension reports Available as False with Reason ObjectsNotReady
+    And ClusterExtension reports Available as False with Reason Unavailable
     And ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ObjectsNotReady
     When deployment "test-operator-${SCENARIO_ID}" reports as ready
     Then ClusterExtension is available

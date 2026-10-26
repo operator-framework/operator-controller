@@ -19,7 +19,6 @@ import (
 
 func TestSecretPacker_Pack(t *testing.T) {
 	packer := SecretPacker{
-		RevisionName:    "my-ext-3",
 		OwnerName:       "my-ext",
 		SystemNamespace: "olmv1-system",
 	}
@@ -43,11 +42,10 @@ func TestSecretPacker_Pack(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, result.Secrets, 1)
-		assert.True(t, strings.HasPrefix(result.Secrets[0].Name, "my-ext-3-"), "Secret name should be content-addressable with revision prefix")
+		assert.True(t, strings.HasPrefix(result.Secrets[0].Name, "my-ext-"), "Secret name should be content-addressable with owner prefix")
 		assert.Equal(t, "olmv1-system", result.Secrets[0].Namespace)
 		assert.True(t, *result.Secrets[0].Immutable)
 		assert.Equal(t, labels.SecretTypeObjectData, result.Secrets[0].Type)
-		assert.Equal(t, "my-ext-3", result.Secrets[0].Labels[labels.RevisionNameKey])
 		assert.Equal(t, "my-ext", result.Secrets[0].Labels[labels.OwnerNameKey])
 
 		ref, ok := result.Refs[[2]int{0, 0}]
@@ -212,6 +210,46 @@ func TestSecretPacker_Pack(t *testing.T) {
 		ref := result.Refs[[2]int{0, 0}]
 		assert.Equal(t, expectedKey, ref.Key)
 	})
+}
+
+func TestSecretPacker_NameIsRevisionIndependent(t *testing.T) {
+	phases := []ocv1.ClusterObjectSetPhase{{
+		Name: "deploy",
+		Objects: []ocv1.ClusterObjectSetObject{
+			{Object: testConfigMap("test-cm", "default")},
+		},
+	}}
+
+	// Pack the same content twice with independent packers.
+	packer1 := SecretPacker{
+		OwnerName:       "ext",
+		SystemNamespace: "olmv1-system",
+	}
+	result1, err := packer1.Pack(phases)
+	require.NoError(t, err)
+	require.Len(t, result1.Secrets, 1)
+
+	packer2 := SecretPacker{
+		OwnerName:       "ext",
+		SystemNamespace: "olmv1-system",
+	}
+	result2, err := packer2.Pack(phases)
+	require.NoError(t, err)
+	require.Len(t, result2.Secrets, 1)
+
+	// Assert both Secret names are identical and begin with "ext-". Names are
+	// content-addressed, so identical content yields identical names.
+	assert.Equal(t, result1.Secrets[0].Name, result2.Secrets[0].Name,
+		"Secret names should be content-addressed, not revision-dependent")
+	assert.True(t, strings.HasPrefix(result1.Secrets[0].Name, "ext-"),
+		"Secret name should be prefixed with OwnerName")
+
+	// Assert labels have OwnerNameKey but no RevisionNameKey
+	secret := result1.Secrets[0]
+	assert.Equal(t, "ext", secret.Labels[labels.OwnerNameKey],
+		"Secret should have OwnerNameKey label")
+	assert.NotContains(t, secret.Labels, labels.RevisionNameKey,
+		"Secret should not have RevisionNameKey label")
 }
 
 func testConfigMap(name, namespace string) unstructured.Unstructured {

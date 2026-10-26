@@ -253,7 +253,7 @@ Feature: Update ClusterExtension
       """
     Then ClusterExtension "${NAME}-dup" reports Progressing as True with Reason Retrying and Message includes:
       """
-      because they are owned by another controller or already exist
+      owned by another controller or already present
       """
     And ClusterExtension "${NAME}" reports Installed as True
     # Force a second revision on the dup via env var change — collision must persist
@@ -281,10 +281,10 @@ Feature: Update ClusterExtension
                 "olm.operatorframework.io/metadata.name": ${CATALOG:test}
             version: 1.0.1
       """
-    Then ClusterExtension "${NAME}-dup" owns 2 ClusterObjectSets
+    Then ClusterObjectDeployment "${NAME}-dup" owns 2 ClusterObjectSets
     And ClusterExtension "${NAME}-dup" reports Progressing as True with Reason Retrying and Message includes:
       """
-      because they are owned by another controller or already exist
+      owned by another controller or already present
       """
     And ClusterExtension "${NAME}" reports Installed as True
 

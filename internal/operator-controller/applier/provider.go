@@ -200,9 +200,11 @@ func extensionConfigBytes(ext *ocv1.ClusterExtension) []byte {
 }
 
 func getBundleAnnotations(bundleFS fs.FS) (map[string]string, error) {
-	// The need to get the underlying bundle in order to extract its annotations
-	// will go away once we have a bundle interface that can surface the annotations independently of the
-	// underlying bundle format...
+	// TODO: this reaches into the registry+v1 CSV, which is too format-specific for a function
+	// that generically generates a ClusterObjectDeployment from a bundleFS. Annotation
+	// extraction should move behind a bundle-format interface — each format providing the subset
+	// or translation of annotations that makes sense for the COD (conceptually a
+	// getCODAnnotationsFromBundle) — rather than assuming registry+v1 here.
 	rv1, err := source.FromFS(bundleFS).GetBundle()
 	if err != nil {
 		return nil, err

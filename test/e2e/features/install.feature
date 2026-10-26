@@ -351,7 +351,9 @@ Feature: Install ClusterExtension
       | package | version | channel | replaces | contents |
       | test    | 1.0.2   | alpha   |          | BadImage |
     And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
-    And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
+    # The applier routes progressDeadlineMinutes through the ClusterObjectDeployment template; the
+    # deployment enforces the rollout deadline itself, so relax its CRD minimum to accept the value of 1.
+    And min value for ClusterObjectDeployment .spec.template.spec.progressDeadlineMinutes is set to 1
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -370,10 +372,12 @@ Feature: Install ClusterExtension
               matchLabels:
                 "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
-    Then ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ProgressDeadlineExceeded
+    # Post-#3055 the deployment enforces the deadline itself (its own Progressing condition); the
+    # ClusterObjectSet revisions it creates do not carry progressDeadlineMinutes.
+    Then ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason ProgressDeadlineExceeded
     And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded and Message:
       """
-      Revision has not rolled out for 1 minute(s). Last status: Objects are not yet ready.
+      latest revision exceeded its progress deadline
       """
     And ClusterExtension reports Progressing transition between 1 and 2 minutes since ClusterObjectSet "${NAME}-1" was created
 
@@ -384,7 +388,9 @@ Feature: Install ClusterExtension
       | package | version | channel | replaces | contents |
       | test    | 1.0.3   | alpha   |          | BadImage |
     And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
-    And min value for ClusterObjectSet .spec.progressDeadlineMinutes is set to 1
+    # The applier routes progressDeadlineMinutes through the ClusterObjectDeployment template; the
+    # deployment enforces the rollout deadline itself, so relax its CRD minimum to accept the value of 1.
+    And min value for ClusterObjectDeployment .spec.template.spec.progressDeadlineMinutes is set to 1
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -404,10 +410,12 @@ Feature: Install ClusterExtension
               matchLabels:
                 "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
-    Then ClusterObjectSet "${NAME}-1" reports Ready as False with Reason ProgressDeadlineExceeded
+    # Post-#3055 the deployment enforces the deadline itself (its own Progressing condition); the
+    # ClusterObjectSet revisions it creates do not carry progressDeadlineMinutes.
+    Then ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason ProgressDeadlineExceeded
     And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded and Message:
       """
-      Revision has not rolled out for 1 minute(s). Last status: Objects are not yet ready.
+      latest revision exceeded its progress deadline
       """
     And ClusterExtension reports Progressing transition between 1 and 2 minutes since ClusterObjectSet "${NAME}-1" was created
 
@@ -440,7 +448,7 @@ Feature: Install ClusterExtension
       """
 
   @BoxcutterRuntime
-  Scenario: ClusterObjectSet is labeled with owner information
+  Scenario: ClusterExtension installs via a ClusterObjectDeployment that owns the revision
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents                   |
       | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
@@ -463,10 +471,22 @@ Feature: Install ClusterExtension
       """
     Then ClusterExtension is rolled out
     And ClusterExtension is available
+    # The ClusterExtension records the installed bundle identity and rolls revision health up
+    # onto its own conditions: Progressing (Succeeded) and Available (ProbesSucceeded, mapped
+    # from the active ClusterObjectSet's Ready condition).
+    And bundle "${PACKAGE:test}.1.2.0" is installed in version "1.2.0"
+    And ClusterExtension reports Progressing as True with Reason Succeeded
+    And ClusterExtension reports Available as True with Reason ProbesSucceeded
+    # operator-controller installs through a ClusterObjectDeployment; the ownership chain is
+    # ClusterExtension -> ClusterObjectDeployment -> ClusterObjectSet revision.
+    And ClusterObjectDeployment "${NAME}" reports Available as True with Reason Available
+    And ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason NewClusterObjectSetProgressed
+    And ClusterObjectDeployment "${NAME}" is owned by ClusterExtension "${NAME}"
+    And ClusterObjectDeployment "${NAME}" owns 1 ClusterObjectSet
+    And ClusterObjectSet "${NAME}-1" reports Ready as True with Reason AllObjectsReady
     And ClusterObjectSet "${NAME}-1" has label "olm.operatorframework.io/owner-kind" with value "ClusterExtension"
     And ClusterObjectSet "${NAME}-1" has label "olm.operatorframework.io/owner-name" with value "${NAME}"
     And ClusterObjectSet "${NAME}-1" has group "${NAME}"
-    And ClusterExtension "${NAME}" owns 1 ClusterObjectSet
 
   @BoxcutterRuntime
   Scenario: ClusterObjectSet objects are externalized to immutable Secrets
@@ -496,10 +516,9 @@ Feature: Install ClusterExtension
     And ClusterObjectSet "${NAME}-1" referred secrets exist in "${OLM_NAMESPACE}" namespace
     And ClusterObjectSet "${NAME}-1" referred secrets are immutable
     And ClusterObjectSet "${NAME}-1" referred secrets contain labels
-      | key                                          | value     |
-      | olm.operatorframework.io/revision-name       | ${NAME}-1 |
-      | olm.operatorframework.io/owner-name          | ${NAME}   |
-    And ClusterObjectSet "${NAME}-1" referred secrets are owned by the object set
+      | key                                          | value   |
+      | olm.operatorframework.io/owner-name          | ${NAME} |
+    And ClusterObjectSet "${NAME}-1" referred secrets are owned by ClusterExtension "${NAME}"
     And ClusterObjectSet "${NAME}-1" referred secrets have type "olm.operatorframework.io/object-data"
 
   @DeploymentConfig

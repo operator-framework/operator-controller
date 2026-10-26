@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -126,10 +127,31 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 			return nil, err
 		}
 
-		setAvailableFromRevisionStates(ext, state.revisionStates)
-		setProgressingFromRevisionStates(ext, state.revisionStates)
-		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+		// Success-path status (Available, Progressing, Installed) is reflected from the
+		// ClusterObjectDeployment by the ReflectClusterObjectDeploymentStatus step.
+		return nil, nil
+	}
+}
 
+// ReflectClusterObjectDeploymentStatus reads the ClusterObjectDeployment the applier manages for the
+// ClusterExtension and maps its rolled-up Available, Progressing, and installed-bundle state onto the
+// ClusterExtension. The deployment is the single object the ClusterExtension observes for rollout
+// health, replacing per-ClusterObjectSet observation.
+func ReflectClusterObjectDeploymentStatus(reader client.Reader) ReconcileStepFunc {
+	return func(ctx context.Context, _ *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
+		cod := &ocv1.ClusterObjectDeployment{}
+		switch err := reader.Get(ctx, client.ObjectKey{Name: ext.Name}, cod); {
+		case apierrors.IsNotFound(err):
+			// The deployment was just applied and is not yet visible in the cache; its status is empty
+			// anyway. Mapping from an empty deployment reports "rolling out"; the watch re-triggers
+			// reconciliation once the deployment and its status become visible.
+			cod = &ocv1.ClusterObjectDeployment{}
+		case err != nil:
+			return nil, fmt.Errorf("getting ClusterObjectDeployment %q: %w", ext.Name, err)
+		}
+		setAvailableFromClusterObjectDeployment(ext, cod)
+		setProgressingFromClusterObjectDeployment(ext, cod)
+		setInstalledFromClusterObjectDeployment(ext, cod)
 		return nil, nil
 	}
 }
