@@ -33,6 +33,7 @@ const (
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressing = "NewClusterObjectSetProgressing"
 	ClusterObjectDeploymentReasonProgressDeadlineExceeded       = ReasonProgressDeadlineExceeded
 	ClusterObjectDeploymentReasonInvalidSpecification           = "InvalidSpecification"
+	ClusterObjectDeploymentReasonRevisionOwnershipConflict      = "RevisionOwnershipConflict"
 
 	// Available condition reasons.
 	ClusterObjectDeploymentReasonAvailable        = "Available"

@@ -739,14 +739,16 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 		latest         int64
 		lifecycleState ocv1.ClusterObjectSetLifecycleState
 		changed        bool
+		foreignOwned   bool
 		wantErr        bool
 		wantCreates    int
 	}{
 		{
-			name:           "allocates final revision after archived foreign-owned history",
+			name:           "allocates final revision after archived history",
 			latest:         ocv1.ClusterObjectSetMaxRevision - 1,
 			lifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 			changed:        false,
+			foreignOwned:   false,
 			wantErr:        false,
 			wantCreates:    1,
 		},
@@ -755,6 +757,7 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 			latest:         ocv1.ClusterObjectSetMaxRevision,
 			lifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 			changed:        true,
+			foreignOwned:   false,
 			wantErr:        true,
 			wantCreates:    0,
 		},
@@ -763,6 +766,7 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 			latest:         math.MaxInt64,
 			lifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
 			changed:        false,
+			foreignOwned:   false,
 			wantErr:        true,
 			wantCreates:    0,
 		},
@@ -771,26 +775,29 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 			latest:         ocv1.ClusterObjectSetMaxRevision,
 			lifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 			changed:        false,
+			foreignOwned:   false,
 			wantErr:        false,
 			wantCreates:    0,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cod := codFixture()
+			ownerRef := metav1.NewControllerRef(cod, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind))
+			if tc.foreignOwned {
+				ownerRef = metav1.NewControllerRef(&ocv1.ClusterObjectDeployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "other-deployment",
+						UID:  "other-uid",
+					},
+				}, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind))
+			}
 			latest := &ocv1.ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: fmt.Sprintf("%s-%d", cod.Name, tc.latest),
 					Labels: map[string]string{
 						labels.TemplateHashKey: hashutil.DeepHashObject(cod.Spec.Template),
 					},
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(&ocv1.ClusterObjectDeployment{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "other-deployment",
-								UID:  "other-uid",
-							},
-						}, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind)),
-					},
+					OwnerReferences: []metav1.OwnerReference{*ownerRef},
 				},
 				Spec: ocv1.ClusterObjectSetSpec{
 					Group:               cod.Name,
@@ -830,4 +837,137 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_ClusterObjectDeploymentReconciler_RevisionOwnership(t *testing.T) {
+	t.Run("adopts an orphan revision in the group", func(t *testing.T) {
+		orphan := revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateActive)
+		c := newCODClient(t, codFixture(), orphan)
+
+		_, err := reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		adopted, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+		require.True(t, ok)
+		owner := metav1.GetControllerOf(adopted)
+		require.NotNil(t, owner)
+		require.Equal(t, ocv1.ClusterObjectDeploymentKind, owner.Kind)
+		require.Equal(t, clusterObjectDeploymentName, owner.Name)
+	})
+
+	t.Run("no-op when already owned by this COD", func(t *testing.T) {
+		cod := codFixture()
+		owned := revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateActive)
+		owned.OwnerReferences = []metav1.OwnerReference{{
+			APIVersion:         ocv1.GroupVersion.String(),
+			Kind:               ocv1.ClusterObjectDeploymentKind,
+			Name:               cod.Name,
+			UID:                cod.UID,
+			Controller:         ptr.To(true),
+			BlockOwnerDeletion: ptr.To(true),
+		}}
+
+		updates := 0
+		base := newCODClient(t, cod, owned)
+		c := interceptor.NewClient(base, interceptor.Funcs{
+			Update: func(ctx context.Context, cl client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
+				if _, isCOS := obj.(*ocv1.ClusterObjectSet); isCOS {
+					updates++
+				}
+				return cl.Update(ctx, obj, opts...)
+			},
+		})
+
+		_, err := reconcileCOD(t, c)
+		require.NoError(t, err)
+		require.Equal(t, 0, updates, "expected no Update calls on already-owned ClusterObjectSet")
+	})
+
+	t.Run("reports RevisionOwnershipConflict when a group revision is owned by a different controller", func(t *testing.T) {
+		cod := codFixture()
+		foreignOwned := revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateActive)
+		foreignOwned.OwnerReferences = []metav1.OwnerReference{{
+			APIVersion:         "example.com/v1",
+			Kind:               "ForeignController",
+			Name:               "foreign",
+			UID:                "foreign-uid",
+			Controller:         ptr.To(true),
+			BlockOwnerDeletion: ptr.To(true),
+		}}
+		c := newCODClient(t, cod, foreignOwned)
+
+		_, err := reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		cond := progressing(t, c)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionFalse, cond.Status)
+		require.Equal(t, ocv1.ClusterObjectDeploymentReasonRevisionOwnershipConflict, cond.Reason)
+		require.Contains(t, cond.Message, clusterObjectDeploymentName+"-1")
+
+		// Rollout should be skipped: no new revision created
+		_, exists := getCOS(t, c, clusterObjectDeploymentName+"-2")
+		require.False(t, exists)
+	})
+
+	t.Run("adopts orphans even when another group revision is foreign-owned", func(t *testing.T) {
+		cod := codFixture()
+		orphan := revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateActive)
+		foreignOwned := revisionCOS(2, ocv1.ClusterObjectSetLifecycleStateActive)
+		foreignOwned.OwnerReferences = []metav1.OwnerReference{{
+			APIVersion:         "example.com/v1",
+			Kind:               "ForeignController",
+			Name:               "foreign",
+			UID:                "foreign-uid",
+			Controller:         ptr.To(true),
+			BlockOwnerDeletion: ptr.To(true),
+		}}
+		c := newCODClient(t, cod, orphan, foreignOwned)
+
+		_, err := reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		// Orphan should be adopted
+		adopted, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+		require.True(t, ok)
+		owner := metav1.GetControllerOf(adopted)
+		require.NotNil(t, owner)
+		require.Equal(t, cod.Name, owner.Name)
+
+		// Conflict should still be reported
+		cond := progressing(t, c)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionFalse, cond.Status)
+		require.Equal(t, ocv1.ClusterObjectDeploymentReasonRevisionOwnershipConflict, cond.Reason)
+	})
+
+	t.Run("adopts an archived orphan revision", func(t *testing.T) {
+		orphan := revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateArchived)
+		c := newCODClient(t, codFixture(), orphan)
+
+		_, err := reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		adopted, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
+		require.True(t, ok)
+		owner := metav1.GetControllerOf(adopted)
+		require.NotNil(t, owner)
+		require.Equal(t, ocv1.ClusterObjectDeploymentKind, owner.Kind)
+		require.Equal(t, clusterObjectDeploymentName, owner.Name)
+	})
+
+	t.Run("ignores a ClusterObjectSet in a different group", func(t *testing.T) {
+		orphan := revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateActive)
+		orphan.Spec.Group = "other-group"
+		orphan.Name = "other-group-1"
+		c := newCODClient(t, codFixture(), orphan)
+
+		_, err := reconcileCOD(t, c)
+		require.NoError(t, err)
+
+		other, ok := getCOS(t, c, "other-group-1")
+		require.True(t, ok)
+		owner := metav1.GetControllerOf(other)
+		require.Nil(t, owner, "ClusterObjectSet in a different group should remain orphaned")
+	})
 }

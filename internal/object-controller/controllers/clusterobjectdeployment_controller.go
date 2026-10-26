@@ -88,6 +88,15 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 		return err
 	}
 
+	if err := c.ensureRevisionOwnership(ctx, cod, revisions); err != nil {
+		var conflict *revisionOwnershipConflictError
+		if errors.As(err, &conflict) {
+			setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonRevisionOwnershipConflict, conflict.Error())
+			return nil // skip GC + rollout; status is persisted by Reconcile; COS watch re-triggers on resolution
+		}
+		return err
+	}
+
 	// Garbage collection is best-effort housekeeping and must not block rollout or
 	// status reconciliation: a persistently failing prune (e.g. a delete denied by
 	// an admission policy) would otherwise indefinitely stall deployment of an
@@ -97,6 +106,56 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 	gcErr := c.garbageCollectArchivedRevisions(ctx, cod, revisions)
 
 	return errors.Join(gcErr, c.reconcileRollout(ctx, cod, revisions))
+}
+
+// revisionOwnershipConflictError signals that a ClusterObjectSet in the deployment's
+// group is owned by a different controller, preventing adoption.
+type revisionOwnershipConflictError struct {
+	cos   string
+	owner string
+}
+
+func (e *revisionOwnershipConflictError) Error() string {
+	return fmt.Sprintf("ClusterObjectSet %q is owned by controller %q; cannot adopt", e.cos, e.owner)
+}
+
+// ensureRevisionOwnership adopts every orphan ClusterObjectSet in the revisions list
+// by setting the deployment as its controller owner. It skips revisions already owned
+// by this deployment (no-op to avoid write churn) and returns a
+// *revisionOwnershipConflictError if any revision is owned by a different controller.
+// Transient Update errors are returned immediately.
+func (c *ClusterObjectDeploymentReconciler) ensureRevisionOwnership(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
+	var conflict *revisionOwnershipConflictError
+	for i := range revisions {
+		rev := &revisions[i]
+		currentOwner := metav1.GetControllerOf(rev)
+		if currentOwner != nil && currentOwner.UID == cod.UID {
+			// Already owned by this deployment; no-op
+			continue
+		}
+
+		err := controllerutil.SetControllerReference(cod, rev, c.Scheme)
+		if err != nil {
+			var alreadyOwned *controllerutil.AlreadyOwnedError
+			if errors.As(err, &alreadyOwned) {
+				// Owned by a different controller; remember the conflict and continue
+				// adopting any remaining orphans.
+				ownerStr := fmt.Sprintf("%s/%s (UID: %s)", alreadyOwned.Owner.Kind, alreadyOwned.Owner.Name, alreadyOwned.Owner.UID)
+				conflict = &revisionOwnershipConflictError{cos: rev.Name, owner: ownerStr}
+				continue
+			}
+			return fmt.Errorf("setting controller reference for revision %q: %w", rev.Name, err)
+		}
+
+		// Orphan found; adopt it.
+		if err := c.Client.Update(ctx, rev); err != nil {
+			return fmt.Errorf("adopting revision %q: %w", rev.Name, err)
+		}
+	}
+	if conflict != nil {
+		return conflict
+	}
+	return nil
 }
 
 // reconcileRollout creates a new ClusterObjectSet revision when the template has
@@ -227,8 +286,6 @@ func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
 
 // createRevision builds and creates the next ClusterObjectSet revision owned by
 // the deployment. Any create error, including AlreadyExists, is returned.
-//
-// TODO: revisit AlreadyExists handling under the adoption use-case.
 func (c *ClusterObjectDeploymentReconciler) createRevision(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet, hash string) error {
 	revision, err := nextRevisionNumber(revisions)
 	if err != nil {
