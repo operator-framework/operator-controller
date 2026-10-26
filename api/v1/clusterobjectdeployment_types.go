@@ -109,12 +109,13 @@ type ClusterObjectDeploymentTemplateSpec struct {
 	// +listMapKey=name
 	Phases []ClusterObjectSetPhase `json:"phases"` //nolint:kubeapilinter // These are ordered groups of objects, not an enum describing lifecycle state.
 
-	// progressDeadlineMinutes is an optional field that defines the maximum period
-	// of time in minutes after which an installation should be considered failed and
-	// require manual intervention. This functionality is disabled when no value
-	// is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
-	//
-	// The value is passed through to each ClusterObjectSet revision created from this template.
+	// progressDeadlineMinutes is the maximum number of minutes a revision may take
+	// to roll out, measured from the ClusterObjectSet's creation timestamp. Time
+	// spent waiting for the ClusterObjectSet to be created is not counted. The
+	// deadline covers all phases together; completing a phase does not reset it.
+	// Once a revision has completed, the deadline no longer applies, even if it
+	// later becomes unhealthy. When omitted, no deadline is enforced. The minimum
+	// period is 10 minutes, and the maximum is 720 minutes (12 hours).
 	//
 	// +kubebuilder:validation:Minimum:=10
 	// +kubebuilder:validation:Maximum:=720
@@ -144,7 +145,7 @@ type ClusterObjectDeploymentStatus struct {
 	// rollout is incomplete, or False with reason NewClusterObjectSetProgressed after
 	// completion. Completion remains recorded even if the completed revision later
 	// becomes unhealthy. Progressing is False with reason ProgressDeadlineExceeded when
-	// the latest revision does not roll out within its spec.progressDeadlineMinutes.
+	// the latest revision does not roll out within spec.template.spec.progressDeadlineMinutes.
 	// Progressing is False with reason InvalidSpecification when spec.template.metadata
 	// contains labels or annotations that are not valid for the resulting
 	// ClusterObjectSet; no new revision is created until the metadata is corrected.

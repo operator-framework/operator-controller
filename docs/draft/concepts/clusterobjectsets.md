@@ -233,6 +233,37 @@ Indicates whether all objects in the revision have been successfully rolled out 
 
 On a revision's first reconciliation the `Ready` condition is initialized to `Unknown`/`Pending`, so it is always present. A transient internal error (e.g. an API read failure) leaves the `Ready` condition unchanged and is retried with backoff; it is not reported as a distinct reason (while the revision is still `Pending`, it stays `Unknown`/`Pending`).
 
+### Progress deadline
+
+`spec.progressDeadlineMinutes` sets one time budget for the entire
+ClusterObjectSet (COS) revision, measured from its creation timestamp until its
+first successful rollout, recorded in `status.completedAt`. Completing a phase
+does not reset the timer.
+
+For a ClusterObjectDeployment (COD), this is the time allowed for the deployment to
+progress to its desired new revision. Configure it through
+`spec.template.spec.progressDeadlineMinutes`. The COD enforces this budget without
+setting `spec.progressDeadlineMinutes` on the ClusterObjectSets it creates. Time
+spent waiting for the ClusterObjectSet to be created is not counted. Each new
+revision receives its own budget.
+
+If the desired revision is still incomplete when that budget expires, the COD
+reports `Progressing=False` with reason `ProgressDeadlineExceeded`. A five-phase
+revision with a ten-minute deadline has ten minutes total, even if four phases
+have completed. The COD schedules a deadline check even if the COS emits no
+further events.
+
+The COS's `Ready` condition continues to report readiness failures, such as
+`ObjectsNotReady`, `PreconditionsNotMet`, or `InvalidSpecification`. The COD checks
+elapsed time independently of the COS's readiness condition.
+
+Omitting the field disables the deadline. Reconciliation continues after a
+timeout, so a revision can still complete later. Once `status.completedAt` is
+recorded, the COD reports `Progressing=False` with reason
+`NewClusterObjectSetProgressed`. Later health regressions do not restart deadline
+timing. The COD can remain `Available=True` if an older active revision is still
+ready.
+
 ### Completion (`status.completedAt`)
 
 The first time a revision becomes ready, the controller stamps `status.completedAt` with the current time. This timestamp is set once and never changes, marking that this revision successfully rolled out at least once — it persists even if the revision later becomes not ready. The ClusterExtension controller uses it to determine the installed revision.
