@@ -2774,13 +2774,82 @@ spec:
                       - synced
                       - total
                       type: object
+                    objectDetails:
+                      description: |-
+                        objectDetails lists objects in this phase that are not yet
+                        complete. For Reconciling, Pending, and Stabilizing phases, this
+                        includes probe failures, collisions, creation/update errors, and
+                        any other condition preventing completion. For Archiving phases,
+                        this lists objects still awaiting deletion. Each entry identifies
+                        the object and carries failure messages. Empty when status is
+                        Ready, Superseded, Archived, or Unknown. The list may contain at
+                        most 50 entries, matching the maximum number of objects per phase.
+                      items:
+                        description: ObjectStatus identifies a managed object and
+                          its failure messages.
+                        properties:
+                          group:
+                            description: |-
+                              group is the API group of the object (empty string for core
+                              resources). At most 253 characters (DNS subdomain max).
+                            maxLength: 253
+                            type: string
+                          kind:
+                            description: |-
+                              kind is the kind of the object. Must be between 1 and 63
+                              characters.
+                            maxLength: 63
+                            minLength: 1
+                            type: string
+                          messages:
+                            description: |-
+                              messages lists the failure reasons for this object. The maximum
+                              of 18 entries accounts for up to 16 assertion probe failures,
+                              one collision message, and one message to note truncation if necessary.
+                              Each message is at most 1024 characters; longer messages are truncated
+                              by the controller.
+                            items:
+                              maxLength: 1024
+                              type: string
+                            maxItems: 18
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          name:
+                            description: |-
+                              name is the name of the object. Must be between 1 and 253
+                              characters (DNS subdomain max).
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                          namespace:
+                            description: |-
+                              namespace is the namespace of the object. Empty for cluster-scoped
+                              resources. At most 253 characters (DNS subdomain max).
+                            maxLength: 253
+                            type: string
+                          version:
+                            description: |-
+                              version is the API version of the object. Must be between 1 and
+                              63 characters.
+                            maxLength: 63
+                            minLength: 1
+                            type: string
+                        required:
+                        - kind
+                        - name
+                        - version
+                        type: object
+                      maxItems: 50
+                      type: array
+                      x-kubernetes-list-type: atomic
                     status:
                       description: |-
                         status is the current state of this phase in the rollout. Must be one of
-                        InvalidSpecification, Pending, Reconciling,
+                        InvalidSpecification, PreconditionsNotMet, Pending, Reconciling,
                         Stabilizing, Ready, Unknown, Superseded, Archiving, or Archived.
                       enum:
                       - InvalidSpecification
+                      - PreconditionsNotMet
                       - Pending
                       - Reconciling
                       - Stabilizing

@@ -31,7 +31,7 @@ type ObservedPhaseApplyConfiguration struct {
 	// name is the phase name matching a phase in spec.phases.
 	Name *string `json:"name,omitempty"`
 	// status is the current state of this phase in the rollout. Must be one of
-	// InvalidSpecification, Pending, Reconciling,
+	// InvalidSpecification, PreconditionsNotMet, Pending, Reconciling,
 	// Stabilizing, Ready, Unknown, Superseded, Archiving, or Archived.
 	Status *apiv1.PhaseStatus `json:"status,omitempty"`
 	// completedAt is the timestamp when this phase first became Ready.
@@ -50,6 +50,15 @@ type ObservedPhaseApplyConfiguration struct {
 	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
 	// lastTransitionTime is the last time the phase transitioned from one status to another.
 	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
+	// objectDetails lists objects in this phase that are not yet
+	// complete. For Reconciling, Pending, and Stabilizing phases, this
+	// includes probe failures, collisions, creation/update errors, and
+	// any other condition preventing completion. For Archiving phases,
+	// this lists objects still awaiting deletion. Each entry identifies
+	// the object and carries failure messages. Empty when status is
+	// Ready, Superseded, Archived, or Unknown. The list may contain at
+	// most 50 entries, matching the maximum number of objects per phase.
+	ObjectDetails []ObjectStatusApplyConfiguration `json:"objectDetails,omitempty"`
 }
 
 // ObservedPhaseApplyConfiguration constructs a declarative configuration of the ObservedPhase type for use with
@@ -111,5 +120,18 @@ func (b *ObservedPhaseApplyConfiguration) WithObjectCounts(value *ObjectCountsAp
 // If called multiple times, the LastTransitionTime field is set to the value of the last call.
 func (b *ObservedPhaseApplyConfiguration) WithLastTransitionTime(value metav1.Time) *ObservedPhaseApplyConfiguration {
 	b.LastTransitionTime = &value
+	return b
+}
+
+// WithObjectDetails adds the given value to the ObjectDetails field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ObjectDetails field.
+func (b *ObservedPhaseApplyConfiguration) WithObjectDetails(values ...*ObjectStatusApplyConfiguration) *ObservedPhaseApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithObjectDetails")
+		}
+		b.ObjectDetails = append(b.ObjectDetails, *values[i])
+	}
 	return b
 }
