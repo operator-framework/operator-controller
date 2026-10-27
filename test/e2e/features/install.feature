@@ -64,7 +64,7 @@ Feature: Install ClusterExtension
     And resource "deployment/test-operator-${SCENARIO_ID}" is installed
 
 
-  Scenario: Report that bundle cannot be installed when it exists in multiple catalogs with same priority
+  Scenario: Report package ambiguity when multiple catalogs have the same priority
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents                   |
       | test    | 1.2.0   | beta    |          | CRD, Deployment, ConfigMap |
@@ -86,7 +86,7 @@ Feature: Install ClusterExtension
       """
     Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
-      found bundles for package "${PACKAGE:test}" in multiple catalogs with the same priority
+      package "${PACKAGE:test}" found in multiple catalogs with the same priority
       """
 
   @SingleOwnNamespaceInstallSupport

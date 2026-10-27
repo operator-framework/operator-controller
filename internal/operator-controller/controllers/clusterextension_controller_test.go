@@ -177,7 +177,7 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 // TestClusterExtensionResolutionFailsWithDeprecationData verifies that deprecation warnings are shown even when resolution fails.
 //
 // Scenario:
-//   - Resolution fails (package not found or version not available)
+//   - Bundle resolution fails after a catalog package was selected
 //   - Resolver returns deprecation data along with the error
 //   - Catalog has marked the package as deprecated
 //   - PackageDeprecated and Deprecated conditions show True with the deprecation message
@@ -195,7 +195,7 @@ func TestClusterExtensionResolutionFailsWithDeprecationData(t *testing.T) {
 					Reference: declcfg.PackageScopedReference{Schema: declcfg.SchemaPackage},
 					Message:   deprecationMessage,
 				}},
-			}, fmt.Errorf("no package %q found", pkgName)
+			}, fmt.Errorf("no bundles found for package %q", pkgName)
 		})
 	})
 
@@ -214,7 +214,7 @@ func TestClusterExtensionResolutionFailsWithDeprecationData(t *testing.T) {
 
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
-	require.EqualError(t, err, fmt.Sprintf("no package %q found", pkgName))
+	require.EqualError(t, err, fmt.Sprintf("no bundles found for package %q", pkgName))
 
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 

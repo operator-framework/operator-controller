@@ -436,16 +436,14 @@ func run() error {
 	})
 
 	resolver := &resolve.CatalogResolver{
-		WalkCatalogsFunc: resolve.CatalogWalker(
-			func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
-				var catalogs ocv1.ClusterCatalogList
-				if err := cl.List(ctx, &catalogs, option...); err != nil {
-					return nil, err
-				}
-				return catalogs.Items, nil
-			},
-			catalogClient.GetPackage,
-		),
+		ListCatalogsFunc: func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
+			var catalogs ocv1.ClusterCatalogList
+			if err := cl.List(ctx, &catalogs, option...); err != nil {
+				return nil, err
+			}
+			return catalogs.Items, nil
+		},
+		GetPackageFunc: catalogClient.GetPackage,
 		Validations: []resolve.ValidationFunc{
 			resolve.NoDependencyValidation,
 		},
