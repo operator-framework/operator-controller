@@ -142,9 +142,38 @@ func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context
 		return ctrl.Result{}, nil
 	}
 
+	// Reflect why the head revision is not yet Ready. Hard stalls will not resolve
+	// without user action, so they report Progressing=False and short-circuit the
+	// deadline (a more actionable reason than ProgressDeadlineExceeded). The COD
+	// surfaces its own generic, revision-naming message and does not echo the
+	// revision's Ready message; the user inspects the named ClusterObjectSet for the
+	// specific cause.
+	readyReason := headRevisionReadyReason(latest)
+	switch readyReason {
+	case ocv1.ClusterObjectSetReasonInvalidSpecification:
+		setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonRevisionInvalidSpecification,
+			fmt.Sprintf("latest revision %q has an invalid specification; inspect the ClusterObjectSet for details", latest.Name))
+		return ctrl.Result{}, nil
+	case ocv1.ClusterObjectSetReasonObjectCollision:
+		setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonRevisionObjectCollision,
+			fmt.Sprintf("latest revision %q cannot take ownership of one or more objects owned by another controller or already present; inspect the ClusterObjectSet for details", latest.Name))
+		return ctrl.Result{}, nil
+	}
+
 	remaining, hasDeadline := durationUntilDeploymentDeadline(c.Clock, cod, latest)
 	if hasDeadline && remaining <= 0 {
 		setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded, "latest revision exceeded its progress deadline")
+		return ctrl.Result{}, nil
+	}
+
+	// PreconditionsNotMet is a still-retrying state: the controller keeps retrying,
+	// so Progressing stays True and the deadline above governs it.
+	if readyReason == ocv1.ClusterObjectSetReasonPreconditionsNotMet {
+		setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet,
+			fmt.Sprintf("latest revision %q is waiting for preconditions to be met; inspect the ClusterObjectSet for details", latest.Name))
+		if hasDeadline {
+			return ctrl.Result{RequeueAfter: remaining}, nil
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -153,6 +182,16 @@ func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context
 		return ctrl.Result{RequeueAfter: remaining}, nil
 	}
 	return ctrl.Result{}, nil
+}
+
+// headRevisionReadyReason returns the Ready condition reason of the head active
+// revision, or "" when the revision has no Ready condition yet.
+func headRevisionReadyReason(cos *ocv1.ClusterObjectSet) string {
+	cond := apimeta.FindStatusCondition(cos.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
+	if cond == nil {
+		return ""
+	}
+	return cond.Reason
 }
 
 // listRevisions returns all ClusterObjectSets in the deployment's group, sorted
