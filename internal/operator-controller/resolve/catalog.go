@@ -47,7 +47,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 	// unless overridden, default to selecting all bundles
 	var selector = labels.Everything()
 	var err error
-	if ext.Spec.Source.Catalog != nil {
+	if ext.Spec.Source.Catalog.PackageName != "" {
 		selector, err = metav1.LabelSelectorAsSelector(ext.Spec.Source.Catalog.Selector)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
