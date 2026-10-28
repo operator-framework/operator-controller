@@ -1535,6 +1535,7 @@ spec:
                                     == 1
                               maxItems: 50
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - name
                           - objects
@@ -2191,6 +2192,7 @@ spec:
                           rule: (has(self.object)?1:0)+(has(self.ref)?1:0) == 1
                       maxItems: 50
                       type: array
+                      x-kubernetes-list-type: atomic
                   required:
                   - name
                   - objects
@@ -2499,8 +2501,10 @@ spec:
             - revision
             type: object
           status:
-            description: status is optional and defines the observed state of the
-              ClusterObjectSet.
+            description: |-
+              status is optional and defines the observed state of the ClusterObjectSet.
+              Cannot be removed once set; this is to prevent immutable fields such as completedAt
+              from being cleared by an update which omits the status.
             properties:
               completedAt:
                 description: |-
@@ -2844,6 +2848,8 @@ spec:
         x-kubernetes-validations:
         - message: metadata.name must be <spec.group>-<spec.revision>
           rule: self.metadata.name == '%s-%d'.format([self.spec.group, self.spec.revision])
+        - message: status cannot be removed once set
+          rule: '!has(oldSelf.status) || has(self.status)'
     selectableFields:
     - jsonPath: .spec.group
     served: true

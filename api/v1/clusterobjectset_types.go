@@ -87,7 +87,7 @@ type ClusterObjectSetSpec struct {
 	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:Maximum:=9999999999
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
-	Revision int64 `json:"revision"`
+	Revision int64 `json:"revision,omitempty"`
 
 	// phases is an optional, immutable list of phases that group objects to be applied together.
 	//
@@ -112,7 +112,7 @@ type ClusterObjectSetSpec struct {
 	// +listType=map
 	// +listMapKey=name
 	// +optional
-	Phases []ClusterObjectSetPhase `json:"phases,omitempty"`
+	Phases []ClusterObjectSetPhase `json:"phases,omitempty"` //nolint:kubeapilinter
 
 	// progressDeadlineMinutes is an optional field that defines the maximum period
 	// of time in minutes after which an installation should be considered failed and
@@ -157,7 +157,7 @@ type ClusterObjectSetSpec struct {
 	// +required
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="collisionProtection is immutable"
-	CollisionProtection CollisionProtection `json:"collisionProtection"`
+	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
 // ProgressionProbe provides a custom probe definition, consisting of an object selection method and assertions.
@@ -388,12 +388,13 @@ type ClusterObjectSetPhase struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start and end with an alphanumeric character."
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// objects is a required list of all Kubernetes objects that belong to this phase.
 	//
 	// All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50.
 	// +required
+	// +listType=atomic
 	// +kubebuilder:validation:MaxItems=50
 	Objects []ClusterObjectSetObject `json:"objects"`
 
@@ -469,7 +470,7 @@ type ObjectSourceRef struct {
 	// +required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// namespace is the namespace of the referenced Secret.
 	// When empty, defaults to the OLM system namespace during ref resolution.
@@ -485,7 +486,7 @@ type ObjectSourceRef struct {
 	// +required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
-	Key string `json:"key"`
+	Key string `json:"key,omitempty"`
 }
 
 // CollisionProtection specifies if and how ownership collisions are prevented.
@@ -536,7 +537,9 @@ type ClusterObjectSetStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	// +optional
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// +patchStrategy=merge
+	// +patchMergeKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"` //nolint:kubeapilinter // This CRD uses structural list-map validation, not protobuf serialization.
 
 	// objectCounts reports aggregate object counts across all phases.
 	// Values are sums of the per-phase counts in observedPhases.
@@ -555,7 +558,7 @@ type ClusterObjectSetStatus struct {
 	// +listType=map
 	// +listMapKey=name
 	// +optional
-	ObservedPhases []ObservedPhase `json:"observedPhases,omitempty"`
+	ObservedPhases []ObservedPhase `json:"observedPhases,omitempty"` //nolint:kubeapilinter
 
 	// completedAt is the timestamp at which the revision was first observed to be
 	// ready, meaning it had successfully rolled out and all of its objects passed
@@ -575,13 +578,13 @@ type ObservedPhase struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start and end with an alphanumeric character."
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// status is the current state of this phase in the rollout. Must be one of
 	// InvalidSpecification, PreconditionsNotMet, Pending, Reconciling,
 	// Stabilizing, Ready, Unknown, Superseded, Archiving, or Archived.
 	// +required
-	Status PhaseStatus `json:"status"`
+	Status PhaseStatus `json:"status,omitempty"`
 
 	// completedAt is the timestamp when this phase first became Ready.
 	// Set once and never modified. Nil means the phase has never been
@@ -597,7 +600,7 @@ type ObservedPhase struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=1024
 	// +optional
-	Message string `json:"message,omitzero"`
+	Message string `json:"message,omitempty"`
 
 	// digest is the digest of the phase's resolved object content
 	// at first successful resolution, in the format "<algorithm>:<hex>".
@@ -607,7 +610,7 @@ type ObservedPhase struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=256
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]+:[a-f0-9]+$')`,message="digest must be in the format '<algorithm>:<hex>'"
-	Digest string `json:"digest"`
+	Digest string `json:"digest,omitempty"`
 
 	// objectCounts reports the number of objects in this phase by state.
 	// +optional
@@ -678,14 +681,14 @@ type ObjectStatus struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
 	// +required
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
 
 	// kind is the kind of the object. Must be between 1 and 63
 	// characters.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
 	// +required
-	Kind string `json:"kind"`
+	Kind string `json:"kind,omitempty"`
 
 	// namespace is the namespace of the object. Empty for cluster-scoped
 	// resources. At most 253 characters (DNS subdomain max).
@@ -698,7 +701,7 @@ type ObjectStatus struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
 	// +required
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// messages lists the failure reasons for this object. The maximum
 	// of 18 entries accounts for up to 16 assertion probe failures,
@@ -794,6 +797,7 @@ const (
 // Set metadata.name explicitly to <spec.group>-<spec.revision>, using decimal
 // notation without leading zeros. This ensures revision uniqueness within a group.
 // Name generation through metadata.generateName is not supported.
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.status) || has(self.status)",message="status cannot be removed once set"
 type ClusterObjectSet struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -807,8 +811,10 @@ type ClusterObjectSet struct {
 	Spec ClusterObjectSetSpec `json:"spec,omitzero"`
 
 	// status is optional and defines the observed state of the ClusterObjectSet.
+	// Cannot be removed once set; this is to prevent immutable fields such as completedAt
+	// from being cleared by an update which omits the status.
 	// +optional
-	Status ClusterObjectSetStatus `json:"status,omitempty"`
+	Status ClusterObjectSetStatus `json:"status,omitzero"`
 }
 
 // +kubebuilder:object:root=true

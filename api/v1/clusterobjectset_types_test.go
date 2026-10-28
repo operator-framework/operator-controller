@@ -297,7 +297,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				},
 			},
 			valid:         false,
-			expectedError: "spec.phases[0].name: Invalid value",
+			expectedError: "spec.phases[0].name: Required value",
 		},
 		"phases entry names cannot start with symbols": {
 			spec: ClusterObjectSetSpec{
@@ -400,7 +400,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				Revision:       1,
 			},
 			valid:         false,
-			expectedError: "spec.collisionProtection: Unsupported value",
+			expectedError: "spec.collisionProtection: Required value",
 		},
 		"spec collisionProtection rejects invalid values": {
 			spec: ClusterObjectSetSpec{
@@ -472,12 +472,12 @@ func TestClusterObjectSetValidity(t *testing.T) {
 		"object ref requires a name": {
 			spec:          refSpec("validity-case-21", ObjectSourceRef{Key: "my-key"}),
 			valid:         false,
-			expectedError: "ref.name: Invalid value",
+			expectedError: "ref.name: Required value",
 		},
 		"object ref requires a key": {
 			spec:          refSpec("validity-case-22", ObjectSourceRef{Name: "my-secret"}),
 			valid:         false,
-			expectedError: "ref.key: Invalid value",
+			expectedError: "ref.key: Required value",
 		},
 		"object ref name cannot exceed 253 characters": {
 			spec:          refSpec("validity-case-23", ObjectSourceRef{Name: strings.Repeat("a", 254), Key: "my-key"}),
