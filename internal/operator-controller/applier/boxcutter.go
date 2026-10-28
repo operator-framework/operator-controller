@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
@@ -465,6 +466,15 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		}
 	}
 
+	// Refuse to adopt a ClusterObjectDeployment that is already controlled by a
+	// different owner. We adopt one that has no controller (stamping our controller
+	// ownerReference via the apply below) or one we already control, but taking over a
+	// deployment controlled by someone else would fight that owner. A plain terminal
+	// error surfaces this as Progressing=False with the Blocked reason.
+	if err := bc.checkAdoptable(ctx, ext); err != nil {
+		return false, "", err
+	}
+
 	// Generate the desired ClusterObjectDeployment and the Secrets its template refs.
 	cod, secrets, err := bc.RevisionGenerator.GenerateClusterObjectDeployment(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
@@ -520,6 +530,35 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	}
 
 	return true, "", nil
+}
+
+// checkAdoptable verifies that the applier may own the ClusterObjectDeployment named
+// after the ClusterExtension. It is adoptable when it does not yet exist, has no
+// controller ownerReference, is already controlled by this ClusterExtension, or is
+// controlled by a reference that matches this ClusterExtension by group, kind, and name
+// but with a different UID — the latter indicates the ClusterExtension was deleted and
+// recreated (for example a backup/restore), which comes back with a fresh UID, so the
+// deployment is logically still ours. When it is controlled by a genuinely different
+// owner, it returns a terminal error (no specific reason, so the ClusterExtension reports
+// Progressing=False with the Blocked reason) rather than fighting that owner for control.
+func (bc *Boxcutter) checkAdoptable(ctx context.Context, ext *ocv1.ClusterExtension) error {
+	existing := &ocv1.ClusterObjectDeployment{}
+	switch err := bc.Client.Get(ctx, client.ObjectKey{Name: ext.Name}, existing); {
+	case apierrors.IsNotFound(err):
+		return nil
+	case err != nil:
+		return fmt.Errorf("getting ClusterObjectDeployment %q: %w", ext.Name, err)
+	}
+
+	controller := metav1.GetControllerOf(existing)
+	if controller == nil || controller.UID == ext.UID {
+		return nil
+	}
+
+	return reconcile.TerminalError(fmt.Errorf(
+		"ClusterObjectDeployment %q is already controlled by %s %q; refusing to adopt it",
+		ext.Name, controller.Kind, controller.Name,
+	))
 }
 
 // runPreflights runs the configured preflight checks for a desired apply. It determines whether
