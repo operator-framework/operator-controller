@@ -15,7 +15,7 @@ import (
 	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"

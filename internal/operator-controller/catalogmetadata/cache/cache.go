@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 )

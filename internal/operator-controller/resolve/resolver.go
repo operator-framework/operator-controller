@@ -3,7 +3,7 @@ package resolve
 import (
 	"context"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
