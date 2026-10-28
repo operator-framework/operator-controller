@@ -429,6 +429,13 @@ func collectDeprecationMessages(entries []declcfg.DeprecationEntry) []string {
 // for each ClusterExtension. The ClusterExtension observes the deployment's rolled-up rollout status,
 // and the deployment is controller-owned by the ClusterExtension, so an owner watch re-reconciles the
 // ClusterExtension whenever its deployment's status changes.
+//
+// TODO: the owner watch only enqueues the ClusterExtension that controls a deployment. When the applier
+// refuses to adopt a deployment controlled by a different owner (see Boxcutter.checkAdoptable), the
+// blocked ClusterExtension does not own that deployment, so deleting the conflicting deployment does not
+// enqueue it; it recovers only on its next spec/catalog change or the periodic resync. Add a name-keyed
+// watch that enqueues the same-named ClusterExtension on any ClusterObjectDeployment change so a blocked
+// extension recovers promptly once the conflict clears.
 func (r *ClusterExtensionReconciler) SetupWithManagerForBoxcutter(mgr ctrl.Manager) (crcontroller.Controller, error) {
 	return r.newControllerBuilder(mgr).
 		Owns(&ocv1.ClusterObjectDeployment{}).
