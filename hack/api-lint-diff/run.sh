@@ -90,6 +90,7 @@ linters:
             optionalfields:
               pointers:
                 preference: WhenRequired
+                policy: Warn
 run:
   timeout: 5m
 
