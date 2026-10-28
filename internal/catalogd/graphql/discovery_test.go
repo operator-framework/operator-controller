@@ -3,7 +3,7 @@ package graphql
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 )
 
 func TestFieldNameRemapping_EdgeCases(t *testing.T) {

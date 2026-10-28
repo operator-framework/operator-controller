@@ -17,7 +17,7 @@ import (
 	"golang.org/x/sync/singleflight"
 	"k8s.io/klog/v2"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 
 	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
 	"github.com/operator-framework/operator-controller/internal/catalogd/server"

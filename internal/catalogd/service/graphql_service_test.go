@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 
 	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
 )

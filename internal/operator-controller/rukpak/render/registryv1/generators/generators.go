@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	registrybundle "github.com/operator-framework/operator-registry/v2/pkg/lib/bundle"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
