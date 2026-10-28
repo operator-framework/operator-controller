@@ -221,9 +221,6 @@ func (r *SimpleRevisionGenerator) buildClusterObjectSet(
 		WithLifecycleState(ocv1.ClusterObjectSetLifecycleStateActive).
 		WithPhases(phases...).
 		WithProgressionProbes(defaultProgressionProbes...)
-	if p := ext.Spec.ProgressDeadlineMinutes; p > 0 {
-		spec.WithProgressDeadlineMinutes(p)
-	}
 
 	return ocv1ac.ClusterObjectSet("").
 		WithAnnotations(annotations).
