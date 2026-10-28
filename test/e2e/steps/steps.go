@@ -34,6 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/wait"
 	k8sresource "k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -129,6 +130,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectDeploymentReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterObjectDeploymentReportsConditionWithMessageFragment)
+	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" consistently reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) for "([^"]+)"$`, ClusterObjectDeploymentConsistentlyReportsCondition)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since ClusterObjectSet "([^"]+)" was created$`, ClusterExtensionReportsConditionTransitionTime)
 	sc.Step(`^(?i)ClusterObjectSet is applied(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterObjectSet with Namespace owner "([^"]*)" is applied$`, ClusterObjectSetWithNamespaceOwnerApplied)
@@ -993,6 +995,91 @@ func ClusterObjectDeploymentReportsConditionWithoutMsg(ctx context.Context, name
 // condition matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
 func ClusterObjectDeploymentReportsConditionWithMessageFragment(ctx context.Context, name, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
 	return waitForCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
+}
+
+// ClusterObjectDeploymentConsistentlyReportsCondition fails if, over the given
+// duration, the named ClusterObjectDeployment's condition ever deviates from the
+// expected type/status/reason. Use it to prove a reason persists (e.g. that a hard
+// stall keeps its reason past the progress deadline rather than flipping to
+// ProgressDeadlineExceeded).
+func ClusterObjectDeploymentConsistentlyReportsCondition(ctx context.Context, name, conditionType, conditionStatus, conditionReason, durationStr string) error {
+	d, err := time.ParseDuration(durationStr)
+	if err != nil {
+		return fmt.Errorf("invalid duration %q: %w", durationStr, err)
+	}
+	return consistentlyCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, conditionStatus, conditionReason, d)
+}
+
+// consistently invokes check every tick until duration elapses. Each call is one
+// observation of the live cluster state: check returns a non-nil error to report a
+// transient failure whose true state is unknown (e.g. a failed API read), which is
+// tolerated only within maxTransientGap; it uses require/assert for hard failures that
+// must fail the test immediately (e.g. an observed value that deviates from what is
+// expected). A nil return is a successful observation. consistently fails if no
+// observation ever succeeds within the window, so it cannot pass vacuously when the
+// resource is never successfully read.
+func consistently(ctx context.Context, duration time.Duration, check func(context.Context) error) error {
+	t := godog.T(ctx)
+	const maxTransientGap = 10 * time.Second
+	lastObserved := time.Now()
+	observed := false
+	// Poll for the whole window rather than until a condition becomes true: the condition
+	// always returns false, so PollUntilContextTimeout runs check every tick (starting
+	// immediately) until it times out, which is the success case. A transient check error is
+	// tolerated only within maxTransientGap; a hard failure inside check fails the test
+	// immediately via require.
+	err := wait.PollUntilContextTimeout(ctx, tick, duration, true, func(ctx context.Context) (bool, error) {
+		if cerr := check(ctx); cerr != nil {
+			require.LessOrEqualf(t, time.Since(lastObserved), maxTransientGap,
+				"consistency check could not observe the expected state for over %s during the window: %v", maxTransientGap, cerr)
+		} else {
+			observed = true
+			lastObserved = time.Now()
+		}
+		return false, nil
+	})
+	// A full-window run ends with a timeout (or context cancellation), which is expected;
+	// anything else is a real error.
+	if err != nil && !wait.Interrupted(err) {
+		return err
+	}
+	require.Truef(t, observed,
+		"consistency check never observed the expected state during the window")
+	return nil
+}
+
+// conditionCheck returns a consistently check that verifies a single condition's status
+// and reason on the named resource. A failed API read is returned as a transient error
+// (the condition's real state is unknown while the read is failing). A successful read
+// that does not contain the condition, or shows a different status or reason, fails
+// immediately: a condition that disappears or changes is not being reported consistently.
+func conditionCheck(resourceType, resourceName, conditionType, conditionStatus, conditionReason string) func(context.Context) error {
+	return func(ctx context.Context) error {
+		t := godog.T(ctx)
+		v, err := k8sClient(ctx, "get", resourceType, resourceName, "-o",
+			fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
+		if err != nil {
+			return fmt.Errorf("reading %s %q: %w", resourceType, resourceName, err)
+		}
+		require.NotEmptyf(t, v,
+			"%s %s condition disappeared during the consistency window", resourceType, conditionType)
+		var condition metav1.Condition
+		require.NoErrorf(t, json.Unmarshal([]byte(v), &condition),
+			"unmarshaling %s %s condition during the consistency window", resourceType, conditionType)
+		require.Equalf(t, metav1.ConditionStatus(conditionStatus), condition.Status,
+			"%s %s condition status changed during the consistency window", resourceType, conditionType)
+		require.Equalf(t, conditionReason, condition.Reason,
+			"%s %s condition reason changed during the consistency window", resourceType, conditionType)
+		return nil
+	}
+}
+
+// consistentlyCondition fails the test if, at any point during duration, the named
+// resource's condition deviates from the expected type/status/reason or disappears.
+// Transient API read failures are tolerated only briefly; see consistently and
+// conditionCheck for the exact semantics.
+func consistentlyCondition(ctx context.Context, resourceType, resourceName, conditionType, conditionStatus, conditionReason string, duration time.Duration) error {
+	return consistently(ctx, duration, conditionCheck(resourceType, resourceName, conditionType, conditionStatus, conditionReason))
 }
 
 // TriggerClusterObjectSetReconciliation annotates the named ClusterObjectSet

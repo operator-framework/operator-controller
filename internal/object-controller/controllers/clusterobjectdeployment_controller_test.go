@@ -122,6 +122,26 @@ func expireRevisionDeadline(t *testing.T, c client.Client, name string) {
 	require.NoError(t, c.Update(t.Context(), cos))
 }
 
+// revisionReadyProbeMessage is a distinctive message written onto a revision's
+// Ready condition so tests can assert the COD surfaces its own generic message
+// rather than echoing the revision's message.
+const revisionReadyProbeMessage = "COS-ONLY-REVISION-READY-MESSAGE"
+
+// setRevisionReadyReason sets the named revision's Ready condition to False with
+// the given reason and a distinctive message (revisionReadyProbeMessage).
+func setRevisionReadyReason(t *testing.T, c client.Client, name, reason string) {
+	t.Helper()
+	cos, ok := getCOS(t, c, name)
+	require.True(t, ok)
+	apimeta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
+		Type:    ocv1.ClusterObjectSetTypeReady,
+		Status:  metav1.ConditionFalse,
+		Reason:  reason,
+		Message: revisionReadyProbeMessage,
+	})
+	require.NoError(t, c.Status().Update(t.Context(), cos))
+}
+
 func Test_ClusterObjectDeploymentReconciler_Available(t *testing.T) {
 	t.Run("no active revision before the first revision exists", func(t *testing.T) {
 		c := newCODClient(t, codFixture())
@@ -381,10 +401,15 @@ func Test_TemplateHash_MetadataParticipates(t *testing.T) {
 
 func Test_ClusterObjectDeploymentReconciler_NoNewRevisionWhenTemplateUnchanged(t *testing.T) {
 	for _, tc := range []struct {
-		name       string
-		prep       func(t *testing.T, c client.Client, cosName string)
+		name string
+		prep func(t *testing.T, c client.Client, cosName string)
+
 		wantStatus metav1.ConditionStatus
 		wantReason string
+		// wantMsgContains, when set, must be a substring of the COD Progressing
+		// message; wantMsgExcludes, when set, must not be.
+		wantMsgContains string
+		wantMsgExcludes string
 	}{
 		{
 			name: "completed latest revision reports Progressed",
@@ -409,6 +434,62 @@ func Test_ClusterObjectDeploymentReconciler_NoNewRevisionWhenTemplateUnchanged(t
 			wantStatus: metav1.ConditionFalse,
 			wantReason: ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded,
 		},
+		{
+			name: "head revision ObjectCollision reports RevisionObjectCollision and is not progressing",
+			prep: func(t *testing.T, c client.Client, cosName string) {
+				setRevisionReadyReason(t, c, cosName, ocv1.ClusterObjectSetReasonObjectCollision)
+			},
+			wantStatus:      metav1.ConditionFalse,
+			wantReason:      ocv1.ClusterObjectDeploymentReasonRevisionObjectCollision,
+			wantMsgContains: clusterObjectDeploymentName + "-1",
+			wantMsgExcludes: revisionReadyProbeMessage,
+		},
+		{
+			name: "head revision InvalidSpecification reports RevisionInvalidSpecification and is not progressing",
+			prep: func(t *testing.T, c client.Client, cosName string) {
+				setRevisionReadyReason(t, c, cosName, ocv1.ClusterObjectSetReasonInvalidSpecification)
+			},
+			wantStatus:      metav1.ConditionFalse,
+			wantReason:      ocv1.ClusterObjectDeploymentReasonRevisionInvalidSpecification,
+			wantMsgContains: clusterObjectDeploymentName + "-1",
+			wantMsgExcludes: revisionReadyProbeMessage,
+		},
+		{
+			name: "head revision PreconditionsNotMet reports RevisionPreconditionsNotMet and keeps progressing",
+			prep: func(t *testing.T, c client.Client, cosName string) {
+				setRevisionReadyReason(t, c, cosName, ocv1.ClusterObjectSetReasonPreconditionsNotMet)
+			},
+			wantStatus:      metav1.ConditionTrue,
+			wantReason:      ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet,
+			wantMsgContains: clusterObjectDeploymentName + "-1",
+			wantMsgExcludes: revisionReadyProbeMessage,
+		},
+		{
+			name:       "head revision with no Ready condition falls through to NewClusterObjectSetProgressing",
+			prep:       nil,
+			wantStatus: metav1.ConditionTrue,
+			wantReason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing,
+		},
+		{
+			name: "head revision with unrecognized Ready reason falls through to NewClusterObjectSetProgressing",
+			prep: func(t *testing.T, c client.Client, cosName string) {
+				setRevisionReadyReason(t, c, cosName, ocv1.ClusterObjectSetReasonObjectsNotReady)
+			},
+			wantStatus: metav1.ConditionTrue,
+			wantReason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing,
+		},
+		{
+			name: "completed revision that also reports ObjectCollision still reports Progressed",
+			prep: func(t *testing.T, c client.Client, cosName string) {
+				setRevisionReadyReason(t, c, cosName, ocv1.ClusterObjectSetReasonObjectCollision)
+				cos, ok := getCOS(t, c, cosName)
+				require.True(t, ok)
+				cos.Status.CompletedAt = metav1.Now()
+				require.NoError(t, c.Status().Update(t.Context(), cos))
+			},
+			wantStatus: metav1.ConditionFalse,
+			wantReason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			c := newCODClient(t, codFixture())
@@ -432,6 +513,12 @@ func Test_ClusterObjectDeploymentReconciler_NoNewRevisionWhenTemplateUnchanged(t
 			require.NotNil(t, cond)
 			require.Equal(t, tc.wantStatus, cond.Status)
 			require.Equal(t, tc.wantReason, cond.Reason)
+			if tc.wantMsgContains != "" {
+				require.Contains(t, cond.Message, tc.wantMsgContains)
+			}
+			if tc.wantMsgExcludes != "" {
+				require.NotContains(t, cond.Message, tc.wantMsgExcludes)
+			}
 		})
 	}
 }

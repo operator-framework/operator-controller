@@ -211,11 +211,16 @@ func TestClusterObjectDeploymentReconcilerDeadlineWithoutCOSDeadlineCondition(t 
 		name   string
 		status metav1.ConditionStatus
 		reason string
+		// wantReason is the expected COD Progressing reason. Empty means the deadline
+		// governs the outcome (ProgressDeadlineExceeded); a hard-stall revision reason
+		// short-circuits the deadline and is named explicitly.
+		wantReason string
 	}{
 		{name: "no Ready condition"},
 		{name: "pending", status: metav1.ConditionUnknown, reason: ocv1.ClusterObjectSetReasonPending},
 		{name: "preconditions not met", status: metav1.ConditionFalse, reason: ocv1.ClusterObjectSetReasonPreconditionsNotMet},
-		{name: "invalid specification", status: metav1.ConditionFalse, reason: ocv1.ClusterObjectSetReasonInvalidSpecification},
+		{name: "invalid specification", status: metav1.ConditionFalse, reason: ocv1.ClusterObjectSetReasonInvalidSpecification, wantReason: ocv1.ClusterObjectDeploymentReasonRevisionInvalidSpecification},
+		{name: "object collision", status: metav1.ConditionFalse, reason: ocv1.ClusterObjectSetReasonObjectCollision, wantReason: ocv1.ClusterObjectDeploymentReasonRevisionObjectCollision},
 		{name: "objects not ready", status: metav1.ConditionFalse, reason: ocv1.ClusterObjectSetReasonObjectsNotReady},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -243,7 +248,11 @@ func TestClusterObjectDeploymentReconcilerDeadlineWithoutCOSDeadlineCondition(t 
 			condition := progressing(t, c)
 			require.NotNil(t, condition)
 			require.Equal(t, metav1.ConditionFalse, condition.Status)
-			require.Equal(t, ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded, condition.Reason)
+			wantReason := tc.wantReason
+			if wantReason == "" {
+				wantReason = ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded
+			}
+			require.Equal(t, wantReason, condition.Reason)
 			cos, found = getCOS(t, c, cos.Name)
 			require.True(t, found)
 			if tc.reason != "" {

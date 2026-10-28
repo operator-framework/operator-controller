@@ -264,6 +264,33 @@ recorded, the COD reports `Progressing=False` with reason
 timing. The COD can remain `Available=True` if an older active revision is still
 ready.
 
+### ClusterObjectDeployment Progressing
+
+While a rollout is incomplete, a ClusterObjectDeployment (COD) reflects *why* its
+head active revision is not yet `Ready` on its own `Progressing` condition, so you
+can tell a rollout that is merely in progress from one that is stalled on
+something you must fix. Each reason names the revision; inspect that
+ClusterObjectSet for the specific cause.
+
+| Status | Reason | Meaning | What to do |
+| --- | --- | --- | --- |
+| True | `NewClusterObjectSetProgressing` | The head revision is rolling out (`Pending`/`ObjectsNotReady`) | Wait |
+| True | `RevisionPreconditionsNotMet` | The head revision's precondition is not yet met (e.g. a mutable/invalid referenced Secret, or RBAC/dependency CRDs not yet propagated); it keeps retrying | Satisfy the precondition (grant RBAC, install the dependency, fix the Secret); it recovers automatically |
+| False | `RevisionObjectCollision` | The head revision's objects are owned by another controller or already exist; it will not roll out without intervention | Resolve ownership of the conflicting objects |
+| False | `RevisionInvalidSpecification` | The head revision's own objects are invalid | Correct the template so the rendered objects are valid |
+| False | `ProgressDeadlineExceeded` | A still-retrying revision exceeded its deadline (see [Progress deadline](#progress-deadline)) | See above |
+| False | `InvalidSpecification` | The deployment's own `spec.template.metadata` is invalid, so no revision is created | Fix the template labels/annotations |
+| False | `NewClusterObjectSetProgressed` | The head revision completed its rollout | None |
+
+`RevisionObjectCollision` and `RevisionInvalidSpecification` are *hard stalls*:
+they will not resolve on their own, so they report `Progressing=False` and take
+precedence over `ProgressDeadlineExceeded` (the actionable cause is more useful
+than "the clock ran out"). `RevisionPreconditionsNotMet` keeps retrying, so it
+stays `Progressing=True` and the progress deadline still governs it. Note that
+`RevisionInvalidSpecification` (the revision's rendered objects) is distinct from
+the deployment's own `InvalidSpecification` (invalid `spec.template.metadata`,
+reported before any revision is created).
+
 ### Completion (`status.completedAt`)
 
 The first time a revision becomes ready, the controller stamps `status.completedAt` with the current time. This timestamp is set once and never changes, marking that this revision successfully rolled out at least once — it persists even if the revision later becomes not ready. The ClusterExtension controller uses it to determine the installed revision.
