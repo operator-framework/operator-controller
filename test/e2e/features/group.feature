@@ -221,6 +221,8 @@ Feature: Track ClusterObjectSet revisions by group
     And ClusterObjectSet "${NAME}-7" has group "${NAME}"
     And resource "clusterobjectset/${NAME}-1" is eventually not found
     # The existing retention policy keeps five prior revisions plus the current one.
-    And ClusterExtension "${NAME}" owns 6 ClusterObjectSets
+    # operator-controller installs through a ClusterObjectDeployment, so the deployment
+    # (named after the ClusterExtension) is the controller owner of the group's revisions.
+    And ClusterObjectDeployment "${NAME}" owns 6 ClusterObjectSets
     And resource "clusterobjectset/${COS_NAME}" exists
     And ClusterObjectSet "${COS_NAME}" has group "${NAME}-other"

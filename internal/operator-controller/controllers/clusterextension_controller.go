@@ -122,6 +122,11 @@ type RevisionStatesGetter interface {
 
 // The operator controller needs to watch all the bundle objects and reconcile accordingly. Though not ideal, but these permissions are required.
 // This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
+//
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterobjectdeployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterobjectsets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create
+
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("cluster-extension")
 	ctx = log.IntoContext(ctx, l)
@@ -420,13 +425,13 @@ func collectDeprecationMessages(entries []declcfg.DeprecationEntry) []string {
 	return messages
 }
 
-// SetupWithManagerForBoxcutter sets up the controller with ClusterObjectSet revision watches.
-// TODO(COD): Replace this COS watch and mapper with a COD watch when ClusterExtension
-// reconciliation manages ClusterObjectDeployments.
+// SetupWithManagerForBoxcutter sets up the controller to watch the ClusterObjectDeployment it manages
+// for each ClusterExtension. The ClusterExtension observes the deployment's rolled-up rollout status,
+// and the deployment is controller-owned by the ClusterExtension, so an owner watch re-reconciles the
+// ClusterExtension whenever its deployment's status changes.
 func (r *ClusterExtensionReconciler) SetupWithManagerForBoxcutter(mgr ctrl.Manager) (crcontroller.Controller, error) {
 	return r.newControllerBuilder(mgr).
-		Watches(&ocv1.ClusterObjectSet{},
-			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForClusterObjectSet)).
+		Owns(&ocv1.ClusterObjectDeployment{}).
 		Build(r)
 }
 
@@ -445,14 +450,6 @@ func (r *ClusterExtensionReconciler) SetupWithManagerForHelm(mgr ctrl.Manager, t
 			},
 		)).
 		Build(r)
-}
-
-func clusterExtensionRequestsForClusterObjectSet(_ context.Context, obj client.Object) []reconcile.Request {
-	cos, ok := obj.(*ocv1.ClusterObjectSet)
-	if !ok || cos.Spec.Group == "" {
-		return nil
-	}
-	return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: cos.Spec.Group}}}
 }
 
 func (r *ClusterExtensionReconciler) newControllerBuilder(mgr ctrl.Manager) *ctrl.Builder {

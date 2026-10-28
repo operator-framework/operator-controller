@@ -154,6 +154,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are immutable$`, ClusterObjectSetReferredSecretsAreImmutable)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets contain labels$`, ClusterObjectSetReferredSecretsContainLabels)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are owned by the object set$`, ClusterObjectSetReferredSecretsOwnedByObjectSet)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets are owned by ClusterExtension "([^"]+)"$`, ClusterObjectSetReferredSecretsOwnedByClusterExtension)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets have type "([^"]+)"$`, ClusterObjectSetReferredSecretsHaveType)
 
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
@@ -210,6 +211,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)min value for (ClusterExtension|ClusterObjectSet|ClusterObjectDeployment) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)
 
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" owns (\d+) ClusterObjectSets?$`, ClusterExtensionOwnsClusterObjectSets)
+	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" owns (\d+) ClusterObjectSets?$`, ClusterObjectDeploymentOwnsClusterObjectSets)
+	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" is owned by ClusterExtension "([^"]+)"$`, ClusterObjectDeploymentIsOwnedByClusterExtension)
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, NamedClusterExtensionReportsCondition)
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, NamedClusterExtensionReportsConditionWithMessageFragment)
 
@@ -626,6 +629,52 @@ func ClusterExtensionOwnsClusterObjectSets(ctx context.Context, extName string, 
 			}
 		}
 		return true
+	})
+	return nil
+}
+
+// ClusterObjectDeploymentOwnsClusterObjectSets waits until the named ClusterObjectDeployment is the
+// controller owner of exactly expectedCount ClusterObjectSet revisions in its group.
+func ClusterObjectDeploymentOwnsClusterObjectSets(ctx context.Context, codName string, expectedCount int) error {
+	sc := scenarioCtx(ctx)
+	codName = substituteScenarioVars(codName, sc)
+	waitFor(ctx, func() bool {
+		revisions, err := listClusterObjectSetsInGroup(ctx, codName)
+		if err != nil || len(revisions) != expectedCount {
+			return false
+		}
+		cod, err := getResource("clusterobjectdeployment", codName, "")
+		if err != nil {
+			return false
+		}
+		for i := range revisions {
+			owner := metav1.GetControllerOf(&revisions[i])
+			if owner == nil || owner.Kind != ocv1.ClusterObjectDeploymentKind || owner.Name != codName || owner.UID != cod.GetUID() {
+				return false
+			}
+		}
+		return true
+	})
+	return nil
+}
+
+// ClusterObjectDeploymentIsOwnedByClusterExtension waits until the named ClusterObjectDeployment has
+// the named ClusterExtension as its controller owner.
+func ClusterObjectDeploymentIsOwnedByClusterExtension(ctx context.Context, codName, extName string) error {
+	sc := scenarioCtx(ctx)
+	codName = substituteScenarioVars(codName, sc)
+	extName = substituteScenarioVars(extName, sc)
+	waitFor(ctx, func() bool {
+		cod, err := getResource("clusterobjectdeployment", codName, "")
+		if err != nil {
+			return false
+		}
+		ext, err := getResource("clusterextension", extName, "")
+		if err != nil {
+			return false
+		}
+		owner := metav1.GetControllerOf(cod)
+		return owner != nil && owner.Kind == ocv1.ClusterExtensionKind && owner.Name == extName && owner.UID == ext.GetUID()
 	})
 	return nil
 }
@@ -1477,6 +1526,45 @@ func ClusterObjectSetReferredSecretsHaveType(ctx context.Context, revisionName, 
 	return nil
 }
 
+// ClusterObjectSetReferredSecretsOwnedByClusterExtension verifies that every referred Secret of the
+// named revision is controller-owned by the named ClusterExtension. On the current operator-controller
+// path the ClusterExtension owns the content Secrets directly (so deleting it garbage-collects them).
+func ClusterObjectSetReferredSecretsOwnedByClusterExtension(ctx context.Context, revisionName, extName string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	extName = substituteScenarioVars(strings.TrimSpace(extName), sc)
+
+	ext, err := getResource("clusterextension", extName, "")
+	if err != nil {
+		return fmt.Errorf("getting ClusterExtension %q: %w", extName, err)
+	}
+
+	secrets, err := listReferredSecrets(ctx, revisionName)
+	if err != nil {
+		return err
+	}
+	if len(secrets) == 0 {
+		return fmt.Errorf("no referred secrets found for revision %q", revisionName)
+	}
+
+	for _, s := range secrets {
+		found := false
+		for _, ref := range s.OwnerReferences {
+			if ref.Kind == ocv1.ClusterExtensionKind && ref.Name == extName && ref.UID == ext.GetUID() {
+				if ref.Controller == nil || !*ref.Controller {
+					return fmt.Errorf("secret %s/%s has ownerReference to ClusterExtension but controller is not true", s.Namespace, s.Name)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("secret %s/%s is not owned by ClusterExtension %q (uid %s)", s.Namespace, s.Name, extName, ext.GetUID())
+		}
+	}
+	return nil
+}
+
 // collectReferredSecretNames returns the unique set of Secret names referenced by the ClusterObjectSet's phase objects.
 func collectReferredSecretNames(ctx context.Context, revisionName string) ([]string, error) {
 	var names []string
@@ -1514,19 +1602,79 @@ func collectReferredSecretNames(ctx context.Context, revisionName string) ([]str
 	return names, nil
 }
 
-// listReferredSecrets lists all Secrets in the OLM namespace that have the revision-name label
-// matching the given revision name.
+type referredSecretRef struct {
+	name      string
+	namespace string
+}
+
+// collectReferredSecretRefs returns the unique Secrets (name + namespace) referenced by the
+// ClusterObjectSet's phase objects. An empty ref namespace defaults to the OLM system namespace.
+func collectReferredSecretRefs(ctx context.Context, revisionName string) ([]referredSecretRef, error) {
+	var refs []referredSecretRef
+	seen := sets.New[string]()
+
+	var obj *unstructured.Unstructured
+	waitFor(ctx, func() bool {
+		var err error
+		obj, err = getResource("clusterobjectset", revisionName, "")
+		return err == nil
+	})
+
+	phases, _, _ := unstructured.NestedSlice(obj.Object, "spec", "phases")
+	for _, p := range phases {
+		phase, ok := p.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		objects, _, _ := unstructured.NestedSlice(phase, "objects")
+		for _, o := range objects {
+			phaseObj, ok := o.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			name, _, _ := unstructured.NestedString(phaseObj, "ref", "name")
+			if name == "" {
+				continue
+			}
+			ns, _, _ := unstructured.NestedString(phaseObj, "ref", "namespace")
+			if ns == "" {
+				ns = olmNamespace
+			}
+			key := ns + "/" + name
+			if seen.Has(key) {
+				continue
+			}
+			seen.Insert(key)
+			refs = append(refs, referredSecretRef{name: name, namespace: ns})
+		}
+	}
+	if len(refs) == 0 {
+		return nil, fmt.Errorf("no referred secret refs found in ClusterObjectSet %q", revisionName)
+	}
+	return refs, nil
+}
+
+// listReferredSecrets returns the Secrets referenced by the named ClusterObjectSet's phase refs.
+// Discovery is driven off the ClusterObjectSet spec rather than a label, so it is robust to how the
+// Secrets are named or labeled.
 func listReferredSecrets(ctx context.Context, revisionName string) ([]corev1.Secret, error) {
-	out, err := k8sClient(ctx, "get", "secrets", "-n", olmNamespace,
-		"-l", "olm.operatorframework.io/revision-name="+revisionName, "-o", "json")
+	refs, err := collectReferredSecretRefs(ctx, revisionName)
 	if err != nil {
-		return nil, fmt.Errorf("listing referred secrets for revision %q: %w", revisionName, err)
+		return nil, err
 	}
-	var secretList corev1.SecretList
-	if err := json.Unmarshal([]byte(out), &secretList); err != nil {
-		return nil, fmt.Errorf("unmarshalling Secret list: %w", err)
+	secrets := make([]corev1.Secret, 0, len(refs))
+	for _, r := range refs {
+		out, err := k8sClient(ctx, "get", "secret", r.name, "-n", r.namespace, "-o", "json")
+		if err != nil {
+			return nil, fmt.Errorf("getting referred secret %s/%s: %w", r.namespace, r.name, err)
+		}
+		var s corev1.Secret
+		if err := json.Unmarshal([]byte(out), &s); err != nil {
+			return nil, fmt.Errorf("unmarshalling secret %s/%s: %w", r.namespace, r.name, err)
+		}
+		secrets = append(secrets, s)
 	}
-	return secretList.Items, nil
+	return secrets, nil
 }
 
 // ResourceAvailable waits for the specified resource (kind/name format) to exist in the test namespace. Polls with timeout.
