@@ -24,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
@@ -469,8 +468,9 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	// Refuse to adopt a ClusterObjectDeployment that is already controlled by a
 	// different owner. We adopt one that has no controller (stamping our controller
 	// ownerReference via the apply below) or one we already control, but taking over a
-	// deployment controlled by someone else would fight that owner. A plain terminal
-	// error surfaces this as Progressing=False with the Blocked reason.
+	// deployment controlled by someone else would fight that owner. Returning an
+	// ordinary error lets the ClusterExtension report Progressing=True/Retrying and
+	// use the normal controller retry backoff.
 	if err := bc.checkAdoptable(ctx, ext); err != nil {
 		return false, "", err
 	}
@@ -539,8 +539,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 // but with a different UID — the latter indicates the ClusterExtension was deleted and
 // recreated (for example a backup/restore), which comes back with a fresh UID, so the
 // deployment is logically still ours. When it is controlled by a genuinely different
-// owner, it returns a terminal error (no specific reason, so the ClusterExtension reports
-// Progressing=False with the Blocked reason) rather than fighting that owner for control.
+// owner, it returns an error rather than fighting that owner for control.
 func (bc *Boxcutter) checkAdoptable(ctx context.Context, ext *ocv1.ClusterExtension) error {
 	existing := &ocv1.ClusterObjectDeployment{}
 	switch err := bc.Client.Get(ctx, client.ObjectKey{Name: ext.Name}, existing); {
@@ -555,10 +554,10 @@ func (bc *Boxcutter) checkAdoptable(ctx context.Context, ext *ocv1.ClusterExtens
 		return nil
 	}
 
-	return reconcile.TerminalError(fmt.Errorf(
+	return fmt.Errorf(
 		"ClusterObjectDeployment %q is already controlled by %s %q; refusing to adopt it",
 		ext.Name, controller.Kind, controller.Name,
-	))
+	)
 }
 
 // runPreflights runs the configured preflight checks for a desired apply. It determines whether
