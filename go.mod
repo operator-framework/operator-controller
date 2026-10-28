@@ -50,7 +50,7 @@ require (
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd
 	pkg.package-operator.run/boxcutter v0.15.0
 	sigs.k8s.io/controller-runtime v0.25.1
-	sigs.k8s.io/controller-tools v0.22.0
+	sigs.k8s.io/controller-tools v0.23.0
 	sigs.k8s.io/crdify v0.6.1-0.20260602124154-bb9957dbf465
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2
 	sigs.k8s.io/yaml v1.6.0
@@ -181,7 +181,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/onsi/gomega v1.43.0 // indirect
+	github.com/onsi/gomega v1.44.0 // indirect
 	github.com/opencontainers/runtime-spec v1.3.0 // indirect
 	github.com/operator-framework/operator-lib v0.19.0 // indirect
 	github.com/otiai10/copy v1.14.1 // indirect
