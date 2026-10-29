@@ -23,6 +23,7 @@ import (
 	"io/fs"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -40,14 +41,34 @@ type BoxcutterRevisionStatesGetter struct {
 }
 
 func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
+	rs := &RevisionStates{}
+	cod := &ocv1.ClusterObjectDeployment{}
+	if err := d.Reader.Get(ctx, client.ObjectKey{Name: ext.Name}, cod); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Without a COD, there is no revision state this ClusterExtension should report.
+			return rs, nil
+		}
+		return nil, fmt.Errorf("getting ClusterObjectDeployment %q: %w", ext.Name, err)
+	}
+	if !metav1.IsControlledBy(cod, ext) {
+		// Do not report status for a deployment owned by someone else, even if it
+		// has the name this ClusterExtension expects to use.
+		return rs, nil
+	}
+
 	existingRevisions, err := revisions.ListForGroup(ctx, d.Reader, ext.Name)
 	if err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
 
-	rs := &RevisionStates{}
 	for _, rev := range existingRevisions {
 		if rev.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {
+			continue
+		}
+
+		// Group membership is based on the name and does not prove ownership.
+		// Ignore revisions outside this deployment's ownership chain.
+		if !metav1.IsControlledBy(&rev, cod) {
 			continue
 		}
 
