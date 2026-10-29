@@ -29,11 +29,11 @@ $(CONFTEST): $(BINGO_DIR)/conftest.mod
 	@echo "(re)installing $(GOBIN)/conftest-v0.62.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=conftest.mod -o=$(GOBIN)/conftest-v0.62.0 "github.com/open-policy-agent/conftest"
 
-CRD_DIFF := $(GOBIN)/crd-diff-v0.6.0
+CRD_DIFF := $(GOBIN)/crd-diff-v0.6.1-0.20260602124154-bb9957dbf465
 $(CRD_DIFF): $(BINGO_DIR)/crd-diff.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/crd-diff-v0.6.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-diff.mod -o=$(GOBIN)/crd-diff-v0.6.0 "sigs.k8s.io/crdify"
+	@echo "(re)installing $(GOBIN)/crd-diff-v0.6.1-0.20260602124154-bb9957dbf465"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-diff.mod -o=$(GOBIN)/crd-diff-v0.6.1-0.20260602124154-bb9957dbf465 "sigs.k8s.io/crdify"
 
 CRD_REF_DOCS := $(GOBIN)/crd-ref-docs-v0.3.0
 $(CRD_REF_DOCS): $(BINGO_DIR)/crd-ref-docs.mod
@@ -53,11 +53,11 @@ $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
 	@echo "(re)installing $(GOBIN)/goreleaser-v2.11.2"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v2.11.2 "github.com/goreleaser/goreleaser/v2"
 
-HELM := $(GOBIN)/helm-v3.18.4
+HELM := $(GOBIN)/helm-v3.22.0
 $(HELM): $(BINGO_DIR)/helm.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/helm-v3.18.4"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=helm.mod -o=$(GOBIN)/helm-v3.18.4 "helm.sh/helm/v3/cmd/helm"
+	@echo "(re)installing $(GOBIN)/helm-v3.22.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=helm.mod -o=$(GOBIN)/helm-v3.22.0 "helm.sh/helm/v3/cmd/helm"
 
 KIND := $(GOBIN)/kind-v0.32.0
 $(KIND): $(BINGO_DIR)/kind.mod
@@ -83,11 +83,11 @@ $(OPERATOR_SDK): $(BINGO_DIR)/operator-sdk.mod
 	@echo "(re)installing $(GOBIN)/operator-sdk-v1.41.1"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -tags=containers_image_openpgp -ldflags=-X=github.com/operator-framework/operator-sdk/internal/version.Version=v1.41.1 -mod=mod -modfile=operator-sdk.mod -o=$(GOBIN)/operator-sdk-v1.41.1 "github.com/operator-framework/operator-sdk/cmd/operator-sdk"
 
-OPM := $(GOBIN)/opm-v1.60.0
+OPM := $(GOBIN)/opm-v1.74.0
 $(OPM): $(BINGO_DIR)/opm.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/opm-v1.60.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -tags=containers_image_openpgp -mod=mod -modfile=opm.mod -o=$(GOBIN)/opm-v1.60.0 "github.com/operator-framework/operator-registry/cmd/opm"
+	@echo "(re)installing $(GOBIN)/opm-v1.74.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -tags=containers_image_openpgp -mod=mod -modfile=opm.mod -o=$(GOBIN)/opm-v1.74.0 "github.com/operator-framework/operator-registry/cmd/opm"
 
 SETUP_ENVTEST := $(GOBIN)/setup-envtest-v0.0.0-20250620151452-b9a9ca01fd37
 $(SETUP_ENVTEST): $(BINGO_DIR)/setup-envtest.mod

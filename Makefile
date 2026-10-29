@@ -220,7 +220,7 @@ verify: tidy kind-verify-versions fmt generate manifests update-tls-profiles crd
 
 .PHONY: verify-bingo
 verify-bingo: $(BINGO)
-	$(BINGO) get -v -t 15
+	$(BINGO) get -v -t 20
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
