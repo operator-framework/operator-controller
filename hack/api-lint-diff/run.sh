@@ -46,18 +46,15 @@ fi
 TEMP_DIR=$(mktemp -d)
 echo -e "${BLUE}Using temporary directory: ${TEMP_DIR}${NC}" >&2
 
-# Get golangci-lint version from bingo
+# Get the golangci-lint version selected by the root module.
 get_golangci_version() {
-    # Extract version from .bingo/Variables.mk
-    # Format: GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.7.2
     local version
-    version=$(grep 'GOLANGCI_LINT :=' .bingo/Variables.mk 2>/dev/null | sed -E 's/.*golangci-lint-(v[0-9.]+).*/\1/')
+    version=$(go list -m -f '{{.Version}}' github.com/golangci/golangci-lint/v2)
 
     # Validate that we got a version
     if [[ -z "${version}" ]]; then
-        echo -e "${YELLOW}Warning: Could not extract golangci-lint version from .bingo/Variables.mk${NC}" >&2
-        echo -e "${YELLOW}Using default version: latest${NC}" >&2
-        version="latest"
+        echo -e "${RED}Error: Could not determine golangci-lint version from go.mod${NC}" >&2
+        return 1
     fi
 
     echo "${version}"
@@ -117,13 +114,13 @@ get_kube_api_linter_version() {
 
 # Create custom golangci-lint configuration
 create_custom_gcl_config() {
-    # Get golangci-lint version from bingo
+    # Get golangci-lint version from go.mod
     local golangci_version
     golangci_version=$(get_golangci_version)
 
     # Validate version is not empty
     if [[ -z "${golangci_version}" ]]; then
-        echo -e "${RED}Error: Failed to determine golangci-lint version from .bingo/Variables.mk${NC}" >&2
+        echo -e "${RED}Error: Failed to determine golangci-lint version from go.mod${NC}" >&2
         exit 1
     fi
 
@@ -199,18 +196,9 @@ check_linter_support() {
 
 # Find golangci-lint binary
 find_golangci_lint() {
-    # Check if variables.env exists and extract golangci-lint path
-    if [[ -f ".bingo/variables.env" ]]; then
-        source .bingo/variables.env 2>/dev/null || true
-        if [[ -n "${GOLANGCI_LINT}" && -f "${GOLANGCI_LINT}" ]]; then
-            echo "${GOLANGCI_LINT}"
-            return 0
-        fi
-    fi
-
-    # Check for custom build
-    if [[ -f ".bingo/golangci-lint" ]]; then
-        echo ".bingo/golangci-lint"
+    local tool_path
+    if tool_path=$(go tool -n golangci-lint 2>/dev/null) && [[ -x "${tool_path}" ]]; then
+        echo "${tool_path}"
         return 0
     fi
 
@@ -228,8 +216,7 @@ find_golangci_lint() {
 
     echo -e "${RED}Error: golangci-lint not found.${NC}" >&2
     echo -e "${RED}Searched for:${NC}" >&2
-    echo -e "  - .bingo/variables.env (bingo-managed variables for GOLANGCI_LINT)" >&2
-    echo -e "  - .bingo/golangci-lint" >&2
+    echo -e "  - go tool golangci-lint (from go.mod)" >&2
     echo -e "  - bin/golangci-lint" >&2
     echo -e "  - golangci-lint on your \$PATH" >&2
     exit 1

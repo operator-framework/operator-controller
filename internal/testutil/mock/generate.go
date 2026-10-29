@@ -17,33 +17,33 @@ limitations under the License.
 package mock
 
 // External interfaces
-//go:generate mockgen -destination=helmclient/mock_actionclient.go -package=helmclient github.com/operator-framework/helm-operator-plugins/pkg/client ActionInterface,ActionClientGetter
-//go:generate mockgen -destination=helmclient/mock_composite.go -package=helmclient github.com/operator-framework/operator-controller/internal/testutil/mock/helmclient ActionClientGetterAndInterface
-//go:generate mockgen -destination=ctrlclient/mock_client.go -package=ctrlclient sigs.k8s.io/controller-runtime/pkg/client Client,StatusWriter,SubResourceWriter
-//go:generate mockgen -destination=crdclient/mock_crdinterface.go -package=crdclient k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1 CustomResourceDefinitionInterface
-//go:generate mockgen -destination=logrsink/mock_logsink.go -package=logrsink github.com/go-logr/logr LogSink
-//go:generate mockgen -destination=machinery/mock_results.go -package=machinery pkg.package-operator.run/boxcutter/machinery RevisionResult,PhaseResult,ObjectResult,RevisionTeardownResult
-//go:generate mockgen -destination=httputil/mock_roundtripper.go -package=httputil net/http RoundTripper
+//go:generate go tool mockgen -destination=helmclient/mock_actionclient.go -package=helmclient github.com/operator-framework/helm-operator-plugins/pkg/client ActionInterface,ActionClientGetter
+//go:generate go tool mockgen -destination=helmclient/mock_composite.go -package=helmclient github.com/operator-framework/operator-controller/internal/testutil/mock/helmclient ActionClientGetterAndInterface
+//go:generate go tool mockgen -destination=ctrlclient/mock_client.go -package=ctrlclient sigs.k8s.io/controller-runtime/pkg/client Client,StatusWriter,SubResourceWriter
+//go:generate go tool mockgen -destination=crdclient/mock_crdinterface.go -package=crdclient k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1 CustomResourceDefinitionInterface
+//go:generate go tool mockgen -destination=logrsink/mock_logsink.go -package=logrsink github.com/go-logr/logr LogSink
+//go:generate go tool mockgen -destination=machinery/mock_results.go -package=machinery pkg.package-operator.run/boxcutter/machinery RevisionResult,PhaseResult,ObjectResult,RevisionTeardownResult
+//go:generate go tool mockgen -destination=httputil/mock_roundtripper.go -package=httputil net/http RoundTripper
 
 // Internal interfaces — catalogd
-//go:generate mockgen -destination=storage/mock_instance.go -package=storage github.com/operator-framework/operator-controller/internal/catalogd/storage Instance
-//go:generate mockgen -destination=catalogdserver/mock_catalogstore.go -package=catalogdserver github.com/operator-framework/operator-controller/internal/catalogd/server CatalogStore
-//go:generate mockgen -destination=catalogdservice/mock_graphqlservice.go -package=catalogdservice github.com/operator-framework/operator-controller/internal/catalogd/service GraphQLService
+//go:generate go tool mockgen -destination=storage/mock_instance.go -package=storage github.com/operator-framework/operator-controller/internal/catalogd/storage Instance
+//go:generate go tool mockgen -destination=catalogdserver/mock_catalogstore.go -package=catalogdserver github.com/operator-framework/operator-controller/internal/catalogd/server CatalogStore
+//go:generate go tool mockgen -destination=catalogdservice/mock_graphqlservice.go -package=catalogdservice github.com/operator-framework/operator-controller/internal/catalogd/service GraphQLService
 
 // Internal interfaces — operator-controller applier
-//go:generate mockgen -destination=applier/mock_applier.go -package=applier github.com/operator-framework/operator-controller/internal/operator-controller/applier Preflight,HelmReleaseToObjectsConverterInterface,HelmChartProvider,RevisionGenerator,ManifestProvider
+//go:generate go tool mockgen -destination=applier/mock_applier.go -package=applier github.com/operator-framework/operator-controller/internal/operator-controller/applier Preflight,HelmReleaseToObjectsConverterInterface,HelmChartProvider,RevisionGenerator,ManifestProvider
 
 // Internal interfaces — operator-controller catalogmetadata
-//go:generate mockgen -destination=catalogclient/mock_cache.go -package=catalogclient github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client Cache
+//go:generate go tool mockgen -destination=catalogclient/mock_cache.go -package=catalogclient github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client Cache
 
 // Internal interfaces — operator-controller config
-//go:generate mockgen -destination=config/mock_schemaprovider.go -package=config github.com/operator-framework/operator-controller/internal/operator-controller/config SchemaProvider
+//go:generate go tool mockgen -destination=config/mock_schemaprovider.go -package=config github.com/operator-framework/operator-controller/internal/operator-controller/config SchemaProvider
 
 // Internal interfaces — operator-controller controllers
-//go:generate mockgen -destination=controllers/mocks_operator_controller.go -package=controllers github.com/operator-framework/operator-controller/internal/operator-controller/controllers CatalogCache,CatalogCachePopulator,RevisionStatesGetter,Applier
+//go:generate go tool mockgen -destination=controllers/mocks_operator_controller.go -package=controllers github.com/operator-framework/operator-controller/internal/operator-controller/controllers CatalogCache,CatalogCachePopulator,RevisionStatesGetter,Applier
 
 // Internal interfaces — cluster-object-controller controllers
-//go:generate mockgen -destination=controllers/mocks_object_controller.go -package=controllers github.com/operator-framework/operator-controller/internal/object-controller/controllers RevisionEngine,RevisionEngineFactory
+//go:generate go tool mockgen -destination=controllers/mocks_object_controller.go -package=controllers github.com/operator-framework/operator-controller/internal/object-controller/controllers RevisionEngine,RevisionEngineFactory
 
 // Internal interfaces — rukpak render
-//go:generate mockgen -destination=render/mock_certprovider.go -package=render github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render CertificateProvider
+//go:generate go tool mockgen -destination=render/mock_certprovider.go -package=render github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render CertificateProvider
