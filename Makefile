@@ -64,6 +64,9 @@ endif
 # bingo manages consistent tooling versions for things like kind, etc.
 include .bingo/Variables.mk
 
+# Use the controller-gen version from go.mod.
+CONTROLLER_GEN := go tool controller-gen
+
 # mockgen is installed by bingo with a versioned name (mockgen-v0.6.0).
 # Redefine MOCKGEN to an unversioned symlink so that go generate can find it on PATH.
 _MOCKGEN_BINGO := $(MOCKGEN)
@@ -201,7 +204,7 @@ generate-mocks: $(MOCKGEN) #EXHELP Generate mock implementations for testing.
 	PATH="$(ROOT_DIR)/bin:$$PATH" go generate ./...
 
 .PHONY: generate
-generate: $(CONTROLLER_GEN) generate-mocks #EXHELP Generate code containing DeepCopy, DeepCopyInto, DeepCopyObject, and ApplyConfiguration type implementations.
+generate: generate-mocks #EXHELP Generate code containing DeepCopy, DeepCopyInto, DeepCopyObject, and ApplyConfiguration type implementations.
 	# Need to delete the files for them to be generated properly
 	@find api cmd hack internal -name "zz_generated.deepcopy.go" -not -path "*/vendor/*" -delete && rm -rf applyconfigurations
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) applyconfiguration:headerFile="hack/boilerplate.go.txt" paths="./api/..."

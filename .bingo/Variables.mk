@@ -29,12 +29,6 @@ $(CONFTEST): $(BINGO_DIR)/conftest.mod
 	@echo "(re)installing $(GOBIN)/conftest-v0.62.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=conftest.mod -o=$(GOBIN)/conftest-v0.62.0 "github.com/open-policy-agent/conftest"
 
-CONTROLLER_GEN := $(GOBIN)/controller-gen-v0.21.0
-$(CONTROLLER_GEN): $(BINGO_DIR)/controller-gen.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/controller-gen-v0.21.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=controller-gen.mod -o=$(GOBIN)/controller-gen-v0.21.0 "sigs.k8s.io/controller-tools/cmd/controller-gen"
-
 CRD_DIFF := $(GOBIN)/crd-diff-v0.6.0
 $(CRD_DIFF): $(BINGO_DIR)/crd-diff.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.

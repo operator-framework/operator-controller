@@ -53,8 +53,9 @@ install and manage cluster extensions. The project follows a microservices archi
 **Build Tags:**
 - `containers_image_openpgp` - required for image handling
 
-**Tools (managed via .bingo/):**
-- controller-gen, golangci-lint, goreleaser, helm, kind, kustomize, mockgen, setup-envtest, operator-sdk
+**Tools:**
+- controller-gen is managed by the Go tool directive in go.mod.
+- golangci-lint, goreleaser, helm, kind, kustomize, mockgen, setup-envtest, and operator-sdk are managed via .bingo/.
 
 **Test Mocking:**
 - **gomock** (`go.uber.org/mock`): Used for generated mock implementations. `//go:generate mockgen` directives

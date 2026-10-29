@@ -249,6 +249,8 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	k8s.io/code-generator v0.37.1 // indirect
+	k8s.io/gengo/v2 v2.0.0-20260408192533-25e2208e0dc3 // indirect
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
 	k8s.io/kubectl v0.37.0 // indirect
 	k8s.io/streaming v0.37.1 // indirect
@@ -262,3 +264,5 @@ require (
 )
 
 retract v1.5.0 // contains filename with ':' which causes failure creating module zip file
+
+tool sigs.k8s.io/controller-tools/cmd/controller-gen
