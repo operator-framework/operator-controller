@@ -65,11 +65,11 @@ $(KIND): $(BINGO_DIR)/kind.mod
 	@echo "(re)installing $(GOBIN)/kind-v0.32.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.32.0 "sigs.k8s.io/kind"
 
-KUBE_SCORE := $(GOBIN)/kube-score-v1.20.0
+KUBE_SCORE := $(GOBIN)/kube-score-v1.20.1-0.20260520132026-06dedc9ccce5
 $(KUBE_SCORE): $(BINGO_DIR)/kube-score.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/kube-score-v1.20.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kube-score.mod -o=$(GOBIN)/kube-score-v1.20.0 "github.com/zegl/kube-score/cmd/kube-score"
+	@echo "(re)installing $(GOBIN)/kube-score-v1.20.1-0.20260520132026-06dedc9ccce5"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kube-score.mod -o=$(GOBIN)/kube-score-v1.20.1-0.20260520132026-06dedc9ccce5 "github.com/zegl/kube-score/cmd/kube-score"
 
 MOCKGEN := $(GOBIN)/mockgen-v0.6.0
 $(MOCKGEN): $(BINGO_DIR)/mockgen.mod
