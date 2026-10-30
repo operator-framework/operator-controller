@@ -80,7 +80,6 @@ func TestClusterObjectDeploymentReconcilerDeadlineCoversEntireRevision(t *testin
 	cos, found := getCOS(t, c, cosName)
 	require.True(t, found)
 	require.True(t, cos.CreationTimestamp.Time.Equal(creation))
-	require.Zero(t, cos.Spec.ProgressDeadlineMinutes, "the COD owns the deadline budget")
 	require.Len(t, cos.Spec.Phases, 5)
 	require.Equal(t, metav1.ConditionTrue, progressing(t, c).Status)
 	// Start after finalizer initialization; the fake client's metadata patch

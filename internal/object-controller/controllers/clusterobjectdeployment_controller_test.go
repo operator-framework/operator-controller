@@ -250,7 +250,6 @@ func Test_ClusterObjectDeploymentReconciler_CreatesFirstRevision(t *testing.T) {
 	require.Equal(t, int64(1), cos.Spec.Revision)
 	require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, cos.Spec.LifecycleState)
 	require.Equal(t, ocv1.CollisionProtectionPrevent, cos.Spec.CollisionProtection)
-	require.Zero(t, cos.Spec.ProgressDeadlineMinutes, "the deployment enforces its own progress deadline")
 	require.NotEmpty(t, cos.Labels[labels.TemplateHashKey])
 
 	ref := metav1.GetControllerOf(cos)

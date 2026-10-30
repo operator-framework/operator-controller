@@ -46,7 +46,6 @@ type ClusterObjectSetStatusApplyConfiguration struct {
 	// - False with reason ObjectCollision: one or more objects are controlled by another owner, or are unowned while collision protection prevents adoption, so this revision cannot take ownership of them.
 	// - False with reason PreconditionsNotMet: a precondition for applying the revision is not yet satisfied (a referenced Secret is mutable or has invalid or changed content, or a preflight dry-run was rejected, e.g. an immutable field, a conflicting object, or RBAC/dependency CRDs not yet propagated); the revision keeps retrying and recovers once the precondition is met.
 	// - False with reason InvalidSpecification: the revision spec is invalid (a malformed revision/phase object or progression probe) and requires a spec change to proceed.
-	// - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
 	// - False with reason Archiving: the revision is being archived and its owned objects are still being torn down.
 	// - False with reason Archived: the revision has been archived and its objects have been torn down.
 	//

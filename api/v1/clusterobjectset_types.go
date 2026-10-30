@@ -114,17 +114,6 @@ type ClusterObjectSetSpec struct {
 	// +optional
 	Phases []ClusterObjectSetPhase `json:"phases,omitempty"`
 
-	// progressDeadlineMinutes is an optional field that defines the maximum period
-	// of time in minutes after which an installation should be considered failed and
-	// require manual intervention. This functionality is disabled when no value
-	// is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
-	//
-	// +kubebuilder:validation:Minimum:=10
-	// +kubebuilder:validation:Maximum:=720
-	// +optional
-	// <opcon:experimental>
-	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
-
 	// progressionProbes is an optional field which provides the ability to define custom readiness probes
 	// for objects defined within spec.phases. As documented in that field, most kubernetes-native objects
 	// within the phases already have some kind of readiness check built-in, but this field allows for checks
@@ -527,7 +516,6 @@ type ClusterObjectSetStatus struct {
 	//   - False with reason ObjectCollision: one or more objects are controlled by another owner, or are unowned while collision protection prevents adoption, so this revision cannot take ownership of them.
 	//   - False with reason PreconditionsNotMet: a precondition for applying the revision is not yet satisfied (a referenced Secret is mutable or has invalid or changed content, or a preflight dry-run was rejected, e.g. an immutable field, a conflicting object, or RBAC/dependency CRDs not yet propagated); the revision keeps retrying and recovers once the precondition is met.
 	//   - False with reason InvalidSpecification: the revision spec is invalid (a malformed revision/phase object or progression probe) and requires a spec change to proceed.
-	//   - False with reason ProgressDeadlineExceeded: the revision did not roll out within spec.progressDeadlineMinutes.
 	//   - False with reason Archiving: the revision is being archived and its owned objects are still being torn down.
 	//   - False with reason Archived: the revision has been archived and its objects have been torn down.
 	//

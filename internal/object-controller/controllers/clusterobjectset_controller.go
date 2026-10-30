@@ -149,15 +149,11 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 		return c.delete(ctx, cos)
 	}
 
-	remaining, hasDeadline := durationUntilDeadline(c.Clock, cos)
-	isDeadlineExceeded := hasDeadline && remaining <= 0
-
 	if err := c.verifyReferencedSecretsImmutable(ctx, cos); err != nil {
 		var mutErr *mutableSecretError
 		if errors.As(err, &mutErr) {
 			// A confirmed mutable Secret requires user action (replacing the immutable Secret),
 			// which is not watched, so keep retrying so the revision can recover.
-			// PreconditionsNotMet takes precedence over ProgressDeadlineExceeded: it is more actionable.
 			l.Error(err, "referenced Secret is mutable, marking revision not ready")
 			markAsNotReady(cos, ocv1.ClusterObjectSetReasonPreconditionsNotMet, err.Error())
 			return ctrl.Result{RequeueAfter: validationRetryInterval}, nil
@@ -307,9 +303,8 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 		if len(collidingObjs) > 0 {
 			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", pres.GetName(), "collisions", collidingObjs)
-			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonObjectCollision,
-				fmt.Sprintf("Cannot take ownership of %d object(s) in phase %q because they are owned by another controller or already exist. Remove the conflicting owner or object, or create a new ClusterObjectSet with a more permissive collisionProtection setting.", len(collidingObjs), pres.GetName()),
-				isDeadlineExceeded)
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonObjectCollision,
+				fmt.Sprintf("Cannot take ownership of %d object(s) in phase %q because they are owned by another controller or already exist. Remove the conflicting owner or object, or create a new ClusterObjectSet with a more permissive collisionProtection setting.", len(collidingObjs), pres.GetName()))
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	}
@@ -377,18 +372,15 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			}
 		}
 
-		// Generic summary used as the ProgressDeadlineExceeded "last status", kept
-		// stable (not the volatile per-object detail) so the deadline message does not
-		// churn. The non-deadline path reports the count. Per-object detail is kept out
-		// of the condition message and logged at V(1) for debugging.
+		// Stable generic summary used when there is no per-object detail; the detailed
+		// path reports the count. Per-object detail is kept out of the condition message
+		// and logged at V(1) for debugging.
 		const genericNotReadyMsg = "Objects are not yet ready."
 		if len(notReadyMsgs) > 0 {
 			l.V(1).Info("objects not yet ready", "count", len(notReadyMsgs), "details", notReadyMsgs)
 		}
-		// Precedence: ProgressDeadlineExceeded > Superseded > ObjectsNotReady.
+		// Precedence: Superseded > ObjectsNotReady.
 		switch {
-		case isDeadlineExceeded:
-			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonObjectsNotReady, genericNotReadyMsg, true)
 		case superseded:
 			markAsNotReady(cos, ocv1.ClusterObjectSetReasonSuperseded, "Object(s) have been adopted by a newer revision of the object set.")
 		default:
@@ -396,10 +388,7 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 			if len(notReadyMsgs) > 0 {
 				notReadyMsg = fmt.Sprintf("%d object(s) are not yet ready.", len(notReadyMsgs))
 			}
-			setReadyWithDeadline(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonObjectsNotReady, notReadyMsg, false)
-		}
-		if hasDeadline && !isDeadlineExceeded {
-			return ctrl.Result{RequeueAfter: remaining}, nil
+			markAsNotReady(cos, ocv1.ClusterObjectSetReasonObjectsNotReady, notReadyMsg)
 		}
 	}
 
@@ -449,11 +438,7 @@ func (c *ClusterObjectSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	c.Clock = clock.RealClock{}
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(controller.Options{
-			RateLimiter: newDeadlineAwareRateLimiter(
-				workqueue.DefaultTypedControllerRateLimiter[ctrl.Request](),
-				mgr.GetClient(),
-				c.Clock,
-			),
+			RateLimiter: workqueue.DefaultTypedControllerRateLimiter[ctrl.Request](),
 		}).
 		For(
 			&ocv1.ClusterObjectSet{},
@@ -765,25 +750,6 @@ func buildProgressionProbes(progressionProbes []ocv1.ProgressionProbe) (probing.
 		})
 	}
 	return userProbes, nil
-}
-
-// setReadyWithDeadline sets the Ready condition to the supplied status/reason/message,
-// unless the progress deadline has been exceeded — in which case it reports
-// Ready=False/ProgressDeadlineExceeded instead. This centralises the progress
-// deadline enforcement for the Ready condition.
-func setReadyWithDeadline(cos *ocv1.ClusterObjectSet, status metav1.ConditionStatus, reason, message string, isDeadlineExceeded bool) { // nolint:unparam
-	if isDeadlineExceeded {
-		markAsNotReady(cos, ocv1.ReasonProgressDeadlineExceeded,
-			fmt.Sprintf("Revision has not rolled out for %d minute(s). Last status: %s", cos.Spec.ProgressDeadlineMinutes, message))
-		return
-	}
-	meta.SetStatusCondition(&cos.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterObjectSetTypeReady,
-		Status:             status,
-		Reason:             reason,
-		Message:            message,
-		ObservedGeneration: cos.Generation,
-	})
 }
 
 func markAsReady(cos *ocv1.ClusterObjectSet, reason, message string) bool {

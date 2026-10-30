@@ -3,48 +3,26 @@
 package controllers
 
 import (
-	"context"
 	"sync"
 	"time"
 
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 // deadlineAwareRateLimiter wraps a delegate rate limiter and caps the backoff
-// duration to the time remaining until a revision's progress deadline, ensuring
-// that ProgressDeadlineExceeded is set promptly even during exponential backoff.
+// duration to the time remaining until the deadline reported by its remaining
+// function, ensuring that a progress deadline is observed promptly even during
+// exponential backoff. The deadline source is supplied by the constructor (the
+// ClusterObjectDeployment controller's progress deadline).
 //
-// After the deadline passes, it allows one immediate requeue (returning 0) so
-// the reconciler can set the ProgressDeadlineExceeded condition, then falls
-// back to the delegate's normal backoff. This avoids both tight-looping and
-// coupling to status conditions.
+// After the deadline passes, it allows one immediate requeue (returning 0) so the
+// reconciler can act on the expiry, then falls back to the delegate's normal
+// backoff. This avoids both tight-looping and coupling to status conditions.
 type deadlineAwareRateLimiter struct {
 	delegate     workqueue.TypedRateLimiter[ctrl.Request]
 	remaining    func(ctrl.Request) (time.Duration, bool, error)
 	pastDeadline sync.Map
-}
-
-func newDeadlineAwareRateLimiter(
-	delegate workqueue.TypedRateLimiter[ctrl.Request],
-	c client.Reader,
-	clk clock.Clock,
-) *deadlineAwareRateLimiter {
-	return &deadlineAwareRateLimiter{
-		delegate: delegate,
-		remaining: func(req ctrl.Request) (time.Duration, bool, error) {
-			cos := &ocv1.ClusterObjectSet{}
-			if err := c.Get(context.Background(), req.NamespacedName, cos); err != nil {
-				return 0, false, client.IgnoreNotFound(err)
-			}
-			remaining, hasDeadline := durationUntilDeadline(clk, cos)
-			return remaining, hasDeadline, nil
-		},
-	}
 }
 
 func (r *deadlineAwareRateLimiter) When(item ctrl.Request) time.Duration {
@@ -81,40 +59,4 @@ func (r *deadlineAwareRateLimiter) Forget(item ctrl.Request) {
 
 func (r *deadlineAwareRateLimiter) NumRequeues(item ctrl.Request) int {
 	return r.delegate.NumRequeues(item)
-}
-
-// durationUntilDeadline returns how much time remains before the progress deadline
-// expires. A negative duration means the deadline has already passed.
-//
-// It derives the deadline from spec and metadata only, with one exception:
-// it checks status.completedAt so that a revision recovering from drift is not
-// penalised by the original deadline.
-//
-// completedAt is a latch: there is no way to deduce from current cluster state
-// alone that a COS became ready in the past. It is set once and never cleared,
-// so once observed ready a revision is never subject to the deadline again.
-//
-// Returns (0, false) when there is no active deadline:
-//   - progressDeadlineMinutes is 0
-//   - the revision has already been observed ready (completedAt set)
-//   - the revision is archived (deadline is irrelevant)
-//   - the revision is being deleted
-func durationUntilDeadline(clk clock.Clock, cos *ocv1.ClusterObjectSet) (time.Duration, bool) {
-	pd := cos.Spec.ProgressDeadlineMinutes
-	if pd <= 0 {
-		return 0, false
-	}
-	// Once the revision has been observed ready (completedAt set), the deadline
-	// no longer applies.
-	if !cos.Status.CompletedAt.IsZero() {
-		return 0, false
-	}
-	if cos.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived {
-		return 0, false
-	}
-	if !cos.DeletionTimestamp.IsZero() {
-		return 0, false
-	}
-	deadline := cos.CreationTimestamp.Add(time.Duration(pd) * time.Minute)
-	return deadline.Sub(clk.Now()), true
 }

@@ -69,13 +69,6 @@ type ClusterObjectSetSpecApplyConfiguration struct {
 	//
 	// Each phase in the list must have a unique name. The maximum number of phases is 20.
 	Phases []ClusterObjectSetPhaseApplyConfiguration `json:"phases,omitempty"`
-	// progressDeadlineMinutes is an optional field that defines the maximum period
-	// of time in minutes after which an installation should be considered failed and
-	// require manual intervention. This functionality is disabled when no value
-	// is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
-	//
-	// <opcon:experimental>
-	ProgressDeadlineMinutes *int32 `json:"progressDeadlineMinutes,omitempty"`
 	// progressionProbes is an optional field which provides the ability to define custom readiness probes
 	// for objects defined within spec.phases. As documented in that field, most kubernetes-native objects
 	// within the phases already have some kind of readiness check built-in, but this field allows for checks
@@ -141,14 +134,6 @@ func (b *ClusterObjectSetSpecApplyConfiguration) WithPhases(values ...*ClusterOb
 		}
 		b.Phases = append(b.Phases, *values[i])
 	}
-	return b
-}
-
-// WithProgressDeadlineMinutes sets the ProgressDeadlineMinutes field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ProgressDeadlineMinutes field is set to the value of the last call.
-func (b *ClusterObjectSetSpecApplyConfiguration) WithProgressDeadlineMinutes(value int32) *ClusterObjectSetSpecApplyConfiguration {
-	b.ProgressDeadlineMinutes = &value
 	return b
 }
 
