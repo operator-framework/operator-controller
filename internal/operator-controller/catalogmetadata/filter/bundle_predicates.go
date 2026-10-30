@@ -3,7 +3,7 @@ package filter
 import (
 	bsemver "github.com/blang/semver/v4"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"

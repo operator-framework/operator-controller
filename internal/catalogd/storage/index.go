@@ -9,7 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 )
 
 // index is an index of sections of an FBC file used to lookup FBC blobs that

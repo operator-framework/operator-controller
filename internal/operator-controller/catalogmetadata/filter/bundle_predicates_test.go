@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/alpha/property"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/property"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/filter"
