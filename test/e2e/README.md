@@ -119,17 +119,35 @@ sc.Step(`^ClusterExtension is applied$`, ResourceIsApplied)
 
 **Step Implementation Pattern:**
 
+Status assertions must read metadata and status from the same API response and
+require the asserted condition's `observedGeneration` to equal `metadata.generation`.
+Use `waitForCondition` for condition checks. Bundle metadata uses the `Installed`
+condition, and COS phase digests and object counts use the `Ready` condition to
+verify that the status reflects the current spec. Deployments instead expose
+`status.observedGeneration` at the resource level.
+
+After changing a spec, use a status assertion directly when checking its result;
+a separate generation-only wait is redundant. Use
+`ClusterExtension has been reconciled the latest generation` before assertions
+on other cluster resources when you only need to confirm the spec was processed.
+That step accepts any current-generation `Progressing` status or reason, whereas
+`ClusterExtension is rolled out` requires `Progressing=True/Succeeded`.
+
 ```go
 func BundleInstalled(ctx context.Context, name, version string) error {
     sc := scenarioCtx(ctx)
     waitFor(ctx, func() bool {
-        v, err := kubectl("get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.install.bundle}")
+        v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "json")
         if err != nil {
           return false
         }
-        var bundle map[string]interface{}
-        json.Unmarshal([]byte(v), &bundle)
-        return bundle["name"] == name && bundle["version"] == version
+        var ext ocv1.ClusterExtension
+        if err := json.Unmarshal([]byte(v), &ext); err != nil {
+            return false
+        }
+        installed := currentCondition(ext.Generation, ext.Status.Conditions, ocv1.TypeInstalled)
+        return conditionMatches(installed, metav1.ConditionTrue, nil, nil) &&
+            ext.Status.Install.Bundle.Name == name && ext.Status.Install.Bundle.Version == version
     })
     return nil
 }

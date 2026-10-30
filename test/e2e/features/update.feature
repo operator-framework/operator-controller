@@ -360,5 +360,4 @@ Feature: Update ClusterExtension
                 "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
     Then ClusterExtension apply does not emit warning
-    And ClusterExtension has been reconciled the latest generation
     And ClusterExtension is available
