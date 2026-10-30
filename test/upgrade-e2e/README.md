@@ -29,8 +29,12 @@ The following Makefile targets run upgrade tests for different upgrade paths:
 | `make test-upgrade-st2st-e2e` | Upgrade from the latest stable **standard** release to a locally built **standard** build |
 | `make test-upgrade-st2ex-e2e` | Upgrade from the latest stable **standard** release to a locally built **experimental** build |
 | `make test-st2ex-e2e` | Switchover from a locally built **standard** install to a locally built **experimental** install |
+| `make test-upgrade-ex2ex-e2e` | Upgrade from the latest stable **experimental** release to a locally built **experimental** build |
 
 Each target handles kind cluster creation, image building/loading, test execution, and cleanup.
+
+Experimental upgrade suites are temporarily skipped via `SKIP_HELM_MIGRATION_TESTS=true`;
+see [OPRUN-4810](https://redhat.atlassian.net/browse/OPRUN-4810).
 
 ## Environment Variables
 
@@ -41,3 +45,4 @@ Each target handles kind cluster creation, image building/loading, test executio
 | `ROOT_DIR` | Project root directory (working directory for install scripts) |
 | `KIND_CLUSTER_NAME` | Name of the kind cluster to use |
 | `KUBECONFIG` | Path to kubeconfig file (defaults to `~/.kube/config`) |
+| `SKIP_HELM_MIGRATION_TESTS` | Set to `true` to skip upgrade tests; unset by default |

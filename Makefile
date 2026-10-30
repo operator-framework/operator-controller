@@ -513,7 +513,10 @@ test-upgrade-st2st-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-st2st-e
 test-upgrade-st2st-e2e: standard/install.sh kind-load-operator-controller-upgrade-st2st-e2e test-upgrade-e2e #HELP Run upgrade (standard -> standard) e2e tests on a local kind cluster
 	-$(KIND) delete cluster --name operator-controller-upgrade-st2st-e2e
 
+# TODO(OPRUN-4810): Remove SKIP_HELM_MIGRATION_TESTS from the experimental upgrade
+# targets below once Helm storage migration has been adapted to ClusterObjectDeployment.
 .PHONY: test-upgrade-ex2ex-e2e
+test-upgrade-ex2ex-e2e: export SKIP_HELM_MIGRATION_TESTS := true
 test-upgrade-ex2ex-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install-experimental.sh
 test-upgrade-ex2ex-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-ex2ex-e2e
 test-upgrade-ex2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
@@ -521,6 +524,7 @@ test-upgrade-ex2ex-e2e: experimental/install.sh kind-load-operator-controller-up
 	-$(KIND) delete cluster --name operator-controller-upgrade-ex2ex-e2e
 
 .PHONY: test-upgrade-st2ex-e2e
+test-upgrade-st2ex-e2e: export SKIP_HELM_MIGRATION_TESTS := true
 test-upgrade-st2ex-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh
 test-upgrade-st2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
 test-upgrade-st2ex-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-st2ex-e2e
@@ -528,6 +532,7 @@ test-upgrade-st2ex-e2e: experimental/install.sh kind-load-operator-controller-up
 	-$(KIND) delete cluster --name operator-controller-upgrade-st2ex-e2e
 
 .PHONY: test-st2ex-e2e
+test-st2ex-e2e: export SKIP_HELM_MIGRATION_TESTS := true
 test-st2ex-e2e: RELEASE_INSTALL := $(ROOT_DIR)/standard-install.sh
 test-st2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
 test-st2ex-e2e: KIND_CLUSTER_NAME := operator-controller-st2ex-e2e

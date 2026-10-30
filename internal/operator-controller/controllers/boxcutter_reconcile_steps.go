@@ -102,8 +102,16 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 	return rs, nil
 }
 
+// TODO(OPRUN-4810): Rework Helm storage migration for ClusterObjectDeployment
+// before re-enabling it. Preserve the existing migration implementation for that work.
+const helmStorageMigrationEnabled = false
+
 func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
+		if !helmStorageMigrationEnabled {
+			return nil, nil
+		}
+
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 			labels.OwnerNameKey: ext.GetName(),

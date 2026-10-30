@@ -29,6 +29,13 @@ func TestMain(m *testing.M) {
 	pflag.Parse()
 	opts.Paths = pflag.Args()
 
+	// TODO(OPRUN-4810): Re-enable experimental upgrade coverage once Helm storage
+	// migration has been adapted to ClusterObjectDeployment.
+	if os.Getenv("SKIP_HELM_MIGRATION_TESTS") == "true" {
+		log.Print("Skipping upgrade E2E suite: Helm storage migration is temporarily disabled (OPRUN-4810)")
+		return
+	}
+
 	sc := godog.TestSuite{
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
 			sc.Before(steps.CreateScenarioContext)
