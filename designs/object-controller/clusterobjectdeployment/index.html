@@ -1,0 +1,2124 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ClusterObjectDeployment contract - Operator Lifecycle Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../css/extra.css">
+    
+      <link rel="stylesheet" href="../../../css/terminal-player.css">
+    
+      <link rel="stylesheet" href="../../../css/asciinema-player.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#clusterobjectdeployment-contract" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Operator Lifecycle Manager" class="md-header__button md-logo" aria-label="Operator Lifecycle Manager" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Operator Lifecycle Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ClusterObjectDeployment contract
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Operator Lifecycle Manager" class="md-nav__button md-logo" aria-label="Operator Lifecycle Manager" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    Operator Lifecycle Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Overview
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project/olmv1_community/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project/olmv1_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project/olmv1_design_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project/olmv1_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project/olmv1_roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project/public-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Public API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/olmv1_getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/add-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a Catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/explore-available-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore Content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/install-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/upgrade-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/downgrade-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Downgrade an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/uninstall-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../howto/catalog-queries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catalog queries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../howto/how-to-channel-based-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Channel-Based Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../howto/how-to-pin-version/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Pinning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../howto/how-to-version-range-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Range Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../howto/how-to-z-stream-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Z-Stream Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../howto/how-to-grant-api-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grant Access to Your Extension's API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conceptual Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Conceptual Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/single-owner-objects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Owner Objects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/upgrade-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/crd-upgrade-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CRD Upgrade Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/controlling-catalog-selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Content Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/version-ranges/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Ranges
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-reference/olmv1-api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OLMv1 API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-reference/catalogd-webserver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CatalogD Web Server reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contribute
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribute/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribute/developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developing OLM v1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#desired-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desired API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Desired API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#template-identity-and-revision-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template identity and revision identity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observed-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observed API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Observed API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#progressing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Progressing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-revision-rollout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example revision rollout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deadline-and-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deadline and recovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deadline and recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-a-persisted-rollout-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative: a persisted rollout record
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependencies-and-review-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies and review decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenarios-for-subsequent-prs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenarios for subsequent PRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="clusterobjectdeployment-contract">ClusterObjectDeployment contract</h1>
+<p>ClusterObjectDeployment (COD) is a mutable orchestration resource that creates
+ClusterObjectSet (COS) snapshots and observes their rollout. This proposal defines
+the template, revision lifecycle, and status contract for COD and COS.</p>
+<p>The design was prototyped in <a href="https://github.com/joelanford/orb-operator/tree/76c7c2316efdacf9a3eeb8a68719df9781dacf1e">orb-operator</a>.</p>
+<h2 id="responsibilities">Responsibilities</h2>
+<p>COD owns revision creation, template metadata propagation, and rollout status.
+COS owns phased application, probes, shared-object ownership handoff, and teardown.
+Clients update one COD instead of allocating revision numbers themselves.</p>
+<p>Group membership and controller ownership answer different questions. All COSs
+with the same immutable <code>spec.group</code> are revision-chain members. COD manages only
+COSs controlled by its UID or legitimately adopted from an ownerless state. Revision
+allocation considers the whole group; COD health and revision summaries use its
+owned subset. A foreign controller reference is not replaced.</p>
+<p>Solid arrows show reconciliation and application; dotted arrows show status
+feedback.</p>
+<pre class="mermaid"><code>flowchart TD
+    client["Client"] --&gt;|updates template| cod["ClusterObjectDeployment&lt;br/&gt;Mutable desired state"]
+    cod --&gt;|reconciled by| codController["COD controller"]
+    codController --&gt;|creates and owns snapshots| cos["ClusterObjectSet revisions"]
+    cos --&gt;|reconciled by| cosController["COS controller"]
+    cosController --&gt;|"applies phases, runs probes,&lt;br/&gt;hands off ownership and tears down"| objects["Managed Kubernetes objects"]
+    cosController -.-&gt;|updates rollout status| cos
+    cos -.-&gt;|"conditions, completion timestamps&lt;br/&gt;and object counts"| codController
+    codController -.-&gt;|"Available, Progressing,&lt;br/&gt;activeRevisions and objectCounts"| cod</code></pre>
+<h2 id="desired-api">Desired API</h2>
+<p>The resource is cluster-scoped, has short name <code>cod</code>, and uses
+<code>olm.operatorframework.io/v1</code>. Its status is updated through the status subresource.
+The outer spec and template remain mutable.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Proposed contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>spec.progressDeadlineMinutes</code></td>
+<td>Optional <code>*int32</code>; minimum 1 when supplied. Omitted means no deadline. Explicit 0 is invalid. It belongs to COD, outside the revision template.</td>
+</tr>
+<tr>
+<td><code>spec.template</code></td>
+<td>Required template with bounded metadata and a COS content spec.</td>
+</tr>
+<tr>
+<td><code>spec.template.metadata.labels</code></td>
+<td>Optional map of at most 32 Kubernetes-valid labels, copied onto each COS.</td>
+</tr>
+<tr>
+<td><code>spec.template.metadata.annotations</code></td>
+<td>Optional map of at most 32 Kubernetes-valid annotations, copied onto each COS.</td>
+</tr>
+<tr>
+<td><code>spec.template.spec.collisionProtection</code></td>
+<td>Optional enum: <code>Prevent</code>, <code>IfNoController</code>, or <code>None</code>. Omitted has effective value <code>Prevent</code>, which COD writes explicitly into COS's required field.</td>
+</tr>
+<tr>
+<td><code>spec.template.spec.phases</code></td>
+<td>Required ordered list of 1–20 uniquely named <code>ClusterObjectSetPhase</code> entries. Reuse the existing phase/object validation, including the 50-object phase limit.</td>
+</tr>
+<tr>
+<td><code>spec.template.spec.progressionProbes</code></td>
+<td>Optional <code>[]ProgressionProbe</code> with the existing selector/assertion types and validation. Preserve the current COS probe API until its separate redesign.</td>
+</tr>
+</tbody>
+</table>
+<p>Reuse <a href="https://github.com/operator-framework/operator-controller/blob/53665b0a7926163a122de0f366da8924dfcdfdd2/api/v1/clusterobjectset_types.go">the existing COS content types</a>.
+Objects retain the existing exactly-one-of <code>object</code>/<code>ref</code> representation; references
+continue pointing to immutable Secret content. COD does not dereference or apply
+that content. Inline per-object assertions and ClusterObjectSlice references are
+separate API extensions outside this proposal.</p>
+<p><code>group</code>, <code>revision</code>, and <code>lifecycleState</code> are controller-assigned COS fields and are
+absent from the template. The legacy COS <code>progressDeadlineMinutes</code> field is also
+absent from the template: COD's inactivity deadline has different semantics and
+must not be forwarded into COS. Removing the legacy field is a follow-up change
+after clients are migrated to COD.</p>
+<p>Template metadata applies to the COS resource, not every managed object. To change
+a managed object's labels or annotations, edit that object in the template content.
+COD root metadata is not automatically copied. The controller owns
+<code>olm.operatorframework.io/template-hash</code>; callers cannot supply that key in template
+labels. Caller metadata is cloned rather than mutated when constructing a child.</p>
+<p>Each annotation value is bounded to 256 KiB. The complete copied annotation map
+must also fit Kubernetes' aggregate 256 KiB annotation budget,
+including keys and any controller-added annotations. Validation must prevent a
+template from producing invalid child metadata.</p>
+<h3 id="example-shape">Example shape</h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterObjectDeployment</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">progressDeadlineMinutes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">        </span><span class="nt">app.kubernetes.io/name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">collisionProtection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Prevent</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="nt">phases</span><span class="p">:</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">namespaces</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">          </span><span class="nt">objects</span><span class="p">:</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">object</span><span class="p">:</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">                </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">                </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Namespace</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">                </span><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">                  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resources</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">          </span><span class="nt">objects</span><span class="p">:</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">object</span><span class="p">:</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">                </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">                </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ConfigMap</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">                </span><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">                  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">settings</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">                  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">                </span><span class="nt">data</span><span class="p">:</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">                  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">enabled</span>
+</span></code></pre></div>
+<p>This describes the proposed API shape, not an installable resource before the COD
+API PR lands. Optional structs use value types and <code>omitzero</code>; scalar/map fields use
+the repository's established JSON conventions. The deadline pointer preserves the
+difference between absence and an invalid explicit zero.</p>
+<h2 id="template-identity-and-revision-identity">Template identity and revision identity</h2>
+<p>Both template metadata and template spec participate in identity. Root metadata,
+status, and deadline-only edits do not create a revision. Map key order is
+irrelevant; changes to phase, object, or probe list order participate in identity.</p>
+<p>Identity uses the declared template, before filling controller-assigned COS fields.
+Omission and an explicitly supplied <code>collisionProtection: Prevent</code> are
+distinct templates even though their effective collision behavior is equal. Editing
+between those representations creates a revision. Absent and empty optional maps
+have the same serialized representation.</p>
+<p>A hash identifies candidates; a label match alone does not establish content
+equality or ownership. Matching and <code>AlreadyExists</code> recovery verify the effective
+child template and controller UID. The concrete hash encoding is an implementation
+detail, not a caller-facing promise of collision-free identity.</p>
+<p>Each child has <code>spec.group = COD.metadata.name</code>, a positive <code>int64</code> revision,
+<code>lifecycleState: Active</code>, and name <code>{group}-{revision}</code>. Its controller reference
+contains the COD's actual UID. Allocate revision 1 for an empty group, otherwise
+the maximum existing group revision plus one, including archived or foreign members.
+Refuse allocation at <code>math.MaxInt64</code> rather than wrapping. A → B → A creates a new
+higher revision; an archived COS cannot be reactivated.</p>
+<p>COD names follow the proposed COS group's pattern
+<code>^[a-z]([a-z0-9-]*[a-z0-9])?$</code> and 1–52 character limit. The limit ensures
+<code>COD.name</code> is a valid group. Child names must satisfy the CRD's name validation,
+using the applicable <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/names/">Kubernetes object-name rules</a>.</p>
+<h2 id="observed-api">Observed API</h2>
+<p>COD status exposes conditions, active revisions, and object counts:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Proposed contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status.conditions</code></td>
+<td><code>[]metav1.Condition</code>, keyed by <code>type</code>, with <code>Available</code> and <code>Progressing</code>.</td>
+</tr>
+<tr>
+<td><code>status.activeRevisions</code></td>
+<td>List keyed by COS <code>name</code>, containing the child's current conditions; sorted by increasing revision when written. Includes owned active, non-deleting COSs and a child acknowledged as newly created.</td>
+</tr>
+<tr>
+<td><code>status.objectCounts</code></td>
+<td>Optional copy of the highest owned active COS's counts: <code>total</code>, <code>present</code>, <code>synced</code>, and <code>available</code>. Omitted if that child has not reported counts or no active child exists.</td>
+</tr>
+</tbody>
+</table>
+<p>Counts are not summed across revisions: they may manage overlapping objects. COS
+status remains the source for phase and object details. No additional rollout
+record, desired-template hash, or timer-start field is proposed in COD status.</p>
+<p>Each COD condition records the generation evaluated by the controller.
+<code>observedGeneration</code> does not mean the desired content is installed; the condition
+type and reason supply that meaning. Preserve <code>lastTransitionTime</code> while condition
+status is unchanged, and avoid identical status writes.</p>
+<h3 id="available">Available</h3>
+<p>Available describes the health of the owned active COSs. Count only owned active COSs
+that are not being deleted.</p>
+<table>
+<thead>
+<tr>
+<th>Active revisions</th>
+<th>Available status</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None</td>
+<td><code>False</code></td>
+<td><code>NotAvailable</code></td>
+</tr>
+<tr>
+<td>Exactly one, with COS <code>Ready=True</code></td>
+<td><code>True</code></td>
+<td><code>Available</code></td>
+</tr>
+<tr>
+<td>Exactly one, with COS Ready absent, False, or Unknown</td>
+<td><code>False</code></td>
+<td><code>NotAvailable</code></td>
+</tr>
+<tr>
+<td>More than one</td>
+<td><code>Unknown</code></td>
+<td><code>Progressing</code></td>
+</tr>
+</tbody>
+</table>
+<p>This is current installation health, not a guarantee that the desired template has
+completed. If revision A is healthy but creation of B fails, Available remains True
+while Progressing reports waiting for B, including the creation error. Once B is
+created, Available becomes Unknown during the transition. After a completed revision
+becomes unhealthy, Available becomes False without restarting rollout timing.</p>
+<h3 id="progressing">Progressing</h3>
+<p>Evaluate only the highest owned active revision. A historical matching template
+or an older completed revision does not complete the current rollout. The selected
+child must match the current desired template before its progress is used.</p>
+<table>
+<thead>
+<tr>
+<th>Current rollout state</th>
+<th>Progressing status</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Matching COS has <code>completedAt</code> set</td>
+<td><code>False</code></td>
+<td><code>NewClusterObjectSetProgressed</code></td>
+</tr>
+<tr>
+<td>Matching COS is incomplete, deadline disabled or not exceeded</td>
+<td><code>True</code></td>
+<td><code>NewClusterObjectSetProgressing</code></td>
+</tr>
+<tr>
+<td>No matching COS exists; creation is pending, deadline disabled or not exceeded</td>
+<td><code>True</code></td>
+<td><code>NewClusterObjectSetProgressing</code></td>
+</tr>
+<tr>
+<td>Matching COS or pending creation has exceeded its deadline</td>
+<td><code>False</code></td>
+<td><code>ProgressDeadlineExceeded</code></td>
+</tr>
+</tbody>
+</table>
+<p>Creation failures remain visible in the pending condition message while retries
+continue. Completion is a historical latch: a matching COS that completed once
+continues reporting <code>NewClusterObjectSetProgressed</code> after a health regression.</p>
+<p>Progressing=True describes unfinished rollout work. Progressing=False describes
+completion or an exceeded deadline; the reason distinguishes those states.</p>
+<h3 id="example-revision-rollout">Example revision rollout</h3>
+<p>This example starts with one healthy owned revision A and changes the template to
+B. The new revision completes without exceeding a deadline. Controllers reconcile
+asynchronously, so a reconciliation may observe several changes together.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant client as Client
+    participant api as Kubernetes API
+    participant codController as COD controller
+    participant cosController as COS controller
+    participant objects as Managed objects
+
+    Note over api,codController: A is the only owned active COS&lt;br/&gt;Available=True
+    client-&gt;&gt;api: Update COD template to B
+    api--&gt;&gt;codController: Observe COD change
+    codController-&gt;&gt;api: List all COSs in the group
+    api--&gt;&gt;codController: Group revisions and ownership
+    codController-&gt;&gt;codController: Verify no matching highest owned active COS&lt;br/&gt;Allocate max group revision + 1
+    codController-&gt;&gt;api: Create B snapshot with COD owner UID
+    codController-&gt;&gt;api: Report Available=Unknown, Progressing=True
+    api--&gt;&gt;cosController: Observe new COS
+
+    loop Each phase of B
+        cosController-&gt;&gt;objects: Apply objects and evaluate probes
+        objects--&gt;&gt;cosController: Observed object state
+        cosController-&gt;&gt;api: Persist phase completedAt and object counts
+        api--&gt;&gt;codController: Observe COS status change
+        codController-&gt;&gt;api: Refresh COD status from owned active COSs
+    end
+
+    cosController-&gt;&gt;api: Persist B completedAt and Ready=True
+    api--&gt;&gt;codController: Observe COS completion
+    codController-&gt;&gt;api: Report Progressing=False&lt;br/&gt;Reason: NewClusterObjectSetProgressed
+    cosController-&gt;&gt;api: Archive predecessor A
+    api--&gt;&gt;codController: Observe COS lifecycle change
+    codController-&gt;&gt;api: Report Available=True and only B in activeRevisions</code></pre>
+<h2 id="deadline-and-recovery">Deadline and recovery</h2>
+<p>With a matching incomplete COS, the milestone is the latest of its creation time
+and persisted phase <code>completedAt</code> timestamps. A phase completion advances the
+milestone; polling, error retries, and condition changes do not. Timeout occurs when
+elapsed time is greater than or equal to the configured interval. Completion is
+checked first and ends rollout timing even if the deadline previously elapsed.</p>
+<p>Without a matching COS, use the persisted Progressing condition to evaluate
+pending creation:</p>
+<table>
+<thead>
+<tr>
+<th>Previous Progressing observation</th>
+<th>Pending-creation baseline or result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No previous condition</td>
+<td>COD creation time.</td>
+</tr>
+<tr>
+<td>Status True</td>
+<td>Its existing <code>lastTransitionTime</code>, including across template/generation edits.</td>
+</tr>
+<tr>
+<td>Status False after a completed rollout</td>
+<td>The time the new pending rollout is first observed; the transition to True persists that time.</td>
+</tr>
+<tr>
+<td>Reason <code>ProgressDeadlineExceeded</code> and deadline still enabled</td>
+<td>Remain timed out until a matching COS is created, including across template edits or increases to the deadline.</td>
+</tr>
+</tbody>
+</table>
+<p>Successfully creating a matching COS switches to that COS's creation/phase
+milestones. Restart reconstructs the same evaluation from persisted conditions and
+COS timestamps. Template edits during an ongoing pending rollout retain the
+existing condition-based baseline and do not start a fresh creation window.</p>
+<p>Deadline-only edits do not stamp a COS. For a matching incomplete COS, evaluate the
+new interval against its existing milestone. For a pending timed-out rollout,
+the timeout remains while a deadline is enabled. Removing the deadline
+must stop reporting <code>ProgressDeadlineExceeded</code> and return an incomplete rollout to
+Progressing=True. Deadline disablement takes precedence over a previously recorded
+pending timeout.</p>
+<p>A pending creation always retries, since a failed create may produce no child
+event. With a matching child and a configured unexpired deadline, schedule a wakeup
+no later than expiry even if no status event arrives. After timeout, retain child
+watches and reconciliation; actual later phase progress can resume Progressing,
+and completion ends it. Timeout neither archives children nor automatically rolls
+back. Arithmetic and requeue calculations must remain safe for every admitted
+positive <code>int32</code> deadline value.</p>
+<h3 id="alternative-a-persisted-rollout-record">Alternative: a persisted rollout record</h3>
+<p>A future contract could store the desired template identity and a rollout start
+timestamp together in COD status. That would allow a distinct creation window for
+each new template even when Progressing remains True, and make timer identity
+independent of condition transition times. Deadline-only edits would retain the
+same record; a template identity change would start a new one. Actual phase progress
+would still come from COS timestamps.</p>
+<p>This adds API fields and decisions about when the record starts, changes, or is
+cleared, including recovery after timeout and parent recreation. It would need
+corresponding restart and partial-write tests. The proposed baseline uses condition
+timestamps; a persisted record is an alternative for a separate API discussion if
+independent per-template creation windows are required.</p>
+<h2 id="dependencies-and-review-decisions">Dependencies and review decisions</h2>
+<table>
+<thead>
+<tr>
+<th>Related work</th>
+<th>Contract dependency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>COS group identity</td>
+<td>Immutable group and shared group lookup; COD naming follows the group's admission contract.</td>
+</tr>
+<tr>
+<td>Detailed COS status</td>
+<td>Persistent phase completion, completion latch, and object counts. Existing phase digests do not indicate phase completion.</td>
+</tr>
+<tr>
+<td>COS Ready semantics</td>
+<td>COD reads the child condition type/status, not specific child reason strings.</td>
+</tr>
+<tr>
+<td>Revision chains and foreign ownership</td>
+<td>Keep group membership separate from management ownership. Group-only COS sibling behavior and foreign-leading OwnerConflict handling are separate follow-up changes.</td>
+</tr>
+<tr>
+<td>Deadline and archival migration</td>
+<td>Later migration of legacy COS deadline and archival responsibilities.</td>
+</tr>
+</tbody>
+</table>
+<p>Before merging the API PR, reviewers need to agree on three deliberate choices:</p>
+<ol>
+<li>Include <code>activeRevisions</code> and <code>objectCounts</code> alongside conditions; retain
+   all phase/object detail on COS.</li>
+<li>Define Available as owned installation health, allowing Available=True while a new
+   desired revision cannot be created; Progressing carries the desired rollout.</li>
+<li>Use the condition-based pending timer and sticky timeout, clearing the timeout
+   when the deadline is removed, without adding persisted timer fields.</li>
+</ol>
+<p>The proposal selects these choices so subsequent PRs have a concrete baseline.
+Revision history configuration, ClusterExtension migration, slice storage,
+assertion redesign, rollback/pause APIs, and controller implementation are outside
+this document's change.</p>
+<h2 id="scenarios-for-subsequent-prs">Scenarios for subsequent PRs</h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Expected observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First COD, child not yet Ready</td>
+<td>One active child; Available=False and Progressing=True.</td>
+</tr>
+<tr>
+<td>Same template reapplied or deadline/root metadata edited</td>
+<td>No new COS; conditions reflect current observations.</td>
+</tr>
+<tr>
+<td>Healthy A; B creation denied</td>
+<td>Available=True; Progressing=True with the creation error, then False/ProgressDeadlineExceeded if configured.</td>
+</tr>
+<tr>
+<td>B created but its final phase is blocked</td>
+<td>A and B are active; Available=Unknown; each completed B phase extends its deadline.</td>
+</tr>
+<tr>
+<td>B finishes; existing COS archival completes</td>
+<td>One Ready child; Available=True and Progressing=False/NewClusterObjectSetProgressed.</td>
+</tr>
+<tr>
+<td>A restored after B</td>
+<td>A new higher immutable revision; no reactivation of an archived COS.</td>
+</tr>
+<tr>
+<td>Completed child becomes unhealthy</td>
+<td>Available=False; Progressing stays False/NewClusterObjectSetProgressed.</td>
+</tr>
+<tr>
+<td>Timed-out pending creation; template edited</td>
+<td>Still timed out until creation succeeds or the deadline is removed.</td>
+</tr>
+<tr>
+<td>Matching incomplete child; timeout then later phase progress</td>
+<td>Resume Progressing=True if the new milestone is within the interval.</td>
+</tr>
+<tr>
+<td>Restart during a stalled rollout</td>
+<td>Existing creation, phase, and condition timestamps determine the remaining window.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Implementation and migration note</strong></p>
+<p>Initially, the existing COS controller continues archiving predecessors.
+Moving archival and adding <code>revisionHistoryLimit</code> are follow-up changes.
+ClusterExtension continues creating COSs directly until it is migrated to use COD.</p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.copy", "navigation.top", "navigation.indexes"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../../js/asciinema-player.min.js"></script>
+      
+    
+  </body>
+</html>
