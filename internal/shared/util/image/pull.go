@@ -34,10 +34,30 @@ type Puller interface {
 var insecurePolicy = []byte(`{"default":[{"type":"insecureAcceptAnything"}]}`)
 
 type ContainersImagePuller struct {
-	SourceCtxFunc func(context.Context) (*types.SystemContext, error)
+	SourceCtxFunc                    func(context.Context) (*types.SystemContext, error)
+	CatalogRollbackProtectionEnabled bool
 }
 
+var _ Puller = (*ContainersImagePuller)(nil)
+
 func (p *ContainersImagePuller) Pull(ctx context.Context, ownerID string, ref string, cache Cache) (fs.FS, reference.Canonical, time.Time, error) {
+	var validate func(reference.Canonical) error
+	if p.CatalogRollbackProtectionEnabled {
+		protector, ok := cache.(CatalogRollbackProtector)
+		if !ok {
+			return nil, nil, time.Time{}, fmt.Errorf("catalog cache does not provide rollback protection")
+		}
+		validate = func(canonicalRef reference.Canonical) error {
+			if err := protector.ValidateCatalog(ctx, ownerID, ref, canonicalRef); err != nil {
+				return err
+			}
+			return protector.AcceptCatalog(ctx, ownerID, ref, canonicalRef)
+		}
+	}
+	return p.pullWithValidation(ctx, ownerID, ref, cache, validate)
+}
+
+func (p *ContainersImagePuller) pullWithValidation(ctx context.Context, ownerID string, ref string, cache Cache, validate func(reference.Canonical) error) (fs.FS, reference.Canonical, time.Time, error) {
 	srcCtx, err := p.SourceCtxFunc(ctx)
 	if err != nil {
 		return nil, nil, time.Time{}, err
@@ -51,7 +71,7 @@ func (p *ContainersImagePuller) Pull(ctx context.Context, ownerID string, ref st
 	l := log.FromContext(ctx, "ref", dockerRef.String())
 	ctx = log.IntoContext(ctx, l)
 
-	fsys, canonicalRef, modTime, err := p.pull(ctx, ownerID, dockerRef, cache, srcCtx)
+	fsys, canonicalRef, modTime, err := p.pull(ctx, ownerID, dockerRef, cache, srcCtx, validate)
 	if err != nil {
 		// Log any CertificateVerificationErrors, and log Docker Certificates if necessary
 		if http.LogCertificateVerificationError(err, l) {
@@ -62,7 +82,7 @@ func (p *ContainersImagePuller) Pull(ctx context.Context, ownerID string, ref st
 	return fsys, canonicalRef, modTime, nil
 }
 
-func (p *ContainersImagePuller) pull(ctx context.Context, ownerID string, dockerRef reference.Named, cache Cache, srcCtx *types.SystemContext) (fs.FS, reference.Canonical, time.Time, error) {
+func (p *ContainersImagePuller) pull(ctx context.Context, ownerID string, dockerRef reference.Named, cache Cache, srcCtx *types.SystemContext, validate func(reference.Canonical) error) (fs.FS, reference.Canonical, time.Time, error) {
 	l := log.FromContext(ctx)
 
 	dockerImgRef, err := docker.NewReference(dockerRef)
@@ -97,6 +117,11 @@ func (p *ContainersImagePuller) pull(ctx context.Context, ownerID string, docker
 		return nil, nil, time.Time{}, fmt.Errorf("error checking cache for existing content: %w", err)
 	}
 	if fsys != nil {
+		if validate != nil {
+			if err := validate(canonicalRef); err != nil {
+				return nil, nil, time.Time{}, err
+			}
+		}
 		return fsys, canonicalRef, modTime, nil
 	}
 
@@ -167,6 +192,11 @@ func (p *ContainersImagePuller) pull(ctx context.Context, ownerID string, docker
 	fsys, modTime, err = p.applyImage(ctx, ownerID, dockerRef, canonicalRef, layoutImgRef, cache, srcCtx)
 	if err != nil {
 		return nil, nil, time.Time{}, fmt.Errorf("error applying image: %w", err)
+	}
+	if validate != nil {
+		if err := validate(canonicalRef); err != nil {
+			return nil, nil, time.Time{}, err
+		}
 	}
 
 	/////////////////////////////////////////////////////////////
