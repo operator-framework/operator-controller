@@ -37,6 +37,10 @@ type ClusterObjectDeploymentStatusApplyConfiguration struct {
 	// Progressing is False with reason InvalidSpecification when spec.template.metadata
 	// contains labels or annotations that are not valid for the resulting
 	// ClusterObjectSet; no new revision is created until the metadata is corrected.
+	// Progressing is False with reason OwnerConflict when the highest active,
+	// non-deleting revision in the deployment's group is controlled by another
+	// controller. No new revision is created while the conflict persists, even if
+	// an owned revision has completed or exceeded its progress deadline.
 	//
 	// While a rollout is incomplete, Progressing also reflects why the latest (head
 	// active) ClusterObjectSet revision is not yet Ready. It is True with reason
@@ -50,10 +54,12 @@ type ClusterObjectDeploymentStatusApplyConfiguration struct {
 	// named ClusterObjectSet revision for the specific cause.
 	//
 	// Available is True with reason Available when at least one active (non-archived)
-	// ClusterObjectSet revision is Ready, so the deployment remains available across
+	// owned ClusterObjectSet revision is Ready, so the deployment remains available across
 	// rollouts while a previous revision is still Ready. It is False with reason
 	// Unavailable when active revisions exist but none are Ready yet, or with reason
-	// NoActiveRevision when no active revision exists.
+	// NoActiveRevision when no owned active revision exists. Revisions without a
+	// controller owner, or controlled by a same-named deployment with an older UID,
+	// are adopted before status is calculated. Foreign-owned revisions are excluded.
 	Conditions []metav1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 }
 

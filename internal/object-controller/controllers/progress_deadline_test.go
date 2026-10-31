@@ -46,6 +46,19 @@ func TestCODDeadlineAwareRateLimiter(t *testing.T) {
 		{name: "expired revision wakes immediately", elapsed: 10 * time.Minute, backoff: 15 * time.Minute},
 		{name: "creation pending has no deadline", elapsed: time.Hour, backoff: 15 * time.Minute, omitCOS: true, expectWait: 15 * time.Minute},
 		{
+			name: "foreign revision has no deployment deadline", elapsed: time.Hour, backoff: 15 * time.Minute, expectWait: 15 * time.Minute,
+			mutate: func(_ *ocv1.ClusterObjectDeployment, cos *ocv1.ClusterObjectSet) {
+				cos.OwnerReferences[0].Name = "other-deployment"
+				cos.OwnerReferences[0].UID = "foreign-uid"
+			},
+		},
+		{
+			name: "unadopted revision has no deployment deadline", elapsed: time.Hour, backoff: 15 * time.Minute, expectWait: 15 * time.Minute,
+			mutate: func(_ *ocv1.ClusterObjectDeployment, cos *ocv1.ClusterObjectSet) {
+				cos.OwnerReferences = nil
+			},
+		},
+		{
 			name: "changed template waits for its own revision", elapsed: time.Hour, backoff: 15 * time.Minute, expectWait: 15 * time.Minute,
 			mutate: func(cod *ocv1.ClusterObjectDeployment, _ *ocv1.ClusterObjectSet) {
 				cod.Spec.Template.Spec.CollisionProtection = ocv1.CollisionProtectionIfNoController
@@ -191,6 +204,23 @@ func TestCODDeadlineAwareRateLimiter_DeadlineRemoved(t *testing.T) {
 				revisions.Items[0].DeletionTimestamp = &metav1.Time{Time: creation}
 			},
 		},
+		{
+			name: "revision ownership changes",
+			mutateRevisions: func(revisions *ocv1.ClusterObjectSetList) {
+				revisions.Items[0].OwnerReferences[0].UID = "old-deployment-uid"
+			},
+		},
+		{
+			name: "foreign leading revision appears",
+			mutateRevisions: func(revisions *ocv1.ClusterObjectSetList) {
+				foreign := revisions.Items[0].DeepCopy()
+				foreign.Name += "-foreign"
+				foreign.Spec.Revision++
+				foreign.OwnerReferences[0].Name = "other-deployment"
+				foreign.OwnerReferences[0].UID = "foreign-uid"
+				revisions.Items = append(revisions.Items, *foreign)
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cod, cos := deadlineRateLimiterObjects(creation)
@@ -236,11 +266,12 @@ func TestCODDeadlineAwareRateLimiter_DeadlineRemoved(t *testing.T) {
 
 func deadlineRateLimiterObjects(creation time.Time) (*ocv1.ClusterObjectDeployment, *ocv1.ClusterObjectSet) {
 	cod := &ocv1.ClusterObjectDeployment{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-cod"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test-cod", UID: "test-cod-uid"},
 		Spec:       ocv1.ClusterObjectDeploymentSpec{Template: testTemplate()},
 	}
 	cod.Spec.Template.Spec.ProgressDeadlineMinutes = 10
 	cos := buildClusterObjectSet(cod, 1, templateHash(cod.Spec.Template))
+	cos.OwnerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(cod, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind))}
 	cos.CreationTimestamp = metav1.NewTime(creation)
 	return cod, cos
 }
