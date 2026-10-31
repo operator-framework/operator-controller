@@ -245,6 +245,7 @@ spec:
                                     == 1
                               maxItems: 50
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - name
                           - objects

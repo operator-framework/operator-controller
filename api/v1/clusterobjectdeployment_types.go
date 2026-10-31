@@ -137,7 +137,7 @@ type ClusterObjectDeploymentTemplateSpec struct {
 	// Objects and phases may override it.
 	// +required
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
-	CollisionProtection CollisionProtection `json:"collisionProtection"`
+	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
 // ClusterObjectDeploymentStatus reports rollout progress.
