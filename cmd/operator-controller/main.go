@@ -30,7 +30,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.podman.io/image/v5/types"
-	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
@@ -70,6 +69,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	cacheutil "github.com/operator-framework/operator-controller/internal/shared/util/cache"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
@@ -237,28 +237,7 @@ func run() error {
 	}
 
 	setupLog.Info("set up manager")
-	cacheOptions := crcache.Options{
-		ByObject: map[client.Object]crcache.ByObject{
-			&ocv1.ClusterExtension{}:     {Label: k8slabels.Everything()},
-			&ocv1.ClusterCatalog{}:       {Label: k8slabels.Everything()},
-			&rbacv1.ClusterRole{}:        {Label: k8slabels.Everything()},
-			&rbacv1.ClusterRoleBinding{}: {Label: k8slabels.Everything()},
-			&rbacv1.Role{}:               {Namespaces: map[string]crcache.Config{}, Label: k8slabels.Everything()},
-			&rbacv1.RoleBinding{}:        {Namespaces: map[string]crcache.Config{}, Label: k8slabels.Everything()},
-		},
-		DefaultNamespaces: map[string]crcache.Config{
-			cfg.systemNamespace: {LabelSelector: k8slabels.Everything()},
-		},
-		DefaultLabelSelector: k8slabels.Nothing(),
-		// Memory optimization: strip managed fields and large annotations from cached objects
-		DefaultTransform: cacheutil.StripAnnotations(),
-	}
-
-	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		cacheOptions.ByObject[&ocv1.ClusterObjectSet{}] = crcache.ByObject{
-			Label: k8slabels.Everything(),
-		}
-	}
+	cacheOptions := newCacheOptions(cfg.systemNamespace, features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime))
 
 	saKey, err := sautil.GetServiceAccount()
 	if err != nil {
@@ -564,6 +543,71 @@ func run() error {
 		return err
 	}
 	return nil
+}
+
+// newCacheOptions configures operator-controller's view of extension resources.
+// The object-controller must retain full CODs and COSs regardless of OLM labels.
+func newCacheOptions(systemNamespace string, boxcutterRuntime bool) crcache.Options {
+	options := crcache.Options{
+		ByObject: map[client.Object]crcache.ByObject{
+			&ocv1.ClusterExtension{}: {Label: k8slabels.Everything()},
+			&ocv1.ClusterCatalog{}:   {Label: k8slabels.Everything()},
+		},
+		DefaultNamespaces: map[string]crcache.Config{
+			systemNamespace: {LabelSelector: k8slabels.Everything()},
+		},
+		DefaultLabelSelector: k8slabels.Nothing(),
+		DefaultTransform:     cacheutil.StripAnnotations(),
+	}
+	if !boxcutterRuntime {
+		return options
+	}
+
+	options.ByObject[&ocv1.ClusterObjectDeployment{}] = crcache.ByObject{
+		// Keep unlabeled CODs visible to name-based reads and ownership
+		// checks, without retaining their unrelated template and rollout status.
+		Label:     k8slabels.Everything(),
+		Transform: transformClusterObjectDeployment,
+	}
+	options.ByObject[&ocv1.ClusterObjectSet{}] = crcache.ByObject{
+		// Keep all COS objects for group indexing, revision discovery, and storage migration.
+		Label:     k8slabels.Everything(),
+		Transform: transformClusterObjectSet,
+	}
+	return options
+}
+
+func transformClusterObjectDeployment(obj any) (any, error) {
+	if cod, ok := obj.(*ocv1.ClusterObjectDeployment); ok {
+		if _, hasOwnerName := cod.Labels[labels.OwnerNameKey]; !hasOwnerName {
+			cod.Spec = ocv1.ClusterObjectDeploymentSpec{}
+			cod.Status = ocv1.ClusterObjectDeploymentStatus{}
+		}
+	}
+	// A per-object transform replaces DefaultTransform rather than composing
+	// with it. Preserve the existing annotation stripping for all CODs.
+	return cacheutil.StripAnnotations()(obj)
+}
+
+func transformClusterObjectSet(obj any) (any, error) {
+	if cos, ok := obj.(*ocv1.ClusterObjectSet); ok {
+		if _, hasOwnerName := cos.Labels[labels.OwnerNameKey]; !hasOwnerName {
+			cos.Spec = ocv1.ClusterObjectSetSpec{
+				// Keep group, revision, and lifecycleState, which are used to determine
+				// if the latest active revision of a group is foreign to the CE.
+				Group:          cos.Spec.Group,
+				Revision:       cos.Spec.Revision,
+				LifecycleState: cos.Spec.LifecycleState,
+			}
+			cos.Status = ocv1.ClusterObjectSetStatus{
+				CompletedAt: cos.Status.CompletedAt,
+				Conditions:  cos.Status.Conditions,
+			}
+		}
+	}
+	// A per-object transform replaces DefaultTransform rather than composing
+	// with it. Preserve the existing annotation stripping for all COSs.
+	return cacheutil.StripAnnotations()(obj)
 }
 
 func getCertificateProvider() render.CertificateProvider {
