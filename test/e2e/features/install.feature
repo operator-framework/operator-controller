@@ -448,6 +448,67 @@ Feature: Install ClusterExtension
       """
 
   @BoxcutterRuntime
+  Scenario: First install reports Retrying and a failed install when a foreign-owned revision blocks the deployment
+    Given a catalog "test" with packages:
+      | package | version | channel | replaces | contents  |
+      | test    | 1.2.0   | beta    |          | ConfigMap |
+    And ClusterObjectSet with Namespace owner "${TEST_NAMESPACE}" is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${NAME}-2
+      spec:
+        group: ${NAME}
+        revision: 2
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - object:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: ${NAME}-foreign
+                namespace: ${TEST_NAMESPACE}
+              data:
+                k: foreign
+      """
+    And ClusterObjectSet "${NAME}-2" reports Ready as True with Reason AllObjectsReady
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            version: 1.2.0
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+      """
+    Then ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason OwnerConflict and Message includes:
+      """
+      ClusterObjectSet "${NAME}-2" (revision 2) is controlled by v1 Namespace "${TEST_NAMESPACE}"
+      """
+    And ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+      """
+      ClusterObjectSet "${NAME}-2" (revision 2) is controlled by v1 Namespace "${TEST_NAMESPACE}"
+      """
+    And ClusterExtension reports Installed as False with Reason Failed
+    When ClusterObjectSet "${NAME}-2" lifecycle is set to "Archived"
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "${PACKAGE:test}.1.2.0" is installed in version "1.2.0"
+    And ClusterObjectSet "${NAME}-3" reports Ready as True with Reason AllObjectsReady
+
+  @BoxcutterRuntime
   Scenario: ClusterExtension installs via a ClusterObjectDeployment that owns the revision
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents                   |

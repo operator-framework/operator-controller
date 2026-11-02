@@ -289,6 +289,14 @@ exceeded its progress deadline. Availability still depends only on owned active
 revisions; a previous ready revision can keep the COD `Available=True` during the
 conflict.
 
+For a ClusterExtension, `OwnerConflict` maps to `Progressing=True` with reason
+`Retrying`, preserving the deployment's message about the conflicting revision
+and its controller. A first install reports `Installed=False` with reason
+`Failed`. During an upgrade, the previously installed bundle and its `Installed=True`
+condition are preserved until the new rollout completes, with `observedGeneration`
+updated to acknowledge the current spec. Reconciliation resumes automatically when
+the ownership conflict clears.
+
 `RevisionObjectCollision` and `RevisionInvalidSpecification` are *hard stalls*:
 they will not resolve on their own, so they report `Progressing=False` and take
 precedence over `ProgressDeadlineExceeded` (the actionable cause is more useful
