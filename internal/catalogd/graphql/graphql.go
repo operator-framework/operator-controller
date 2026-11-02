@@ -12,7 +12,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"k8s.io/klog/v2"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 )
 
 // Pre-compiled regex patterns to avoid repeated compilation in hot paths

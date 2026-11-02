@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	regv1bundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	regv1bundle "github.com/operator-framework/operator-registry/v2/pkg/lib/bundle"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 )
