@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sresource "k8s.io/cli-runtime/pkg/resource"
+	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -372,11 +373,16 @@ func ImageRegistryIsAvailable() error {
 // OLMisAvailable waits for the OLM operator-controller deployment to become available. Polls with timeout.
 func OLMisAvailable(ctx context.Context) error {
 	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient(ctx, "get", "deployment", "-n", olmNamespace, olmDeploymentName, "-o", "jsonpath='{.status.conditions[?(@.type==\"Available\")].status}'")
+		v, err := k8sClient(ctx, "get", "deployment", "-n", olmNamespace, olmDeploymentName, "-o", "json")
 		if err != nil {
 			return false
 		}
-		return v == "'True'"
+		var deployment appsv1.Deployment
+		if err := json.Unmarshal([]byte(v), &deployment); err != nil || !generationObserved(deployment.Generation, deployment.Status.ObservedGeneration) {
+			return false
+		}
+		condition := deploymentutil.GetDeploymentCondition(deployment.Status, appsv1.DeploymentAvailable)
+		return condition != nil && condition.Status == corev1.ConditionTrue
 	}, timeout, tick)
 
 	if rec := RecorderFromContext(ctx); rec != nil {
@@ -391,15 +397,17 @@ func BundleInstalled(ctx context.Context, name, version string) error {
 	sc := scenarioCtx(ctx)
 	name = substituteScenarioVars(name, sc)
 	waitFor(ctx, func() bool {
-		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.install.bundle}")
+		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "json")
 		if err != nil {
 			return false
 		}
-		var bundle map[string]interface{}
-		if err := json.Unmarshal([]byte(v), &bundle); err != nil {
+		var ext ocv1.ClusterExtension
+		if err := json.Unmarshal([]byte(v), &ext); err != nil {
 			return false
 		}
-		return bundle["name"] == name && bundle["version"] == version
+		installed := currentCondition(ext.Generation, ext.Status.Conditions, ocv1.TypeInstalled)
+		return conditionMatches(installed, metav1.ConditionTrue, nil, nil) &&
+			ext.Status.Install.Bundle.Name == name && ext.Status.Install.Bundle.Version == version
 	})
 	return nil
 }
@@ -684,14 +692,14 @@ func ClusterObjectDeploymentIsOwnedByClusterExtension(ctx context.Context, codNa
 func NamedClusterExtensionReportsCondition(ctx context.Context, extName, conditionType, conditionStatus string) error {
 	sc := scenarioCtx(ctx)
 	extName = substituteScenarioVars(extName, sc)
-	return waitForCondition(ctx, "clusterextension", extName, conditionType, conditionStatus, nil, nil)
+	return waitForCondition(ctx, "clusterextension", extName, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
 }
 
 // NamedClusterExtensionReportsConditionWithMessageFragment waits for a specific ClusterExtension (by name)
 // to have a condition matching type, status, reason, with a message containing the specified fragment.
 func NamedClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, extName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
 	extName = substituteScenarioVars(extName, scenarioCtx(ctx))
-	return waitForCondition(ctx, "clusterextension", extName, conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
+	return waitForCondition(ctx, "clusterextension", extName, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterExtensionVersionUpdate patches the ClusterExtension's catalog version to the specified value.
@@ -772,13 +780,9 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 // ClusterExtensionIsAvailable waits for the ClusterExtension's Installed condition to be True. Polls with timeout.
 func ClusterExtensionIsAvailable(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
-	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.conditions[?(@.type==\"Installed\")].status}")
-		if err != nil {
-			return false
-		}
-		return v == "True"
-	}, timeout, tick)
+	if err := waitForExtensionCondition(ctx, ocv1.TypeInstalled, metav1.ConditionTrue, nil, nil); err != nil {
+		return err
+	}
 
 	if rec := RecorderFromContext(ctx); rec != nil {
 		out, _ := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status}")
@@ -794,43 +798,28 @@ func ClusterExtensionIsAvailable(ctx context.Context) error {
 	return nil
 }
 
-// ClusterExtensionReconciledLatestGeneration waits for the ClusterExtension's observedGeneration to match its metadata generation. Polls with timeout.
+// ClusterExtensionReconciledLatestGeneration waits for the Progressing condition
+// to observe the current generation, regardless of its status or reason. This
+// confirms the spec was processed, not that the rollout succeeded.
 func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	waitFor(ctx, func() bool {
-		// Get both generation and observedGeneration in a single kubectl call
-		output, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName,
-			"-o", "jsonpath={.metadata.generation},{.status.conditions[?(@.type=='Progressing')].observedGeneration}")
-		if err != nil || output == "" {
+		resource, err := readResourceConditions(ctx, "clusterextension", sc.clusterExtensionName)
+		if err != nil {
 			return false
 		}
-		parts := strings.Split(output, ",")
-		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-			return false
-		}
-		// Both exist and are equal means reconciliation happened
-		return parts[0] == parts[1]
+		return currentCondition(resource.Metadata.Generation, resource.Status.Conditions, ocv1.TypeProgressing) != nil
 	})
 	return nil
 }
 
 // ClusterExtensionIsRolledOut waits for the ClusterExtension's Progressing condition to be True with reason Succeeded,
-// then gathers its constituent resources into the scenario context. Polls with timeout.
+// for the current generation, then gathers its constituent resources into the scenario context. Polls with timeout.
 func ClusterExtensionIsRolledOut(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
-	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.conditions[?(@.type==\"Progressing\")]}")
-		if err != nil {
-			return false
-		}
-
-		var condition map[string]interface{}
-		if err := json.Unmarshal([]byte(v), &condition); err != nil {
-			return false
-		}
-
-		return condition["status"] == "True" && condition["reason"] == "Succeeded" && condition["type"] == "Progressing"
-	}, timeout, tick)
+	if err := waitForExtensionCondition(ctx, ocv1.TypeProgressing, metav1.ConditionTrue, ptr.To(ocv1.ReasonSucceeded), nil); err != nil {
+		return err
+	}
 
 	if rec := RecorderFromContext(ctx); rec != nil {
 		out, _ := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName)
@@ -931,33 +920,21 @@ func messageFragmentComparison(ctx context.Context, msgFragment *godog.DocString
 	}
 }
 
-func waitForCondition(ctx context.Context, resourceType, resourceName, conditionType, conditionStatus string, conditionReason *string, msgCmp msgMatchFn) error {
+// waitForCondition requires the asserted condition to reflect metadata.generation,
+// in addition to matching the requested status, reason, and message.
+func waitForCondition(ctx context.Context, resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason *string, msgCmp msgMatchFn) error {
 	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient(ctx, "get", resourceType, resourceName, "-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
+		resource, err := readResourceConditions(ctx, resourceType, resourceName)
 		if err != nil {
 			return false
 		}
-
-		var condition metav1.Condition
-		if err := json.Unmarshal([]byte(v), &condition); err != nil {
-			return false
-		}
-		if condition.Status != metav1.ConditionStatus(conditionStatus) {
-			return false
-		}
-		if conditionReason != nil && condition.Reason != *conditionReason {
-			return false
-		}
-		if msgCmp != nil && !msgCmp(condition.Message) {
-			return false
-		}
-
-		return true
+		condition := currentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
+		return conditionMatches(condition, conditionStatus, conditionReason, msgCmp)
 	}, timeout, tick)
 	return nil
 }
 
-func waitForExtensionCondition(ctx context.Context, conditionType, conditionStatus string, conditionReason *string, msgCmp msgMatchFn) error {
+func waitForExtensionCondition(ctx context.Context, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason *string, msgCmp msgMatchFn) error {
 	sc := scenarioCtx(ctx)
 	return waitForCondition(ctx, "clusterextension", sc.clusterExtensionName, conditionType, conditionStatus, conditionReason, msgCmp)
 }
@@ -965,13 +942,13 @@ func waitForExtensionCondition(ctx context.Context, conditionType, conditionStat
 // ClusterExtensionReportsCondition waits for the ClusterExtension to have a condition matching the specified type,
 // status, reason, and exact message. Polls with timeout.
 func ClusterExtensionReportsCondition(ctx context.Context, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
-	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, messageComparison(ctx, msg))
+	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageComparison(ctx, msg))
 }
 
 // ClusterExtensionReportsConditionWithMessageFragment waits for the ClusterExtension to have a condition matching
 // type, status, and reason, with a message containing the specified fragment. Polls with timeout.
 func ClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
+	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterExtensionReportsConditionWithoutMsg waits for the ClusterExtension to have a condition matching type,
@@ -983,7 +960,7 @@ func ClusterExtensionReportsConditionWithoutMsg(ctx context.Context, conditionTy
 // ClusterExtensionReportsConditionWithoutReason waits for the ClusterExtension to have a condition matching type
 // and status, without checking reason or message. Polls with timeout.
 func ClusterExtensionReportsConditionWithoutReason(ctx context.Context, conditionType, conditionStatus string) error {
-	return waitForExtensionCondition(ctx, conditionType, conditionStatus, nil, nil)
+	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
 }
 
 // ClusterExtensionReportsConditionTransitionTime asserts that a condition's lastTransitionTime falls within
@@ -998,11 +975,16 @@ func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditi
 	creationTimestamp, err := time.Parse(time.RFC3339, creationTimestampValue)
 	require.NoError(t, err, "failed to parse ClusterObjectSet creationTimestamp")
 
-	lastTransitionTimeValue, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o",
-		fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")].lastTransitionTime}", conditionType))
-	require.NoError(t, err)
-	lastTransitionTime, err := time.Parse(time.RFC3339, lastTransitionTimeValue)
-	require.NoError(t, err, "failed to parse ClusterExtension lastTransitionTime")
+	var condition *metav1.Condition
+	waitFor(ctx, func() bool {
+		resource, err := readResourceConditions(ctx, "clusterextension", sc.clusterExtensionName)
+		if err != nil {
+			return false
+		}
+		condition = currentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
+		return condition != nil && !condition.LastTransitionTime.IsZero()
+	})
+	lastTransitionTime := condition.LastTransitionTime.Time
 
 	transitionDuration := lastTransitionTime.Sub(creationTimestamp)
 	minDuration := time.Duration(minMinutes) * time.Minute
@@ -1019,31 +1001,31 @@ func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditi
 // ClusterObjectSetReportsConditionWithoutMsg waits for the named ClusterObjectSet to have a condition
 // matching type, status, and reason. Polls with timeout.
 func ClusterObjectSetReportsConditionWithoutMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, nil)
+	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, nil)
 }
 
 // ClusterObjectSetReportsConditionWithMsg waits for the named ClusterObjectSet to have a condition
 // matching type, status, reason, and message. Polls with timeout.
 func ClusterObjectSetReportsConditionWithMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageComparison(ctx, msg))
+	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageComparison(ctx, msg))
 }
 
 // ClusterObjectSetReportsConditionWithMessageFragment waits for the named ClusterObjectSet to have a condition
 // matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
 func ClusterObjectSetReportsConditionWithMessageFragment(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
+	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterObjectDeploymentReportsConditionWithoutMsg waits for the named ClusterObjectDeployment to have a
 // condition matching type, status, and reason. Polls with timeout.
 func ClusterObjectDeploymentReportsConditionWithoutMsg(ctx context.Context, name, conditionType, conditionStatus, conditionReason string) error {
-	return waitForCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, nil)
+	return waitForCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, nil)
 }
 
 // ClusterObjectDeploymentReportsConditionWithMessageFragment waits for the named ClusterObjectDeployment to have a
 // condition matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
 func ClusterObjectDeploymentReportsConditionWithMessageFragment(ctx context.Context, name, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	return waitForCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, messageFragmentComparison(ctx, msgFragment))
+	return waitForCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterObjectDeploymentConsistentlyReportsCondition fails if, over the given
@@ -1056,7 +1038,7 @@ func ClusterObjectDeploymentConsistentlyReportsCondition(ctx context.Context, na
 	if err != nil {
 		return fmt.Errorf("invalid duration %q: %w", durationStr, err)
 	}
-	return consistentlyCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, conditionStatus, conditionReason, d)
+	return consistentlyCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), conditionReason, d)
 }
 
 // consistently invokes check every tick until duration elapses. Each call is one
@@ -1098,24 +1080,21 @@ func consistently(ctx context.Context, duration time.Duration, check func(contex
 }
 
 // conditionCheck returns a consistently check that verifies a single condition's status
-// and reason on the named resource. A failed API read is returned as a transient error
+// and reason for the current generation on the named resource. A failed API read is returned as a transient error
 // (the condition's real state is unknown while the read is failing). A successful read
 // that does not contain the condition, or shows a different status or reason, fails
 // immediately: a condition that disappears or changes is not being reported consistently.
-func conditionCheck(resourceType, resourceName, conditionType, conditionStatus, conditionReason string) func(context.Context) error {
+func conditionCheck(resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason string) func(context.Context) error {
 	return func(ctx context.Context) error {
 		t := godog.T(ctx)
-		v, err := k8sClient(ctx, "get", resourceType, resourceName, "-o",
-			fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
+		resource, err := readResourceConditions(ctx, resourceType, resourceName)
 		if err != nil {
-			return fmt.Errorf("reading %s %q: %w", resourceType, resourceName, err)
+			return err
 		}
-		require.NotEmptyf(t, v,
-			"%s %s condition disappeared during the consistency window", resourceType, conditionType)
-		var condition metav1.Condition
-		require.NoErrorf(t, json.Unmarshal([]byte(v), &condition),
-			"unmarshaling %s %s condition during the consistency window", resourceType, conditionType)
-		require.Equalf(t, metav1.ConditionStatus(conditionStatus), condition.Status,
+		condition := currentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
+		require.NotNilf(t, condition,
+			"%s %s condition disappeared or has not observed generation %d during the consistency window", resourceType, conditionType, resource.Metadata.Generation)
+		require.Equalf(t, conditionStatus, condition.Status,
 			"%s %s condition status changed during the consistency window", resourceType, conditionType)
 		require.Equalf(t, conditionReason, condition.Reason,
 			"%s %s condition reason changed during the consistency window", resourceType, conditionType)
@@ -1127,7 +1106,7 @@ func conditionCheck(resourceType, resourceName, conditionType, conditionStatus, 
 // resource's condition deviates from the expected type/status/reason or disappears.
 // Transient API read failures are tolerated only briefly; see consistently and
 // conditionCheck for the exact semantics.
-func consistentlyCondition(ctx context.Context, resourceType, resourceName, conditionType, conditionStatus, conditionReason string, duration time.Duration) error {
+func consistentlyCondition(ctx context.Context, resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason string, duration time.Duration) error {
 	return consistently(ctx, duration, conditionCheck(resourceType, resourceName, conditionType, conditionStatus, conditionReason))
 }
 
@@ -1149,12 +1128,20 @@ func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName st
 	phaseName = substituteScenarioVars(phaseName, sc)
 
 	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o",
-			fmt.Sprintf(`jsonpath={.status.observedPhases[?(@.name=="%s")].digest}`, phaseName))
+		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
 		if err != nil {
 			return false
 		}
-		return strings.TrimSpace(out) != ""
+		var cos ocv1.ClusterObjectSet
+		if err := json.Unmarshal([]byte(out), &cos); err != nil || currentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
+			return false
+		}
+		for _, phase := range cos.Status.ObservedPhases {
+			if phase.Name == phaseName {
+				return phase.Digest != ""
+			}
+		}
+		return false
 	})
 	return nil
 }
@@ -1162,7 +1149,7 @@ func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName st
 // ClusterObjectSetIsArchived waits for the named ClusterObjectSet to have Ready=False
 // with reason Archived. Polls with timeout.
 func ClusterObjectSetIsArchived(ctx context.Context, revisionName string) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Ready", "False", ptr.To("Archived"), nil)
+	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Ready", metav1.ConditionFalse, ptr.To("Archived"), nil)
 }
 
 // ClusterObjectSetIsEventuallyDeleted waits for the named ClusterObjectSet to be
@@ -1192,7 +1179,7 @@ func ClusterObjectSetPhaseHasObjectCounts(ctx context.Context, cosName, phaseNam
 			return false
 		}
 		var cos ocv1.ClusterObjectSet
-		if err := json.Unmarshal([]byte(out), &cos); err != nil {
+		if err := json.Unmarshal([]byte(out), &cos); err != nil || currentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
 			return false
 		}
 		for _, phase := range cos.Status.ObservedPhases {
@@ -1219,7 +1206,7 @@ func ClusterObjectSetHasAggregateObjectCounts(ctx context.Context, cosName strin
 			return false
 		}
 		var cos ocv1.ClusterObjectSet
-		if err := json.Unmarshal([]byte(out), &cos); err != nil {
+		if err := json.Unmarshal([]byte(out), &cos); err != nil || currentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
 			return false
 		}
 		return cos.Status.ObjectCounts.Total == total &&
@@ -3024,8 +3011,9 @@ func DeploymentPodTemplateHasAnnotation(ctx context.Context, deploymentName, ann
 
 // TriggerClusterExtensionReconciliation patches the ClusterExtension spec to bump
 // its metadata generation, forcing the controller to run a full reconciliation loop.
-// Use with "ClusterExtension has been reconciled the latest generation" to confirm
-// the controller processed the change before asserting on the cluster state.
+// Follow with "ClusterExtension has been reconciled the latest generation" to
+// confirm the controller processed the change before asserting on the cluster
+// state, without requiring a successful rollout.
 //
 // We flip install.preflight.crdUpgradeSafety.enforcement between "None" and "Strict"
 // because it is a real spec field that the API server will persist (unlike unknown
@@ -3102,6 +3090,9 @@ func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expect
 			logger.V(1).Info("Failed to parse deployment", "error", err)
 			return false
 		}
+		if !generationObserved(deployment.Generation, deployment.Status.ObservedGeneration) {
+			return false
+		}
 
 		args := []string{"get", "rs", "-n", sc.namespace}
 		if deployment.Spec.Selector != nil && len(deployment.Spec.Selector.MatchLabels) > 0 {
@@ -3144,7 +3135,7 @@ func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expect
 		// Verify at least one ReplicaSet has active replicas
 		hasActiveRS := false
 		for _, rs := range rsList {
-			if rs.Status.Replicas > 0 && rs.Status.ReadyReplicas > 0 {
+			if generationObserved(rs.Generation, rs.Status.ObservedGeneration) && rs.Status.Replicas > 0 && rs.Status.ReadyReplicas > 0 {
 				hasActiveRS = true
 				logger.V(1).Info("Found active ReplicaSet", "name", rs.Name, "replicas", rs.Status.Replicas, "ready", rs.Status.ReadyReplicas)
 			}
