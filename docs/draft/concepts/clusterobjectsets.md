@@ -21,6 +21,9 @@ Each ClusterObjectSet has:
 manages ClusterObjectDeployments instead of ClusterObjectSets directly. -->
 ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, the operator-controller uses ClusterObjectSets as the mechanism to deploy and upgrade ClusterExtensions.
 
+For a standalone walkthrough that manages mutable desired content through COS
+revisions, see [Manage standalone ClusterObjectDeployments](../tutorials/manage-clusterobjectdeployments.md).
+
 The `group` value must be 1–52 characters long, start with a lowercase letter,
 contain only lowercase letters, digits or hyphens, and end with a letter or digit.
 Set `metadata.name` explicitly to `<group>-<revision>`, with the revision in decimal
