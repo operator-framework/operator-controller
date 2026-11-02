@@ -34,7 +34,7 @@ const clusterObjectDeploymentName = "test-cod-1"
 
 func codFixture() *ocv1.ClusterObjectDeployment {
 	return &ocv1.ClusterObjectDeployment{
-		ObjectMeta: metav1.ObjectMeta{Name: clusterObjectDeploymentName},
+		ObjectMeta: metav1.ObjectMeta{Name: clusterObjectDeploymentName, UID: "test-cod-uid"},
 		Spec: ocv1.ClusterObjectDeploymentSpec{
 			Template: ocv1.ClusterObjectDeploymentTemplate{
 				Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
@@ -566,15 +566,27 @@ func Test_ClusterObjectDeploymentReconciler_CreatesNewRevisionWhenLatestArchived
 	require.Equal(t, int64(2), rev2.Spec.Revision)
 }
 
-// revisionCOS builds a ClusterObjectSet revision in the test deployment's group
-// with the given revision number and lifecycle state, for garbage-collection tests.
-// An archived revision is given Ready=False/Archived, mirroring a revision whose
-// teardown has completed — the state in which garbage collection may prune it.
-func revisionCOS(revision int64, lifecycle ocv1.ClusterObjectSetLifecycleState) *ocv1.ClusterObjectSet {
+// revisionCOS builds a ClusterObjectSet revision owned by cod in the test deployment's
+// group with the given revision number and lifecycle state, for garbage-collection tests.
+// An archived revision is given Ready=False/Archived, mirroring a revision whose teardown
+// has completed — the state in which garbage collection may prune it. The controller owner
+// reference ensures listRevisions (which now filters by both group and owner UID) includes
+// this revision.
+func revisionCOS(cod *ocv1.ClusterObjectDeployment, revision int64, lifecycle ocv1.ClusterObjectSetLifecycleState) *ocv1.ClusterObjectSet {
 	cos := &ocv1.ClusterObjectSet{
-		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-%d", clusterObjectDeploymentName, revision)},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("%s-%d", cod.Name, revision),
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion:         ocv1.GroupVersion.String(),
+				Kind:               ocv1.ClusterObjectDeploymentKind,
+				Name:               cod.Name,
+				UID:                cod.GetUID(),
+				Controller:         ptr.To(true),
+				BlockOwnerDeletion: ptr.To(true),
+			}},
+		},
 		Spec: ocv1.ClusterObjectSetSpec{
-			Group:               clusterObjectDeploymentName,
+			Group:               cod.Name,
 			Revision:            revision,
 			CollisionProtection: ocv1.CollisionProtectionPrevent,
 			LifecycleState:      lifecycle,
@@ -675,7 +687,7 @@ func Test_ClusterObjectDeploymentReconciler_GarbageCollectsArchivedRevisions(t *
 			objs := make([]client.Object, 0, 1+len(tc.revisions))
 			objs = append(objs, cod)
 			for _, r := range tc.revisions {
-				cos := revisionCOS(r.num, r.state)
+				cos := revisionCOS(cod, r.num, r.state)
 				if r.tearingDown {
 					setCOSReady(cos, metav1.ConditionFalse, ocv1.ClusterObjectSetReasonArchiving)
 				}
@@ -708,9 +720,9 @@ func Test_ClusterObjectDeploymentReconciler_GarbageCollectContinuesAfterDeleteEr
 		WithStatusSubresource(&ocv1.ClusterObjectDeployment{}, &ocv1.ClusterObjectSet{}).
 		WithObjects(
 			cod,
-			revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateArchived),
-			revisionCOS(2, ocv1.ClusterObjectSetLifecycleStateArchived),
-			revisionCOS(3, ocv1.ClusterObjectSetLifecycleStateArchived),
+			revisionCOS(cod, 1, ocv1.ClusterObjectSetLifecycleStateArchived),
+			revisionCOS(cod, 2, ocv1.ClusterObjectSetLifecycleStateArchived),
+			revisionCOS(cod, 3, ocv1.ClusterObjectSetLifecycleStateArchived),
 		).
 		Build()
 
@@ -752,7 +764,7 @@ func Test_ClusterObjectDeploymentReconciler_RolloutProceedsDespiteGarbageCollect
 			cod,
 			// An archived revision whose prune is denied, and no active revision, so
 			// the rollout must create a new one.
-			revisionCOS(1, ocv1.ClusterObjectSetLifecycleStateArchived),
+			revisionCOS(cod, 1, ocv1.ClusterObjectSetLifecycleStateArchived),
 		).
 		Build()
 
@@ -816,20 +828,23 @@ func Test_ClusterObjectDeploymentReconciler_SurfacesAlreadyExists(t *testing.T) 
 
 func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 	for _, tc := range []struct {
-		name           string
-		latest         int64
-		lifecycleState ocv1.ClusterObjectSetLifecycleState
-		changed        bool
-		wantErr        bool
-		wantCreates    int
+		name                string
+		latest              int64
+		lifecycleState      ocv1.ClusterObjectSetLifecycleState
+		changed             bool
+		foreignOwned        bool // whether the latest COS is owned by a different deployment
+		wantErr             bool
+		wantCreates         int
+		wantCreatedRevision int64 // expected revision number when wantCreates == 1
 	}{
 		{
-			name:           "allocates final revision after archived foreign-owned history",
-			latest:         ocv1.ClusterObjectSetMaxRevision - 1,
-			lifecycleState: ocv1.ClusterObjectSetLifecycleStateArchived,
-			changed:        false,
-			wantErr:        false,
-			wantCreates:    1,
+			name:                "allocates MaxRevision after the highest owned revision is MaxRevision-1",
+			latest:              ocv1.ClusterObjectSetMaxRevision - 1,
+			lifecycleState:      ocv1.ClusterObjectSetLifecycleStateArchived,
+			changed:             false,
+			wantErr:             false,
+			wantCreates:         1,
+			wantCreatedRevision: ocv1.ClusterObjectSetMaxRevision,
 		},
 		{
 			name:           "changed template at maximum creates nothing",
@@ -855,23 +870,43 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 			wantErr:        false,
 			wantCreates:    0,
 		},
+		{
+			// Foreign-owned COS in the same group are not visible to listRevisions (which
+			// now filters by both group and controller owner UID), so the deployment allocates
+			// revision 1 regardless of how high the foreign revision numbers are.
+			name:                "foreign-owned COS in the group are not visible to revision allocation",
+			latest:              ocv1.ClusterObjectSetMaxRevision - 1,
+			lifecycleState:      ocv1.ClusterObjectSetLifecycleStateArchived,
+			foreignOwned:        true,
+			wantErr:             false,
+			wantCreates:         1,
+			wantCreatedRevision: 1,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cod := codFixture()
+			var ownerRef metav1.OwnerReference
+			if tc.foreignOwned {
+				ownerRef = *metav1.NewControllerRef(&ocv1.ClusterObjectDeployment{
+					ObjectMeta: metav1.ObjectMeta{Name: "other-deployment", UID: "other-uid"},
+				}, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind))
+			} else {
+				ownerRef = metav1.OwnerReference{
+					APIVersion:         ocv1.GroupVersion.String(),
+					Kind:               ocv1.ClusterObjectDeploymentKind,
+					Name:               cod.Name,
+					UID:                cod.GetUID(),
+					Controller:         ptr.To(true),
+					BlockOwnerDeletion: ptr.To(true),
+				}
+			}
 			latest := &ocv1.ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: fmt.Sprintf("%s-%d", cod.Name, tc.latest),
 					Labels: map[string]string{
 						labels.TemplateHashKey: hashutil.DeepHashObject(cod.Spec.Template),
 					},
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(&ocv1.ClusterObjectDeployment{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "other-deployment",
-								UID:  "other-uid",
-							},
-						}, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind)),
-					},
+					OwnerReferences: []metav1.OwnerReference{ownerRef},
 				},
 				Spec: ocv1.ClusterObjectSetSpec{
 					Group:               cod.Name,
@@ -905,9 +940,9 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, latest.Spec, retained.Spec)
 			if tc.wantCreates == 1 {
-				created, ok := getCOS(t, c, fmt.Sprintf("%s-%d", cod.Name, ocv1.ClusterObjectSetMaxRevision))
+				created, ok := getCOS(t, c, fmt.Sprintf("%s-%d", cod.Name, tc.wantCreatedRevision))
 				require.True(t, ok)
-				require.Equal(t, ocv1.ClusterObjectSetMaxRevision, created.Spec.Revision)
+				require.Equal(t, tc.wantCreatedRevision, created.Spec.Revision)
 			}
 		})
 	}

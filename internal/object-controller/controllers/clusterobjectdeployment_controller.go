@@ -91,7 +91,7 @@ func (c *ClusterObjectDeploymentReconciler) Reconcile(ctx context.Context, req c
 // deployment's rollout (see reconcileRollout). Child events and the revision's
 // fixed deadline drive subsequent reconciliations.
 func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *ocv1.ClusterObjectDeployment) (ctrl.Result, error) {
-	revisions, err := c.listRevisions(ctx, cod.Name)
+	revisions, err := c.listRevisions(ctx, cod.Name, string(cod.GetUID()))
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -194,11 +194,14 @@ func headRevisionReadyReason(cos *ocv1.ClusterObjectSet) string {
 	return cond.Reason
 }
 
-// listRevisions returns all ClusterObjectSets in the deployment's group, sorted
+// listRevisions returns all ClusterObjectSets in the deployment's group, owned by the deployment, sorted
 // ascending by revision number.
-func (c *ClusterObjectDeploymentReconciler) listRevisions(ctx context.Context, group string) ([]ocv1.ClusterObjectSet, error) {
+func (c *ClusterObjectDeploymentReconciler) listRevisions(ctx context.Context, group string, owner string) ([]ocv1.ClusterObjectSet, error) {
 	var list ocv1.ClusterObjectSetList
-	if err := c.Client.List(ctx, &list, client.MatchingFields{clusterObjectSetGroupIndex: group}); err != nil {
+	if err := c.Client.List(ctx, &list, client.MatchingFields{
+		clusterObjectSetGroupIndex: group,
+		clusterObjectSetOwnerIndex: owner,
+	}); err != nil {
 		return nil, fmt.Errorf("listing revisions for group %q: %w", group, err)
 	}
 	slices.SortFunc(list.Items, func(a, b ocv1.ClusterObjectSet) int {
@@ -223,19 +226,6 @@ func (c *ClusterObjectDeploymentReconciler) listRevisions(ctx context.Context, g
 //
 // revisions must be sorted ascending by revision number (oldest first), as
 // returned by listRevisions.
-//
-// NOTE: The candidate revisions come from listRevisions, which selects by
-// spec.group (equal to the deployment name) rather than by this deployment's
-// controller owner reference. This is deliberate and consistent with the rest of
-// OLMv1: sibling membership of a revision family is defined by spec.group, not by
-// ownership (see createRevision's naming/grouping and the ClusterObjectSet
-// controller's own sibling archival, both keyed on spec.group). A consequence is
-// that a ClusterObjectSet sharing this group but created by a different owner
-// would be counted toward the limit and could be deleted here. That is tolerated
-// because the deployment name is the group and is treated as an exclusive
-// namespace for its revisions — nothing else should create ClusterObjectSets in
-// it. If siblinghood is ever redefined in terms of ownership, this function and
-// listRevisions must be updated together to filter by owner reference and UID.
 func (c *ClusterObjectDeploymentReconciler) garbageCollectArchivedRevisions(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
 	limit := defaultRevisionHistoryLimit
 	if cod.Spec.RevisionHistoryLimit != nil {
@@ -325,7 +315,10 @@ func newCODDeadlineAwareRateLimiter(delegate workqueue.TypedRateLimiter[ctrl.Req
 				return 0, false, nil
 			}
 			var revisions ocv1.ClusterObjectSetList
-			if err := reader.List(ctx, &revisions, client.MatchingFields{clusterObjectSetGroupIndex: cod.Name}); err != nil {
+			if err := reader.List(ctx, &revisions, client.MatchingFields{
+				clusterObjectSetGroupIndex: cod.Name,
+				clusterObjectSetOwnerIndex: string(cod.GetUID()),
+			}); err != nil {
 				return 0, false, err
 			}
 			latest := latestActiveRevision(revisions.Items)
@@ -407,8 +400,9 @@ func (c *ClusterObjectDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) e
 			),
 		).
 		// A ClusterObjectSet's spec.group matches the name of the ClusterObjectDeployment
-		// that owns (or should adopt) it. Owns() only enqueues already-owned revisions, so
-		// this watch additionally surfaces not-yet-adopted (orphan) ClusterObjectSets.
+		// that manages it. Owns() only enqueues events for already-owned revisions; this
+		// watch additionally captures events from any ClusterObjectSet whose spec.group
+		// names this deployment.
 		Watches(
 			&ocv1.ClusterObjectSet{},
 			handler.EnqueueRequestsFromMapFunc(mapClusterObjectSetToClusterObjectDeployment),

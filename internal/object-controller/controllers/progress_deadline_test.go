@@ -236,12 +236,20 @@ func TestCODDeadlineAwareRateLimiter_DeadlineRemoved(t *testing.T) {
 
 func deadlineRateLimiterObjects(creation time.Time) (*ocv1.ClusterObjectDeployment, *ocv1.ClusterObjectSet) {
 	cod := &ocv1.ClusterObjectDeployment{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-cod"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test-cod", UID: "test-cod-uid"},
 		Spec:       ocv1.ClusterObjectDeploymentSpec{Template: testTemplate()},
 	}
 	cod.Spec.Template.Spec.ProgressDeadlineMinutes = 10
 	cos := buildClusterObjectSet(cod, 1, templateHash(cod.Spec.Template))
 	cos.CreationTimestamp = metav1.NewTime(creation)
+	isController := true
+	cos.OwnerReferences = []metav1.OwnerReference{{
+		APIVersion: ocv1.GroupVersion.String(),
+		Kind:       ocv1.ClusterObjectDeploymentKind,
+		Name:       cod.Name,
+		UID:        cod.GetUID(),
+		Controller: &isController,
+	}}
 	return cod, cos
 }
 
@@ -252,5 +260,14 @@ func deadlineRateLimiterClient(t *testing.T, objects ...client.Object) client.Wi
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).
 		WithIndex(&ocv1.ClusterObjectSet{}, clusterObjectSetGroupIndex, func(obj client.Object) []string {
 			return []string{obj.(*ocv1.ClusterObjectSet).Spec.Group}
-		}).Build()
+		}).
+		WithIndex(&ocv1.ClusterObjectSet{}, clusterObjectSetOwnerIndex, func(obj client.Object) []string {
+			for _, ref := range obj.GetOwnerReferences() {
+				if ref.Controller != nil && *ref.Controller {
+					return []string{string(ref.UID)}
+				}
+			}
+			return nil
+		}).
+		Build()
 }

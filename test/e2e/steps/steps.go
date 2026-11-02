@@ -634,26 +634,28 @@ func ClusterExtensionOwnsClusterObjectSets(ctx context.Context, extName string, 
 }
 
 // ClusterObjectDeploymentOwnsClusterObjectSets waits until the named ClusterObjectDeployment is the
-// controller owner of exactly expectedCount ClusterObjectSet revisions in its group.
+// controller owner of exactly expectedCount ClusterObjectSet revisions in its group. Non-owned
+// ClusterObjectSets in the same group (e.g. foreign revisions) are not counted.
 func ClusterObjectDeploymentOwnsClusterObjectSets(ctx context.Context, codName string, expectedCount int) error {
 	sc := scenarioCtx(ctx)
 	codName = substituteScenarioVars(codName, sc)
 	waitFor(ctx, func() bool {
 		revisions, err := listClusterObjectSetsInGroup(ctx, codName)
-		if err != nil || len(revisions) != expectedCount {
+		if err != nil {
 			return false
 		}
 		cod, err := getResource("clusterobjectdeployment", codName, "")
 		if err != nil {
 			return false
 		}
+		owned := 0
 		for i := range revisions {
 			owner := metav1.GetControllerOf(&revisions[i])
-			if owner == nil || owner.Kind != ocv1.ClusterObjectDeploymentKind || owner.Name != codName || owner.UID != cod.GetUID() {
-				return false
+			if owner != nil && owner.Kind == ocv1.ClusterObjectDeploymentKind && owner.Name == codName && owner.UID == cod.GetUID() {
+				owned++
 			}
 		}
-		return true
+		return owned == expectedCount
 	})
 	return nil
 }

@@ -62,3 +62,66 @@ func TestSetupIndexes_GroupLookup(t *testing.T) {
 		})
 	}
 }
+
+func TestSetupIndexes_OwnerLookup(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(scheme))
+
+	isController := true
+	notController := false
+
+	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), controllers.SetupIndexes).
+		WithObjects(
+			// Owned by uid-a via a controller owner reference — must be found under uid-a.
+			&ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "owned-by-a",
+					OwnerReferences: []metav1.OwnerReference{
+						{APIVersion: "v1", Kind: "Foo", Name: "a", UID: "uid-a", Controller: &isController},
+					},
+				},
+			},
+			// Owned by uid-b — must be found only under uid-b, not uid-a.
+			&ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "owned-by-b",
+					OwnerReferences: []metav1.OwnerReference{
+						{APIVersion: "v1", Kind: "Foo", Name: "b", UID: "uid-b", Controller: &isController},
+					},
+				},
+			},
+			// Non-controller reference must not appear in the owner index.
+			&ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "non-controller-ref",
+					OwnerReferences: []metav1.OwnerReference{
+						{APIVersion: "v1", Kind: "Foo", Name: "a", UID: "uid-a", Controller: &notController},
+					},
+				},
+			},
+			// No owner references at all — must not appear in any owner index lookup.
+			&ocv1.ClusterObjectSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "no-owner"},
+			},
+		).
+		Build()
+
+	for _, tc := range []struct {
+		ownerUID string
+		want     []string
+	}{
+		{ownerUID: "uid-a", want: []string{"owned-by-a"}},
+		{ownerUID: "uid-b", want: []string{"owned-by-b"}},
+		{ownerUID: "uid-unknown", want: nil},
+	} {
+		t.Run(tc.ownerUID, func(t *testing.T) {
+			list := &ocv1.ClusterObjectSetList{}
+			require.NoError(t, cl.List(t.Context(), list, client.MatchingFields{".metadata.controllerOwner": tc.ownerUID}))
+			names := make([]string, 0, len(list.Items))
+			for _, cos := range list.Items {
+				names = append(names, cos.Name)
+			}
+			require.ElementsMatch(t, tc.want, names)
+		})
+	}
+}

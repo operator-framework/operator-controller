@@ -163,7 +163,7 @@ Feature: Track ClusterObjectSet revisions by group
         lifecycleState: Active
       """
 
-  Scenario: Revision pruning is isolated by group
+  Scenario: Revision pruning is isolated by group and controller owner
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents                   |
       | test    | 1.0.0   | beta    |          | CRD, Deployment, ConfigMap |
@@ -173,6 +173,18 @@ Feature: Track ClusterObjectSet revisions by group
       | test    | 1.0.4   | beta    | 1.0.3    | CRD, Deployment, ConfigMap |
       | test    | 1.0.5   | beta    | 1.0.4    | CRD, Deployment, ConfigMap |
       | test    | 1.0.6   | beta    | 1.0.5    | CRD, Deployment, ConfigMap |
+    And ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${NAME}-99
+      spec:
+        group: ${NAME}
+        revision: 99
+        lifecycleState: Archived
+        collisionProtection: Prevent
+      """
     And ClusterObjectSet is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -220,9 +232,11 @@ Feature: Track ClusterObjectSet revisions by group
     And ClusterExtension is available
     And ClusterObjectSet "${NAME}-7" has group "${NAME}"
     And resource "clusterobjectset/${NAME}-1" is eventually not found
-    # The existing retention policy keeps five prior revisions plus the current one.
-    # operator-controller installs through a ClusterObjectDeployment, so the deployment
-    # (named after the ClusterExtension) is the controller owner of the group's revisions.
+    # The retention policy keeps five prior revisions plus the current active one.
+    # Only revisions owned by the ClusterObjectDeployment count against the limit;
+    # the unmanaged same-group COS (no controller owner) is invisible to the
+    # deployment's GC and must survive even though it is an archived GC candidate.
     And ClusterObjectDeployment "${NAME}" owns 6 ClusterObjectSets
+    And resource "clusterobjectset/${NAME}-99" exists
     And resource "clusterobjectset/${COS_NAME}" exists
     And ClusterObjectSet "${COS_NAME}" has group "${NAME}-other"
