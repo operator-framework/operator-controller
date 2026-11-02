@@ -265,11 +265,11 @@ ready.
 
 ### ClusterObjectDeployment Progressing
 
-While a rollout is incomplete, a ClusterObjectDeployment (COD) reflects *why* its
-head active revision is not yet `Ready` on its own `Progressing` condition, so you
-can tell a rollout that is merely in progress from one that is stalled on
-something you must fix. Each reason names the revision; inspect that
-ClusterObjectSet for the specific cause.
+A ClusterObjectDeployment (COD) reports rollout progress and ownership conflicts
+on its `Progressing` condition. While a rollout is incomplete, it also reflects
+*why* its head active revision is not yet `Ready`, so you can tell a rollout that
+is merely in progress from one that is stalled on something you must fix.
+For revision failures, inspect the named ClusterObjectSet for the specific cause.
 
 | Status | Reason | Meaning | What to do |
 | --- | --- | --- | --- |
@@ -279,7 +279,15 @@ ClusterObjectSet for the specific cause.
 | False | `RevisionInvalidSpecification` | The head revision's own objects are invalid | Correct the template so the rendered objects are valid |
 | False | `ProgressDeadlineExceeded` | A still-retrying revision exceeded its deadline (see [Progress deadline](#progress-deadline)) | See above |
 | False | `InvalidSpecification` | The deployment's own `spec.template.metadata` is invalid, so no revision is created | Fix the template labels/annotations |
+| False | `OwnerConflict` | The highest active, non-deleting revision in the deployment's group is controlled by another controller; no new revision is created | Resolve the revision's controller ownership, or archive or delete the conflicting revision |
 | False | `NewClusterObjectSetProgressed` | The head revision completed its rollout | None |
+
+`OwnerConflict` concerns ownership of the ClusterObjectSet itself, while
+`RevisionObjectCollision` concerns ownership of objects within a revision.
+`OwnerConflict` takes precedence even if an owned revision has completed or
+exceeded its progress deadline. Availability still depends only on owned active
+revisions; a previous ready revision can keep the COD `Available=True` during the
+conflict.
 
 `RevisionObjectCollision` and `RevisionInvalidSpecification` are *hard stalls*:
 they will not resolve on their own, so they report `Progressing=False` and take
