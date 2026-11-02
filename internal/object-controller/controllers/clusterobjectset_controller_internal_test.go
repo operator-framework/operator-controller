@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
@@ -460,8 +461,6 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			WithObjects(immutableSecret.DeepCopy()).
 			Build()
 
-		reconciler := &ClusterObjectSetReconciler{Client: testClient}
-
 		cos := &ocv1.ClusterObjectSet{
 			Spec: ocv1.ClusterObjectSetSpec{
 				Phases: []ocv1.ClusterObjectSetPhase{{
@@ -477,7 +476,7 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			},
 		}
 
-		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		err := newReferencedSecretReader(testClient).verifyImmutable(t.Context(), cos)
 		require.NoError(t, err)
 	})
 
@@ -490,8 +489,6 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			WithObjects(mutableSecret).
 			Build()
 
-		reconciler := &ClusterObjectSetReconciler{Client: testClient}
-
 		cos := &ocv1.ClusterObjectSet{
 			Spec: ocv1.ClusterObjectSetSpec{
 				Phases: []ocv1.ClusterObjectSetPhase{{
@@ -507,7 +504,7 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			},
 		}
 
-		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		err := newReferencedSecretReader(testClient).verifyImmutable(t.Context(), cos)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "must be immutable but are not")
 	})
@@ -516,8 +513,6 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 		testClient := fake.NewClientBuilder().
 			WithScheme(testScheme).
 			Build()
-
-		reconciler := &ClusterObjectSetReconciler{Client: testClient}
 
 		cos := &ocv1.ClusterObjectSet{
 			Spec: ocv1.ClusterObjectSetSpec{
@@ -530,7 +525,7 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			},
 		}
 
-		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		err := newReferencedSecretReader(testClient).verifyImmutable(t.Context(), cos)
 		require.NoError(t, err)
 	})
 
@@ -550,8 +545,6 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			}).
 			Build()
 
-		reconciler := &ClusterObjectSetReconciler{Client: testClient}
-
 		cos := &ocv1.ClusterObjectSet{
 			Spec: ocv1.ClusterObjectSetSpec{
 				Phases: []ocv1.ClusterObjectSetPhase{{
@@ -564,8 +557,73 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 			},
 		}
 
-		err := reconciler.verifyReferencedSecretsImmutable(t.Context(), cos)
+		err := newReferencedSecretReader(testClient).verifyImmutable(t.Context(), cos)
 		require.NoError(t, err)
 		assert.Equal(t, int32(1), secretGetCount.Load(), "secret should be fetched only once despite multiple references")
 	})
+}
+
+func TestMapSecretToClusterObjectSets(t *testing.T) {
+	testScheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(testScheme))
+	newRevision := func(name string, refs ...ocv1.ObjectSourceRef) *ocv1.ClusterObjectSet {
+		cos := &ocv1.ClusterObjectSet{ObjectMeta: metav1.ObjectMeta{Name: name}}
+		phase := ocv1.ClusterObjectSetPhase{Name: "deploy"}
+		for _, ref := range refs {
+			phase.Objects = append(phase.Objects, ocv1.ClusterObjectSetObject{Ref: ref})
+		}
+		cos.Spec.Phases = []ocv1.ClusterObjectSetPhase{phase}
+		return cos
+	}
+	ref := ocv1.ObjectSourceRef{Namespace: "storage-a", Name: "content", Key: "first"}
+	otherKey := ref
+	otherKey.Key = "second"
+	otherNamespace := ref
+	otherNamespace.Namespace = "storage-b"
+	otherSecret := ref
+	otherSecret.Name = "other"
+	testClient := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(testScheme), SetupIndexes).
+		WithObjects(
+			newRevision("first", ref, ref),
+			newRevision("second", otherKey),
+			newRevision("other-namespace", otherNamespace),
+			newRevision("other-secret", otherSecret),
+			newRevision("inline"),
+		).Build()
+	reconciler := &ClusterObjectSetReconciler{Client: testClient}
+	for _, tc := range []struct {
+		name string
+		key  client.ObjectKey
+		want []ctrl.Request
+	}{
+		{
+			name: "all referencing revisions, once each and regardless of data key",
+			key:  client.ObjectKey{Namespace: "storage-a", Name: "content"},
+			want: []ctrl.Request{
+				{NamespacedName: client.ObjectKey{Name: "first"}},
+				{NamespacedName: client.ObjectKey{Name: "second"}},
+			},
+		},
+		{
+			name: "same Secret name in another namespace",
+			key:  client.ObjectKey{Namespace: "storage-b", Name: "content"},
+			want: []ctrl.Request{{NamespacedName: client.ObjectKey{Name: "other-namespace"}}},
+		},
+		{
+			name: "another Secret in the same namespace",
+			key:  client.ObjectKey{Namespace: "storage-a", Name: "other"},
+			want: []ctrl.Request{{NamespacedName: client.ObjectKey{Name: "other-secret"}}},
+		},
+		{
+			name: "unreferenced Secret",
+			key:  client.ObjectKey{Namespace: "storage-a", Name: "unreferenced"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			metadata := &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{
+				Namespace: tc.key.Namespace, Name: tc.key.Name,
+			}}
+			assert.ElementsMatch(t, tc.want, reconciler.mapSecretToClusterObjectSets(t.Context(), metadata))
+		})
+	}
 }

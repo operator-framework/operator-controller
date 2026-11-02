@@ -131,11 +131,12 @@ kubectl get secret <name> -o jsonpath='{.data.<key>}' | base64 -d | gunzip | jq 
 ### Referenced resource conventions
 
 The COS API does not enforce any particular structure or metadata on the
-referenced Secret — the `ref` field is a plain pointer. The reconciler only
-requires that the Secret exists and that the key resolves to valid JSON content
-(optionally gzip-compressed). Everything else is a convention that the system
-follows when it creates referenced Secrets, and that other producers should
-follow for consistency and safe lifecycle management.
+referenced Secret — the `ref` field identifies its namespace, name, and data key.
+The reconciler requires that the Secret exists, has `immutable: true` set, and
+that the key resolves to valid JSON content (optionally gzip-compressed). It also
+checks that the resolved content matches any phase digests already recorded for
+the revision. Secret types, labels, and owner references are conventions that
+producers should follow for consistency and safe lifecycle management.
 
 Recommended conventions:
 
@@ -394,41 +395,84 @@ Key properties:
 
 ### COS reconciler behavior
 
-Before resolving individual object refs, the reconciler verifies that all
-referenced Secrets have `immutable: true` set. After successfully building
-the phases (resolving all refs), the reconciler computes a per-phase content
-digest and compares it against the digests recorded in `.status.observedPhases`
-(if present). If any phase's content has changed, the ClusterObjectSet reports
-`Ready=False, Reason=PreconditionsNotMet`. On first successful build, phase
-content digests are persisted to status for future comparisons.
+#### Source Secret events
 
-When processing a COS phase:
-- For each object entry in the phase:
-  - If `object` is set, use it directly (current behavior, unchanged).
-  - If `ref` is set, fetch the referenced Secret, read the value at the
-    specified `key`, and JSON-deserialize into an
-    `unstructured.Unstructured`.
-- The resolved object is used identically to an inline object for the remainder
-  of reconciliation — collision protection inheritance, owner labeling, and
-  rollout semantics are unchanged.
+The object-controller watches Secret metadata for create, update, and delete
+events. It indexes COS references by the source Secret's namespace and name,
+then enqueues every COS that references the changed Secret. References to the
+same name in another namespace are unaffected.
 
-Under normal operation, referenced Secrets are guaranteed to exist before the
-COS is created (see [Crash-safe creation sequence](#crash-safe-creation-sequence)).
-The reconciler distinguishes two failure modes:
+This works for Secrets owned by a COS or a ClusterExtension, shared by multiple
+COSs, or carrying no owner reference. Ownership still determines garbage
+collection; event mapping uses the references in the COS spec. The watch also
+triggers reconciliation for revisions that have already completed rollout and
+are no longer polling, so replacing their source content is detected.
 
-- A referenced **Secret that does not exist yet** — for example, informer cache lag
-  after creation, or a partially completed creation sequence — is treated as a
-  transient error. The ClusterObjectSet leaves its `Ready` condition unchanged and the
-  controller returns the error so it retries with backoff.
-- **Invalid referenced content** — a missing key, a malformed manifest, or content
-  that has changed since first rollout — is an unmet precondition. The ClusterObjectSet
-  reports `Ready=False, Reason=PreconditionsNotMet`. Because referenced Secrets are not
-  watched and the `ref` is immutable, the reconciler retries this case periodically so
-  the revision recovers automatically once the referenced Secret is replaced with
-  corrected content. Referenced Secrets are immutable, so correcting the content means
-  deleting and recreating the Secret (it cannot be edited in place).
+#### Verified Secret snapshots
 
-Secrets are fetched using the typed client served from the informer cache.
+Each reconciliation reads every distinct referenced Secret once, directly from
+the API server. Multiple keys or phases referencing the same Secret share that
+snapshot. The reconciler verifies that the sources have `immutable: true` set
+before decoding their manifests, then resolves all refs from those same
+snapshots. A Secret deleted and recreated between verification and decoding
+therefore cannot substitute unverified content into that reconciliation.
+The next reconciliation takes fresh snapshots and observes the replacement.
+The watch caches Secret metadata; full Secret payloads are read directly.
+
+After resolving the refs, the reconciler computes a content digest for each
+phase and compares it with any digest recorded in `.status.observedPhases`.
+For an active revision without recorded digests, it assigns the initial digests
+after patching the teardown finalizer, then persists them in the status update.
+This ordering preserves the initial digests when the metadata patch refreshes
+the COS, so a replacement immediately after the first reconciliation is still
+checked against the original resolved content.
+
+Inline objects are used directly. Once resolved and validated, referenced
+objects follow the same collision protection, ownership, and rollout rules as
+inline objects.
+
+```mermaid
+flowchart TD
+    Event["Secret created, updated, or deleted"] --> Index["Find COSs referencing its namespace/name"]
+    Index --> Reconcile["Reconcile each referencing COS"]
+    Reconcile --> Read["Read each distinct Secret once<br/>Verify immutability"]
+    Read -->|Verified snapshots| Decode["Decode the same snapshots<br/>Compare recorded phase digests"]
+    Read -->|Mutable source| Wait["Ready=False<br/>PreconditionsNotMet"]
+    Read -->|"Read error, no mutable source"| Backoff["Keep Ready unchanged"]
+    Decode -->|Valid, expected content| Rollout["Record initial digests if needed<br/>Reconcile phases"]
+    Decode -->|Invalid or changed content| Wait
+    Wait -->|Secret event or 10-second retry| Reconcile
+    Backoff -->|Retry with backoff| Reconcile
+```
+
+#### Validation and recovery
+
+Under normal operation, producers create the referenced Secrets before the COS
+(see [Crash-safe creation sequence](#crash-safe-creation-sequence)). The
+reconciler handles source failures as follows:
+
+| Source failure | COS behavior | Recovery |
+| --- | --- | --- |
+| Missing Secret or API read failure | Leaves the existing `Ready` condition unchanged and retries with backoff; manifest decoding does not proceed | Make the source available or restore API access |
+| Secret without `immutable: true` | Reports `Ready=False`, reason `PreconditionsNotMet` | Supply the expected content with `immutable: true` |
+| Missing data key, invalid JSON, or invalid gzip content | Reports `Ready=False`, reason `PreconditionsNotMet` | Recreate the Secret with valid content at the referenced key |
+| Resolved content differs from recorded phase digests | Reports `Ready=False`, reason `PreconditionsNotMet` | Restore the original resolved content |
+
+A confirmed mutable Secret takes precedence over a read failure from another
+source. If no `Ready` condition has been set yet, the first transient failure
+initializes it to `Unknown` with reason `Pending`.
+
+Failures reported as `PreconditionsNotMet` retain the ten-second periodic
+retry. Secret events trigger reevaluation without waiting for that timer,
+allowing recovery when a source is restored or made immutable. The timer also
+covers preconditions whose dependencies are not watched, such as RBAC or a
+dependency CRD becoming available.
+
+An immutable Secret's data cannot be edited in place; correcting it requires
+deleting and recreating the Secret under the referenced namespace and name.
+Once phase digests have been recorded, the replacement must resolve to the
+original manifests. To deploy different content, create a new COS revision
+with a new source reference, or update the COD template to create that revision.
 
 ---
 
@@ -679,7 +723,7 @@ rollout semantics are unchanged.
 |---|-------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
 | **Granularity** | Per-object — each object has its own `ref`                                                            | Per-phase-set — all phases externalized as a single blob                                         |
 | **API complexity** | New `ref` field on existing object struct; new `ObjectSourceRef` type                                 | New top-level `phasesRef` field; new `PhasesRef` and `SecretRef` types                           |
-| **Reconciler complexity** | Secrets are served from cache; no ordering dependency between fetches                                 | Chain traversal — follow `.nextSecretRef` links, concatenate chunks, gunzip, deserialize         |
+| **Reconciler complexity** | Secret metadata watch; one direct API read per distinct source Secret per reconciliation              | Chain traversal — follow `.nextSecretRef` links, concatenate chunks, gunzip, deserialize         |
 | **Compression** | Optional per-object gzip, auto-detected via magic bytes; each object compressed independently         | Single gzip stream across all phases; exploits cross-phase redundancy for better ratios          |
 | **Number of Secrets** | One or more, typically one                                                                            | Typically one Secret for all phases; multiple only when compressed blob exceeds 900 KiB          |
 | **Crash safety** | 3-step: Secrets → COS → patch ownerRefs; orphan cleanup via revision label                            | 2-step: COS → Secrets with ownerRefs; simpler but reconciler may see missing Secrets temporarily |
