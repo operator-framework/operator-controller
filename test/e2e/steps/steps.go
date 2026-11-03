@@ -169,6 +169,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)deployment "([^"]+)" reports as (not ready|ready)$`, MarkDeploymentReadiness)
 
 	sc.Step(`^(?i)resource apply fails with error msg containing "([^"]+)"$`, ResourceApplyFails)
+	sc.Step(`^(?i)resource create fails with error msg containing "([^"]+)"$`, ResourceCreateFails)
 	sc.Step(`^(?i)resource is applied as user "([^"]+)" in group "([^"]+)"$`, ResourceIsAppliedAsUser)
 	sc.Step(`^(?i)resource apply as user "([^"]+)" in group "([^"]+)" fails with error msg containing "([^"]+)"$`, ResourceApplyAsUserFails)
 	sc.Step(`^(?i)\w+ apply emits warning:$`, ResourceApplyEmitsWarning)
@@ -466,6 +467,23 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 		}
 		return true
 	})
+	return nil
+}
+
+// ResourceCreateFails checks a create request, so an existing object cannot be updated by apply.
+func ResourceCreateFails(ctx context.Context, errMsg string, yamlTemplate *godog.DocString) error {
+	sc := scenarioCtx(ctx)
+	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
+	if _, err := toUnstructured(yamlContent); err != nil {
+		return fmt.Errorf("failed to parse resource yaml: %w", err)
+	}
+	_, stderr, err := k8scliWithInput(ctx, yamlContent, "create", "-f", "-")
+	if err == nil {
+		return fmt.Errorf("expected create error containing %q, but creation succeeded", errMsg)
+	}
+	if !strings.Contains(stderr, errMsg) {
+		return fmt.Errorf("expected create error containing %q, got: %s: %w", errMsg, stderr, err)
+	}
 	return nil
 }
 
