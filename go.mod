@@ -623,7 +623,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/onsi/gomega v1.44.0 // indirect
 	github.com/open-policy-agent/conftest v0.62.0 // indirect
-	github.com/opencontainers/runc v1.2.6 // indirect
+	github.com/opencontainers/runc v1.3.6 // indirect
 	github.com/opencontainers/runtime-spec v1.3.0 // indirect
 	github.com/operator-framework/operator-lib v0.19.0 // indirect
 	github.com/operator-framework/operator-sdk v1.41.1 // indirect
