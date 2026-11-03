@@ -16,8 +16,40 @@ jobs:
       with:
         go-version-file: go.mod
 
+    - name: Determine comparison base
+      id: base
+      env:
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        MG_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+      run: |
+        set -euo pipefail
+        if [[ -n "${PR_BASE_SHA}" ]]; then
+          # Compare the PR head against its merge base so the check only
+          # covers changes introduced by the PR itself. Comparing against the
+          # base branch tip instead attributes API changes from PRs that merged
+          # after this PR was created to this PR (e.g. when a label change
+          # re-triggers the workflow after the base branch has advanced).
+          # actions/checkout may only fetch the ephemeral merge ref for
+          # pull_request events, so fetch the PR head explicitly.
+          git fetch --no-tags origin "refs/pull/${PR_NUMBER}/head"
+          BASE_REF="$(git merge-base "${PR_BASE_SHA}" "${PR_HEAD_SHA}")"
+        else
+          # merge_group events compare against the base of the merge group.
+          BASE_REF="${MG_BASE_SHA}"
+        fi
+        if [[ -z "${BASE_REF}" ]]; then
+          echo "Unable to determine comparison base" >&2
+          exit 1
+        fi
+        echo "Using comparison base: ${BASE_REF}"
+        echo "ref=${BASE_REF}" >> "${GITHUB_OUTPUT}"
+
     - uses: joelanford/go-apidiff@main
       id: check-api
+      with:
+        base-ref: ${{ steps.base.outputs.ref }}
       continue-on-error: true
 
     - name: Check for override label
