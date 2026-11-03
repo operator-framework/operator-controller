@@ -22,6 +22,21 @@ func Test_ObjectNameForBaseAndSuffix(t *testing.T) {
 	require.Equal(t, "my.object.thing.has.a.really.really.really.really.really-suffix", name)
 }
 
+func Test_ObjectNameForBaseAndSuffix_SeparatorCountsTowardMaxLength(t *testing.T) {
+	// base and suffix add up to 63 characters, so the "-" separator pushes the name to 64
+	base := strings.Repeat("a", 56)
+	name := util.ObjectNameForBaseAndSuffix(base, "service")
+	require.Len(t, name, 63)
+	require.Equal(t, strings.Repeat("a", 55)+"-service", name)
+}
+
+func Test_ObjectNameForBaseAndSuffix_ShortNameIsNotTruncated(t *testing.T) {
+	base := strings.Repeat("a", 55)
+	name := util.ObjectNameForBaseAndSuffix(base, "service")
+	require.Len(t, name, 63)
+	require.Equal(t, base+"-service", name)
+}
+
 func TestMergeMaps(t *testing.T) {
 	tests := []struct {
 		name      string
