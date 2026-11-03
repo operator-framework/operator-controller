@@ -17,7 +17,7 @@ Each ClusterObjectSet has:
 - A **collision protection** strategy — immutable, controlling how pre-existing objects are handled
 - **Status conditions** — reporting rollout progress, availability, and success
 
-ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, operator-controller creates and updates a ClusterObjectDeployment (COD) for each ClusterExtension. The COD controller creates the immutable ClusterObjectSet revisions that deploy and upgrade the extension.
+ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, when `BoxcutterRuntime` is enabled, operator-controller creates and updates a ClusterObjectDeployment (COD) for each ClusterExtension. The COD controller creates the immutable ClusterObjectSet revisions that deploy and upgrade the extension.
 
 For a standalone walkthrough that manages mutable desired content through COS
 revisions, see [Manage standalone ClusterObjectDeployments](../tutorials/manage-clusterobjectdeployments.md).
@@ -316,7 +316,7 @@ The first time a revision becomes ready, the controller stamps `status.completed
 
 ## How operator-controller uses ClusterObjectSets
 
-Within OLM, ClusterObjectSets serve as the deployment mechanism for `ClusterExtensions`. The operator-controller is one consumer of the ClusterObjectSet API.
+With `BoxcutterRuntime` enabled, ClusterObjectSets serve as the deployment mechanism for `ClusterExtensions`. The operator-controller is one consumer of the ClusterObjectSet API.
 
 ### Installation
 
@@ -326,7 +326,7 @@ When a ClusterExtension is installed:
 2. The bundle's Kubernetes manifests are sorted into phases by resource kind
 3. Objects are packed into immutable Secrets
 4. The operator-controller applies a ClusterObjectDeployment with the desired content in its template
-5. The COD controller creates a ClusterObjectSet with `revision: 1` in `Active` lifecycle state
+5. When a new revision is needed, the COD controller creates an `Active` ClusterObjectSet with a revision number one greater than the highest existing revision in the group (`1` for an empty group)
 6. Phases roll out sequentially — each phase waits for all its objects to become ready before the next phase begins
 
 ### Upgrades

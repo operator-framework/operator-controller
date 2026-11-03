@@ -43,6 +43,9 @@ Feature: Validate ClusterObjectSet revision identity
         collisionProtection: Prevent
       """
     And resource "clusterobjectset/${NAME}-1" UID is remembered
+    # The existing COS is Active. Request Archived in the duplicate so that an
+    # accidental update would change its state. After the create is rejected,
+    # assert that the existing COS is still Active.
     When resource create fails with error msg containing "already exists"
       """
       apiVersion: olm.operatorframework.io/v1
@@ -52,7 +55,7 @@ Feature: Validate ClusterObjectSet revision identity
       spec:
         group: ${NAME}
         revision: 1
-        lifecycleState: Active
+        lifecycleState: Archived
         collisionProtection: Prevent
       """
     Then resource "clusterobjectset/${NAME}-1" keeps its UID
@@ -61,4 +64,5 @@ Feature: Validate ClusterObjectSet revision identity
       spec:
         group: ${NAME}
         revision: 1
+        lifecycleState: Active
       """
