@@ -334,7 +334,7 @@ When a ClusterExtension is installed:
 When a ClusterExtension is upgraded to a new version:
 
 1. The operator-controller updates the ClusterObjectDeployment's template with the new bundle content
-2. The COD controller creates a new ClusterObjectSet with `revision: N+1`
+2. The COD controller creates a new ClusterObjectSet with a revision number one greater than the highest existing revision in the group, including archived and foreign-owned ClusterObjectSets
 3. Both old and new revisions are `Active` during the transition
 4. Objects transition ownership from the old revision to the new one
 5. Once the new revision has rolled out successfully, the old revision is archived
@@ -342,7 +342,8 @@ When a ClusterExtension is upgraded to a new version:
 
 Once a group reaches revision 9999999999, the ClusterObjectDeployment controller
 reports an error instead of allocating another revision. Reconciliation of
-unchanged content still works.
+unchanged content still works when no higher active, non-deleting COS is
+controlled by another controller.
 
 ### Relationship with ClusterExtension
 
