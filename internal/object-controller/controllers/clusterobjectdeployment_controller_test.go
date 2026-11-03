@@ -284,7 +284,7 @@ func Test_ClusterObjectDeploymentReconciler_PropagatesTemplateMetadata(t *testin
 
 func Test_ClusterObjectDeploymentReconciler_NoTemplateMetadata(t *testing.T) {
 	// codFixture sets no template.metadata, so the revision must carry only the
-	// controller-managed template-hash label and no annotations.
+	// controller-managed template-hash and managed-by labels and no annotations.
 	c := newCODClient(t, codFixture())
 
 	_, err := reconcileCOD(t, c)
@@ -292,8 +292,9 @@ func Test_ClusterObjectDeploymentReconciler_NoTemplateMetadata(t *testing.T) {
 
 	cos, ok := getCOS(t, c, clusterObjectDeploymentName+"-1")
 	require.True(t, ok, "revision 1 should be created")
-	require.Len(t, cos.Labels, 1, "only the controller-managed template-hash label should be set")
+	require.Len(t, cos.Labels, 2, "only the controller-managed template-hash and managed-by labels should be set")
 	require.NotEmpty(t, cos.Labels[labels.TemplateHashKey])
+	require.Equal(t, labels.ManagedByObjectController, cos.Labels[labels.ManagedByKey])
 	require.Empty(t, cos.Annotations, "no annotations should be set when template.metadata has none")
 }
 
@@ -573,7 +574,10 @@ func Test_ClusterObjectDeploymentReconciler_CreatesNewRevisionWhenLatestArchived
 // teardown has completed — the state in which garbage collection may prune it.
 func revisionCOS(revision int64, lifecycle ocv1.ClusterObjectSetLifecycleState) *ocv1.ClusterObjectSet {
 	cos := &ocv1.ClusterObjectSet{
-		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-%d", clusterObjectDeploymentName, revision)},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   fmt.Sprintf("%s-%d", clusterObjectDeploymentName, revision),
+			Labels: map[string]string{labels.ManagedByKey: labels.ManagedByObjectController},
+		},
 		Spec: ocv1.ClusterObjectSetSpec{
 			Group:               clusterObjectDeploymentName,
 			Revision:            revision,
@@ -930,7 +934,10 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 func deploymentRevision(cod *ocv1.ClusterObjectDeployment, revision int64, lifecycle ocv1.ClusterObjectSetLifecycleState) *ocv1.ClusterObjectSet {
 	cos := revisionCOS(revision, lifecycle)
 	cos.OwnerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(cod, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind))}
-	cos.Labels = map[string]string{labels.TemplateHashKey: hashutil.DeepHashObject(cod.Spec.Template)}
+	cos.Labels = map[string]string{
+		labels.TemplateHashKey: hashutil.DeepHashObject(cod.Spec.Template),
+		labels.ManagedByKey:    labels.ManagedByObjectController,
+	}
 	cos.Spec.Phases = cod.Spec.Template.DeepCopy().Spec.Phases
 	return cos
 }
@@ -943,37 +950,50 @@ func foreignControllerReference() metav1.OwnerReference {
 }
 
 func Test_ClusterObjectDeploymentReconciler_AdoptsGroupRevisions(t *testing.T) {
+	observer := metav1.OwnerReference{
+		APIVersion: ocv1.GroupVersion.String(), Kind: "ClusterExtension",
+		Name: "observer", UID: "observer-uid", Controller: ptr.To(false),
+	}
+	olderUID := metav1.OwnerReference{
+		APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterObjectDeploymentKind,
+		Name: clusterObjectDeploymentName, UID: "old-cod-uid", Controller: ptr.To(true),
+	}
+	olderAPIVersion := metav1.OwnerReference{
+		APIVersion: ocv1.GroupVersion.Group + "/v1alpha1", Kind: ocv1.ClusterObjectDeploymentKind,
+		Name: clusterObjectDeploymentName, UID: "old-cod-uid", Controller: ptr.To(true),
+	}
 	for _, tc := range []struct {
-		name   string
-		owners []metav1.OwnerReference
+		name          string
+		owners        []metav1.OwnerReference
+		dropManagedBy bool
+		wantAdopted   bool
+		wantUnmanaged bool
 	}{
-		{name: "orphan"},
-		{
-			name: "preserves non-controller owner",
-			owners: []metav1.OwnerReference{{
-				APIVersion: ocv1.GroupVersion.String(), Kind: "ClusterExtension",
-				Name: "observer", UID: "observer-uid", Controller: ptr.To(false),
-			}},
-		},
-		{
-			name: "same deployment with an older UID",
-			owners: []metav1.OwnerReference{{
-				APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterObjectDeploymentKind,
-				Name: clusterObjectDeploymentName, UID: "old-cod-uid", Controller: ptr.To(true),
-			}},
-		},
-		{
-			name: "same deployment through an older API version",
-			owners: []metav1.OwnerReference{{
-				APIVersion: ocv1.GroupVersion.Group + "/v1alpha1", Kind: ocv1.ClusterObjectDeploymentKind,
-				Name: clusterObjectDeploymentName, UID: "old-cod-uid", Controller: ptr.To(true),
-			}},
-		},
+		// Ownerless revisions are adopted only when they carry the managed-by label,
+		// the proof the object-controller created them.
+		{name: "ownerless with managed-by label", wantAdopted: true},
+		{name: "ownerless without managed-by label", dropManagedBy: true, wantUnmanaged: true},
+		// A non-controller owner leaves the revision ownerless (no controller), so the
+		// managed-by label still governs adoption and the observer ref is preserved.
+		{name: "non-controller owner with managed-by label", owners: []metav1.OwnerReference{observer}, wantAdopted: true},
+		{name: "non-controller owner without managed-by label", owners: []metav1.OwnerReference{observer}, dropManagedBy: true, wantUnmanaged: true},
+		// A same-group/kind/name controller reference with an older UID is never adopted:
+		// we do not rewrite the reference to race garbage collection, which deletes a
+		// revision whose owner UID no longer exists. It is left untouched and, being
+		// transient and self-healing, is not surfaced on the Progressing condition
+		// (regardless of the managed-by label).
+		{name: "same deployment with an older UID", owners: []metav1.OwnerReference{olderUID}},
+		{name: "same deployment with an older UID without managed-by label", owners: []metav1.OwnerReference{olderUID}, dropManagedBy: true},
+		{name: "same deployment through an older API version", owners: []metav1.OwnerReference{olderAPIVersion}},
+		{name: "same deployment through an older API version without managed-by label", owners: []metav1.OwnerReference{olderAPIVersion}, dropManagedBy: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cod := codFixture()
 			cos := deploymentRevision(cod, 7, ocv1.ClusterObjectSetLifecycleStateActive)
 			cos.OwnerReferences = tc.owners
+			if tc.dropManagedBy {
+				delete(cos.Labels, labels.ManagedByKey)
+			}
 			cos.Annotations = map[string]string{"preserve": "annotation"}
 			cos.Status.CompletedAt = metav1.Now()
 			setCOSReady(cos, metav1.ConditionTrue, ocv1.ClusterObjectSetReasonAllObjectsReady)
@@ -983,25 +1003,108 @@ func Test_ClusterObjectDeploymentReconciler_AdoptsGroupRevisions(t *testing.T) {
 
 			_, err := reconcileCOD(t, c)
 			require.NoError(t, err)
-			adopted, found := getCOS(t, c, cos.Name)
+			result, found := getCOS(t, c, cos.Name)
 			require.True(t, found)
-			require.True(t, metav1.IsControlledBy(adopted, cod))
-			require.Equal(t, cos.Spec, adopted.Spec)
-			require.Equal(t, cos.Labels, adopted.Labels)
-			require.Equal(t, cos.Annotations, adopted.Annotations)
-			require.Equal(t, before.Status, adopted.Status)
+			// The revision is never mutated apart from its controller owner reference.
+			require.Equal(t, cos.Spec, result.Spec)
+			require.Equal(t, cos.Labels, result.Labels)
+			require.Equal(t, cos.Annotations, result.Annotations)
+			require.Equal(t, before.Status, result.Status)
 			for _, owner := range tc.owners {
 				if owner.Controller != nil && !*owner.Controller {
-					require.Contains(t, adopted.OwnerReferences, owner)
+					require.Contains(t, result.OwnerReferences, owner)
 				}
 			}
-			require.Equal(t, metav1.ConditionTrue, available(t, c).Status)
-			require.Equal(t, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed, progressing(t, c).Reason)
+
 			var revisions ocv1.ClusterObjectSetList
 			require.NoError(t, c.List(t.Context(), &revisions))
-			require.Len(t, revisions.Items, 1, "adoption must not create a matching revision")
+			require.Len(t, revisions.Items, 1, "neither adoption nor refusal may create a matching revision")
+
+			if tc.wantAdopted {
+				require.True(t, metav1.IsControlledBy(result, cod))
+				require.Equal(t, metav1.ConditionTrue, available(t, c).Status)
+				require.Equal(t, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed, progressing(t, c).Reason)
+				return
+			}
+			// Not adopted: the revision's controller owner reference (if any) is unchanged.
+			require.False(t, metav1.IsControlledBy(result, cod), "an unmanaged revision must not be adopted by this deployment")
+			require.Equal(t, cos.OwnerReferences, result.OwnerReferences, "a refused revision's owner references are unchanged")
+			if tc.wantUnmanaged {
+				// An ownerless, unlabeled revision is surfaced on Progressing while it
+				// leads the group, since it requires user action to resolve.
+				cond := progressing(t, c)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterObjectDeploymentReasonUnmanagedRevision, cond.Reason)
+				require.Contains(t, cond.Message, cos.Name)
+				return
+			}
+			// A stale older-UID revision is left to garbage collection; being transient
+			// and self-healing, it must not flap a Progressing condition.
+			require.Nil(t, progressing(t, c), "a stale older-UID revision must not set a Progressing condition")
 		})
 	}
+}
+
+// Test_ClusterObjectDeploymentReconciler_UnmanagedRevisionRecovery verifies that an
+// unmanaged orphan leading the group is adopted once it gains the managed-by label,
+// without creating a competing higher revision in the meantime.
+func Test_ClusterObjectDeploymentReconciler_UnmanagedRevisionRecovery(t *testing.T) {
+	cod := codFixture()
+	// An ownerless revision that the object-controller did not create: it merely
+	// shares the deployment's group and carries no managed-by label. Keep the
+	// template-hash so, once recovered, the adopted revision matches the current
+	// template and no competing revision is cut.
+	unmanaged := deploymentRevision(cod, 1, ocv1.ClusterObjectSetLifecycleStateActive)
+	unmanaged.OwnerReferences = nil
+	delete(unmanaged.Labels, labels.ManagedByKey)
+	setCOSReady(unmanaged, metav1.ConditionTrue, ocv1.ClusterObjectSetReasonAllObjectsReady)
+	c := newCODClient(t, cod, unmanaged)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+	require.Equal(t, ocv1.ClusterObjectDeploymentReasonUnmanagedRevision, progressing(t, c).Reason)
+	_, found := getCOS(t, c, cod.Name+"-2")
+	require.False(t, found, "no higher revision must be created while an unmanaged revision leads the group")
+
+	// Recovery: once the unmanaged revision gains the managed-by label, it is adopted
+	// and the deployment progresses without creating a competing revision.
+	recovered, found := getCOS(t, c, unmanaged.Name)
+	require.True(t, found)
+	recovered.Labels[labels.ManagedByKey] = labels.ManagedByObjectController
+	require.NoError(t, c.Update(t.Context(), recovered))
+
+	_, err = reconcileCOD(t, c)
+	require.NoError(t, err)
+	adopted, found := getCOS(t, c, unmanaged.Name)
+	require.True(t, found)
+	require.True(t, metav1.IsControlledBy(adopted, cod), "a labeled orphan must be adopted")
+	_, found = getCOS(t, c, cod.Name+"-2")
+	require.False(t, found, "adoption must not create a competing higher revision")
+}
+
+// Test_ClusterObjectDeploymentReconciler_IgnoresNonLeadingUnmanagedOrphan verifies
+// that an unmanaged orphan which does not lead the group neither blocks the rollout
+// nor is adopted: the owned leading revision governs the deployment normally.
+func Test_ClusterObjectDeploymentReconciler_IgnoresNonLeadingUnmanagedOrphan(t *testing.T) {
+	cod := codFixture()
+	owned := deploymentRevision(cod, 5, ocv1.ClusterObjectSetLifecycleStateActive)
+	setCOSReady(owned, metav1.ConditionTrue, ocv1.ClusterObjectSetReasonAllObjectsReady)
+	owned.Status.CompletedAt = metav1.Now()
+	unmanaged := deploymentRevision(cod, 1, ocv1.ClusterObjectSetLifecycleStateActive)
+	unmanaged.OwnerReferences = nil
+	delete(unmanaged.Labels, labels.ManagedByKey)
+	c := newCODClient(t, cod, owned, unmanaged)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	// The owned leader governs: the deployment progresses, and the lower unmanaged
+	// orphan is neither adopted nor blocking.
+	require.Equal(t, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed, progressing(t, c).Reason)
+	after, found := getCOS(t, c, unmanaged.Name)
+	require.True(t, found)
+	require.Nil(t, metav1.GetControllerOf(after), "a non-leading unmanaged orphan must not be adopted")
 }
 
 func Test_ClusterObjectDeploymentReconciler_OwnerConflict(t *testing.T) {
@@ -1103,7 +1206,7 @@ func Test_ClusterObjectDeploymentReconciler_OwnerConflict(t *testing.T) {
 }
 
 func Test_ClusterObjectDeploymentReconciler_OwnerConflictRecovery(t *testing.T) {
-	for _, resolution := range []string{"archived", "orphaned", "old deployment UID", "deleted", "deleting"} {
+	for _, resolution := range []string{"archived", "orphaned", "deleted", "deleting"} {
 		t.Run(resolution, func(t *testing.T) {
 			cod := codFixture()
 			owned := deploymentRevision(cod, 1, ocv1.ClusterObjectSetLifecycleStateActive)
@@ -1134,11 +1237,6 @@ func Test_ClusterObjectDeploymentReconciler_OwnerConflictRecovery(t *testing.T) 
 			case "orphaned":
 				foreign.OwnerReferences = nil
 				require.NoError(t, c.Update(t.Context(), foreign))
-			case "old deployment UID":
-				stale := cod.DeepCopy()
-				stale.UID = "old-cod-uid"
-				foreign.OwnerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(stale, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind))}
-				require.NoError(t, c.Update(t.Context(), foreign))
 			case "deleted":
 				require.NoError(t, c.Delete(t.Context(), foreign))
 				expectedRevision = 2
@@ -1153,13 +1251,47 @@ func Test_ClusterObjectDeploymentReconciler_OwnerConflictRecovery(t *testing.T) 
 			require.Equal(t, metav1.ConditionTrue, progressing(t, c).Status)
 			require.Equal(t, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, progressing(t, c).Reason)
 			require.Equal(t, metav1.ConditionTrue, available(t, c).Status)
-			if resolution == "orphaned" || resolution == "old deployment UID" {
+			if resolution == "orphaned" {
 				adopted, found := getCOS(t, c, foreign.Name)
 				require.True(t, found)
 				require.True(t, metav1.IsControlledBy(adopted, cod))
 			}
 		})
 	}
+}
+
+// Test_ClusterObjectDeploymentReconciler_StaleRevisionWaitsForGC verifies that a revision
+// still referencing an older UID of this deployment (e.g. a restored revision) is neither
+// adopted (which would race garbage collection) nor superseded by a competing revision
+// while it leads the group, and that the deployment rolls forward once garbage collection
+// removes it. The transient wait is not reported as a Progressing condition.
+func Test_ClusterObjectDeploymentReconciler_StaleRevisionWaitsForGC(t *testing.T) {
+	cod := codFixture()
+	stale := deploymentRevision(cod, 1, ocv1.ClusterObjectSetLifecycleStateActive)
+	old := cod.DeepCopy()
+	old.UID = "old-cod-uid"
+	stale.OwnerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(old, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind))}
+	c := newCODClient(t, cod, stale)
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+	result, found := getCOS(t, c, stale.Name)
+	require.True(t, found)
+	require.False(t, metav1.IsControlledBy(result, cod), "a stale older-UID revision must not be adopted")
+	require.Equal(t, stale.OwnerReferences, result.OwnerReferences, "a stale older-UID revision's owner references are unchanged")
+	require.Nil(t, progressing(t, c), "a transient, self-healing stale revision must not set a Progressing condition")
+	_, found = getCOS(t, c, cod.Name+"-2")
+	require.False(t, found, "no competing revision may be created while the stale revision leads")
+
+	// Garbage collection removes the revision whose owner UID no longer exists; the watch
+	// re-reconciles and the deployment rolls forward with a fresh, owned revision.
+	require.NoError(t, c.Delete(t.Context(), stale))
+	_, err = reconcileCOD(t, c)
+	require.NoError(t, err)
+	created, found := getCOS(t, c, cod.Name+"-1")
+	require.True(t, found)
+	require.True(t, metav1.IsControlledBy(created, cod), "the fresh revision is controlled by the current deployment")
+	require.Equal(t, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, progressing(t, c).Reason)
 }
 
 func Test_ClusterObjectDeploymentReconciler_ForeignHistoryExcluded(t *testing.T) {
@@ -1213,7 +1345,9 @@ func Test_ClusterObjectDeploymentReconciler_AdoptionFailure(t *testing.T) {
 			setCOSReady(owned, metav1.ConditionTrue, ocv1.ClusterObjectSetReasonAllObjectsReady)
 			orphan := deploymentRevision(cod, 3, ocv1.ClusterObjectSetLifecycleStateActive)
 			orphan.OwnerReferences = nil
-			orphan.Labels = nil // Successful adoption will require a new matching revision.
+			// Keep the managed-by label so the ownerless revision is adoptable, but drop
+			// the template-hash so successful adoption still requires a new matching revision.
+			orphan.Labels = map[string]string{labels.ManagedByKey: labels.ManagedByObjectController}
 			foreign := deploymentRevision(cod, 4, ocv1.ClusterObjectSetLifecycleStateArchived)
 			foreign.OwnerReferences = []metav1.OwnerReference{foreignControllerReference()}
 			if conflict {

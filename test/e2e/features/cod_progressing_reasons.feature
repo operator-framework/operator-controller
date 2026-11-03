@@ -241,3 +241,67 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
     # so it begins from a known-good state rather than racing the COD reconcile.
     And ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason RevisionObjectCollision
     And ClusterObjectDeployment "${NAME}" consistently reports Progressing as False with Reason RevisionObjectCollision for "70s"
+
+  # An ownerless ClusterObjectSet that merely shares the deployment's group but was not
+  # created by the object-controller (no managed-by label) must not be force-adopted.
+  # While it leads the group the deployment reports Progressing=False/UnmanagedRevision
+  # and creates no higher revision; it recovers once the revision is labeled and adopted.
+  Scenario: Progressing is False with UnmanagedRevision for an ownerless, unlabeled group member
+    Given ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${NAME}-1
+      spec:
+        group: ${NAME}
+        revision: 1
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects: []
+      """
+    When resource is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectDeployment
+      metadata:
+        name: ${NAME}
+      spec:
+        template:
+          spec:
+            collisionProtection: Prevent
+            phases:
+            - name: resources
+              objects: []
+      """
+    Then ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason UnmanagedRevision and Message includes:
+      """
+      ClusterObjectSet "${NAME}-1" (revision 1) is not labeled apps.kubernetes.io/managed-by=object-controller
+      """
+    # No higher revision is created while the unmanaged revision leads the group: the
+    # deployment stays blocked and ${NAME}-2 is never cut.
+    And ClusterObjectDeployment "${NAME}" consistently reports Progressing as False with Reason UnmanagedRevision for "5s"
+    And resource "clusterobjectset/${NAME}-2" is not found
+    # Recovery: label the revision as object-controller-managed. The deployment adopts
+    # it and resumes progressing.
+    When ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${NAME}-1
+        labels:
+          apps.kubernetes.io/managed-by: object-controller
+      spec:
+        group: ${NAME}
+        revision: 1
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects: []
+      """
+    Then ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason NewClusterObjectSetProgressed
+    And ClusterObjectDeployment "${NAME}" owns 2 ClusterObjectSets

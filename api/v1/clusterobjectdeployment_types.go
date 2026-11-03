@@ -37,6 +37,7 @@ const (
 	ClusterObjectDeploymentReasonRevisionObjectCollision        = "RevisionObjectCollision"
 	ClusterObjectDeploymentReasonRevisionInvalidSpecification   = "RevisionInvalidSpecification"
 	ClusterObjectDeploymentReasonOwnerConflict                  = "OwnerConflict"
+	ClusterObjectDeploymentReasonUnmanagedRevision              = "UnmanagedRevision"
 
 	// Available condition reasons.
 	ClusterObjectDeploymentReasonAvailable        = "Available"
@@ -157,6 +158,15 @@ type ClusterObjectDeploymentStatus struct {
 	// non-deleting revision in the deployment's group is controlled by another
 	// controller. No new revision is created while the conflict persists, even if
 	// an owned revision has completed or exceeded its progress deadline.
+	// Progressing is False with reason UnmanagedRevision when the highest active,
+	// non-deleting revision in the deployment's group has no controller owner and is
+	// not labeled apps.kubernetes.io/managed-by=object-controller, the proof that the
+	// object-controller created it; such a revision is not adopted and no higher
+	// revision is created while it persists. Recover by removing the revision or by
+	// restoring the managed-by label on it. A revision that instead still references an
+	// older UID of this deployment (for example after a restore) is left to garbage
+	// collection rather than adopted, and no higher revision is created until GC removes
+	// it; this resolves without user action and is not reported as a distinct condition.
 	//
 	// While a rollout is incomplete, Progressing also reflects why the latest (head
 	// active) ClusterObjectSet revision is not yet Ready. It is True with reason
@@ -173,9 +183,16 @@ type ClusterObjectDeploymentStatus struct {
 	// owned ClusterObjectSet revision is Ready, so the deployment remains available across
 	// rollouts while a previous revision is still Ready. It is False with reason
 	// Unavailable when owned active revisions exist but none are Ready yet, or with reason
-	// NoActiveRevision when no owned active revision exists. Revisions without a
-	// controller owner, or controlled by a same-named deployment with an older UID,
-	// are adopted before status is calculated. Foreign-owned revisions are excluded.
+	// NoActiveRevision when no owned active revision exists. Only an ownerless revision
+	// is adopted before status is calculated, and only when it carries the
+	// apps.kubernetes.io/managed-by=object-controller label that proves the
+	// object-controller created it; an ownerless revision missing that label is left
+	// untouched and, when it leads the group, blocks the rollout and is reported on the
+	// Progressing condition with reason UnmanagedRevision. A revision that still carries a
+	// controller owner reference is never adopted: foreign-owned revisions are excluded,
+	// and a stale reference to an older UID of this deployment (for example after a
+	// restore) is left to garbage collection rather than rewriting the reference to race
+	// it.
 	// +optional
 	// +listType=map
 	// +listMapKey=type
