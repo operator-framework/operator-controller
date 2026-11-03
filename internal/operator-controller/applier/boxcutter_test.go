@@ -18,6 +18,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
@@ -867,6 +868,100 @@ func TestBoxcutterApply_NilContentUsesExistingCOD(t *testing.T) {
 		assert.True(t, completed)
 		assert.Empty(t, status)
 	})
+}
+
+// TestBoxcutterApply_Adoption verifies the applier only adopts an existing
+// ClusterObjectDeployment when it is not already controlled by a different owner.
+func TestBoxcutterApply_Adoption(t *testing.T) {
+	type testCase struct {
+		name                   string
+		ext                    *ocv1.ClusterExtension
+		cod                    *ocv1.ClusterObjectDeployment
+		assert                 func(t *testing.T, cl client.Client, applyCompleted bool, applyStatus string, applyErr error)
+		wantExtControllerOwner bool
+	}
+
+	for _, tc := range []testCase{
+		{
+			name: "adopts an existing deployment with no controller owner reference",
+			ext:  &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}},
+			cod: &ocv1.ClusterObjectDeployment{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-ext"},
+			},
+			assert: func(t *testing.T, _ client.Client, applyCompleted bool, applyStatus string, applyErr error) {
+				require.NoError(t, applyErr)
+				require.True(t, applyCompleted)
+				require.Empty(t, applyStatus)
+			},
+			wantExtControllerOwner: true,
+		},
+		{
+			name: "proceeds when the existing deployment is already controlled by this extension",
+			ext:  &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}},
+			cod: &ocv1.ClusterObjectDeployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "test-ext",
+					OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(&ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}}, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))},
+				},
+			},
+			assert: func(t *testing.T, _ client.Client, applyCompleted bool, applyStatus string, applyErr error) {
+				require.NoError(t, applyErr)
+				require.True(t, applyCompleted)
+				require.Empty(t, applyStatus)
+			},
+			wantExtControllerOwner: true,
+		},
+		{
+			name: "refuses to adopt a deployment controlled by a different owner",
+			ext:  &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}},
+			cod: &ocv1.ClusterObjectDeployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "test-ext",
+					OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(&ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "other-ext", UID: "other-uid"}}, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))},
+				},
+			},
+			assert: func(t *testing.T, cl client.Client, applyCompleted bool, applyStatus string, applyErr error) {
+				require.Error(t, applyErr)
+				assert.False(t, applyCompleted)
+				assert.Empty(t, applyStatus)
+
+				t.Log("by surfacing a non-terminal error so retries occur without CE changes")
+				require.NotErrorIs(t, applyErr, reconcile.TerminalError(nil), "error was terminal, but expected non-terminal error so that CE retries occur")
+
+				t.Log("by naming the deployment and the conflicting owner in the message")
+				assert.Contains(t, applyErr.Error(), "test-ext")
+				assert.Contains(t, applyErr.Error(), "other-ext")
+
+				secretList := &corev1.SecretList{}
+				require.NoError(t, cl.List(t.Context(), secretList, client.InNamespace("olmv1-system")))
+				assert.Empty(t, secretList.Items)
+			},
+			wantExtControllerOwner: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			scheme := codTestScheme(t)
+			cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tc.cod).Build()
+			bc := newCODBoxcutter(t, scheme, cl, []client.Object{
+				&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "test-cm", Namespace: "test-ns"}},
+			})
+
+			actualCompleted, actualStatus, actualErr := bc.Apply(t.Context(), dummyBundle, tc.ext, map[string]string{"some": "label"}, map[string]string{})
+			tc.assert(t, cl, actualCompleted, actualStatus, actualErr)
+
+			cod := &ocv1.ClusterObjectDeployment{}
+			require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: tc.ext.Name}, cod))
+			owner := metav1.GetControllerOf(cod)
+			if tc.wantExtControllerOwner {
+				require.NotNil(t, owner)
+				assert.Equal(t, tc.ext.Name, owner.Name)
+				assert.Equal(t, tc.ext.UID, owner.UID)
+				assert.Equal(t, ocv1.ClusterExtensionKind, owner.Kind)
+			} else {
+				require.Equal(t, metav1.GetControllerOf(tc.cod), owner)
+			}
+		})
+	}
 }
 
 // TestBoxcutterApply_Preflights verifies which preflight hook runs for each rollout state
