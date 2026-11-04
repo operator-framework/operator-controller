@@ -1,4 +1,4 @@
-package e2e_test
+package steps_test
 
 import (
 	"context"
@@ -20,13 +20,13 @@ func TestScenarioResourceIsolationAcrossSuites(t *testing.T) {
 	// its input. No cluster is needed to reproduce Godog IDs restarting at 1.
 	dir := t.TempDir()
 	cli := filepath.Join(dir, "kubectl")
-	require.NoError(t, os.WriteFile(cli, []byte("#!/bin/sh\ncat > \"$E2E_APPLIED_RESOURCE\"\n"), 0o700))
+	require.NoError(t, os.WriteFile(cli, []byte("#!/bin/sh\ncat > \"$E2E_APPLIED_RESOURCE\"\n"), 0o700)) //nolint:gosec // The test CLI must be executable.
 	original := pflag.Lookup("k8s.cli").Value.String()
 	require.NoError(t, pflag.Set("k8s.cli", cli))
 	t.Cleanup(func() { require.NoError(t, pflag.Set("k8s.cli", original)) })
 	output := filepath.Join(dir, "applied.yaml")
 	t.Setenv("E2E_APPLIED_RESOURCE", output)
-	var names []string
+	names := make([]string, 0, 3)
 	for _, uri := range []string{"features/install.feature", "features/revision.feature", "object-controller/features/revision.feature"} {
 		ctx, err := steps.CreateScenarioContext(context.Background(), &godog.Scenario{Id: "1", Name: "Stable scenario name", Uri: uri})
 		require.NoError(t, err)
