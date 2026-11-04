@@ -20,7 +20,7 @@ Managed mode requires the `BoxcutterRuntime` feature gate. Without it, omitting 
 
 For registry+v1 bundles in managed mode, the namespace name is resolved from CSV annotations in this order:
 
-1. `operatorframework.io/suggested-namespace-template`: the `metadata.name` field from the JSON template
+1. `operatorframework.io/suggested-namespace-template`: the `metadata.name` field from the YAML or JSON template
 2. `operatorframework.io/suggested-namespace`: a plain string with the preferred name
 3. `<packageName>-system`: convention fallback
 

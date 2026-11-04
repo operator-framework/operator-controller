@@ -72,11 +72,8 @@ type Options struct {
 	// rendered. When false (the default), the renderer resolves the bundle's system-managed
 	// namespace and emits a Namespace object for it (see WithSelfManagedInstallNamespace).
 	SelfManagedInstallNamespace bool
-	// InstallNamespaceLabels and InstallNamespaceAnnotations seed metadata (e.g. PSA) on the
-	// emitted Namespace object. They are defaulted from the bundle's suggested-namespace-template
-	// annotation during Render setup and only consulted when SelfManagedInstallNamespace is false.
-	InstallNamespaceLabels      map[string]string
-	InstallNamespaceAnnotations map[string]string
+	// InstallNamespaceObject is resolved during Render and emitted only for system-managed namespaces.
+	InstallNamespaceObject *corev1.Namespace
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -93,8 +90,10 @@ func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 	if o.UniqueNameGenerator == nil {
 		errs = append(errs, errors.New("unique name generator must be specified"))
 	}
-	if o.SelfManagedInstallNamespace && o.InstallNamespace == "" {
-		errs = append(errs, errors.New("self-managed install namespace requires a namespace name"))
+	if o.SelfManagedInstallNamespace {
+		if err := validateNamespaceName(o.InstallNamespace); err != nil {
+			errs = append(errs, fmt.Errorf("invalid self-managed install namespace: %w", err))
+		}
 	}
 	if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
 		errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
@@ -165,18 +164,14 @@ func (r BundleRenderer) Render(rv1 bundle.RegistryV1, opts ...Option) ([]client.
 	}).apply(opts...)
 
 	// Unless the caller opted into a self-managed install namespace, resolve the bundle's
-	// system-managed namespace (and its Namespace template) from CSV metadata. The template
-	// seeds labels/annotations on the Namespace object that BundleInstallNamespaceGenerator emits.
+	// complete system-managed Namespace from CSV metadata for BundleInstallNamespaceGenerator.
 	if !genOpts.SelfManagedInstallNamespace {
-		name, template, err := resolveSystemManagedNamespace(&rv1)
+		name, namespace, err := resolveSystemManagedNamespace(&rv1)
 		if err != nil {
 			return nil, err
 		}
 		genOpts.InstallNamespace = name
-		if template != nil {
-			genOpts.InstallNamespaceLabels = template.Labels
-			genOpts.InstallNamespaceAnnotations = template.Annotations
-		}
+		genOpts.InstallNamespaceObject = namespace
 	}
 
 	if _, errs := genOpts.validate(&rv1); len(errs) > 0 {

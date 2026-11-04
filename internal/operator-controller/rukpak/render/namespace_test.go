@@ -1,6 +1,7 @@
 package render
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -45,7 +46,7 @@ func TestParseNamespaceTemplate(t *testing.T) {
 		{
 			name:        "empty string value",
 			annotations: map[string]string{AnnotationSuggestedNamespaceTemplate: ""},
-			expected:    nil,
+			expected:    &corev1.Namespace{},
 		},
 		{
 			name: "valid template with PSA labels",
@@ -67,6 +68,35 @@ func TestParseNamespaceTemplate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{"openshift.io/description": "Operator namespace"},
 				},
+			},
+		},
+		{
+			name: "valid YAML template",
+			annotations: map[string]string{
+				AnnotationSuggestedNamespaceTemplate: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: template-ns
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+  annotations:
+    example.com/description: Operator namespace
+  finalizers: [example.com/cleanup]
+spec:
+  finalizers: [kubernetes]
+status:
+  phase: Active`,
+			},
+			expected: &corev1.Namespace{
+				TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "template-ns",
+					Labels:      map[string]string{"pod-security.kubernetes.io/enforce": "restricted"},
+					Annotations: map[string]string{"example.com/description": "Operator namespace"},
+					Finalizers:  []string{"example.com/cleanup"},
+				},
+				Spec:   corev1.NamespaceSpec{Finalizers: []corev1.FinalizerName{corev1.FinalizerKubernetes}},
+				Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
 			},
 		},
 		{
@@ -92,18 +122,17 @@ func TestParseNamespaceTemplate(t *testing.T) {
 
 func TestResolveSystemManagedNamespace(t *testing.T) {
 	tests := []struct {
-		name         string
-		annotations  map[string]string
-		packageName  string
-		wantName     string
-		wantTemplate bool
+		name        string
+		annotations map[string]string
+		packageName string
+		wantName    string
+		expectError bool
 	}{
 		{
-			name:         "suggested-namespace-template with name",
-			annotations:  map[string]string{AnnotationSuggestedNamespaceTemplate: `{"metadata":{"name":"from-template","labels":{"pod-security.kubernetes.io/enforce":"privileged"}}}`},
-			packageName:  "my-operator",
-			wantName:     "from-template",
-			wantTemplate: true,
+			name:        "suggested-namespace-template with name",
+			annotations: map[string]string{AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"from-template","labels":{"pod-security.kubernetes.io/enforce":"privileged"}}}`},
+			packageName: "my-operator",
+			wantName:    "from-template",
 		},
 		{
 			name:        "suggested-namespace without template",
@@ -114,12 +143,11 @@ func TestResolveSystemManagedNamespace(t *testing.T) {
 		{
 			name: "template takes priority over suggested-namespace",
 			annotations: map[string]string{
-				AnnotationSuggestedNamespaceTemplate: `{"metadata":{"name":"from-template"}}`,
+				AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"from-template"}}`,
 				AnnotationSuggestedNamespace:         "from-annotation",
 			},
-			packageName:  "my-operator",
-			wantName:     "from-template",
-			wantTemplate: true,
+			packageName: "my-operator",
+			wantName:    "from-template",
 		},
 		{
 			name:        "fallback to packageName-system",
@@ -134,44 +162,77 @@ func TestResolveSystemManagedNamespace(t *testing.T) {
 			wantName:    "my-operator-system",
 		},
 		{
-			name: "template without name falls back to suggested-namespace",
+			name: "template without name does not fall back to suggested-namespace",
 			annotations: map[string]string{
-				AnnotationSuggestedNamespaceTemplate: `{"metadata":{"labels":{"foo":"bar"}}}`,
-				AnnotationSuggestedNamespace:         "from-annotation",
+				AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"foo":"bar"}}}`,
+				AnnotationSuggestedNamespace:         "Invalid_NS",
 			},
-			packageName:  "my-operator",
-			wantName:     "from-annotation",
-			wantTemplate: true,
+			packageName: "my-operator",
+			expectError: true,
 		},
 		{
-			name:         "template without name and no suggested-namespace falls back to convention",
-			annotations:  map[string]string{AnnotationSuggestedNamespaceTemplate: `{"metadata":{"labels":{"foo":"bar"}}}`},
-			packageName:  "my-operator",
-			wantName:     "my-operator-system",
-			wantTemplate: true,
+			name:        "template without name produces an error",
+			annotations: map[string]string{AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"foo":"bar"}}}`},
+			packageName: "my-operator",
+			expectError: true,
+		},
+		{
+			name: "empty suggested-namespace produces an error",
+			annotations: map[string]string{
+				AnnotationSuggestedNamespace: "",
+			},
+			packageName: "my-operator",
+			expectError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			name, template, err := resolveSystemManagedNamespace(rv1WithAnnotations(tt.packageName, tt.annotations))
+			if tt.expectError {
+				require.ErrorContains(t, err, "namespace name is empty")
+				return
+			}
 			require.NoError(t, err)
 			require.Equal(t, tt.wantName, name)
-			if tt.wantTemplate {
-				require.NotNil(t, template)
-			} else {
-				require.Nil(t, template)
-			}
+			require.NotNil(t, template)
+			require.Equal(t, name, template.Name)
+			require.Equal(t, metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"}, template.TypeMeta)
 		})
 	}
+}
+
+func TestResolveSystemManagedNamespace_PreservesTemplate(t *testing.T) {
+	wantNamespace := &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "template-ns",
+			Labels:      map[string]string{"pod-security.kubernetes.io/enforce": "restricted"},
+			Annotations: map[string]string{"example.com/description": "Operator namespace"},
+			Finalizers:  []string{"example.com/cleanup"},
+		},
+		Spec:   corev1.NamespaceSpec{Finalizers: []corev1.FinalizerName{corev1.FinalizerKubernetes}},
+		Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
+	}
+	templateJSON, err := json.Marshal(wantNamespace)
+	require.NoError(t, err)
+
+	name, namespace, err := resolveSystemManagedNamespace(rv1WithAnnotations("my-operator", map[string]string{
+		AnnotationSuggestedNamespaceTemplate: string(templateJSON),
+	}))
+	require.NoError(t, err)
+	require.Equal(t, wantNamespace.Name, name)
+	require.Equal(t, wantNamespace, namespace)
 }
 
 func TestResolveSystemManagedNamespace_InvalidTemplate(t *testing.T) {
 	_, _, err := resolveSystemManagedNamespace(rv1WithAnnotations("pkg", map[string]string{
 		AnnotationSuggestedNamespaceTemplate: `{invalid json`,
+		AnnotationSuggestedNamespace:         "must-not-fall-back",
 	}))
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "failed to parse namespace template")
+	require.Contains(t, err.Error(), "failed to parse CSV namespace template")
+	require.Contains(t, err.Error(), AnnotationSuggestedNamespaceTemplate)
 }
 
 func TestResolveSystemManagedNamespace_Validation(t *testing.T) {
@@ -182,6 +243,20 @@ func TestResolveSystemManagedNamespace_Validation(t *testing.T) {
 		expectErr   bool
 		errContains string
 	}{
+		{
+			name:        "rejects empty template instead of falling back",
+			annotations: map[string]string{AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v1","kind":"Namespace"}`, AnnotationSuggestedNamespace: "must-not-fall-back"},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "namespace name is empty",
+		},
+		{
+			name:        "rejects empty suggested-namespace instead of falling back",
+			annotations: map[string]string{AnnotationSuggestedNamespace: ""},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "namespace name is empty",
+		},
 		{
 			name:        "rejects uppercase characters in suggested-namespace",
 			annotations: map[string]string{AnnotationSuggestedNamespace: "Invalid-NS"},
@@ -215,10 +290,24 @@ func TestResolveSystemManagedNamespace_Validation(t *testing.T) {
 		},
 		{
 			name:        "rejects invalid name from template",
-			annotations: map[string]string{AnnotationSuggestedNamespaceTemplate: `{"metadata":{"name":"INVALID"}}`},
+			annotations: map[string]string{AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"INVALID"}}`},
 			packageName: "pkg",
 			expectErr:   true,
 			errContains: "not a valid DNS1123 label",
+		},
+		{
+			name:        "rejects invalid version from template",
+			annotations: map[string]string{AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v2","kind":"Namespace","metadata":{"name":"valid"}}`},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "invalid template apiVersion and kind",
+		},
+		{
+			name:        "rejects invalid kind from template",
+			annotations: map[string]string{AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v1","kind":"NotNamespace","metadata":{"name":"valid"}}`},
+			packageName: "pkg",
+			expectErr:   true,
+			errContains: "invalid template apiVersion and kind",
 		},
 	}
 
@@ -269,7 +358,7 @@ func TestBuildNamespaceObject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, BuildNamespaceObject(tt.nsName, tt.labels, tt.annotations))
+			assert.Equal(t, tt.want, buildNamespaceObject(tt.nsName, tt.labels, tt.annotations))
 		})
 	}
 }

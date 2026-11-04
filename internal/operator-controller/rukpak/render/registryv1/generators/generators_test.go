@@ -75,7 +75,7 @@ func Test_BundleInstallNamespaceGenerator(t *testing.T) {
 
 	t.Run("emits a Namespace object for the system-managed install namespace by default", func(t *testing.T) {
 		objs, err := generators.BundleInstallNamespaceGenerator(&bundle.RegistryV1{}, render.Options{
-			InstallNamespace: "install-namespace",
+			InstallNamespaceObject: &corev1.Namespace{TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"}, ObjectMeta: metav1.ObjectMeta{Name: "install-namespace"}},
 		})
 		require.NoError(t, err)
 		require.Len(t, objs, 1)
@@ -85,9 +85,14 @@ func Test_BundleInstallNamespaceGenerator(t *testing.T) {
 
 	t.Run("seeds labels and annotations from the template", func(t *testing.T) {
 		objs, err := generators.BundleInstallNamespaceGenerator(&bundle.RegistryV1{}, render.Options{
-			InstallNamespace:            "install-namespace",
-			InstallNamespaceLabels:      map[string]string{"pod-security.kubernetes.io/enforce": "privileged"},
-			InstallNamespaceAnnotations: map[string]string{"example.com/foo": "bar"},
+			InstallNamespaceObject: &corev1.Namespace{
+				TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "install-namespace",
+					Labels:      map[string]string{"pod-security.kubernetes.io/enforce": "privileged"},
+					Annotations: map[string]string{"example.com/foo": "bar"},
+				},
+			},
 		})
 		require.NoError(t, err)
 		require.Len(t, objs, 1)

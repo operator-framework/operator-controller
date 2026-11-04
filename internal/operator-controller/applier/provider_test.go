@@ -175,7 +175,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 			WithCSV(bundlecsv.Builder().
 				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 				WithAnnotations(map[string]string{
-					render.AnnotationSuggestedNamespaceTemplate: `{"metadata":{"name":"managed-ns","labels":{"pod-security.kubernetes.io/enforce":"privileged"},"annotations":{"example.com/note":"hello"}}}`,
+					render.AnnotationSuggestedNamespaceTemplate: `{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"managed-ns","labels":{"pod-security.kubernetes.io/enforce":"privileged"},"annotations":{"example.com/note":"hello"}}}`,
 				}).Build()).
 			WithBundleResource("service.yaml", &corev1.Service{
 				TypeMeta:   metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String(), Kind: "Service"},
