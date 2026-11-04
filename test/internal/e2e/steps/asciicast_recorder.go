@@ -12,8 +12,12 @@ import (
 
 type recorderContextKey struct{}
 
+// WithRecorder attaches rec as both the demo asciicast recorder and the command
+// observer used by shared helpers, including bash and K8sClient. Both roles
+// intentionally use the same instance; callers must not override the command
+// recorder separately on the returned context.
 func WithRecorder(ctx context.Context, rec *AsciiCastRecorder) context.Context {
-	return context.WithValue(ctx, recorderContextKey{}, rec)
+	return context.WithValue(WithCommandRecorder(ctx, rec), recorderContextKey{}, rec)
 }
 
 func RecorderFromContext(ctx context.Context) *AsciiCastRecorder {

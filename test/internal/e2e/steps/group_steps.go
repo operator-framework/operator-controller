@@ -20,14 +20,14 @@ import (
 // ResourceWithNamespaceOwnerApplied resolves a real cluster-scoped Namespace owner
 // before applying the resource so garbage collection sees valid owner metadata.
 func ResourceWithNamespaceOwnerApplied(ctx context.Context, ownerName string, template *godog.DocString) error {
-	sc := scenarioCtx(ctx)
-	obj, err := toUnstructured(substituteScenarioVars(template.Content, sc))
+	sc := Scenario(ctx)
+	obj, err := ToUnstructured(SubstituteScenarioVars(template.Content, sc))
 	if err != nil {
 		return err
 	}
-	ownerName = substituteScenarioVars(ownerName, sc)
+	ownerName = SubstituteScenarioVars(ownerName, sc)
 	if ownerName != "" {
-		owner, err := getResource("namespace", ownerName, "")
+		owner, err := GetResource("namespace", ownerName, "")
 		if err != nil {
 			return err
 		}
@@ -46,35 +46,35 @@ func ResourceWithNamespaceOwnerApplied(ctx context.Context, ownerName string, te
 }
 
 func RememberResourceUID(ctx context.Context, resourceName string) error {
-	sc := scenarioCtx(ctx)
-	resourceName = substituteScenarioVars(resourceName, sc)
+	sc := Scenario(ctx)
+	resourceName = SubstituteScenarioVars(resourceName, sc)
 	kind, name, found := strings.Cut(resourceName, "/")
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resourceName)
 	}
-	obj, err := getResource(kind, name, sc.namespace)
+	obj, err := GetResource(kind, name, sc.Namespace)
 	if err != nil {
 		return err
 	}
 	if obj.GetUID() == "" {
 		return fmt.Errorf("resource %s has no UID", resourceName)
 	}
-	if sc.resourceUIDs == nil {
-		sc.resourceUIDs = map[string]types.UID{}
+	if sc.ResourceUIDs == nil {
+		sc.ResourceUIDs = map[string]types.UID{}
 	}
-	sc.resourceUIDs[resourceName] = obj.GetUID()
+	sc.ResourceUIDs[resourceName] = obj.GetUID()
 	return nil
 }
 
 func ResourceKeepsUID(ctx context.Context, resourceName string) error {
-	sc := scenarioCtx(ctx)
-	resourceName = substituteScenarioVars(resourceName, sc)
-	uid, found := sc.resourceUIDs[resourceName]
+	sc := Scenario(ctx)
+	resourceName = SubstituteScenarioVars(resourceName, sc)
+	uid, found := sc.ResourceUIDs[resourceName]
 	if !found {
 		return fmt.Errorf("no UID remembered for resource %s", resourceName)
 	}
 	kind, name, _ := strings.Cut(resourceName, "/")
-	obj, err := getResource(kind, name, sc.namespace)
+	obj, err := GetResource(kind, name, sc.Namespace)
 	if err != nil {
 		return err
 	}
@@ -84,9 +84,9 @@ func ResourceKeepsUID(ctx context.Context, resourceName string) error {
 	return nil
 }
 
-// listClusterObjectSetsInGroup selects revisions by group on the API server.
-func listClusterObjectSetsInGroup(ctx context.Context, group string) ([]ocv1.ClusterObjectSet, error) {
-	out, err := k8sClient(ctx, "get", "clusterobjectsets", "--field-selector", "spec.group="+group, "-o", "json")
+// ListClusterObjectSetsInGroup selects revisions by group on the API server.
+func ListClusterObjectSetsInGroup(ctx context.Context, group string) ([]ocv1.ClusterObjectSet, error) {
+	out, err := K8sClient(ctx, "get", "clusterobjectsets", "--field-selector", "spec.group="+group, "-o", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -98,11 +98,11 @@ func listClusterObjectSetsInGroup(ctx context.Context, group string) ([]ocv1.Clu
 }
 
 func ClusterObjectSetHasGroup(ctx context.Context, revisionName, group string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(revisionName, sc)
-	group = substituteScenarioVars(group, sc)
-	waitFor(ctx, func() bool {
-		obj, err := getResource("clusterobjectset", revisionName, "")
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(revisionName, sc)
+	group = SubstituteScenarioVars(group, sc)
+	WaitFor(ctx, func() bool {
+		obj, err := GetResource("clusterobjectset", revisionName, "")
 		if err != nil {
 			return false
 		}
@@ -115,11 +115,11 @@ func ClusterObjectSetHasGroup(ctx context.Context, revisionName, group string) e
 // ClusterObjectSetObjectsUseSSAManager checks actual managed fields on every
 // inline or externally stored phase object, including their revision owner.
 func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, manager string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(revisionName, sc)
-	manager = substituteScenarioVars(manager, sc)
-	waitFor(ctx, func() bool {
-		obj, err := getResource("clusterobjectset", revisionName, "")
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(revisionName, sc)
+	manager = SubstituteScenarioVars(manager, sc)
+	WaitFor(ctx, func() bool {
+		obj, err := GetResource("clusterobjectset", revisionName, "")
 		if err != nil {
 			return false
 		}
@@ -132,7 +132,7 @@ func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, man
 			for _, phaseObj := range phase.Objects {
 				desired := &phaseObj.InlineManifest
 				if phaseObj.Type == ocv1.ObjectTypeObjectReference {
-					desired, err = resolveObjectRef(phaseObj.ObjectRef)
+					desired, err = ResolveObjectRef(phaseObj.ObjectRef)
 					if err != nil {
 						return false
 					}
@@ -142,7 +142,7 @@ func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, man
 				if desired.GetNamespace() != "" {
 					args = append(args, "-n", desired.GetNamespace())
 				}
-				out, err := k8sClient(ctx, args...)
+				out, err := K8sClient(ctx, args...)
 				if err != nil {
 					return false
 				}
@@ -178,26 +178,26 @@ func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, man
 }
 
 func RememberClusterObjectSetSecrets(ctx context.Context, revisionName string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(revisionName, sc)
-	names, err := collectReferredSecretNames(ctx, revisionName)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(revisionName, sc)
+	names, err := CollectReferredSecretNames(ctx, revisionName)
 	if err != nil {
 		return err
 	}
 	for _, name := range names {
-		sc.revisionSecrets = append(sc.revisionSecrets, resource{kind: "secret", name: name, namespace: olmNamespace})
+		sc.RevisionSecrets = append(sc.RevisionSecrets, Resource{Kind: "secret", Name: name, Namespace: OLMNamespace})
 	}
 	return nil
 }
 
 func RememberedRevisionSecretsRemoved(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
-	if len(sc.revisionSecrets) == 0 {
+	sc := Scenario(ctx)
+	if len(sc.RevisionSecrets) == 0 {
 		return fmt.Errorf("no revision secrets were remembered")
 	}
-	for _, secret := range sc.revisionSecrets {
-		waitFor(ctx, func() bool {
-			out, err := k8sClient(ctx, "get", secret.kind, secret.name, "-n", secret.namespace, "--ignore-not-found", "-o", "name")
+	for _, secret := range sc.RevisionSecrets {
+		WaitFor(ctx, func() bool {
+			out, err := K8sClient(ctx, "get", secret.Kind, secret.Name, "-n", secret.Namespace, "--ignore-not-found", "-o", "name")
 			return err == nil && strings.TrimSpace(out) == ""
 		})
 	}
