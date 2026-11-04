@@ -3,14 +3,14 @@
 End-to-end tests that verify OLM upgrades don't break pre-existing ClusterCatalogs and ClusterExtensions.
 
 These tests use the [Godog](https://github.com/cucumber/godog) BDD framework with shared step definitions
-from `test/e2e/steps/`. The upgrade-specific steps live in `test/e2e/steps/upgrade_steps.go`.
+from `test/e2e/shared/steps/`. The upgrade-specific steps live in `test/e2e/shared/steps/upgrade_steps.go`.
 See [test/e2e/README.md](../e2e/README.md) for more information on the Godog framework and writing tests.
 
 ## Structure
 
 ```
 test/upgrade-e2e/
-├── upgrade_test.go                     # Test runner (reuses shared steps from test/e2e/steps/)
+├── upgrade_test.go                     # Test runner (reuses shared steps from test/e2e/shared/steps/)
 └── features/
     └── operator-upgrade.feature        # Upgrade verification scenarios
 ```

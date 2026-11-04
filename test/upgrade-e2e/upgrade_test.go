@@ -9,7 +9,7 @@ import (
 	"github.com/cucumber/godog/colors"
 	"github.com/spf13/pflag"
 
-	"github.com/operator-framework/operator-controller/test/e2e/steps"
+	"github.com/operator-framework/operator-controller/test/e2e/shared/steps"
 )
 
 var opts = godog.Options{

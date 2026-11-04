@@ -2,10 +2,10 @@ package summary
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"math"
 	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -20,6 +20,9 @@ var (
 	alertsTemplate  = "alert.md.tmpl"
 	chartTemplate   = "mermaid_chart.md.tmpl"
 )
+
+//go:embed templates/*.tmpl
+var templates embed.FS
 
 type summaryAlerts struct {
 	FiringAlerts  []summaryAlert
@@ -151,11 +154,7 @@ func (s *githubSummary) Alerts() (string, error) {
 }
 
 func executeTemplate(templateFile string, obj any) (string, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("failed to get working directory: %w", err)
-	}
-	tmpl, err := template.New(templateFile).ParseGlob(filepath.Join(wd, "../internal/summary/templates", templateFile))
+	tmpl, err := template.New(templateFile).ParseFS(templates, "templates/"+templateFile)
 	if err != nil {
 		return "", err
 	}
