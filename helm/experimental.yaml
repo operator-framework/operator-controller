@@ -6,6 +6,7 @@
 # to pull in resources or additions
 options:
   objectController:
+    enabled: true
     deployment:
       replicas: 2
   operatorController:

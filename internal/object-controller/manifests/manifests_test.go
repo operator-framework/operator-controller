@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
@@ -29,22 +28,16 @@ func TestObjectControllerManifests(t *testing.T) {
 		wantErr                string
 	}{
 		{name: "standard", values: `{}`, wantOperatorController: true, wantCatalogd: true},
-		{name: "conflicting Boxcutter gate", values: `options: {featureSet: experimental, operatorController: {features: {enabled: [BoxcutterRuntime], disabled: [BoxcutterRuntime]}}}`, wantErr: "BoxcutterRuntime cannot appear in both options.operatorController.features.enabled and options.operatorController.features.disabled"},
-		{name: "experimental with Boxcutter", values: `options: {featureSet: experimental, operatorController: {features: {enabled: [BoxcutterRuntime], disabled: []}}}`, wantObjectController: true, wantOperatorController: true, wantCatalogd: true},
-		{name: "cannot disable object-controller with Boxcutter", values: `options: {featureSet: experimental, objectController: {enabled: false}, operatorController: {features: {enabled: [BoxcutterRuntime], disabled: []}}}`, wantErr: "options.objectController.enabled=false is incompatible with enabled BoxcutterRuntime"},
-		{name: "conflicting Boxcutter gate with object-controller disabled", values: `options: {featureSet: experimental, objectController: {enabled: false}, operatorController: {features: {enabled: [BoxcutterRuntime], disabled: [BoxcutterRuntime]}}}`, wantErr: "BoxcutterRuntime cannot appear in both options.operatorController.features.enabled and options.operatorController.features.disabled"},
-		{name: "conflicting Boxcutter gate with object-controller enabled", values: `options: {featureSet: experimental, objectController: {enabled: true}, operatorController: {features: {enabled: [BoxcutterRuntime], disabled: [BoxcutterRuntime]}}}`, wantErr: "BoxcutterRuntime cannot appear in both options.operatorController.features.enabled and options.operatorController.features.disabled"},
-		{name: "explicitly disabled with inactive Boxcutter", values: `options: {featureSet: experimental, objectController: {enabled: false}, operatorController: {features: {enabled: [], disabled: [BoxcutterRuntime]}}}`, wantOperatorController: true, wantCatalogd: true},
+		{name: "enabled Boxcutter does not render object-controller", values: `options: {featureSet: experimental, operatorController: {features: {enabled: [BoxcutterRuntime], disabled: []}}}`, wantOperatorController: true, wantCatalogd: true},
 		{name: "standalone", values: `options: {featureSet: experimental, objectController: {enabled: true}, operatorController: {enabled: false}, catalogd: {enabled: false}}`, wantObjectController: true},
-		{name: "standalone with inactive conflicting Boxcutter gate", values: `options: {featureSet: experimental, objectController: {enabled: true}, operatorController: {enabled: false, features: {enabled: [BoxcutterRuntime], disabled: [BoxcutterRuntime]}}, catalogd: {enabled: false}}`, wantObjectController: true},
 		{name: "standalone with cert-manager", values: `options: {featureSet: experimental, objectController: {enabled: true}, operatorController: {enabled: false}, catalogd: {enabled: false}, certManager: {enabled: true}}`, wantObjectController: true},
 		{name: "explicitly disabled", values: `options: {featureSet: experimental, objectController: {enabled: false}}`, wantOperatorController: true, wantCatalogd: true},
 		{name: "downstream default", values: `options: {openshift: {enabled: true}, catalogd: {enabled: false}}`, wantOperatorController: true, wantOpenShift: true},
 		{name: "downstream experimental with Helm", values: `options: {featureSet: experimental, openshift: {enabled: true}, catalogd: {enabled: false}, operatorController: {features: {enabled: [WebhookProviderOpenshiftServiceCA], disabled: [BoxcutterRuntime]}}}`, wantOperatorController: true, wantOpenShift: true},
-		{name: "downstream experimental with Boxcutter", values: `options: {featureSet: experimental, openshift: {enabled: true}, catalogd: {enabled: false}, operatorController: {features: {enabled: [BoxcutterRuntime], disabled: []}}}`, wantObjectController: true, wantOperatorController: true, wantOpenShift: true},
 		{name: "downstream standalone", values: `options: {featureSet: experimental, openshift: {enabled: true}, objectController: {enabled: true}, operatorController: {enabled: false}, catalogd: {enabled: false}}`, wantObjectController: true, wantOpenShift: true},
 		{name: "catalogd only", values: `options: {featureSet: experimental, operatorController: {enabled: false, features: {enabled: [BoxcutterRuntime]}}}`, wantCatalogd: true},
-		{name: "standard cannot enable experimental API", values: `options: {objectController: {enabled: true}}`, wantErr: "objectController requires options.featureSet=experimental"},
+		{name: "standard can enable object-controller", values: `options: {objectController: {enabled: true}}`, wantObjectController: true, wantOperatorController: true, wantCatalogd: true},
+		{name: "null object-controller toggle does not render", values: `options: {featureSet: experimental, objectController: {enabled: null}}`, wantOperatorController: true, wantCatalogd: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rendered, err := renderChart(t, tc.values)
@@ -96,44 +89,6 @@ func TestObjectControllerManifests(t *testing.T) {
 					require.Equal(t, "object-controller-cert", objects["Service/object-controller-service"].GetAnnotations()["service.beta.openshift.io/serving-cert-secret-name"])
 				}
 			}
-		})
-	}
-}
-
-func TestObjectControllerEnabledWithoutOperatorController(t *testing.T) {
-	for _, tc := range []struct {
-		name    string
-		values  string
-		enabled bool
-	}{
-		{name: "missing operator-controller", values: `options: {featureSet: experimental, objectController: {enabled: null}}`},
-		{name: "null operator-controller", values: `options: {featureSet: experimental, objectController: {enabled: null}, operatorController: null}`},
-		{name: "standalone without operator-controller", values: `options: {featureSet: experimental, objectController: {enabled: true}}`, enabled: true},
-		{name: "standalone with null operator-controller", values: `options: {featureSet: experimental, objectController: {enabled: true}, operatorController: null}`, enabled: true},
-		{name: "missing features", values: `options: {featureSet: experimental, objectController: {enabled: null}, operatorController: {enabled: true}}`},
-		{name: "null features", values: `options: {featureSet: experimental, objectController: {enabled: null}, operatorController: {enabled: true, features: null}}`},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			ch, err := loader.Load("../../../helm/olmv1")
-			require.NoError(t, err)
-			values, err := chartutil.ReadValues([]byte(tc.values))
-			require.NoError(t, err)
-			values["options"].(map[string]interface{})["openshift"] = map[string]interface{}{"enabled": false}
-			var helpers *chart.File
-			for _, template := range ch.Templates {
-				if template.Name == "templates/_helpers.tpl" {
-					helpers = template
-					break
-				}
-			}
-			require.NotNil(t, helpers)
-			ch.Templates = []*chart.File{
-				helpers,
-				{Name: "templates/enabled", Data: []byte(`{{ include "objectController.enabled" . }}`)},
-			}
-			rendered, err := engine.Render(ch, chartutil.Values{"Values": values})
-			require.NoError(t, err)
-			require.Equal(t, tc.enabled, rendered["olmv1/templates/enabled"] == "true")
 		})
 	}
 }
