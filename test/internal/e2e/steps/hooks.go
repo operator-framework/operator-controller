@@ -2,6 +2,7 @@ package steps
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -214,13 +215,18 @@ func CheckFeatureTags(ctx context.Context, sc *godog.Scenario) (context.Context,
 }
 
 func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+	// Godog IDs restart in each component process. Scope resource identities by
+	// feature so concurrent suites cannot delete or modify each other's resources.
+	featureName := strings.TrimSuffix(filepath.Base(sc.Uri), filepath.Ext(sc.Uri))
+	featureHash := sha256.Sum256([]byte(featureName))
+	id := fmt.Sprintf("%x-%s", featureHash[:4], sc.Id)
 	scCtx := &scenarioContext{
-		id:                   sc.Id,
-		featureName:          strings.TrimSuffix(filepath.Base(sc.Uri), filepath.Ext(sc.Uri)),
+		id:                   id,
+		featureName:          featureName,
 		scenarioName:         sc.Name,
-		namespace:            fmt.Sprintf("ns-%s", sc.Id),
-		clusterExtensionName: fmt.Sprintf("ce-%s", sc.Id),
-		clusterObjectSetName: fmt.Sprintf("ce-%s-1", sc.Id),
+		namespace:            fmt.Sprintf("ns-%s", id),
+		clusterExtensionName: fmt.Sprintf("ce-%s", id),
+		clusterObjectSetName: fmt.Sprintf("ce-%s-1", id),
 		catalogs:             make(map[string]string),
 		catalogPackageNames:  make(map[string]string),
 		metricsResponse:      make(map[string]string),
