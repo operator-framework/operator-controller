@@ -487,7 +487,10 @@ e2e/%: #EXHELP Run e2e scenario against a cluster created by e2e-setup or experi
 	@feature=$$(echo "$*" | cut -d/ -f1); \
 	scenario=$$(echo "$*" | cut -d/ -f2-); \
 	if [ "$$scenario" = "$$feature" ]; then scenario=""; fi; \
-	KUBECONFIG=$(KUBECONFIG) go test -count=1 -v ./test/e2e/operator-controller/... \
+	set -- test/e2e/*/features/"$$feature.feature"; \
+	if [ "$$#" -ne 1 ] || [ ! -f "$$1" ]; then echo "Expected one feature named $$feature" >&2; exit 1; fi; \
+	suite=$$(dirname "$$(dirname "$$1")"); \
+	KUBECONFIG=$(KUBECONFIG) go test -count=1 -v ./$$suite/... \
 	  -timeout $(E2E_TIMEOUT) \
 	  -args --godog.concurrency=1 --e2e.scenario="$$scenario" "features/$$feature.feature"
 
