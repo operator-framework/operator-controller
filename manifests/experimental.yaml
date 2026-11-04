@@ -3029,6 +3029,7 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
     app.kubernetes.io/part-of: olm
   name: operator-controller-clusterextension-viewer-role
 rules:
