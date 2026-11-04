@@ -1,5 +1,5 @@
 {{- if .Values.options.openshift.enabled -}}
-{{- if include "objectController.enabled" . -}}
+{{- if .Values.options.objectController.enabled -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

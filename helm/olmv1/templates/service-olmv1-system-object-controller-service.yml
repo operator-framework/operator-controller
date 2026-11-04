@@ -1,4 +1,4 @@
-{{- if include "objectController.enabled" . }}
+{{- if .Values.options.objectController.enabled }}
 apiVersion: v1
 kind: Service
 metadata:

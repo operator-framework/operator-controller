@@ -1,4 +1,4 @@
-{{- if include "objectController.enabled" . }}
+{{- if .Values.options.objectController.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

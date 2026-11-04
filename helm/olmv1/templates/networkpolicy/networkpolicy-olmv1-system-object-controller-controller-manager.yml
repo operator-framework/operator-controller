@@ -1,4 +1,4 @@
-{{- if include "objectController.enabled" . }}
+{{- if .Values.options.objectController.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

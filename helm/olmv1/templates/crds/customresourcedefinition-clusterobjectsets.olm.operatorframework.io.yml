@@ -1,3 +1,3 @@
-{{- if include "objectController.enabled" . }}
+{{- if .Values.options.objectController.enabled }}
 {{ tpl (.Files.Get "base/object-controller/crd/experimental/olm.operatorframework.io_clusterobjectsets.yaml") . }}
 {{- end }}
