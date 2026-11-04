@@ -15,7 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// tlsCipherSuiteByName is a name→ID map that covers TLS 1.3 cipher suites
+// tlsCipherSuiteByName is a Name→ID map that covers TLS 1.3 cipher suites
 // (not returned by tls.CipherSuites) as well as all TLS 1.2 suites.
 var tlsCipherSuiteByName = func() map[string]uint16 {
 	m := map[string]uint16{
@@ -33,7 +33,7 @@ var tlsCipherSuiteByName = func() map[string]uint16 {
 	return m
 }()
 
-// tlsCipherSuiteName returns a human-readable name for a cipher suite ID,
+// tlsCipherSuiteName returns a human-readable Name for a cipher suite ID,
 // including TLS 1.3 suites that tls.CipherSuiteName does not recognise.
 func tlsCipherSuiteName(id uint16) string {
 	for name, cid := range tlsCipherSuiteByName {
@@ -57,10 +57,10 @@ var curveIDByName = map[string]tls.CurveID{
 }
 
 // getMetricsService returns the full Service object for the named component's metrics service.
-// The namespace is available via svc.Namespace.
+// The Namespace is available via svc.Namespace.
 func getMetricsService(component string) (*corev1.Service, error) {
 	serviceName := fmt.Sprintf("%s-service", component)
-	serviceNs, err := k8sClient(context.Background(), "get", "service", "-A", "-o",
+	serviceNs, err := K8sClient(context.Background(), "get", "service", "-A", "-o",
 		fmt.Sprintf(`jsonpath={.items[?(@.metadata.name=="%s")].metadata.namespace}`, serviceName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to find namespace for service %s: %w", serviceName, err)
@@ -70,7 +70,7 @@ func getMetricsService(component string) (*corev1.Service, error) {
 		return nil, fmt.Errorf("service %s not found in any namespace", serviceName)
 	}
 
-	raw, err := k8sClient(context.Background(), "get", "service", "-n", serviceNs, serviceName, "-o", "json")
+	raw, err := K8sClient(context.Background(), "get", "service", "-n", serviceNs, serviceName, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service %s: %w", serviceName, err)
 	}
@@ -101,7 +101,7 @@ func randomAvailablePort() (int, error) {
 }
 
 // portForward starts a kubectl port-forward to target (e.g. "service/foo" or "pod/bar")
-// in the given namespace, mapping a random local port to remotePort. It returns the
+// in the given Namespace, mapping a random local port to remotePort. It returns the
 // local address and a cleanup function. The caller is responsible for calling cleanup.
 func portForward(ctx context.Context, ns, target string, remotePort int32) (string, func(), error) {
 	localPort, err := randomAvailablePort()
@@ -109,9 +109,9 @@ func portForward(ctx context.Context, ns, target string, remotePort int32) (stri
 		return "", nil, fmt.Errorf("failed to find a free local port: %w", err)
 	}
 
-	pfCmd := exec.Command(k8sCli, "port-forward", "-n", ns, //nolint:gosec
+	pfCmd := exec.Command(K8sCLI, "port-forward", "-n", ns, //nolint:gosec
 		target, fmt.Sprintf("%d:%d", localPort, remotePort))
-	pfCmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
+	pfCmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", KubeconfigPath))
 	if err := pfCmd.Start(); err != nil {
 		return "", nil, fmt.Errorf("failed to start port-forward to %s: %w", target, err)
 	}
@@ -123,9 +123,9 @@ func portForward(ctx context.Context, ns, target string, remotePort int32) (stri
 		}
 	}
 
-	if rec := RecorderFromContext(ctx); rec != nil {
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
 		rec.RecordCustom(
-			fmt.Sprintf("%s port-forward -n %s %s %d:%d &", k8sCli, ns, target, localPort, remotePort),
+			fmt.Sprintf("%s port-forward -n %s %s %d:%d &", K8sCLI, ns, target, localPort, remotePort),
 			"", "",
 		)
 	}
@@ -155,9 +155,9 @@ func withMetricsPortForward(ctx context.Context, component string, fn func(addr 
 
 	// Wait until the port-forward is accepting connections. A plain TLS dial (no version
 	// restrictions) serves as the readiness probe; any successful TLS handshake confirms
-	// the tunnel is up.  A short per-attempt timeout prevents the dial from blocking
+	// the tunnel is up.  A short per-attempt Timeout prevents the dial from blocking
 	// indefinitely if the local port is open but the upstream handshake stalls.
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		dialer := &net.Dialer{Timeout: 3 * time.Second}
 		conn, err := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{InsecureSkipVerify: true}) //nolint:gosec
 		if err != nil {
@@ -222,8 +222,8 @@ func MetricsEndpointAcceptsConnectionUsingCurve(ctx context.Context, component, 
 	})
 }
 
-// componentDeploymentName maps the short component name used in feature files to
-// the actual Kubernetes Deployment name.
+// componentDeploymentName maps the short component Name used in feature files to
+// the actual Kubernetes Deployment Name.
 func componentDeploymentName(component string) (string, error) {
 	switch component {
 	case "operator-controller":
@@ -238,7 +238,7 @@ func componentDeploymentName(component string) (string, error) {
 // getDeploymentContainerArgs returns the args list of the container named "manager"
 // inside the named deployment.
 func getDeploymentContainerArgs(ns, name string) ([]string, error) {
-	raw, err := k8sClient(context.Background(), "get", "deployment", name, "-n", ns, "-o", "json")
+	raw, err := K8sClient(context.Background(), "get", "deployment", name, "-n", ns, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("getting deployment %s/%s: %w", ns, name, err)
 	}
@@ -257,7 +257,7 @@ func getDeploymentContainerArgs(ns, name string) ([]string, error) {
 // getDeploymentContainerIndex returns the index of the container named "manager"
 // inside the named deployment.
 func getDeploymentContainerIndex(ns, name string) (int, error) {
-	raw, err := k8sClient(context.Background(), "get", "deployment", name, "-n", ns, "-o", "json")
+	raw, err := K8sClient(context.Background(), "get", "deployment", name, "-n", ns, "-o", "json")
 	if err != nil {
 		return -1, fmt.Errorf("getting deployment %s/%s: %w", ns, name, err)
 	}
@@ -285,7 +285,7 @@ func patchDeploymentArgs(ns, name string, args []string) error {
 		return err
 	}
 	patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/%d/args","value":%s}]`, idx, string(argsJSON))
-	_, err = k8sClient(context.Background(), "patch", "deployment", name, "-n", ns, "--type=json", "-p", patch)
+	_, err = K8sClient(context.Background(), "patch", "deployment", name, "-n", ns, "--type=json", "-p", patch)
 	return err
 }
 
@@ -322,26 +322,26 @@ func configureDeploymentCustomTLS(ctx context.Context, component, version, ciphe
 		return err
 	}
 
-	origArgs, err := getDeploymentContainerArgs(olmNamespace, deploymentName)
+	origArgs, err := getDeploymentContainerArgs(OLMNamespace, deploymentName)
 	if err != nil {
 		return err
 	}
 
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	sc.deploymentRestores = append(sc.deploymentRestores, deploymentRestore{
-		name:         deploymentName,
-		namespace:    olmNamespace,
+		Name:         deploymentName,
+		Namespace:    OLMNamespace,
 		patchedArgs:  true,
 		originalArgs: origArgs,
 	})
 
 	newArgs := buildCustomTLSArgs(origArgs, version, ciphers, curves)
-	if err := patchDeploymentArgs(olmNamespace, deploymentName, newArgs); err != nil {
+	if err := patchDeploymentArgs(OLMNamespace, deploymentName, newArgs); err != nil {
 		return fmt.Errorf("patching %s with custom TLS args: %w", deploymentName, err)
 	}
 
-	waitFor(ctx, func() bool {
-		_, err := k8sClient(ctx, "rollout", "status", "-n", olmNamespace,
+	WaitFor(ctx, func() bool {
+		_, err := K8sClient(ctx, "rollout", "status", "-n", OLMNamespace,
 			fmt.Sprintf("deployment/%s", deploymentName), "--timeout=10s")
 		return err == nil
 	})

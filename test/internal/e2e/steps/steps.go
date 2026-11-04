@@ -54,13 +54,13 @@ const (
 	olmDeploymentName      = "operator-controller-controller-manager"
 	catalogdDeploymentName = "catalogd-controller-manager"
 	defaultTimeout         = 5 * time.Minute
-	tick                   = 1 * time.Second
+	Tick                   = 1 * time.Second
 )
 
-// timeout is the per-step wait timeout. It defaults to defaultTimeout (5m) but
+// Timeout is the per-step wait Timeout. It defaults to defaultTimeout (5m) but
 // can be overridden via E2E_STEP_TIMEOUT to accommodate runtimes (e.g.
 // BoxcutterRuntime) that take longer to complete an installation.
-var timeout = func() time.Duration {
+var Timeout = func() time.Duration {
 	if s := os.Getenv("E2E_STEP_TIMEOUT"); s != "" {
 		if d, err := time.ParseDuration(s); err == nil {
 			return d
@@ -70,13 +70,13 @@ var timeout = func() time.Duration {
 }()
 
 var (
-	olmNamespace        = "olmv1-system"
-	componentNamespaces = map[string]string{} // keyed by component label (e.g. "catalogd"); falls back to olmNamespace
-	kubeconfigPath      string
-	k8sCli              string
+	OLMNamespace        = "olmv1-system"
+	ComponentNamespaces = map[string]string{} // keyed by component label (e.g. "catalogd"); falls back to olmNamespace
+	KubeconfigPath      string
+	K8sCLI              string
 	deployImageRegistry = sync.OnceValue(func() error {
-		// Only deploy the registry on kind clusters
-		providerID, err := k8sClient(context.Background(), "get", "nodes", "-o", "jsonpath={.items[0].spec.providerID}")
+		// Only deploy the registry on Kind clusters
+		providerID, err := K8sClient(context.Background(), "get", "nodes", "-o", "jsonpath={.items[0].spec.providerID}")
 		if err != nil || !strings.HasPrefix(providerID, "kind://") {
 			return nil
 		}
@@ -252,31 +252,31 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 func init() {
 	flagSet := pflag.CommandLine
-	flagSet.StringVar(&k8sCli, "k8s.cli", "kubectl", "Path to k8s cli")
+	flagSet.StringVar(&K8sCLI, "k8s.cli", "kubectl", "Path to k8s cli")
 	if v, found := os.LookupEnv("KUBECONFIG"); found {
-		kubeconfigPath = v
+		KubeconfigPath = v
 	} else {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			panic(fmt.Sprintf("cannot determine user home directory: %v", err))
 		}
-		flagSet.StringVar(&kubeconfigPath, "kubeconfig", filepath.Join(home, ".kube", "config"), "Paths to a kubeconfig. Only required if out-of-cluster.")
+		flagSet.StringVar(&KubeconfigPath, "kubeconfig", filepath.Join(home, ".kube", "config"), "Paths to a kubeconfig. Only required if out-of-cluster.")
 	}
 }
 
-// namespaceForComponent returns the namespace for the named OLM component.
-// Falls back to olmNamespace when the component has no dedicated entry (e.g. upstream single-namespace deployments).
-func namespaceForComponent(component string) string {
-	if ns, ok := componentNamespaces[component]; ok {
+// NamespaceForComponent returns the Namespace for the named OLM component.
+// Falls back to OLMNamespace when the component has no dedicated entry (e.g. upstream single-Namespace deployments).
+func NamespaceForComponent(component string) string {
+	if ns, ok := ComponentNamespaces[component]; ok {
 		return ns
 	}
-	return olmNamespace
+	return OLMNamespace
 }
 
-func k8sClient(ctx context.Context, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, k8sCli, args...)
+func K8sClient(ctx context.Context, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, K8sCLI, args...)
 	logger.V(1).Info("Running", "command", strings.Join(cmd.Args, " "))
-	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
+	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", KubeconfigPath))
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
@@ -300,16 +300,16 @@ func k8sClient(ctx context.Context, args ...string) (string, error) {
 	}
 	logger.V(1).Info("Output", "command", strings.Join(cmd.Args, " "), "output", output)
 
-	if rec := RecorderFromContext(ctx); rec != nil {
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
 		rec.RecordCommand(strings.Join(cmd.Args, " "), output, stderrStr, elapsed)
 	}
 	return output, err
 }
 
-func k8scliWithInput(ctx context.Context, yaml string, args ...string) (string, string, error) {
-	cmd := exec.CommandContext(ctx, k8sCli, args...)
+func K8sCLIWithInput(ctx context.Context, yaml string, args ...string) (string, string, error) {
+	cmd := exec.CommandContext(ctx, K8sCLI, args...)
 	cmd.Stdin = bytes.NewBufferString(yaml)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
+	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", KubeconfigPath))
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
@@ -329,7 +329,7 @@ func k8scliWithInput(ctx context.Context, yaml string, args ...string) (string, 
 		}
 	}
 
-	if rec := RecorderFromContext(ctx); rec != nil {
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
 		rec.RecordCommandWithInput(strings.Join(cmd.Args, " "), yaml, output, stderrStr, elapsed)
 	}
 	return output, stderrStr, err
@@ -372,34 +372,34 @@ func ImageRegistryIsAvailable() error {
 	return deployImageRegistry()
 }
 
-// OLMisAvailable waits for the OLM operator-controller deployment to become available. Polls with timeout.
+// OLMisAvailable waits for the OLM operator-controller deployment to become available. Polls with Timeout.
 func OLMisAvailable(ctx context.Context) error {
 	require.Eventually(godog.T(ctx), func() bool {
-		v, err := k8sClient(ctx, "get", "deployment", "-n", olmNamespace, olmDeploymentName, "-o", "json")
+		v, err := K8sClient(ctx, "get", "deployment", "-n", OLMNamespace, olmDeploymentName, "-o", "json")
 		if err != nil {
 			return false
 		}
 		var deployment appsv1.Deployment
-		if err := json.Unmarshal([]byte(v), &deployment); err != nil || !generationObserved(deployment.Generation, deployment.Status.ObservedGeneration) {
+		if err := json.Unmarshal([]byte(v), &deployment); err != nil || !GenerationObserved(deployment.Generation, deployment.Status.ObservedGeneration) {
 			return false
 		}
 		condition := deploymentutil.GetDeploymentCondition(deployment.Status, appsv1.DeploymentAvailable)
 		return condition != nil && condition.Status == corev1.ConditionTrue
-	}, timeout, tick)
+	}, Timeout, Tick)
 
-	if rec := RecorderFromContext(ctx); rec != nil {
-		out, _ := k8sClient(ctx, "get", "deployments", "-n", olmNamespace, "-l", "app.kubernetes.io/part-of=olm")
-		rec.RecordCustom(fmt.Sprintf("kubectl get deployments -n %s", olmNamespace), out, "")
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
+		out, _ := K8sClient(ctx, "get", "deployments", "-n", OLMNamespace, "-l", "app.kubernetes.io/part-of=olm")
+		rec.RecordCustom(fmt.Sprintf("kubectl get deployments -n %s", OLMNamespace), out, "")
 	}
 	return nil
 }
 
-// BundleInstalled waits for the ClusterExtension to report the specified bundle name and version as installed. Polls with timeout.
+// BundleInstalled waits for the ClusterExtension to report the specified bundle Name and version as installed. Polls with Timeout.
 func BundleInstalled(ctx context.Context, name, version string) error {
-	sc := scenarioCtx(ctx)
-	name = substituteScenarioVars(name, sc)
-	waitFor(ctx, func() bool {
-		v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "json")
+	sc := Scenario(ctx)
+	name = SubstituteScenarioVars(name, sc)
+	WaitFor(ctx, func() bool {
+		v, err := K8sClient(ctx, "get", "clusterextension", sc.ClusterExtensionName, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -407,14 +407,14 @@ func BundleInstalled(ctx context.Context, name, version string) error {
 		if err := json.Unmarshal([]byte(v), &ext); err != nil {
 			return false
 		}
-		installed := currentCondition(ext.Generation, ext.Status.Conditions, ocv1.TypeInstalled)
-		return conditionMatches(installed, metav1.ConditionTrue, nil, nil) &&
+		installed := CurrentCondition(ext.Generation, ext.Status.Conditions, ocv1.TypeInstalled)
+		return ConditionMatches(installed, metav1.ConditionTrue, nil, nil) &&
 			ext.Status.Install.Bundle.Name == name && ext.Status.Install.Bundle.Version == version
 	})
 	return nil
 }
 
-func toUnstructured(yamlContent string) (*unstructured.Unstructured, error) {
+func ToUnstructured(yamlContent string) (*unstructured.Unstructured, error) {
 	var u map[string]any
 	if err := yaml.Unmarshal([]byte(yamlContent), &u); err != nil {
 		return nil, err
@@ -422,43 +422,43 @@ func toUnstructured(yamlContent string) (*unstructured.Unstructured, error) {
 	return &unstructured.Unstructured{Object: u}, nil
 }
 
-func injectTestAnnotations(obj *unstructured.Unstructured, sc *scenarioContext) {
+func injectTestAnnotations(obj *unstructured.Unstructured, sc *World) {
 	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	annotations["e2e.olm.operatorframework.io/feature"] = sc.featureName
-	annotations["e2e.olm.operatorframework.io/scenario"] = sc.scenarioName
+	annotations["e2e.olm.operatorframework.io/feature"] = sc.FeatureName
+	annotations["e2e.olm.operatorframework.io/scenario"] = sc.ScenarioName
 	obj.SetAnnotations(annotations)
 }
 
-func substituteScenarioVars(content string, sc *scenarioContext) string {
+func SubstituteScenarioVars(content string, sc *World) string {
 	vars := map[string]string{
-		"TEST_NAMESPACE": sc.namespace,
-		"NAME":           sc.clusterExtensionName,
-		"COS_NAME":       sc.clusterObjectSetName,
-		"SCENARIO_ID":    sc.id,
-		"OLM_NAMESPACE":  olmNamespace,
+		"TEST_NAMESPACE": sc.Namespace,
+		"NAME":           sc.ClusterExtensionName,
+		"COS_NAME":       sc.ClusterObjectSetName,
+		"SCENARIO_ID":    sc.ID,
+		"OLM_NAMESPACE":  OLMNamespace,
 	}
-	for orig, param := range sc.catalogPackageNames {
+	for orig, param := range sc.CatalogPackageNames {
 		vars[fmt.Sprintf("PACKAGE:%s", orig)] = param
 	}
-	for name, catalogName := range sc.catalogs {
+	for name, catalogName := range sc.Catalogs {
 		vars[fmt.Sprintf("CATALOG:%s", name)] = catalogName
 	}
 	return templateContent(content, vars)
 }
 
-// ResourceApplyFails waits for kubectl apply of the provided YAML to fail with the expected error message. Polls with timeout.
+// ResourceApplyFails waits for kubectl apply of the provided YAML to fail with the expected error message. Polls with Timeout.
 func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.DocString) error {
-	sc := scenarioCtx(ctx)
-	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
-	_, err := toUnstructured(yamlContent)
+	sc := Scenario(ctx)
+	yamlContent := SubstituteScenarioVars(yamlTemplate.Content, sc)
+	_, err := ToUnstructured(yamlContent)
 	if err != nil {
 		return fmt.Errorf("failed to parse resource yaml: %v", err)
 	}
-	waitFor(ctx, func() bool {
-		_, stdErr, err := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-")
+	WaitFor(ctx, func() bool {
+		_, stdErr, err := K8sCLIWithInput(ctx, yamlContent, "apply", "-f", "-")
 		if err == nil {
 			return false
 		}
@@ -472,12 +472,12 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 
 // ResourceCreateFails checks a create request, so an existing object cannot be updated by apply.
 func ResourceCreateFails(ctx context.Context, errMsg string, yamlTemplate *godog.DocString) error {
-	sc := scenarioCtx(ctx)
-	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
-	if _, err := toUnstructured(yamlContent); err != nil {
+	sc := Scenario(ctx)
+	yamlContent := SubstituteScenarioVars(yamlTemplate.Content, sc)
+	if _, err := ToUnstructured(yamlContent); err != nil {
 		return fmt.Errorf("failed to parse resource yaml: %w", err)
 	}
-	_, stderr, err := k8scliWithInput(ctx, yamlContent, "create", "-f", "-")
+	_, stderr, err := K8sCLIWithInput(ctx, yamlContent, "create", "-f", "-")
 	if err == nil {
 		return fmt.Errorf("expected create error containing %q, but creation succeeded", errMsg)
 	}
@@ -489,9 +489,9 @@ func ResourceCreateFails(ctx context.Context, errMsg string, yamlTemplate *godog
 
 // ResourceIsAppliedAsUser applies the provided YAML using kubectl impersonation (--as/--as-group).
 func ResourceIsAppliedAsUser(ctx context.Context, user, group string, yamlTemplate *godog.DocString) error {
-	sc := scenarioCtx(ctx)
-	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
-	res, err := toUnstructured(yamlContent)
+	sc := Scenario(ctx)
+	yamlContent := SubstituteScenarioVars(yamlTemplate.Content, sc)
+	res, err := ToUnstructured(yamlContent)
 	if err != nil {
 		return fmt.Errorf("failed to parse resource yaml: %v", err)
 	}
@@ -500,22 +500,22 @@ func ResourceIsAppliedAsUser(ctx context.Context, user, group string, yamlTempla
 	if err != nil {
 		return fmt.Errorf("failed to marshal resource yaml: %w", err)
 	}
-	out, stdErr, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-", "--as="+user, "--as-group="+group)
+	out, stdErr, err := K8sCLIWithInput(ctx, string(annotatedYAML), "apply", "-f", "-", "--as="+user, "--as-group="+group)
 	if err != nil {
 		return fmt.Errorf("failed to apply resource as %s/%s: %v; stderr: %s", user, group, out, stdErr)
 	}
-	sc.lastApplyStderr = stdErr
+	sc.LastApplyStderr = stdErr
 	if res.GetKind() == "ClusterExtension" {
-		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterextension"})
+		sc.AddedResources = append(sc.AddedResources, Resource{Name: res.GetName(), Kind: "clusterextension"})
 	} else {
 		namespace := res.GetNamespace()
 		if namespace == "" {
-			namespace = sc.namespace
+			namespace = sc.Namespace
 		}
-		sc.addedResources = append(sc.addedResources, resource{
-			name:      res.GetName(),
-			kind:      strings.ToLower(res.GetKind()),
-			namespace: namespace,
+		sc.AddedResources = append(sc.AddedResources, Resource{
+			Name:      res.GetName(),
+			Kind:      strings.ToLower(res.GetKind()),
+			Namespace: namespace,
 		})
 	}
 	return nil
@@ -523,21 +523,21 @@ func ResourceIsAppliedAsUser(ctx context.Context, user, group string, yamlTempla
 
 // ResourceApplyAsUserFails polls kubectl apply --dry-run=server with impersonation until the admission controller
 // denies the request with the expected error message. Server-side dry-run sends each request through the full
-// admission chain without persisting the resource, which allows polling until eventually-consistent admission
+// admission chain without persisting the Resource, which allows polling until eventually-consistent admission
 // policies (e.g. ValidatingAdmissionPolicy) become active. Once the dry-run confirms denial, a real apply
 // (without dry-run) is issued to verify the actual request is also denied.
 func ResourceApplyAsUserFails(ctx context.Context, user, group, errMsg string, yamlTemplate *godog.DocString) error {
-	sc := scenarioCtx(ctx)
-	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
-	res, err := toUnstructured(yamlContent)
+	sc := Scenario(ctx)
+	yamlContent := SubstituteScenarioVars(yamlTemplate.Content, sc)
+	res, err := ToUnstructured(yamlContent)
 	if err != nil {
 		return fmt.Errorf("failed to parse resource yaml: %v", err)
 	}
 	// dry-run=server: ValidatingAdmissionPolicy enforcement is eventually consistent — the API server's
-	// informer cache may not have the binding yet. Dry-run avoids persisting the resource on the first
+	// informer cache may not have the binding yet. Dry-run avoids persisting the Resource on the first
 	// attempt, so we can safely poll until the admission chain starts denying.
-	waitFor(ctx, func() bool {
-		_, stdErr, err := k8scliWithInput(ctx, yamlContent, "apply", "--dry-run=server", "-f", "-", "--as="+user, "--as-group="+group)
+	WaitFor(ctx, func() bool {
+		_, stdErr, err := K8sCLIWithInput(ctx, yamlContent, "apply", "--dry-run=server", "-f", "-", "--as="+user, "--as-group="+group)
 		if err == nil {
 			return false
 		}
@@ -548,22 +548,22 @@ func ResourceApplyAsUserFails(ctx context.Context, user, group, errMsg string, y
 	// VAP binding enforcement propagates per-replica and is eventually consistent, so a single dry-run
 	// denial does not guarantee the next request is denied. Poll the real apply until it is denied with
 	// the expected message; if a request slips through the propagation window, the object is persisted,
-	// so delete it and retry. This converges without leaking the resource or reporting a false
+	// so delete it and retry. This converges without leaking the Resource or reporting a false
 	// "it succeeded".
 	var lastErr error
 	// pendingCleanup is true once an apply has been admitted and the persisted object has not yet been
 	// confirmed removed. We must not report success while a leaked object remains — a following
-	// "is not found" step would time out, and ScenarioCleanup skips tracked-resource deletion once the
+	// "is not found" step would time out, and ScenarioCleanup skips tracked-Resource deletion once the
 	// scenario has failed, so the object would also leak into the next scenario.
 	pendingCleanup := false
-	deadline := time.Now().Add(timeout)
+	deadline := time.Now().Add(Timeout)
 	for {
-		_, stdErr, applyErr := k8scliWithInput(ctx, yamlContent, "apply", "-f", "-", "--as="+user, "--as-group="+group)
+		_, stdErr, applyErr := K8sCLIWithInput(ctx, yamlContent, "apply", "-f", "-", "--as="+user, "--as-group="+group)
 		switch {
 		case applyErr == nil:
 			// Admitted before enforcement propagated to this replica. Track for cleanup and remove it below.
 			if !pendingCleanup {
-				sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: strings.ToLower(res.GetKind())})
+				sc.AddedResources = append(sc.AddedResources, Resource{Name: res.GetName(), Kind: strings.ToLower(res.GetKind())})
 			}
 			pendingCleanup = true
 			lastErr = fmt.Errorf("apply was admitted before enforcement propagated")
@@ -578,74 +578,74 @@ func ResourceApplyAsUserFails(ctx context.Context, user, group, errMsg string, y
 		if pendingCleanup {
 			// A blocking delete (default --wait) returns only once the object is actually removed, so a
 			// nil error confirms removal. Keep pendingCleanup set on failure so a later denial is not accepted.
-			// Bound the wait by the remaining step budget (at least one tick) so a finalizer-blocked delete —
+			// Bound the wait by the remaining step budget (at least one Tick) so a finalizer-blocked delete —
 			// e.g. a ClusterExtension waiting on its controller — cannot push the step past deadline.
 			remaining := time.Until(deadline)
-			if remaining < tick {
-				remaining = tick
+			if remaining < Tick {
+				remaining = Tick
 			}
 			delArgs := []string{"delete", res.GetKind(), res.GetName(), "--ignore-not-found", "--timeout=" + remaining.String()}
 			if ns := res.GetNamespace(); ns != "" {
 				delArgs = append(delArgs, "-n", ns)
 			}
-			if _, delErr := k8sClient(ctx, delArgs...); delErr != nil {
+			if _, delErr := K8sClient(ctx, delArgs...); delErr != nil {
 				lastErr = fmt.Errorf("failed to remove admitted resource: %w", delErr)
 			} else {
 				pendingCleanup = false
 			}
 		}
 		if time.Now().After(deadline) {
-			return fmt.Errorf("expected apply to fail with %q within %s: %w", errMsg, timeout, lastErr)
+			return fmt.Errorf("expected apply to fail with %q within %s: %w", errMsg, Timeout, lastErr)
 		}
-		time.Sleep(tick)
+		time.Sleep(Tick)
 	}
 }
 
 // ResourceApplyEmitsWarning asserts the last kubectl apply produced stderr output containing the expected warning.
 func ResourceApplyEmitsWarning(ctx context.Context, expected *godog.DocString) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	expectedText := strings.TrimSpace(expected.Content)
-	if !strings.Contains(sc.lastApplyStderr, expectedText) {
-		return fmt.Errorf("expected apply warning %q, got stderr: %q", expectedText, sc.lastApplyStderr)
+	if !strings.Contains(sc.LastApplyStderr, expectedText) {
+		return fmt.Errorf("expected apply warning %q, got stderr: %q", expectedText, sc.LastApplyStderr)
 	}
 	return nil
 }
 
 func ResourceApplyDoesNotEmitWarning(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
-	if strings.Contains(sc.lastApplyStderr, "Warning:") {
-		return fmt.Errorf("expected no warnings, got stderr: %q", sc.lastApplyStderr)
+	sc := Scenario(ctx)
+	if strings.Contains(sc.LastApplyStderr, "Warning:") {
+		return fmt.Errorf("expected no warnings, got stderr: %q", sc.LastApplyStderr)
 	}
 	return nil
 }
 
-// TrackCurrentClusterExtensionForCleanup saves the current ClusterExtension name in the cleanup list
+// TrackCurrentClusterExtensionForCleanup saves the current ClusterExtension Name in the cleanup list
 // so it gets deleted at the end of the scenario. Call this before applying a second ClusterExtension
-// in the same scenario, because ResourceIsApplied overwrites the tracked name.
+// in the same scenario, because ResourceIsApplied overwrites the tracked Name.
 func TrackCurrentClusterExtensionForCleanup(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
-	if sc.clusterExtensionName != "" {
-		sc.extensionObjects = append(sc.extensionObjects, &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{Name: sc.clusterExtensionName},
+	sc := Scenario(ctx)
+	if sc.ClusterExtensionName != "" {
+		sc.ExtensionObjects = append(sc.ExtensionObjects, &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: sc.ClusterExtensionName},
 		})
 	}
 	return nil
 }
 
 // ClusterExtensionOwnsClusterObjectSets waits for the named ClusterExtension to own exactly the
-// expected number of ClusterObjectSets. Polls with timeout.
+// expected number of ClusterObjectSets. Polls with Timeout.
 func ClusterExtensionOwnsClusterObjectSets(ctx context.Context, extName string, expectedCount int) error {
-	sc := scenarioCtx(ctx)
-	extName = substituteScenarioVars(extName, sc)
-	waitFor(ctx, func() bool {
-		revisions, err := listClusterObjectSetsInGroup(ctx, extName)
+	sc := Scenario(ctx)
+	extName = SubstituteScenarioVars(extName, sc)
+	WaitFor(ctx, func() bool {
+		revisions, err := ListClusterObjectSetsInGroup(ctx, extName)
 		if err != nil {
 			return false
 		}
 		if len(revisions) != expectedCount {
 			return false
 		}
-		ext, err := getResource("clusterextension", extName, "")
+		ext, err := GetResource("clusterextension", extName, "")
 		if err != nil {
 			return false
 		}
@@ -663,14 +663,14 @@ func ClusterExtensionOwnsClusterObjectSets(ctx context.Context, extName string, 
 // ClusterObjectDeploymentOwnsClusterObjectSets waits until the named ClusterObjectDeployment is the
 // controller owner of exactly expectedCount ClusterObjectSet revisions in its group.
 func ClusterObjectDeploymentOwnsClusterObjectSets(ctx context.Context, codName string, expectedCount int) error {
-	sc := scenarioCtx(ctx)
-	codName = substituteScenarioVars(codName, sc)
-	waitFor(ctx, func() bool {
-		revisions, err := listClusterObjectSetsInGroup(ctx, codName)
+	sc := Scenario(ctx)
+	codName = SubstituteScenarioVars(codName, sc)
+	WaitFor(ctx, func() bool {
+		revisions, err := ListClusterObjectSetsInGroup(ctx, codName)
 		if err != nil || len(revisions) != expectedCount {
 			return false
 		}
-		cod, err := getResource("clusterobjectdeployment", codName, "")
+		cod, err := GetResource("clusterobjectdeployment", codName, "")
 		if err != nil {
 			return false
 		}
@@ -688,15 +688,15 @@ func ClusterObjectDeploymentOwnsClusterObjectSets(ctx context.Context, codName s
 // ClusterObjectDeploymentIsOwnedByClusterExtension waits until the named ClusterObjectDeployment has
 // the named ClusterExtension as its controller owner.
 func ClusterObjectDeploymentIsOwnedByClusterExtension(ctx context.Context, codName, extName string) error {
-	sc := scenarioCtx(ctx)
-	codName = substituteScenarioVars(codName, sc)
-	extName = substituteScenarioVars(extName, sc)
-	waitFor(ctx, func() bool {
-		cod, err := getResource("clusterobjectdeployment", codName, "")
+	sc := Scenario(ctx)
+	codName = SubstituteScenarioVars(codName, sc)
+	extName = SubstituteScenarioVars(extName, sc)
+	WaitFor(ctx, func() bool {
+		cod, err := GetResource("clusterobjectdeployment", codName, "")
 		if err != nil {
 			return false
 		}
-		ext, err := getResource("clusterextension", extName, "")
+		ext, err := GetResource("clusterextension", extName, "")
 		if err != nil {
 			return false
 		}
@@ -706,24 +706,24 @@ func ClusterObjectDeploymentIsOwnedByClusterExtension(ctx context.Context, codNa
 	return nil
 }
 
-// NamedClusterExtensionReportsCondition waits for a specific ClusterExtension (by name) to have a condition
-// matching type and status. Polls with timeout.
+// NamedClusterExtensionReportsCondition waits for a specific ClusterExtension (by Name) to have a condition
+// matching type and status. Polls with Timeout.
 func NamedClusterExtensionReportsCondition(ctx context.Context, extName, conditionType, conditionStatus string) error {
-	sc := scenarioCtx(ctx)
-	extName = substituteScenarioVars(extName, sc)
-	return waitForCondition(ctx, "clusterextension", extName, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
+	sc := Scenario(ctx)
+	extName = SubstituteScenarioVars(extName, sc)
+	return WaitForCondition(ctx, "clusterextension", extName, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
 }
 
-// NamedClusterExtensionReportsConditionWithMessageFragment waits for a specific ClusterExtension (by name)
+// NamedClusterExtensionReportsConditionWithMessageFragment waits for a specific ClusterExtension (by Name)
 // to have a condition matching type, status, reason, with a message containing the specified fragment.
 func NamedClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, extName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	extName = substituteScenarioVars(extName, scenarioCtx(ctx))
-	return waitForCondition(ctx, "clusterextension", extName, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageFragmentComparison(ctx, msgFragment))
+	extName = SubstituteScenarioVars(extName, Scenario(ctx))
+	return WaitForCondition(ctx, "clusterextension", extName, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, MessageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterExtensionVersionUpdate patches the ClusterExtension's catalog version to the specified value.
 func ClusterExtensionVersionUpdate(ctx context.Context, version string) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	patch := map[string]any{
 		"spec": map[string]any{
 			"source": map[string]any{
@@ -737,14 +737,14 @@ func ClusterExtensionVersionUpdate(ctx context.Context, version string) error {
 	if err != nil {
 		return err
 	}
-	_, err = k8sClient(ctx, "patch", "clusterextension", sc.clusterExtensionName, "--type", "merge", "-p", string(pb))
+	_, err = K8sClient(ctx, "patch", "clusterextension", sc.ClusterExtensionName, "--type", "merge", "-p", string(pb))
 	return err
 }
 
 // ClusterObjectSetLifecycleUpdate patches the ClusterObjectSet's lifecycleState to the specified value.
 func ClusterObjectSetLifecycleUpdate(ctx context.Context, cosName, lifecycle string) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
+	sc := Scenario(ctx)
+	cosName = SubstituteScenarioVars(cosName, sc)
 	patch := map[string]any{
 		"spec": map[string]any{
 			"lifecycleState": lifecycle,
@@ -754,16 +754,16 @@ func ClusterObjectSetLifecycleUpdate(ctx context.Context, cosName, lifecycle str
 	if err != nil {
 		return err
 	}
-	_, err = k8sClient(ctx, "patch", "clusterobjectset", cosName, "--type", "merge", "-p", string(pb))
+	_, err = K8sClient(ctx, "patch", "clusterobjectset", cosName, "--type", "merge", "-p", string(pb))
 	return err
 }
 
-// ResourceIsApplied applies the provided YAML resource to the cluster and in case of ClusterExtension or ClusterObjectSet it captures
-// its name in the test context so that it can be referred to in later steps with ${NAME} or ${COS_NAME}, respectively
+// ResourceIsApplied applies the provided YAML Resource to the cluster and in case of ClusterExtension or ClusterObjectSet it captures
+// its Name in the test context so that it can be referred to in later steps with ${NAME} or ${COS_NAME}, respectively
 func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error {
-	sc := scenarioCtx(ctx)
-	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
-	res, err := toUnstructured(yamlContent)
+	sc := Scenario(ctx)
+	yamlContent := SubstituteScenarioVars(yamlTemplate.Content, sc)
+	res, err := ToUnstructured(yamlContent)
 	if err != nil {
 		return fmt.Errorf("failed to parse resource yaml: %v", err)
 	}
@@ -772,45 +772,45 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 	if err != nil {
 		return fmt.Errorf("failed to marshal resource yaml: %w", err)
 	}
-	out, stdErr, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-")
+	out, stdErr, err := K8sCLIWithInput(ctx, string(annotatedYAML), "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply resource %v; err: %w; stderr: %s", out, err, stdErr)
 	}
-	sc.lastApplyStderr = stdErr
+	sc.LastApplyStderr = stdErr
 	if res.GetKind() == "ClusterExtension" {
-		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterextension"})
+		sc.AddedResources = append(sc.AddedResources, Resource{Name: res.GetName(), Kind: "clusterextension"})
 	} else if res.GetKind() == "ClusterObjectSet" {
-		sc.clusterObjectSetName = res.GetName() // used for ${COS_NAME} variable substitution in YAML templates
-		sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: "clusterobjectset"})
+		sc.ClusterObjectSetName = res.GetName() // used for ${COS_NAME} variable substitution in YAML templates
+		sc.AddedResources = append(sc.AddedResources, Resource{Name: res.GetName(), Kind: "clusterobjectset"})
 	} else {
 		namespace := res.GetNamespace()
 		if namespace == "" {
-			namespace = sc.namespace
+			namespace = sc.Namespace
 		}
-		sc.addedResources = append(sc.addedResources, resource{
-			name:      res.GetName(),
-			kind:      strings.ToLower(res.GetKind()),
-			namespace: namespace,
+		sc.AddedResources = append(sc.AddedResources, Resource{
+			Name:      res.GetName(),
+			Kind:      strings.ToLower(res.GetKind()),
+			Namespace: namespace,
 		})
 	}
 	return nil
 }
 
-// ClusterExtensionIsAvailable waits for the ClusterExtension's Installed condition to be True. Polls with timeout.
+// ClusterExtensionIsAvailable waits for the ClusterExtension's Installed condition to be True. Polls with Timeout.
 func ClusterExtensionIsAvailable(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	if err := waitForExtensionCondition(ctx, ocv1.TypeInstalled, metav1.ConditionTrue, nil, nil); err != nil {
 		return err
 	}
 
-	if rec := RecorderFromContext(ctx); rec != nil {
-		out, _ := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status}")
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
+		out, _ := K8sClient(ctx, "get", "clusterextension", sc.ClusterExtensionName, "-o", "jsonpath={.status}")
 		var pretty bytes.Buffer
 		if err := json.Indent(&pretty, []byte(out), "", "  "); err == nil {
 			out = pretty.String()
 		}
 		rec.RecordCustom(
-			fmt.Sprintf("kubectl get clusterextension %s -o jsonpath='{.status}' | jq .", sc.clusterExtensionName),
+			fmt.Sprintf("kubectl get clusterextension %s -o jsonpath='{.status}' | jq .", sc.ClusterExtensionName),
 			out+"\n", "",
 		)
 	}
@@ -821,28 +821,28 @@ func ClusterExtensionIsAvailable(ctx context.Context) error {
 // to observe the current generation, regardless of its status or reason. This
 // confirms the spec was processed, not that the rollout succeeded.
 func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
-	waitFor(ctx, func() bool {
-		resource, err := readResourceConditions(ctx, "clusterextension", sc.clusterExtensionName)
+	sc := Scenario(ctx)
+	WaitFor(ctx, func() bool {
+		resource, err := ReadResourceConditions(ctx, "clusterextension", sc.ClusterExtensionName)
 		if err != nil {
 			return false
 		}
-		return currentCondition(resource.Metadata.Generation, resource.Status.Conditions, ocv1.TypeProgressing) != nil
+		return CurrentCondition(resource.Metadata.Generation, resource.Status.Conditions, ocv1.TypeProgressing) != nil
 	})
 	return nil
 }
 
 // ClusterExtensionIsRolledOut waits for the ClusterExtension's Progressing condition to be True with reason Succeeded,
-// for the current generation, then gathers its constituent resources into the scenario context. Polls with timeout.
+// for the current generation, then gathers its constituent resources into the scenario context. Polls with Timeout.
 func ClusterExtensionIsRolledOut(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	if err := waitForExtensionCondition(ctx, ocv1.TypeProgressing, metav1.ConditionTrue, ptr.To(ocv1.ReasonSucceeded), nil); err != nil {
 		return err
 	}
 
-	if rec := RecorderFromContext(ctx); rec != nil {
-		out, _ := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName)
-		rec.RecordCustom(fmt.Sprintf("kubectl get clusterextension %s", sc.clusterExtensionName), out, "")
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
+		out, _ := K8sClient(ctx, "get", "clusterextension", sc.ClusterExtensionName)
+		rec.RecordCustom(fmt.Sprintf("kubectl get clusterextension %s", sc.ClusterExtensionName), out, "")
 	}
 
 	// Save ClusterExtension resources to test context for posterior checks
@@ -852,18 +852,18 @@ func ClusterExtensionIsRolledOut(ctx context.Context) error {
 	return nil
 }
 
-// ClusterExtensionResourcesCreatedAndAreLabeled verifies each constituent resource has the expected OLM owner-kind
-// and owner-name labels. Polls with timeout per resource.
+// ClusterExtensionResourcesCreatedAndAreLabeled verifies each constituent Resource has the expected OLM owner-Kind
+// and owner-Name labels. Polls with Timeout per Resource.
 func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	if len(sc.GetClusterExtensionObjects()) == 0 {
 		return fmt.Errorf("extension objects not found in context")
 	}
 
 	for _, obj := range sc.GetClusterExtensionObjects() {
-		waitFor(ctx, func() bool {
+		WaitFor(ctx, func() bool {
 			kind := obj.GetObjectKind().GroupVersionKind().Kind
-			clusterObj, err := getResource(kind, obj.GetName(), obj.GetNamespace())
+			clusterObj, err := GetResource(kind, obj.GetName(), obj.GetNamespace())
 			if err != nil {
 				logger.V(1).Error(err, "error getting resource", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind)
 				return false
@@ -877,7 +877,7 @@ func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
 
 			for key, expectedValue := range map[string]string{
 				"olm.operatorframework.io/owner-kind": "ClusterExtension",
-				"olm.operatorframework.io/owner-name": sc.clusterExtensionName,
+				"olm.operatorframework.io/owner-name": sc.ClusterExtensionName,
 			} {
 				if labels[key] != expectedValue {
 					logger.V(1).Info("invalid resource label value", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind, "label", key, "expected", expectedValue, "actual", labels["olm.operatorframework.io/owner-kind"])
@@ -892,13 +892,13 @@ func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
 
 // ClusterExtensionIsRemoved deletes the current ClusterExtension, saving its state for potential restore checks.
 func ClusterExtensionIsRemoved(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
-	return ResourceRemoved(ctx, fmt.Sprintf("clusterextension/%s", sc.clusterExtensionName))
+	sc := Scenario(ctx)
+	return ResourceRemoved(ctx, fmt.Sprintf("clusterextension/%s", sc.ClusterExtensionName))
 }
 
-// ClusterExtensionResourcesRemoved waits for each previously gathered constituent resource to be deleted. Polls with timeout per resource.
+// ClusterExtensionResourcesRemoved waits for each previously gathered constituent Resource to be deleted. Polls with Timeout per Resource.
 func ClusterExtensionResourcesRemoved(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	if len(sc.GetClusterExtensionObjects()) == 0 {
 		return fmt.Errorf("extension objects not found in context")
 	}
@@ -910,18 +910,18 @@ func ClusterExtensionResourcesRemoved(ctx context.Context) error {
 	return nil
 }
 
-func waitFor(ctx context.Context, conditionFn func() bool) {
-	require.Eventually(godog.T(ctx), conditionFn, timeout, tick)
+func WaitFor(ctx context.Context, conditionFn func() bool) {
+	require.Eventually(godog.T(ctx), conditionFn, Timeout, Tick)
 }
 
-type msgMatchFn func(string) bool
+type MsgMatchFn func(string) bool
 
-func alwaysMatch(_ string) bool { return true }
+func AlwaysMatch(_ string) bool { return true }
 
-func messageComparison(ctx context.Context, msg *godog.DocString) msgMatchFn {
-	msgCmp := alwaysMatch
+func MessageComparison(ctx context.Context, msg *godog.DocString) MsgMatchFn {
+	msgCmp := AlwaysMatch
 	if msg != nil {
-		expectedMsg := substituteScenarioVars(strings.Join(strings.Fields(msg.Content), " "), scenarioCtx(ctx))
+		expectedMsg := SubstituteScenarioVars(strings.Join(strings.Fields(msg.Content), " "), Scenario(ctx))
 		msgCmp = func(actual string) bool {
 			return actual == expectedMsg
 		}
@@ -929,55 +929,55 @@ func messageComparison(ctx context.Context, msg *godog.DocString) msgMatchFn {
 	return msgCmp
 }
 
-func messageFragmentComparison(ctx context.Context, msgFragment *godog.DocString) msgMatchFn {
+func MessageFragmentComparison(ctx context.Context, msgFragment *godog.DocString) MsgMatchFn {
 	if msgFragment == nil {
-		return alwaysMatch
+		return AlwaysMatch
 	}
-	expectedFragment := substituteScenarioVars(strings.Join(strings.Fields(msgFragment.Content), " "), scenarioCtx(ctx))
+	expectedFragment := SubstituteScenarioVars(strings.Join(strings.Fields(msgFragment.Content), " "), Scenario(ctx))
 	return func(actualMsg string) bool {
 		return strings.Contains(strings.Join(strings.Fields(actualMsg), " "), expectedFragment)
 	}
 }
 
-// waitForCondition requires the asserted condition to reflect metadata.generation,
+// WaitForCondition requires the asserted condition to reflect metadata.generation,
 // in addition to matching the requested status, reason, and message.
-func waitForCondition(ctx context.Context, resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason *string, msgCmp msgMatchFn) error {
+func WaitForCondition(ctx context.Context, resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason *string, msgCmp MsgMatchFn) error {
 	require.Eventually(godog.T(ctx), func() bool {
-		resource, err := readResourceConditions(ctx, resourceType, resourceName)
+		resource, err := ReadResourceConditions(ctx, resourceType, resourceName)
 		if err != nil {
 			return false
 		}
-		condition := currentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
-		return conditionMatches(condition, conditionStatus, conditionReason, msgCmp)
-	}, timeout, tick)
+		condition := CurrentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
+		return ConditionMatches(condition, conditionStatus, conditionReason, msgCmp)
+	}, Timeout, Tick)
 	return nil
 }
 
-func waitForExtensionCondition(ctx context.Context, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason *string, msgCmp msgMatchFn) error {
-	sc := scenarioCtx(ctx)
-	return waitForCondition(ctx, "clusterextension", sc.clusterExtensionName, conditionType, conditionStatus, conditionReason, msgCmp)
+func waitForExtensionCondition(ctx context.Context, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason *string, msgCmp MsgMatchFn) error {
+	sc := Scenario(ctx)
+	return WaitForCondition(ctx, "clusterextension", sc.ClusterExtensionName, conditionType, conditionStatus, conditionReason, msgCmp)
 }
 
 // ClusterExtensionReportsCondition waits for the ClusterExtension to have a condition matching the specified type,
-// status, reason, and exact message. Polls with timeout.
+// status, reason, and exact message. Polls with Timeout.
 func ClusterExtensionReportsCondition(ctx context.Context, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
-	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageComparison(ctx, msg))
+	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, MessageComparison(ctx, msg))
 }
 
 // ClusterExtensionReportsConditionWithMessageFragment waits for the ClusterExtension to have a condition matching
-// type, status, and reason, with a message containing the specified fragment. Polls with timeout.
+// type, status, and reason, with a message containing the specified fragment. Polls with Timeout.
 func ClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageFragmentComparison(ctx, msgFragment))
+	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, MessageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterExtensionReportsConditionWithoutMsg waits for the ClusterExtension to have a condition matching type,
-// status, and reason, without checking the message. Polls with timeout.
+// status, and reason, without checking the message. Polls with Timeout.
 func ClusterExtensionReportsConditionWithoutMsg(ctx context.Context, conditionType, conditionStatus, conditionReason string) error {
 	return ClusterExtensionReportsCondition(ctx, conditionType, conditionStatus, conditionReason, nil)
 }
 
 // ClusterExtensionReportsConditionWithoutReason waits for the ClusterExtension to have a condition matching type
-// and status, without checking reason or message. Polls with timeout.
+// and status, without checking reason or message. Polls with Timeout.
 func ClusterExtensionReportsConditionWithoutReason(ctx context.Context, conditionType, conditionStatus string) error {
 	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
 }
@@ -985,22 +985,22 @@ func ClusterExtensionReportsConditionWithoutReason(ctx context.Context, conditio
 // ClusterExtensionReportsConditionTransitionTime asserts that a condition's lastTransitionTime falls within
 // the specified minute range since the ClusterObjectSet's creation, when its progress deadline starts.
 func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditionType string, minMinutes, maxMinutes int, revisionName string) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	t := godog.T(ctx)
 
-	revisionName = substituteScenarioVars(revisionName, sc)
-	creationTimestampValue, err := k8sClient(ctx, "get", "clusterobjectset", revisionName, "-o", "jsonpath={.metadata.creationTimestamp}")
+	revisionName = SubstituteScenarioVars(revisionName, sc)
+	creationTimestampValue, err := K8sClient(ctx, "get", "clusterobjectset", revisionName, "-o", "jsonpath={.metadata.creationTimestamp}")
 	require.NoError(t, err)
 	creationTimestamp, err := time.Parse(time.RFC3339, creationTimestampValue)
 	require.NoError(t, err, "failed to parse ClusterObjectSet creationTimestamp")
 
 	var condition *metav1.Condition
-	waitFor(ctx, func() bool {
-		resource, err := readResourceConditions(ctx, "clusterextension", sc.clusterExtensionName)
+	WaitFor(ctx, func() bool {
+		resource, err := ReadResourceConditions(ctx, "clusterextension", sc.ClusterExtensionName)
 		if err != nil {
 			return false
 		}
-		condition = currentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
+		condition = CurrentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
 		return condition != nil && !condition.LastTransitionTime.IsZero()
 	})
 	lastTransitionTime := condition.LastTransitionTime.Time
@@ -1018,33 +1018,33 @@ func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditi
 }
 
 // ClusterObjectSetReportsConditionWithoutMsg waits for the named ClusterObjectSet to have a condition
-// matching type, status, and reason. Polls with timeout.
+// matching type, status, and reason. Polls with Timeout.
 func ClusterObjectSetReportsConditionWithoutMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, nil)
+	return WaitForCondition(ctx, "clusterobjectset", SubstituteScenarioVars(revisionName, Scenario(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, nil)
 }
 
 // ClusterObjectSetReportsConditionWithMsg waits for the named ClusterObjectSet to have a condition
-// matching type, status, reason, and message. Polls with timeout.
+// matching type, status, reason, and message. Polls with Timeout.
 func ClusterObjectSetReportsConditionWithMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageComparison(ctx, msg))
+	return WaitForCondition(ctx, "clusterobjectset", SubstituteScenarioVars(revisionName, Scenario(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, MessageComparison(ctx, msg))
 }
 
 // ClusterObjectSetReportsConditionWithMessageFragment waits for the named ClusterObjectSet to have a condition
-// matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
+// matching type, status, reason, with a message containing the specified fragment. Polls with Timeout.
 func ClusterObjectSetReportsConditionWithMessageFragment(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageFragmentComparison(ctx, msgFragment))
+	return WaitForCondition(ctx, "clusterobjectset", SubstituteScenarioVars(revisionName, Scenario(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, MessageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterObjectDeploymentReportsConditionWithoutMsg waits for the named ClusterObjectDeployment to have a
-// condition matching type, status, and reason. Polls with timeout.
+// condition matching type, status, and reason. Polls with Timeout.
 func ClusterObjectDeploymentReportsConditionWithoutMsg(ctx context.Context, name, conditionType, conditionStatus, conditionReason string) error {
-	return waitForCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, nil)
+	return WaitForCondition(ctx, "clusterobjectdeployment", SubstituteScenarioVars(name, Scenario(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, nil)
 }
 
 // ClusterObjectDeploymentReportsConditionWithMessageFragment waits for the named ClusterObjectDeployment to have a
-// condition matching type, status, reason, with a message containing the specified fragment. Polls with timeout.
+// condition matching type, status, reason, with a message containing the specified fragment. Polls with Timeout.
 func ClusterObjectDeploymentReportsConditionWithMessageFragment(ctx context.Context, name, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
-	return waitForCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, messageFragmentComparison(ctx, msgFragment))
+	return WaitForCondition(ctx, "clusterobjectdeployment", SubstituteScenarioVars(name, Scenario(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, MessageFragmentComparison(ctx, msgFragment))
 }
 
 // ClusterObjectDeploymentConsistentlyReportsCondition fails if, over the given
@@ -1057,7 +1057,7 @@ func ClusterObjectDeploymentConsistentlyReportsCondition(ctx context.Context, na
 	if err != nil {
 		return fmt.Errorf("invalid duration %q: %w", durationStr, err)
 	}
-	return consistentlyCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), conditionReason, d)
+	return consistentlyCondition(ctx, "clusterobjectdeployment", SubstituteScenarioVars(name, Scenario(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), conditionReason, d)
 }
 
 // consistently invokes check every tick until the expected state has held for the full
@@ -1083,7 +1083,7 @@ func consistently(ctx context.Context, duration time.Duration, check func(contex
 	// the window postpones it instead of failing. A transient check error is tolerated only
 	// within maxTransientGap of the last successful observation; a hard failure inside check
 	// fails the test immediately via require.
-	err := wait.PollUntilContextTimeout(ctx, tick, duration+maxTransientGap, true, func(ctx context.Context) (bool, error) {
+	err := wait.PollUntilContextTimeout(ctx, Tick, duration+maxTransientGap, true, func(ctx context.Context) (bool, error) {
 		if cerr := check(ctx); cerr != nil {
 			require.LessOrEqualf(t, time.Since(lastObserved), maxTransientGap,
 				"consistency check could not observe the expected state for over %s: %v", maxTransientGap, cerr)
@@ -1110,18 +1110,18 @@ func consistently(ctx context.Context, duration time.Duration, check func(contex
 }
 
 // conditionCheck returns a consistently check that verifies a single condition's status
-// and reason for the current generation on the named resource. A failed API read is returned as a transient error
+// and reason for the current generation on the named Resource. A failed API read is returned as a transient error
 // (the condition's real state is unknown while the read is failing). A successful read
 // that does not contain the condition, or shows a different status or reason, fails
 // immediately: a condition that disappears or changes is not being reported consistently.
 func conditionCheck(resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason string) func(context.Context) error {
 	return func(ctx context.Context) error {
 		t := godog.T(ctx)
-		resource, err := readResourceConditions(ctx, resourceType, resourceName)
+		resource, err := ReadResourceConditions(ctx, resourceType, resourceName)
 		if err != nil {
 			return err
 		}
-		condition := currentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
+		condition := CurrentCondition(resource.Metadata.Generation, resource.Status.Conditions, conditionType)
 		require.NotNilf(t, condition,
 			"%s %s condition disappeared or has not observed generation %d during the consistency window", resourceType, conditionType, resource.Metadata.Generation)
 		require.Equalf(t, conditionStatus, condition.Status,
@@ -1133,7 +1133,7 @@ func conditionCheck(resourceType, resourceName, conditionType string, conditionS
 }
 
 // consistentlyCondition fails the test if, at any point during duration, the named
-// resource's condition deviates from the expected type/status/reason or disappears.
+// Resource's condition deviates from the expected type/status/reason or disappears.
 // Transient API read failures are tolerated only briefly; see consistently and
 // conditionCheck for the exact semantics.
 func consistentlyCondition(ctx context.Context, resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason string, duration time.Duration) error {
@@ -1143,27 +1143,27 @@ func consistentlyCondition(ctx context.Context, resourceType, resourceName, cond
 // TriggerClusterObjectSetReconciliation annotates the named ClusterObjectSet
 // to trigger a new reconciliation cycle.
 func TriggerClusterObjectSetReconciliation(ctx context.Context, cosName string) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
-	_, err := k8sClient(ctx, "annotate", "clusterobjectset", cosName, "--overwrite",
+	sc := Scenario(ctx)
+	cosName = SubstituteScenarioVars(cosName, sc)
+	_, err := K8sClient(ctx, "annotate", "clusterobjectset", cosName, "--overwrite",
 		fmt.Sprintf("e2e-trigger=%d", time.Now().UnixNano()))
 	return err
 }
 
 // ClusterObjectSetHasObservedPhase waits for the named ClusterObjectSet to have
-// an observedPhases entry matching the given phase name with a non-empty digest. Polls with timeout.
+// an observedPhases entry matching the given phase Name with a non-empty digest. Polls with Timeout.
 func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName string) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
-	phaseName = substituteScenarioVars(phaseName, sc)
+	sc := Scenario(ctx)
+	cosName = SubstituteScenarioVars(cosName, sc)
+	phaseName = SubstituteScenarioVars(phaseName, sc)
 
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
 		if err != nil {
 			return false
 		}
 		var cos ocv1.ClusterObjectSet
-		if err := json.Unmarshal([]byte(out), &cos); err != nil || currentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
+		if err := json.Unmarshal([]byte(out), &cos); err != nil || CurrentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
 			return false
 		}
 		for _, phase := range cos.Status.ObservedPhases {
@@ -1177,18 +1177,18 @@ func ClusterObjectSetHasObservedPhase(ctx context.Context, cosName, phaseName st
 }
 
 // ClusterObjectSetIsArchived waits for the named ClusterObjectSet to have Ready=False
-// with reason Archived. Polls with timeout.
+// with reason Archived. Polls with Timeout.
 func ClusterObjectSetIsArchived(ctx context.Context, revisionName string) error {
-	return waitForCondition(ctx, "clusterobjectset", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Ready", metav1.ConditionFalse, ptr.To("Archived"), nil)
+	return WaitForCondition(ctx, "clusterobjectset", SubstituteScenarioVars(revisionName, Scenario(ctx)), "Ready", metav1.ConditionFalse, ptr.To("Archived"), nil)
 }
 
 // ClusterObjectSetIsEventuallyDeleted waits for the named ClusterObjectSet to be
 // removed from the cluster, e.g. garbage collected once it is archived beyond the
-// owning ClusterObjectDeployment's revisionHistoryLimit. Polls with timeout.
+// owning ClusterObjectDeployment's revisionHistoryLimit. Polls with Timeout.
 func ClusterObjectSetIsEventuallyDeleted(ctx context.Context, revisionName string) error {
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), scenarioCtx(ctx))
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectset", revisionName, "--ignore-not-found", "-o", "json")
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), Scenario(ctx))
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "clusterobjectset", revisionName, "--ignore-not-found", "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -1198,18 +1198,18 @@ func ClusterObjectSetIsEventuallyDeleted(ctx context.Context, revisionName strin
 }
 
 // ClusterObjectSetPhaseHasObjectCounts waits for a specific phase of the named ClusterObjectSet to
-// report exact object counts for total, present, synced, and available. Polls with timeout.
+// report exact object counts for total, present, synced, and available. Polls with Timeout.
 func ClusterObjectSetPhaseHasObjectCounts(ctx context.Context, cosName, phaseName string, total, present, synced, ready int64) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
-	phaseName = substituteScenarioVars(phaseName, sc)
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
+	sc := Scenario(ctx)
+	cosName = SubstituteScenarioVars(cosName, sc)
+	phaseName = SubstituteScenarioVars(phaseName, sc)
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
 		if err != nil {
 			return false
 		}
 		var cos ocv1.ClusterObjectSet
-		if err := json.Unmarshal([]byte(out), &cos); err != nil || currentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
+		if err := json.Unmarshal([]byte(out), &cos); err != nil || CurrentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
 			return false
 		}
 		for _, phase := range cos.Status.ObservedPhases {
@@ -1228,17 +1228,17 @@ func ClusterObjectSetPhaseHasObjectCounts(ctx context.Context, cosName, phaseNam
 }
 
 // ClusterObjectSetHasAggregateObjectCounts waits for the named ClusterObjectSet to report exact
-// aggregate object counts (summed across all phases). Polls with timeout.
+// aggregate object counts (summed across all phases). Polls with Timeout.
 func ClusterObjectSetHasAggregateObjectCounts(ctx context.Context, cosName string, total, present, synced, ready int64) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
+	sc := Scenario(ctx)
+	cosName = SubstituteScenarioVars(cosName, sc)
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
 		if err != nil {
 			return false
 		}
 		var cos ocv1.ClusterObjectSet
-		if err := json.Unmarshal([]byte(out), &cos); err != nil || currentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
+		if err := json.Unmarshal([]byte(out), &cos); err != nil || CurrentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
 			return false
 		}
 		// Counts are required *int64 pointers; a nil (uncomputed) count
@@ -1252,16 +1252,16 @@ func ClusterObjectSetHasAggregateObjectCounts(ctx context.Context, cosName strin
 }
 
 // ClusterObjectSetHasAnnotationWithValue waits for the named ClusterObjectSet to have the specified
-// annotation with the expected value. Polls with timeout.
+// annotation with the expected value. Polls with Timeout.
 func ClusterObjectSetHasAnnotationWithValue(ctx context.Context, revisionName, annotationKey string, annotationValue *godog.DocString) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 	expectedValue := ""
 	if annotationValue != nil {
 		expectedValue = annotationValue.Content
 	}
-	waitFor(ctx, func() bool {
-		obj, err := getResource("clusterobjectset", revisionName, "")
+	WaitFor(ctx, func() bool {
+		obj, err := GetResource("clusterobjectset", revisionName, "")
 		if err != nil {
 			logger.V(1).Error(err, "failed to get clusterobjectset", "name", revisionName)
 			return false
@@ -1275,13 +1275,13 @@ func ClusterObjectSetHasAnnotationWithValue(ctx context.Context, revisionName, a
 }
 
 // ClusterObjectSetHasLabelWithValue waits for the named ClusterObjectSet to have the specified label
-// with the expected value. Polls with timeout.
+// with the expected value. Polls with Timeout.
 func ClusterObjectSetHasLabelWithValue(ctx context.Context, revisionName, labelKey, labelValue string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
-	labelValue = substituteScenarioVars(labelValue, sc)
-	waitFor(ctx, func() bool {
-		obj, err := getResource("clusterobjectset", revisionName, "")
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	labelValue = SubstituteScenarioVars(labelValue, sc)
+	WaitFor(ctx, func() bool {
+		obj, err := GetResource("clusterobjectset", revisionName, "")
 		if err != nil {
 			logger.V(1).Error(err, "failed to get clusterobjectset", "name", revisionName)
 			return false
@@ -1296,15 +1296,15 @@ func ClusterObjectSetHasLabelWithValue(ctx context.Context, revisionName, labelK
 
 // ClusterObjectSetObjectsNotFoundOrNotOwned waits for all objects described in the named
 // ClusterObjectSet's phases to either not exist on the cluster or not contain the revision
-// in their ownerReferences. Polls with timeout.
+// in their ownerReferences. Polls with Timeout.
 func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
 	// Get the ClusterObjectSet to extract its phase objects
 	var rev ocv1.ClusterObjectSet
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectset", revisionName, "-o", "json")
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "clusterobjectset", revisionName, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -1318,7 +1318,7 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 			var obj *unstructured.Unstructured
 			switch phaseObj.Type {
 			case ocv1.ObjectTypeObjectReference:
-				resolved, err := resolveObjectRef(phaseObj.ObjectRef)
+				resolved, err := ResolveObjectRef(phaseObj.ObjectRef)
 				if err != nil {
 					return fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
 				}
@@ -1339,20 +1339,20 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 				return fmt.Errorf("clusterobjectset %q has a phase object with empty name (kind %q, namespace %q)", revisionName, kind, namespace)
 			}
 
-			waitFor(ctx, func() bool {
+			WaitFor(ctx, func() bool {
 				args := []string{"get", kind, name, "--ignore-not-found", "-o", "json"}
 				if namespace != "" {
 					args = append(args, "-n", namespace)
 				}
-				out, err := k8sClient(ctx, args...)
+				out, err := K8sClient(ctx, args...)
 				if err != nil {
 					return false
 				}
-				// If output is empty, the resource does not exist — condition satisfied
+				// If output is empty, the Resource does not exist — condition satisfied
 				if strings.TrimSpace(out) == "" {
 					return true
 				}
-				clusterObj, err := toUnstructured(out)
+				clusterObj, err := ToUnstructured(out)
 				if err != nil {
 					return false
 				}
@@ -1374,13 +1374,13 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 }
 
 // ClusterObjectSetPhaseObjectsManagedInSecrets verifies that every object in every phase of the named
-// ClusterObjectSet uses a ref (not an inline object). Polls with timeout.
+// ClusterObjectSet uses a ref (not an inline object). Polls with Timeout.
 func ClusterObjectSetPhaseObjectsManagedInSecrets(ctx context.Context, revisionName string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
-	waitFor(ctx, func() bool {
-		obj, err := getResource("clusterobjectset", revisionName, "")
+	WaitFor(ctx, func() bool {
+		obj, err := GetResource("clusterobjectset", revisionName, "")
 		if err != nil {
 			return false
 		}
@@ -1420,20 +1420,20 @@ func ClusterObjectSetPhaseObjectsManagedInSecrets(ctx context.Context, revisionN
 }
 
 // ClusterObjectSetReferredSecretsExist verifies that all Secrets referenced by the named
-// ClusterObjectSet's phase objects exist in the given namespace. Polls with timeout.
+// ClusterObjectSet's phase objects exist in the given Namespace. Polls with Timeout.
 func ClusterObjectSetReferredSecretsExist(ctx context.Context, revisionName, namespace string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
-	namespace = substituteScenarioVars(strings.TrimSpace(namespace), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	namespace = SubstituteScenarioVars(strings.TrimSpace(namespace), sc)
 
-	secretNames, err := collectReferredSecretNames(ctx, revisionName)
+	secretNames, err := CollectReferredSecretNames(ctx, revisionName)
 	if err != nil {
 		return err
 	}
 
 	for _, name := range secretNames {
-		waitFor(ctx, func() bool {
-			_, err := getResource("secret", name, namespace)
+		WaitFor(ctx, func() bool {
+			_, err := GetResource("secret", name, namespace)
 			return err == nil
 		})
 	}
@@ -1441,10 +1441,10 @@ func ClusterObjectSetReferredSecretsExist(ctx context.Context, revisionName, nam
 }
 
 // ClusterObjectSetReferredSecretsAreImmutable verifies that all referred Secrets for the named
-// ClusterObjectSet are immutable. Polls with timeout.
+// ClusterObjectSet are immutable. Polls with Timeout.
 func ClusterObjectSetReferredSecretsAreImmutable(ctx context.Context, revisionName string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
 	secrets, err := listReferredSecrets(ctx, revisionName)
 	if err != nil {
@@ -1462,17 +1462,17 @@ func ClusterObjectSetReferredSecretsAreImmutable(ctx context.Context, revisionNa
 }
 
 // ClusterObjectSetReferredSecretsContainLabels verifies that all referred Secrets for the named
-// ClusterObjectSet have the expected labels specified in the data table. Polls with timeout.
+// ClusterObjectSet have the expected labels specified in the data table. Polls with Timeout.
 func ClusterObjectSetReferredSecretsContainLabels(ctx context.Context, revisionName string, table *godog.Table) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
 	expected, err := parseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
 	}
 
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		secrets, err := listReferredSecrets(ctx, revisionName)
 		if err != nil || len(secrets) == 0 {
 			return false
@@ -1490,10 +1490,10 @@ func ClusterObjectSetReferredSecretsContainLabels(ctx context.Context, revisionN
 // ClusterObjectSetReferredSecretsOwnedByObjectSet verifies that all referred Secrets for the named
 // ClusterObjectSet have an ownerReference pointing to the ClusterObjectSet with controller=true.
 func ClusterObjectSetReferredSecretsOwnedByObjectSet(ctx context.Context, revisionName string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
-	cosObj, err := getResource("clusterobjectset", revisionName, "")
+	cosObj, err := GetResource("clusterobjectset", revisionName, "")
 	if err != nil {
 		return fmt.Errorf("getting ClusterObjectSet %q: %w", revisionName, err)
 	}
@@ -1528,8 +1528,8 @@ func ClusterObjectSetReferredSecretsOwnedByObjectSet(ctx context.Context, revisi
 // ClusterObjectSetReferredSecretsHaveType verifies that all referred Secrets for the named
 // ClusterObjectSet have the specified Secret type.
 func ClusterObjectSetReferredSecretsHaveType(ctx context.Context, revisionName, expectedType string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
 	secrets, err := listReferredSecrets(ctx, revisionName)
 	if err != nil {
@@ -1551,11 +1551,11 @@ func ClusterObjectSetReferredSecretsHaveType(ctx context.Context, revisionName, 
 // named revision is controller-owned by the named ClusterExtension. On the current operator-controller
 // path the ClusterExtension owns the content Secrets directly (so deleting it garbage-collects them).
 func ClusterObjectSetReferredSecretsOwnedByClusterExtension(ctx context.Context, revisionName, extName string) error {
-	sc := scenarioCtx(ctx)
-	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
-	extName = substituteScenarioVars(strings.TrimSpace(extName), sc)
+	sc := Scenario(ctx)
+	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	extName = SubstituteScenarioVars(strings.TrimSpace(extName), sc)
 
-	ext, err := getResource("clusterextension", extName, "")
+	ext, err := GetResource("clusterextension", extName, "")
 	if err != nil {
 		return fmt.Errorf("getting ClusterExtension %q: %w", extName, err)
 	}
@@ -1586,15 +1586,15 @@ func ClusterObjectSetReferredSecretsOwnedByClusterExtension(ctx context.Context,
 	return nil
 }
 
-// collectReferredSecretNames returns the unique set of Secret names referenced by the ClusterObjectSet's phase objects.
-func collectReferredSecretNames(ctx context.Context, revisionName string) ([]string, error) {
+// CollectReferredSecretNames returns the unique set of Secret names referenced by the ClusterObjectSet's phase objects.
+func CollectReferredSecretNames(ctx context.Context, revisionName string) ([]string, error) {
 	var names []string
 	seen := sets.New[string]()
 
 	var obj *unstructured.Unstructured
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		var err error
-		obj, err = getResource("clusterobjectset", revisionName, "")
+		obj, err = GetResource("clusterobjectset", revisionName, "")
 		return err == nil
 	})
 
@@ -1624,20 +1624,20 @@ func collectReferredSecretNames(ctx context.Context, revisionName string) ([]str
 }
 
 type referredSecretRef struct {
-	name      string
-	namespace string
+	Name      string
+	Namespace string
 }
 
-// collectReferredSecretRefs returns the unique Secrets (name + namespace) referenced by the
-// ClusterObjectSet's phase objects. An empty ref namespace defaults to the OLM system namespace.
+// collectReferredSecretRefs returns the unique Secrets (Name + Namespace) referenced by the
+// ClusterObjectSet's phase objects. An empty ref Namespace defaults to the OLM system Namespace.
 func collectReferredSecretRefs(ctx context.Context, revisionName string) ([]referredSecretRef, error) {
 	var refs []referredSecretRef
 	seen := sets.New[string]()
 
 	var obj *unstructured.Unstructured
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		var err error
-		obj, err = getResource("clusterobjectset", revisionName, "")
+		obj, err = GetResource("clusterobjectset", revisionName, "")
 		return err == nil
 	})
 
@@ -1659,14 +1659,14 @@ func collectReferredSecretRefs(ctx context.Context, revisionName string) ([]refe
 			}
 			ns, _, _ := unstructured.NestedString(phaseObj, "objectRef", "namespace")
 			if ns == "" {
-				ns = olmNamespace
+				ns = OLMNamespace
 			}
 			key := ns + "/" + name
 			if seen.Has(key) {
 				continue
 			}
 			seen.Insert(key)
-			refs = append(refs, referredSecretRef{name: name, namespace: ns})
+			refs = append(refs, referredSecretRef{Name: name, Namespace: ns})
 		}
 	}
 	if len(refs) == 0 {
@@ -1685,89 +1685,89 @@ func listReferredSecrets(ctx context.Context, revisionName string) ([]corev1.Sec
 	}
 	secrets := make([]corev1.Secret, 0, len(refs))
 	for _, r := range refs {
-		out, err := k8sClient(ctx, "get", "secret", r.name, "-n", r.namespace, "-o", "json")
+		out, err := K8sClient(ctx, "get", "secret", r.Name, "-n", r.Namespace, "-o", "json")
 		if err != nil {
-			return nil, fmt.Errorf("getting referred secret %s/%s: %w", r.namespace, r.name, err)
+			return nil, fmt.Errorf("getting referred secret %s/%s: %w", r.Namespace, r.Name, err)
 		}
 		var s corev1.Secret
 		if err := json.Unmarshal([]byte(out), &s); err != nil {
-			return nil, fmt.Errorf("unmarshalling secret %s/%s: %w", r.namespace, r.name, err)
+			return nil, fmt.Errorf("unmarshalling secret %s/%s: %w", r.Namespace, r.Name, err)
 		}
 		secrets = append(secrets, s)
 	}
 	return secrets, nil
 }
 
-// ResourceAvailable waits for the specified resource (kind/name format) to exist in the test namespace. Polls with timeout.
+// ResourceAvailable waits for the specified Resource (Kind/Name format) to exist in the test Namespace. Polls with Timeout.
 func ResourceAvailable(ctx context.Context, resource string) error {
-	sc := scenarioCtx(ctx)
-	resource = substituteScenarioVars(resource, sc)
+	sc := Scenario(ctx)
+	resource = SubstituteScenarioVars(resource, sc)
 	kind, name, found := strings.Cut(resource, "/")
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
-	waitFor(ctx, func() bool {
-		_, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace)
+	WaitFor(ctx, func() bool {
+		_, err := K8sClient(ctx, "get", kind, name, "-n", sc.Namespace)
 		return err == nil
 	})
 	return nil
 }
 
-// ResourceRemoved saves the resource state for potential restore checks, then deletes it from the test namespace.
+// ResourceRemoved saves the Resource state for potential restore checks, then deletes it from the test Namespace.
 func ResourceRemoved(ctx context.Context, resource string) error {
-	sc := scenarioCtx(ctx)
-	resource = substituteScenarioVars(resource, sc)
+	sc := Scenario(ctx)
+	resource = SubstituteScenarioVars(resource, sc)
 	kind, name, found := strings.Cut(resource, "/")
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
-	yaml, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "yaml")
+	yaml, err := K8sClient(ctx, "get", kind, name, "-n", sc.Namespace, "-o", "yaml")
 	if err != nil {
 		return err
 	}
-	obj, err := toUnstructured(yaml)
+	obj, err := ToUnstructured(yaml)
 	if err != nil {
 		return err
 	}
-	sc.removedResources = append(sc.removedResources, *obj)
-	_, err = k8sClient(ctx, "delete", kind, name, "-n", sc.namespace)
+	sc.RemovedResources = append(sc.RemovedResources, *obj)
+	_, err = K8sClient(ctx, "delete", kind, name, "-n", sc.Namespace)
 	return err
 }
 
-// ResourceEventuallyNotFound waits for the specified resource to be fully deleted from the test namespace. Polls with timeout.
+// ResourceEventuallyNotFound waits for the specified Resource to be fully deleted from the test Namespace. Polls with Timeout.
 func ResourceEventuallyNotFound(ctx context.Context, resource string) error {
-	sc := scenarioCtx(ctx)
-	resource = substituteScenarioVars(resource, sc)
+	sc := Scenario(ctx)
+	resource = SubstituteScenarioVars(resource, sc)
 	kind, name, found := strings.Cut(resource, "/")
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
 
-	waitFor(ctx, func() bool {
-		obj, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "--ignore-not-found", "-o", "yaml")
+	WaitFor(ctx, func() bool {
+		obj, err := K8sClient(ctx, "get", kind, name, "-n", sc.Namespace, "--ignore-not-found", "-o", "yaml")
 		return err == nil && strings.TrimSpace(obj) == ""
 	})
 	return nil
 }
 
-// ResourceMatches waits for the specified resource to match the expected content using JSON merge patch comparison. Polls with timeout.
+// ResourceMatches waits for the specified Resource to match the expected content using JSON merge patch comparison. Polls with Timeout.
 func ResourceMatches(ctx context.Context, resource string, requiredContentTemplate *godog.DocString) error {
-	sc := scenarioCtx(ctx)
-	resource = substituteScenarioVars(resource, sc)
+	sc := Scenario(ctx)
+	resource = SubstituteScenarioVars(resource, sc)
 	kind, name, found := strings.Cut(resource, "/")
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
-	requiredContent, err := toUnstructured(substituteScenarioVars(requiredContentTemplate.Content, sc))
+	requiredContent, err := ToUnstructured(SubstituteScenarioVars(requiredContentTemplate.Content, sc))
 	if err != nil {
 		return fmt.Errorf("failed to parse required resource yaml: %v", err)
 	}
-	waitFor(ctx, func() bool {
-		objJson, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "json")
+	WaitFor(ctx, func() bool {
+		objJson, err := K8sClient(ctx, "get", kind, name, "-n", sc.Namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
-		obj, err := toUnstructured(objJson)
+		obj, err := ToUnstructured(objJson)
 		if err != nil {
 			return false
 		}
@@ -1779,7 +1779,7 @@ func ResourceMatches(ctx context.Context, resource string, requiredContentTempla
 		if err != nil {
 			return false
 		}
-		upd, err := toUnstructured(string(updJson))
+		upd, err := ToUnstructured(string(updJson))
 		if err != nil {
 			return false
 		}
@@ -1789,26 +1789,26 @@ func ResourceMatches(ctx context.Context, resource string, requiredContentTempla
 	return nil
 }
 
-// ResourceRestored waits for a previously removed resource to be re-created with matching spec or data. Polls with timeout.
+// ResourceRestored waits for a previously removed Resource to be re-created with matching spec or data. Polls with Timeout.
 func ResourceRestored(ctx context.Context, resource string) error {
-	sc := scenarioCtx(ctx)
-	resource = substituteScenarioVars(resource, sc)
+	sc := Scenario(ctx)
+	resource = SubstituteScenarioVars(resource, sc)
 	kind, name, found := strings.Cut(resource, "/")
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
-	waitFor(ctx, func() bool {
-		yaml, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "yaml")
+	WaitFor(ctx, func() bool {
+		yaml, err := K8sClient(ctx, "get", kind, name, "-n", sc.Namespace, "-o", "yaml")
 		if err != nil {
 			return false
 		}
-		obj, err := toUnstructured(yaml)
+		obj, err := ToUnstructured(yaml)
 		if err != nil {
 			return false
 		}
 		ct := obj.GetCreationTimestamp()
 
-		for i, removed := range sc.removedResources {
+		for i, removed := range sc.RemovedResources {
 			rct := removed.GetCreationTimestamp()
 			if removed.GetName() == obj.GetName() && removed.GetKind() == obj.GetKind() && rct.Before(&ct) {
 				switch kind {
@@ -1821,7 +1821,7 @@ func ResourceRestored(ctx context.Context, resource string) error {
 						return false
 					}
 				}
-				sc.removedResources = append(sc.removedResources[:i], sc.removedResources[i+1:]...)
+				sc.RemovedResources = append(sc.RemovedResources[:i], sc.RemovedResources[i+1:]...)
 				return true
 			}
 		}
@@ -1831,9 +1831,9 @@ func ResourceRestored(ctx context.Context, resource string) error {
 }
 
 func applyServiceAccount(ctx context.Context, serviceAccount string, keyValue ...string) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	vars := extendMap(map[string]string{
-		"TEST_NAMESPACE":       sc.namespace,
+		"TEST_NAMESPACE":       sc.Namespace,
 		"SERVICE_ACCOUNT_NAME": serviceAccount,
 		"SERVICEACCOUNT_NAME":  serviceAccount,
 	}, keyValue...)
@@ -1845,7 +1845,7 @@ func applyServiceAccount(ctx context.Context, serviceAccount string, keyValue ..
 	}
 
 	// Apply the ServiceAccount configuration
-	_, stdErr, err := k8scliWithInput(ctx, yaml, "apply", "-f", "-")
+	_, stdErr, err := K8sCLIWithInput(ctx, yaml, "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply ServiceAccount configuration: %v: %s", err, stdErr)
 	}
@@ -1854,16 +1854,16 @@ func applyServiceAccount(ctx context.Context, serviceAccount string, keyValue ..
 }
 
 func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacTemplate string, keyValue ...string) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	if err := applyServiceAccount(ctx, serviceAccount); err != nil {
 		return err
 	}
 	vars := extendMap(map[string]string{
-		"TEST_NAMESPACE":         sc.namespace,
+		"TEST_NAMESPACE":         sc.Namespace,
 		"SERVICE_ACCOUNT_NAME":   serviceAccount,
 		"SERVICEACCOUNT_NAME":    serviceAccount,
-		"CLUSTER_EXTENSION_NAME": sc.clusterExtensionName,
-		"CLUSTEREXTENSION_NAME":  sc.clusterExtensionName,
+		"CLUSTER_EXTENSION_NAME": sc.ClusterExtensionName,
+		"CLUSTEREXTENSION_NAME":  sc.ClusterExtensionName,
 	}, keyValue...)
 
 	_, thisFile, _, _ := runtime.Caller(0)
@@ -1873,7 +1873,7 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 	}
 
 	// Apply the RBAC configuration
-	_, rbacStdErr, err := k8scliWithInput(ctx, rbacYaml, "apply", "-f", "-")
+	_, rbacStdErr, err := K8sCLIWithInput(ctx, rbacYaml, "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply RBAC configuration: %v: %s", err, rbacStdErr)
 	}
@@ -1884,23 +1884,23 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 		if doc == "" {
 			continue
 		}
-		res, err := toUnstructured(doc)
+		res, err := ToUnstructured(doc)
 		if err != nil {
 			continue
 		}
 		kind := res.GetKind()
 		if kind == "ClusterRole" || kind == "ClusterRoleBinding" {
-			sc.addedResources = append(sc.addedResources, resource{name: res.GetName(), kind: strings.ToLower(kind)})
+			sc.AddedResources = append(sc.AddedResources, Resource{Name: res.GetName(), Kind: strings.ToLower(kind)})
 		}
 	}
 
 	return nil
 }
 
-// NamespaceIsAvailable ensures the given namespace exists by applying a namespace template.
+// NamespaceIsAvailable ensures the given Namespace exists by applying a Namespace template.
 func NamespaceIsAvailable(ctx context.Context, ns string) error {
-	sc := scenarioCtx(ctx)
-	ns = substituteScenarioVars(ns, sc)
+	sc := Scenario(ctx)
+	ns = SubstituteScenarioVars(ns, sc)
 	_, thisFile, _, _ := runtime.Caller(0)
 	yaml, err := templateYaml(filepath.Join(filepath.Dir(thisFile), "testdata", "namespace-template.yaml"), map[string]string{
 		"NAMESPACE": ns,
@@ -1908,13 +1908,13 @@ func NamespaceIsAvailable(ctx context.Context, ns string) error {
 	if err != nil {
 		return fmt.Errorf("failed to template namespace yaml: %v", err)
 	}
-	if _, _, err := k8scliWithInput(ctx, yaml, "apply", "-f", "-"); err != nil {
+	if _, _, err := K8sCLIWithInput(ctx, yaml, "apply", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply namespace %s: %w", ns, err)
 	}
 	return nil
 }
 
-// ServiceAccountIsAvailableInNamespace creates a ServiceAccount in the test namespace without RBAC permissions.
+// ServiceAccountIsAvailableInNamespace creates a ServiceAccount in the test Namespace without RBAC permissions.
 func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
 	return applyServiceAccount(ctx, serviceAccount)
 }
@@ -1923,7 +1923,7 @@ func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount st
 // The RBAC template is selected based on the service account and BoxcutterRuntime feature gate: <service-account>-<helm|boxcutter>-rbac-template.yaml
 func ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace(ctx context.Context, serviceAccount string) error {
 	kernel := "helm"
-	if enabled, found := featureGates[features.BoxcutterRuntime]; found && enabled {
+	if enabled, found := FeatureGates[features.BoxcutterRuntime]; found && enabled {
 		kernel = "boxcutter"
 	}
 	rbacTemplate := fmt.Sprintf("%s-%s-rbac-template.yaml", serviceAccount, kernel)
@@ -1932,9 +1932,9 @@ func ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace(ctx context.C
 
 // ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace creates a ServiceAccount and enables creation of any cluster extension on behalf of this account.
 func ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace(ctx context.Context, serviceAccount string, ns string) error {
-	sc := scenarioCtx(ctx)
-	ns = substituteScenarioVars(ns, sc)
-	sc.addedResources = append(sc.addedResources, resource{name: ns, kind: "namespace"})
+	sc := Scenario(ctx)
+	ns = SubstituteScenarioVars(ns, sc)
+	sc.AddedResources = append(sc.AddedResources, Resource{Name: ns, Kind: "namespace"})
 	if err := applyServiceAccount(ctx, serviceAccount, "TEST_NAMESPACE", ns); err != nil {
 		return err
 	}
@@ -1971,9 +1971,9 @@ func httpGet(url string, token string) (*http.Response, error) {
 }
 
 // SendMetricsRequest sets up port-forwarding to the controller's service pods and waits for the metrics endpoint
-// to return a successful response. Stores the response body per pod in the scenario context. Polls with timeout.
+// to return a successful response. Stores the response body per pod in the scenario context. Polls with Timeout.
 func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint string, controllerName string) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	svc, err := getMetricsService(controllerName)
 	if err != nil {
 		return err
@@ -1987,7 +1987,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 	for k, v := range svc.Spec.Selector {
 		podNameCmd = append(podNameCmd, fmt.Sprintf("--selector=%s=%s", k, v))
 	}
-	v, err := k8sClient(ctx, podNameCmd...)
+	v, err := K8sClient(ctx, podNameCmd...)
 	if err != nil {
 		return err
 	}
@@ -1996,12 +1996,12 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 	if err := json.Unmarshal([]byte(v), &pods); err != nil {
 		return err
 	}
-	token, err := k8sClient(ctx, "create", "token", serviceAccount, "-n", sc.namespace)
+	token, err := K8sClient(ctx, "create", "token", serviceAccount, "-n", sc.Namespace)
 	if err != nil {
 		return err
 	}
 
-	sc.metricsResponse = make(map[string]string)
+	sc.MetricsResponse = make(map[string]string)
 	for _, p := range pods {
 		if err := func() error {
 			addr, cleanup, err := portForward(ctx, p.Namespace, fmt.Sprintf("pod/%s", p.Name), mPort)
@@ -2009,7 +2009,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 				return err
 			}
 			defer cleanup()
-			waitFor(ctx, func() bool {
+			WaitFor(ctx, func() bool {
 				resp, err := httpGet(fmt.Sprintf("https://%s%s", addr, endpoint), token)
 				if err != nil {
 					return false
@@ -2021,7 +2021,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 					if err != nil {
 						return false
 					}
-					sc.metricsResponse[p.Name] = string(b)
+					sc.MetricsResponse[p.Name] = string(b)
 					return true
 				}
 				b, err := io.ReadAll(resp.Body)
@@ -2042,12 +2042,12 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 
 // ScenarioCatalogIsDeleted deletes a named per-scenario ClusterCatalog and waits for it to be removed.
 func ScenarioCatalogIsDeleted(ctx context.Context, catalogUserName string) error {
-	sc := scenarioCtx(ctx)
-	catalogName, ok := sc.catalogs[catalogUserName]
+	sc := Scenario(ctx)
+	catalogName, ok := sc.Catalogs[catalogUserName]
 	if !ok {
 		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
 	}
-	_, err := k8sClient(ctx, "delete", "clustercatalog", catalogName, "--ignore-not-found=true", "--wait=true")
+	_, err := K8sClient(ctx, "delete", "clustercatalog", catalogName, "--ignore-not-found=true", "--wait=true")
 	if err != nil {
 		return fmt.Errorf("failed to delete catalog %q: %v", catalogUserName, err)
 	}
@@ -2055,12 +2055,12 @@ func ScenarioCatalogIsDeleted(ctx context.Context, catalogUserName string) error
 }
 
 func CatalogIsLabeledWith(ctx context.Context, catalogUserName, label string) error {
-	sc := scenarioCtx(ctx)
-	catalogName, ok := sc.catalogs[catalogUserName]
+	sc := Scenario(ctx)
+	catalogName, ok := sc.Catalogs[catalogUserName]
 	if !ok {
 		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
 	}
-	_, err := k8sClient(ctx, "label", "clustercatalog", catalogName, label, "--overwrite")
+	_, err := K8sClient(ctx, "label", "clustercatalog", catalogName, label, "--overwrite")
 	if err != nil {
 		return fmt.Errorf("failed to label catalog %q with %q: %v", catalogUserName, label, err)
 	}
@@ -2069,12 +2069,12 @@ func CatalogIsLabeledWith(ctx context.Context, catalogUserName, label string) er
 
 // ValidatingAdmissionPolicyIsActive waits for the named ValidatingAdmissionPolicy to be compiled
 // and active by checking that status.observedGeneration matches metadata.generation.
-// The scenario fails on timeout if the policy never becomes active.
+// The scenario fails on Timeout if the policy never becomes active.
 func ValidatingAdmissionPolicyIsActive(ctx context.Context, name string) error {
-	sc := scenarioCtx(ctx)
-	name = substituteScenarioVars(name, sc)
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "validatingadmissionpolicy", name, "-o",
+	sc := Scenario(ctx)
+	name = SubstituteScenarioVars(name, sc)
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "validatingadmissionpolicy", name, "-o",
 			"jsonpath={.metadata.generation},{.status.observedGeneration}")
 		if err != nil {
 			return false
@@ -2089,14 +2089,14 @@ func ValidatingAdmissionPolicyIsActive(ctx context.Context, name string) error {
 // It pushes a new catalog image with the specified tag but does NOT update the ClusterCatalog.
 // Use ScenarioCatalogIsUpdatedToVersion to patch the ClusterCatalog to use the new version.
 func CatalogVersionWithPackages(ctx context.Context, catalogUserName, version string, table *godog.Table) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 
 	pkgOpts, err := parseCatalogTable(table)
 	if err != nil {
 		return err
 	}
 
-	cat := catalog.NewCatalog(catalogUserName, sc.id, pkgOpts...)
+	cat := catalog.NewCatalog(catalogUserName, sc.ID, pkgOpts...)
 	localRegistry, clusterRegistry, err := registryHosts()
 	if err != nil {
 		return err
@@ -2109,7 +2109,7 @@ func CatalogVersionWithPackages(ctx context.Context, catalogUserName, version st
 
 	// Accumulate package names (bundles may differ between versions)
 	for orig, param := range result.PackageNames {
-		sc.catalogPackageNames[orig] = param
+		sc.CatalogPackageNames[orig] = param
 	}
 
 	return nil
@@ -2117,12 +2117,12 @@ func CatalogVersionWithPackages(ctx context.Context, catalogUserName, version st
 
 // ScenarioCatalogIsUpdatedToVersion patches a named per-scenario ClusterCatalog's image ref to a new version tag.
 func ScenarioCatalogIsUpdatedToVersion(ctx context.Context, catalogUserName, version string) error {
-	sc := scenarioCtx(ctx)
-	catalogName, ok := sc.catalogs[catalogUserName]
+	sc := Scenario(ctx)
+	catalogName, ok := sc.Catalogs[catalogUserName]
 	if !ok {
 		return fmt.Errorf("no catalog %q has been created for this scenario", catalogUserName)
 	}
-	ref, err := k8sClient(ctx, "get", "clustercatalog", catalogName, "-o", "jsonpath={.spec.source.image.ref}")
+	ref, err := K8sClient(ctx, "get", "clustercatalog", catalogName, "-o", "jsonpath={.spec.source.image.ref}")
 	if err != nil {
 		return err
 	}
@@ -2144,7 +2144,7 @@ func ScenarioCatalogIsUpdatedToVersion(ctx context.Context, catalogUserName, ver
 	if err != nil {
 		return err
 	}
-	_, err = k8sClient(ctx, "patch", "clustercatalog", catalogName, "--type", "merge", "-p", string(pb))
+	_, err = K8sClient(ctx, "patch", "clustercatalog", catalogName, "--type", "merge", "-p", string(pb))
 	return err
 }
 
@@ -2154,8 +2154,8 @@ func ScenarioCatalogTagImage(ctx context.Context, catalogUserName, oldTag, newTa
 	if err != nil {
 		return err
 	}
-	sc := scenarioCtx(ctx)
-	imageRef := fmt.Sprintf("%s/e2e/%s-catalog-%s:%s", localRegistry, catalogUserName, sc.id, oldTag)
+	sc := Scenario(ctx)
+	imageRef := fmt.Sprintf("%s/e2e/%s-catalog-%s:%s", localRegistry, catalogUserName, sc.ID, oldTag)
 	return crane.Tag(imageRef, newTag, crane.Insecure)
 }
 
@@ -2245,14 +2245,14 @@ func parseCatalogTable(table *godog.Table) ([]catalog.PackageOption, error) {
 // CatalogWithPackages builds a per-scenario catalog from a Gherkin data table.
 // Table columns: package | version | channel | replaces | contents
 func CatalogWithPackages(ctx context.Context, catalogUserName string, table *godog.Table) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 
 	pkgOpts, err := parseCatalogTable(table)
 	if err != nil {
 		return err
 	}
 
-	cat := catalog.NewCatalog(catalogUserName, sc.id, pkgOpts...)
+	cat := catalog.NewCatalog(catalogUserName, sc.ID, pkgOpts...)
 	localRegistry, clusterRegistry, err := registryHosts()
 	if err != nil {
 		return err
@@ -2263,9 +2263,9 @@ func CatalogWithPackages(ctx context.Context, catalogUserName string, table *god
 		return fmt.Errorf("failed to build catalog: %w", err)
 	}
 
-	sc.catalogs[catalogUserName] = result.CatalogName
+	sc.Catalogs[catalogUserName] = result.CatalogName
 	for orig, param := range result.PackageNames {
-		sc.catalogPackageNames[orig] = param
+		sc.CatalogPackageNames[orig] = param
 	}
 
 	catalogYAML := fmt.Sprintf(`apiVersion: olm.operatorframework.io/v1
@@ -2281,7 +2281,7 @@ spec:
       ref: %s
 `, result.CatalogName, result.CatalogImageRef)
 
-	catalogObj, err := toUnstructured(catalogYAML)
+	catalogObj, err := ToUnstructured(catalogYAML)
 	if err != nil {
 		return fmt.Errorf("failed to parse catalog YAML: %w", err)
 	}
@@ -2291,7 +2291,7 @@ spec:
 		return fmt.Errorf("failed to marshal catalog YAML: %w", err)
 	}
 
-	if _, _, err := k8scliWithInput(ctx, string(annotatedYAML), "apply", "-f", "-"); err != nil {
+	if _, _, err := K8sCLIWithInput(ctx, string(annotatedYAML), "apply", "-f", "-"); err != nil {
 		return fmt.Errorf("failed to apply ClusterCatalog: %w", err)
 	}
 
@@ -2354,8 +2354,8 @@ func parseContents(contents string) ([]catalog.BundleOption, error) {
 
 // PrometheusMetricsAreReturned validates that each pod's stored metrics response is non-empty and parses as valid Prometheus text format.
 func PrometheusMetricsAreReturned(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
-	for podName, mr := range sc.metricsResponse {
+	sc := Scenario(ctx)
+	for podName, mr := range sc.MetricsResponse {
 		if mr == "" {
 			return fmt.Errorf("metrics response is empty for pod %s", podName)
 		}
@@ -2373,10 +2373,10 @@ func PrometheusMetricsAreReturned(ctx context.Context) error {
 
 // OperatorTargetNamespace asserts that the operator deployment has the expected olm.targetNamespaces annotation.
 func OperatorTargetNamespace(ctx context.Context, operator, namespace string) error {
-	sc := scenarioCtx(ctx)
-	operator = substituteScenarioVars(operator, sc)
-	namespace = substituteScenarioVars(namespace, sc)
-	raw, err := k8sClient(ctx, "get", "deployment", "-n", sc.namespace, operator, "-o", "json")
+	sc := Scenario(ctx)
+	operator = SubstituteScenarioVars(operator, sc)
+	namespace = SubstituteScenarioVars(namespace, sc)
+	raw, err := K8sClient(ctx, "get", "deployment", "-n", sc.Namespace, operator, "-o", "json")
 	if err != nil {
 		return err
 	}
@@ -2390,8 +2390,8 @@ func OperatorTargetNamespace(ctx context.Context, operator, namespace string) er
 		return fmt.Errorf("expected target namespace %s, got %s", namespace, tns)
 	}
 
-	if rec := RecorderFromContext(ctx); rec != nil {
-		cmd := fmt.Sprintf("kubectl get deployment -n %s %s -o jsonpath='{.spec.template.metadata.annotations.olm\\.targetNamespaces}'", sc.namespace, operator)
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
+		cmd := fmt.Sprintf("kubectl get deployment -n %s %s -o jsonpath='{.spec.template.metadata.annotations.olm\\.targetNamespaces}'", sc.Namespace, operator)
 		rec.RecordCustom(cmd, tns+"\n", "")
 	}
 	return nil
@@ -2399,9 +2399,9 @@ func OperatorTargetNamespace(ctx context.Context, operator, namespace string) er
 
 // MarkDeploymentReadiness controls a deployment's readiness probe by removing or creating the readiness file in its pod.
 func MarkDeploymentReadiness(ctx context.Context, deploymentName, state string) error {
-	sc := scenarioCtx(ctx)
-	deploymentName = substituteScenarioVars(deploymentName, sc)
-	v, err := k8sClient(ctx, "get", "deployment", "-n", sc.namespace, deploymentName, "-o", "jsonpath={.spec.selector.matchLabels}")
+	sc := Scenario(ctx)
+	deploymentName = SubstituteScenarioVars(deploymentName, sc)
+	v, err := K8sClient(ctx, "get", "deployment", "-n", sc.Namespace, deploymentName, "-o", "jsonpath={.spec.selector.matchLabels}")
 	if err != nil {
 		return err
 	}
@@ -2409,11 +2409,11 @@ func MarkDeploymentReadiness(ctx context.Context, deploymentName, state string) 
 	if err := json.Unmarshal([]byte(v), &labels); err != nil {
 		return err
 	}
-	podNameCmd := []string{"get", "pod", "-n", sc.namespace, "-o", "jsonpath={.items[0].metadata.name}"}
+	podNameCmd := []string{"get", "pod", "-n", sc.Namespace, "-o", "jsonpath={.items[0].metadata.name}"}
 	for k, v := range labels {
 		podNameCmd = append(podNameCmd, fmt.Sprintf("--selector=%s=%s", k, v))
 	}
-	podName, err := k8sClient(ctx, podNameCmd...)
+	podName, err := K8sClient(ctx, podNameCmd...)
 	if err != nil {
 		return err
 	}
@@ -2426,7 +2426,7 @@ func MarkDeploymentReadiness(ctx context.Context, deploymentName, state string) 
 	default:
 		return fmt.Errorf("invalid state %s", state)
 	}
-	_, err = k8sClient(ctx, "exec", podName, "-n", sc.namespace, "--", op, "/tmp/www/ready")
+	_, err = K8sClient(ctx, "exec", podName, "-n", sc.Namespace, "--", op, "/tmp/www/ready")
 	return err
 }
 
@@ -2455,7 +2455,7 @@ func SetCRDFieldMinValue(ctx context.Context, resourceType, jsonPath string, min
 	patchPath := fmt.Sprintf("/spec/versions/0/schema/openAPIV3Schema/%s/minimum", strings.Join(schemaParts, "/"))
 
 	patch := fmt.Sprintf(`[{"op": "replace", "path": "%s", "value": %d}]`, patchPath, minValue)
-	_, err := k8sClient(ctx, "patch", "crd", crdName, "--type=json", "-p", patch)
+	_, err := K8sClient(ctx, "patch", "crd", crdName, "--type=json", "-p", patch)
 	return err
 }
 
@@ -2491,12 +2491,12 @@ func extendMap(m map[string]string, keyValue ...string) map[string]string {
 	return m
 }
 
-func getResource(kind string, name string, namespace string) (*unstructured.Unstructured, error) {
-	out, err := k8sClient(context.Background(), "get", kind, name, "-n", namespace, "-o", "yaml")
+func GetResource(kind string, name string, namespace string) (*unstructured.Unstructured, error) {
+	out, err := K8sClient(context.Background(), "get", kind, name, "-n", namespace, "-o", "yaml")
 	if err != nil {
 		return nil, err
 	}
-	obj, err := toUnstructured(out)
+	obj, err := ToUnstructured(out)
 	if err != nil {
 		return nil, err
 	}
@@ -2507,7 +2507,7 @@ func getResource(kind string, name string, namespace string) (*unstructured.Unst
 // this method is best called when the extension has been installed successfully. An error is returned if there was
 // any issue in determining the extension's resources.
 func listExtensionResources(extName string) ([]client.Object, error) {
-	if enabled, found := featureGates[features.BoxcutterRuntime]; found && enabled {
+	if enabled, found := FeatureGates[features.BoxcutterRuntime]; found && enabled {
 		return listExtensionRevisionResources(extName)
 	}
 	return listHelmReleaseResources(extName)
@@ -2533,9 +2533,9 @@ func listHelmReleaseResources(extName string) ([]client.Object, error) {
 	return objs, nil
 }
 
-// helmReleaseSecretForExtension returns the Helm release secret for the extension with name extName
+// helmReleaseSecretForExtension returns the Helm release secret for the extension with Name extName
 func helmReleaseSecretForExtension(extName string) (*corev1.Secret, error) {
-	out, err := k8sClient(context.Background(), "get", "secrets", "-n", olmNamespace,
+	out, err := K8sClient(context.Background(), "get", "secrets", "-n", OLMNamespace,
 		"-l", fmt.Sprintf("name=%s,status=deployed", extName),
 		"--field-selector", "type=operatorframework.io/index.v1", "-o", "json")
 	if err != nil {
@@ -2613,7 +2613,7 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 			specObj := &phase.Objects[j]
 			switch specObj.Type {
 			case ocv1.ObjectTypeObjectReference:
-				resolved, err := resolveObjectRef(specObj.ObjectRef)
+				resolved, err := ResolveObjectRef(specObj.ObjectRef)
 				if err != nil {
 					return nil, fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
 				}
@@ -2629,9 +2629,9 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 	return objs, nil
 }
 
-// resolveObjectRef fetches an object from a Secret ref using kubectl.
-func resolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
-	out, err := k8sClient(context.Background(), "get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
+// ResolveObjectRef fetches an object from a Secret ref using kubectl.
+func ResolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
+	out, err := K8sClient(context.Background(), "get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("getting Secret %s/%s: %w", ref.Namespace, ref.Name, err)
 	}
@@ -2670,7 +2670,7 @@ func resolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, err
 
 // latestActiveRevisionForExtension returns the latest active revision for the extension called extName
 func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterObjectSet, error) {
-	revisions, err := listClusterObjectSetsInGroup(context.Background(), extName)
+	revisions, err := ListClusterObjectSetsInGroup(context.Background(), extName)
 	if err != nil {
 		return nil, fmt.Errorf("error listing revisions for extension '%s': %w", extName, err)
 	}
@@ -2692,12 +2692,12 @@ func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterObjectSet, e
 	return latest, nil
 }
 
-// AnnotationsAreAdded adds annotations from a data table to a resource using kubectl annotate.
+// AnnotationsAreAdded adds annotations from a data table to a Resource using kubectl annotate.
 // The table must have "key" and "value" columns.
-// Only supports namespaced resources (always uses sc.namespace).
+// Only supports namespaced resources (always uses sc.Namespace).
 func AnnotationsAreAdded(ctx context.Context, resourceName string, table *godog.Table) error {
-	sc := scenarioCtx(ctx)
-	resourceName = substituteScenarioVars(resourceName, sc)
+	sc := Scenario(ctx)
+	resourceName = SubstituteScenarioVars(resourceName, sc)
 
 	pairs, err := parseKeyValueTable(table, sc)
 	if err != nil {
@@ -2713,19 +2713,19 @@ func AnnotationsAreAdded(ctx context.Context, resourceName string, table *godog.
 	for k, v := range pairs {
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}
-	args = append(args, "--overwrite", "-n", sc.namespace)
-	if _, err := k8sClient(ctx, args...); err != nil {
+	args = append(args, "--overwrite", "-n", sc.Namespace)
+	if _, err := K8sClient(ctx, args...); err != nil {
 		return fmt.Errorf("failed to annotate %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
 	}
 	return nil
 }
 
-// LabelsAreAdded adds labels from a data table to a resource using kubectl label.
+// LabelsAreAdded adds labels from a data table to a Resource using kubectl label.
 // The table must have "key" and "value" columns.
-// Only supports namespaced resources (always uses sc.namespace).
+// Only supports namespaced resources (always uses sc.Namespace).
 func LabelsAreAdded(ctx context.Context, resourceName string, table *godog.Table) error {
-	sc := scenarioCtx(ctx)
-	resourceName = substituteScenarioVars(resourceName, sc)
+	sc := Scenario(ctx)
+	resourceName = SubstituteScenarioVars(resourceName, sc)
 
 	pairs, err := parseKeyValueTable(table, sc)
 	if err != nil {
@@ -2741,19 +2741,19 @@ func LabelsAreAdded(ctx context.Context, resourceName string, table *godog.Table
 	for k, v := range pairs {
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}
-	args = append(args, "--overwrite", "-n", sc.namespace)
-	if _, err := k8sClient(ctx, args...); err != nil {
+	args = append(args, "--overwrite", "-n", sc.Namespace)
+	if _, err := K8sClient(ctx, args...); err != nil {
 		return fmt.Errorf("failed to label %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
 	}
 	return nil
 }
 
-// ResourceHasAnnotations waits for a resource to have all annotations specified in the data table.
+// ResourceHasAnnotations waits for a Resource to have all annotations specified in the data table.
 // The table must have "key" and "value" columns.
-// Only supports namespaced resources (always uses sc.namespace).
+// Only supports namespaced resources (always uses sc.Namespace).
 func ResourceHasAnnotations(ctx context.Context, resourceName string, table *godog.Table) error {
-	sc := scenarioCtx(ctx)
-	resourceName = substituteScenarioVars(resourceName, sc)
+	sc := Scenario(ctx)
+	resourceName = SubstituteScenarioVars(resourceName, sc)
 
 	expected, err := parseKeyValueTable(table, sc)
 	if err != nil {
@@ -2765,8 +2765,8 @@ func ResourceHasAnnotations(ctx context.Context, resourceName string, table *god
 		return fmt.Errorf("invalid resource name format: %q (expected kind/name)", resourceName)
 	}
 
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "json")
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", kind, name, "-n", sc.Namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -2797,12 +2797,12 @@ func matchLabels(actual, expected map[string]string) (string, string, bool) {
 	return "", "", true
 }
 
-// ResourceHasLabels waits for a resource to have all labels specified in the data table.
+// ResourceHasLabels waits for a Resource to have all labels specified in the data table.
 // The table must have "key" and "value" columns.
-// Only supports namespaced resources (always uses sc.namespace).
+// Only supports namespaced resources (always uses sc.Namespace).
 func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Table) error {
-	sc := scenarioCtx(ctx)
-	resourceName = substituteScenarioVars(resourceName, sc)
+	sc := Scenario(ctx)
+	resourceName = SubstituteScenarioVars(resourceName, sc)
 
 	expected, err := parseKeyValueTable(table, sc)
 	if err != nil {
@@ -2814,8 +2814,8 @@ func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Ta
 		return fmt.Errorf("invalid resource name format: %q (expected kind/name)", resourceName)
 	}
 
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", kind, name, "-n", sc.namespace, "-o", "json")
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", kind, name, "-n", sc.Namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -2832,18 +2832,18 @@ func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Ta
 	return nil
 }
 
-// NamespaceHasLabels waits for a namespace (cluster-scoped) to have all labels specified in the data table.
+// NamespaceHasLabels waits for a Namespace (cluster-scoped) to have all labels specified in the data table.
 func NamespaceHasLabels(ctx context.Context, nsName string, table *godog.Table) error {
-	sc := scenarioCtx(ctx)
-	nsName = substituteScenarioVars(nsName, sc)
+	sc := Scenario(ctx)
+	nsName = SubstituteScenarioVars(nsName, sc)
 
 	expected, err := parseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
 	}
 
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "namespace", nsName, "-o", "json")
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "namespace", nsName, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -2860,12 +2860,12 @@ func NamespaceHasLabels(ctx context.Context, nsName string, table *godog.Table) 
 	return nil
 }
 
-// NamespaceDoesNotHaveLabel verifies a namespace does not have the specified label.
+// NamespaceDoesNotHaveLabel verifies a Namespace does not have the specified label.
 func NamespaceDoesNotHaveLabel(ctx context.Context, nsName string, labelKey string) error {
-	sc := scenarioCtx(ctx)
-	nsName = substituteScenarioVars(nsName, sc)
+	sc := Scenario(ctx)
+	nsName = SubstituteScenarioVars(nsName, sc)
 
-	out, err := k8sClient(ctx, "get", "namespace", nsName, "-o", "json")
+	out, err := K8sClient(ctx, "get", "namespace", nsName, "-o", "json")
 	if err != nil {
 		return fmt.Errorf("failed to get namespace %q: %w", nsName, err)
 	}
@@ -2879,18 +2879,18 @@ func NamespaceDoesNotHaveLabel(ctx context.Context, nsName string, labelKey stri
 	return nil
 }
 
-// NamespaceIsManagedByOLM waits for a namespace to be owned by the extension's active ClusterObjectSet.
+// NamespaceIsManagedByOLM waits for a Namespace to be owned by the extension's active ClusterObjectSet.
 func NamespaceIsManagedByOLM(ctx context.Context, nsName string) error {
-	sc := scenarioCtx(ctx)
-	nsName = substituteScenarioVars(nsName, sc)
+	sc := Scenario(ctx)
+	nsName = SubstituteScenarioVars(nsName, sc)
 
-	waitFor(ctx, func() bool {
-		revision, err := latestActiveRevisionForExtension(sc.clusterExtensionName)
+	WaitFor(ctx, func() bool {
+		revision, err := latestActiveRevisionForExtension(sc.ClusterExtensionName)
 		if err != nil {
-			logger.V(1).Error(err, "failed to get active revision", "extension", sc.clusterExtensionName)
+			logger.V(1).Error(err, "failed to get active revision", "extension", sc.ClusterExtensionName)
 			return false
 		}
-		out, err := k8sClient(ctx, "get", "namespace", nsName, "-o", "json")
+		out, err := K8sClient(ctx, "get", "namespace", nsName, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -2910,12 +2910,12 @@ func NamespaceIsManagedByOLM(ctx context.Context, nsName string) error {
 	return nil
 }
 
-// NamespaceHasNoOwnerReferences verifies a namespace remains unmanaged after installation.
+// NamespaceHasNoOwnerReferences verifies a Namespace remains unmanaged after installation.
 func NamespaceHasNoOwnerReferences(ctx context.Context, nsName string) error {
-	sc := scenarioCtx(ctx)
-	nsName = substituteScenarioVars(nsName, sc)
+	sc := Scenario(ctx)
+	nsName = SubstituteScenarioVars(nsName, sc)
 
-	out, err := k8sClient(ctx, "get", "namespace", nsName, "-o", "json")
+	out, err := K8sClient(ctx, "get", "namespace", nsName, "-o", "json")
 	if err != nil {
 		return fmt.Errorf("failed to get namespace %q: %w", nsName, err)
 	}
@@ -2950,7 +2950,7 @@ func nestedString(obj map[string]interface{}, keys ...string) (string, bool) {
 // parseKeyValueTable extracts key-value pairs from a godog data table.
 // The table must have a header row with "key" and "value" columns.
 // If sc is non-nil, variable substitution is applied to both keys and values.
-func parseKeyValueTable(table *godog.Table, sc *scenarioContext) (map[string]string, error) {
+func parseKeyValueTable(table *godog.Table, sc *World) (map[string]string, error) {
 	if len(table.Rows) < 2 {
 		return nil, fmt.Errorf("table must have a header row and at least one data row")
 	}
@@ -2982,19 +2982,19 @@ func parseKeyValueTable(table *godog.Table, sc *scenarioContext) (map[string]str
 		key := row.Cells[keyIdx].Value
 		value := row.Cells[valueIdx].Value
 		if sc != nil {
-			key = substituteScenarioVars(key, sc)
-			value = substituteScenarioVars(value, sc)
+			key = SubstituteScenarioVars(key, sc)
+			value = SubstituteScenarioVars(value, sc)
 		}
 		result[key] = value
 	}
 	return result, nil
 }
 
-// RolloutRestartIsPerformed runs "kubectl rollout restart deployment/<name>".
+// RolloutRestartIsPerformed runs "kubectl rollout restart deployment/<Name>".
 // See: https://github.com/operator-framework/operator-lifecycle-manager/issues/3392
 func RolloutRestartIsPerformed(ctx context.Context, resourceName string) error {
-	sc := scenarioCtx(ctx)
-	resourceName = substituteScenarioVars(resourceName, sc)
+	sc := Scenario(ctx)
+	resourceName = SubstituteScenarioVars(resourceName, sc)
 
 	kind, deploymentName, ok := strings.Cut(resourceName, "/")
 	if !ok {
@@ -3007,7 +3007,7 @@ func RolloutRestartIsPerformed(ctx context.Context, resourceName string) error {
 
 	// Run kubectl rollout restart to add the restart annotation.
 	// This is the real command users run, so we test actual user behavior.
-	out, err := k8sClient(ctx, "rollout", "restart", resourceName, "-n", sc.namespace)
+	out, err := K8sClient(ctx, "rollout", "restart", resourceName, "-n", sc.Namespace)
 	if err != nil {
 		return fmt.Errorf("failed to rollout restart %s: %w; stderr: %s", resourceName, err, stderrOutput(err))
 	}
@@ -3019,13 +3019,13 @@ func RolloutRestartIsPerformed(ctx context.Context, resourceName string) error {
 
 // DeploymentPodTemplateHasAnnotation waits for the deployment's pod template to have
 // the given annotation key. Uses JSON parsing to avoid JSONPath issues with dots
-// in annotation keys. Polls with timeout.
+// in annotation keys. Polls with Timeout.
 func DeploymentPodTemplateHasAnnotation(ctx context.Context, deploymentName, annotationKey string) error {
-	sc := scenarioCtx(ctx)
-	deploymentName = substituteScenarioVars(deploymentName, sc)
+	sc := Scenario(ctx)
+	deploymentName = SubstituteScenarioVars(deploymentName, sc)
 
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "deployment", deploymentName, "-n", sc.Namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -3054,16 +3054,16 @@ func DeploymentPodTemplateHasAnnotation(ctx context.Context, deploymentName, ann
 // fields, which are pruned by structural schemas). Toggling ensures that each call
 // results in a spec change, reliably bumping .metadata.generation.
 func TriggerClusterExtensionReconciliation(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 
-	out, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "json")
+	out, err := K8sClient(ctx, "get", "clusterextension", sc.ClusterExtensionName, "-o", "json")
 	if err != nil {
-		return fmt.Errorf("failed to get ClusterExtension %s: %w; stderr: %s", sc.clusterExtensionName, err, stderrOutput(err))
+		return fmt.Errorf("failed to get ClusterExtension %s: %w; stderr: %s", sc.ClusterExtensionName, err, stderrOutput(err))
 	}
 
 	var obj map[string]interface{}
 	if err := json.Unmarshal([]byte(out), &obj); err != nil {
-		return fmt.Errorf("failed to unmarshal ClusterExtension %s JSON: %w", sc.clusterExtensionName, err)
+		return fmt.Errorf("failed to unmarshal ClusterExtension %s JSON: %w", sc.ClusterExtensionName, err)
 	}
 
 	currentEnforcement, _ := nestedString(obj, "spec", "install", "preflight", "crdUpgradeSafety", "enforcement")
@@ -3074,11 +3074,11 @@ func TriggerClusterExtensionReconciliation(ctx context.Context) error {
 	}
 
 	payload := fmt.Sprintf(`{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"enforcement":%q}}}}}`, newEnforcement)
-	_, err = k8sClient(ctx, "patch", "clusterextension", sc.clusterExtensionName,
+	_, err = K8sClient(ctx, "patch", "clusterextension", sc.ClusterExtensionName,
 		"--type=merge",
 		"-p", payload)
 	if err != nil {
-		return fmt.Errorf("failed to trigger reconciliation for ClusterExtension %s: %w; stderr: %s", sc.clusterExtensionName, err, stderrOutput(err))
+		return fmt.Errorf("failed to trigger reconciliation for ClusterExtension %s: %w; stderr: %s", sc.ClusterExtensionName, err, stderrOutput(err))
 	}
 	return nil
 }
@@ -3086,11 +3086,11 @@ func TriggerClusterExtensionReconciliation(ctx context.Context) error {
 // DeploymentRolloutIsComplete verifies that a deployment rollout has completed successfully.
 // This ensures the new ReplicaSet is fully scaled up and the old one is scaled down.
 func DeploymentRolloutIsComplete(ctx context.Context, deploymentName string) error {
-	sc := scenarioCtx(ctx)
-	deploymentName = substituteScenarioVars(deploymentName, sc)
+	sc := Scenario(ctx)
+	deploymentName = SubstituteScenarioVars(deploymentName, sc)
 
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "rollout", "status", "deployment/"+deploymentName, "-n", sc.namespace, "--watch=false")
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "rollout", "status", "deployment/"+deploymentName, "-n", sc.Namespace, "--watch=false")
 		if err != nil {
 			logger.V(1).Info("Failed to get rollout status", "deployment", deploymentName, "error", err)
 			return false
@@ -3109,11 +3109,11 @@ func DeploymentRolloutIsComplete(ctx context.Context, deploymentName string) err
 // DeploymentHasReplicaSets verifies that a deployment has the expected number of ReplicaSets
 // and that at least one owned ReplicaSet is active with pods running.
 func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expectedCount int) error {
-	sc := scenarioCtx(ctx)
-	deploymentName = substituteScenarioVars(deploymentName, sc)
+	sc := Scenario(ctx)
+	deploymentName = SubstituteScenarioVars(deploymentName, sc)
 
-	waitFor(ctx, func() bool {
-		deploymentOut, err := k8sClient(ctx, "get", "deployment", deploymentName, "-n", sc.namespace, "-o", "json")
+	WaitFor(ctx, func() bool {
+		deploymentOut, err := K8sClient(ctx, "get", "deployment", deploymentName, "-n", sc.Namespace, "-o", "json")
 		if err != nil {
 			logger.V(1).Info("Failed to get deployment", "deployment", deploymentName, "error", err)
 			return false
@@ -3124,11 +3124,11 @@ func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expect
 			logger.V(1).Info("Failed to parse deployment", "error", err)
 			return false
 		}
-		if !generationObserved(deployment.Generation, deployment.Status.ObservedGeneration) {
+		if !GenerationObserved(deployment.Generation, deployment.Status.ObservedGeneration) {
 			return false
 		}
 
-		args := []string{"get", "rs", "-n", sc.namespace}
+		args := []string{"get", "rs", "-n", sc.Namespace}
 		if deployment.Spec.Selector != nil && len(deployment.Spec.Selector.MatchLabels) > 0 {
 			var parts []string
 			for k, v := range deployment.Spec.Selector.MatchLabels {
@@ -3137,7 +3137,7 @@ func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expect
 			args = append(args, "-l", strings.Join(parts, ","))
 		}
 		args = append(args, "-o", "json")
-		out, err := k8sClient(ctx, args...)
+		out, err := K8sClient(ctx, args...)
 		if err != nil {
 			logger.V(1).Info("Failed to get ReplicaSets", "deployment", deploymentName, "error", err)
 			return false
@@ -3169,7 +3169,7 @@ func DeploymentHasReplicaSets(ctx context.Context, deploymentName string, expect
 		// Verify at least one ReplicaSet has active replicas
 		hasActiveRS := false
 		for _, rs := range rsList {
-			if generationObserved(rs.Generation, rs.Status.ObservedGeneration) && rs.Status.Replicas > 0 && rs.Status.ReadyReplicas > 0 {
+			if GenerationObserved(rs.Generation, rs.Status.ObservedGeneration) && rs.Status.Replicas > 0 && rs.Status.ReadyReplicas > 0 {
 				hasActiveRS = true
 				logger.V(1).Info("Found active ReplicaSet", "name", rs.Name, "replicas", rs.Status.Replicas, "ready", rs.Status.ReadyReplicas)
 			}

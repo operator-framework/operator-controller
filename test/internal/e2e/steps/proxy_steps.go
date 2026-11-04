@@ -124,9 +124,9 @@ func (p *recordingProxy) recordedHosts() []string {
 // Helpers
 // ---------------------------------------------------------------------------
 
-// kindGatewayIP returns the gateway IP of the "kind" network for the
+// kindGatewayIP returns the gateway IP of the "Kind" network for the
 // configured container runtime, which is the address that pods inside the
-// kind cluster use to reach the host machine.  The runtime is read from the
+// Kind cluster use to reach the host machine.  The runtime is read from the
 // CONTAINER_RUNTIME environment variable; it defaults to "docker".
 func kindGatewayIP() (string, error) {
 	runtime := os.Getenv("CONTAINER_RUNTIME")
@@ -134,7 +134,7 @@ func kindGatewayIP() (string, error) {
 		runtime = "docker"
 	}
 	// Range over all IPAM config entries rather than hard-coding index 0.
-	// Some kind setups place an IPv6 config at index 0 (with no Gateway) and
+	// Some Kind setups place an IPv6 config at index 0 (with no Gateway) and
 	// the IPv4 config at index 1; indexing 0 directly would return empty.
 	out, err := exec.Command(runtime, "network", "inspect", "kind", //nolint:gosec
 		"--format", "{{range .IPAM.Config}}{{.Gateway}} {{end}}").Output()
@@ -154,10 +154,10 @@ func kindGatewayIP() (string, error) {
 }
 
 // kubernetesClusterIP returns the cluster IP of the "kubernetes" service in
-// the "default" namespace, which is the address client-go uses to reach the
+// the "default" Namespace, which is the address client-go uses to reach the
 // API server from inside a pod (via the KUBERNETES_SERVICE_HOST env var).
 func kubernetesClusterIP() (string, error) {
-	ip, err := k8sClient(context.Background(), "get", "service", "kubernetes", "-n", "default",
+	ip, err := K8sClient(context.Background(), "get", "service", "kubernetes", "-n", "default",
 		"-o", "jsonpath={.spec.clusterIP}")
 	if err != nil {
 		return "", fmt.Errorf("failed to get kubernetes service cluster IP: %w", err)
@@ -168,7 +168,7 @@ func kubernetesClusterIP() (string, error) {
 // getDeploymentContainerEnv returns the environment variables for the named
 // container in the given deployment, as a slice of "NAME=VALUE" strings.
 func getDeploymentContainerEnv(deploymentName, namespace, containerName string) ([]string, error) {
-	raw, err := k8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
+	raw, err := K8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get deployment %s/%s: %w", namespace, deploymentName, err)
 	}
@@ -192,11 +192,11 @@ func getDeploymentContainerEnv(deploymentName, namespace, containerName string) 
 
 // setDeploymentEnvVars replaces the environment of the named container with
 // the provided "NAME=VALUE" pairs and waits for the rollout to complete.
-// It locates the container by name (rather than assuming index 0) and uses
+// It locates the container by Name (rather than assuming index 0) and uses
 // the JSON Patch "add" operation, which creates the env field if absent.
 func setDeploymentEnvVars(deploymentName, namespace, containerName string, env []string) error {
 	// Fetch the deployment to find the container index.
-	raw, err := k8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
+	raw, err := K8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
 	if err != nil {
 		return fmt.Errorf("failed to get deployment %s/%s: %w", namespace, deploymentName, err)
 	}
@@ -243,12 +243,12 @@ func setDeploymentEnvVars(deploymentName, namespace, containerName string, env [
 		return fmt.Errorf("failed to marshal patch: %w", err)
 	}
 
-	if _, err := k8sClient(context.Background(), "patch", "deployment", deploymentName, "-n", namespace,
+	if _, err := K8sClient(context.Background(), "patch", "deployment", deploymentName, "-n", namespace,
 		"--type=json", fmt.Sprintf("--patch=%s", string(patchBytes))); err != nil {
 		return fmt.Errorf("failed to patch deployment %s/%s: %w", namespace, deploymentName, err)
 	}
 
-	if _, err := k8sClient(context.Background(), "rollout", "status", "deployment", deploymentName, "-n", namespace,
+	if _, err := K8sClient(context.Background(), "rollout", "status", "deployment", deploymentName, "-n", namespace,
 		"--timeout=5m"); err != nil {
 		return fmt.Errorf("rollout of deployment %s/%s did not complete: %w", namespace, deploymentName, err)
 	}
@@ -277,14 +277,14 @@ func restoreDeployment(r deploymentRestore) error {
 	if r.originalEnv == nil {
 		return nil
 	}
-	return setDeploymentEnvVars(r.name, r.namespace, r.containerName, r.originalEnv)
+	return setDeploymentEnvVars(r.Name, r.Namespace, r.containerName, r.originalEnv)
 }
 
 // configureDeploymentProxy patches the named deployment to set HTTPS_PROXY to
 // proxyURL and NO_PROXY to the Kubernetes API server cluster IP, then waits
 // for the rollout.  The original env is saved for cleanup.
 func configureDeploymentProxy(ctx context.Context, component, proxyURL string) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 
 	var deployName string
 	switch component {
@@ -300,25 +300,25 @@ func configureDeploymentProxy(ctx context.Context, component, proxyURL string) e
 	// patched in this scenario.  Subsequent env patches must not overwrite the
 	// saved original, otherwise cleanup would restore to an intermediate state.
 	// We check for containerName != "" to distinguish env-restore records from
-	// args-restore records (TLS profile patches), which share the same name and
-	// namespace fields but have no containerName or originalEnv set.
+	// args-restore records (TLS profile patches), which share the same Name and
+	// Namespace fields but have no containerName or originalEnv set.
 	alreadyTracked := false
 	for _, r := range sc.deploymentRestores {
-		if r.name == deployName && r.namespace == olmNamespace && r.containerName != "" {
+		if r.Name == deployName && r.Namespace == OLMNamespace && r.containerName != "" {
 			alreadyTracked = true
 			break
 		}
 	}
 
-	origEnv, err := getDeploymentContainerEnv(deployName, olmNamespace, "manager")
+	origEnv, err := getDeploymentContainerEnv(deployName, OLMNamespace, "manager")
 	if err != nil {
 		return err
 	}
 
 	if !alreadyTracked {
 		sc.deploymentRestores = append(sc.deploymentRestores, deploymentRestore{
-			name:          deployName,
-			namespace:     olmNamespace,
+			Name:          deployName,
+			Namespace:     OLMNamespace,
 			containerName: "manager",
 			originalEnv:   origEnv,
 		})
@@ -327,7 +327,7 @@ func configureDeploymentProxy(ctx context.Context, component, proxyURL string) e
 	// Exclude the Kubernetes API server from proxying so the controller can
 	// still reconcile resources.  client-go connects to KUBERNETES_SERVICE_HOST
 	// which is the cluster IP of the "kubernetes" service — a plain IP, not a
-	// DNS name, so DNS-wildcard NO_PROXY entries won't match it.
+	// DNS Name, so DNS-wildcard NO_PROXY entries won't match it.
 	k8sIP, err := kubernetesClusterIP()
 	if err != nil {
 		return err
@@ -335,7 +335,7 @@ func configureDeploymentProxy(ctx context.Context, component, proxyURL string) e
 
 	newEnv := addOrReplaceEnvVar(origEnv, "HTTPS_PROXY", proxyURL)
 	newEnv = addOrReplaceEnvVar(newEnv, "NO_PROXY", k8sIP)
-	return setDeploymentEnvVars(deployName, olmNamespace, "manager", newEnv)
+	return setDeploymentEnvVars(deployName, OLMNamespace, "manager", newEnv)
 }
 
 // ---------------------------------------------------------------------------
@@ -350,10 +350,10 @@ func ConfigureDeploymentWithHTTPSProxy(ctx context.Context, component, proxyURL 
 }
 
 // StartRecordingProxyAndConfigureDeployment starts an in-process HTTP CONNECT
-// proxy reachable from the cluster via the container-runtime kind network
+// proxy reachable from the cluster via the container-runtime Kind network
 // gateway, then patches the component deployment to route HTTPS through it.
 func StartRecordingProxyAndConfigureDeployment(ctx context.Context, component string) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 
 	p, err := newRecordingProxy()
 	if err != nil {
@@ -379,19 +379,19 @@ func StartRecordingProxyAndConfigureDeployment(ctx context.Context, component st
 
 // RecordingProxyReceivedCONNECTForCatalogd polls until the recording proxy has
 // received at least one CONNECT request whose target host contains "catalogd",
-// or the polling timeout is reached.
+// or the polling Timeout is reached.
 //
 // Note: the recording proxy runs on the host and cannot route to in-cluster
 // service addresses, so it responds with 502 Bad Gateway after recording the
 // CONNECT.  This is intentional — the step only verifies that operator-controller
 // respected HTTPS_PROXY and sent the request through the proxy.
 func RecordingProxyReceivedCONNECTForCatalogd(ctx context.Context) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	if sc.proxy == nil {
 		return fmt.Errorf("no recording proxy was started in this scenario")
 	}
 
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		for _, h := range sc.proxy.recordedHosts() {
 			if strings.Contains(h, "catalogd") {
 				logger.Info("Recording proxy confirmed CONNECT for catalogd", "host", h)

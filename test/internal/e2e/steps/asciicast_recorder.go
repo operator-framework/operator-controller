@@ -13,7 +13,7 @@ import (
 type recorderContextKey struct{}
 
 func WithRecorder(ctx context.Context, rec *AsciiCastRecorder) context.Context {
-	return context.WithValue(ctx, recorderContextKey{}, rec)
+	return context.WithValue(WithCommandRecorder(ctx, rec), recorderContextKey{}, rec)
 }
 
 func RecorderFromContext(ctx context.Context) *AsciiCastRecorder {

@@ -50,25 +50,25 @@ func bash(ctx context.Context, script string) (string, error) {
 	}
 	logger.V(1).Info("Output", "command", script, "output", stdout)
 
-	if rec := RecorderFromContext(ctx); rec != nil {
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
 		rec.RecordCommand(script, stdout, stderr, elapsed)
 	}
 	return stdout, err
 }
 
 func CatalogReportsConditionWithoutReason(ctx context.Context, catalogUserName, conditionType, conditionStatus string) error {
-	sc := scenarioCtx(ctx)
-	catalogName, ok := sc.catalogs[catalogUserName]
+	sc := Scenario(ctx)
+	catalogName, ok := sc.Catalogs[catalogUserName]
 	if !ok {
-		if _, err := k8sClient(ctx, "get", "clustercatalog", catalogUserName); err != nil {
+		if _, err := K8sClient(ctx, "get", "clustercatalog", catalogUserName); err != nil {
 			return fmt.Errorf("catalog %q was not created by this scenario and does not exist on the cluster", catalogUserName)
 		}
 		catalogName = catalogUserName
 	}
-	err := waitForCondition(ctx, "clustercatalog", catalogName, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
+	err := WaitForCondition(ctx, "clustercatalog", catalogName, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
 	if err == nil {
-		if rec := RecorderFromContext(ctx); rec != nil {
-			out, _ := k8sClient(ctx, "get", "clustercatalog", catalogName,
+		if rec := CommandRecorderFromContext(ctx); rec != nil {
+			out, _ := K8sClient(ctx, "get", "clustercatalog", catalogName,
 				"-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
 			var pretty bytes.Buffer
 			if jsonErr := json.Indent(&pretty, []byte(out), "", "  "); jsonErr == nil {
@@ -85,16 +85,16 @@ func CatalogReportsConditionWithoutReason(ctx context.Context, catalogUserName, 
 }
 
 func ensureCatalogPortForward(ctx context.Context) (string, error) {
-	sc := scenarioCtx(ctx)
-	if sc.catalogAddr != "" {
-		if catalogPortForwardAlive(sc.catalogAddr) {
-			return sc.catalogAddr, nil
+	sc := Scenario(ctx)
+	if sc.CatalogAddr != "" {
+		if catalogPortForwardAlive(sc.CatalogAddr) {
+			return sc.CatalogAddr, nil
 		}
-		logger.V(1).Info("Catalog port-forward is dead, re-establishing", "addr", sc.catalogAddr)
+		logger.V(1).Info("Catalog port-forward is dead, re-establishing", "addr", sc.CatalogAddr)
 		resetCatalogPortForward(ctx)
 	}
 
-	ns := componentNamespaces["catalogd"]
+	ns := ComponentNamespaces["catalogd"]
 	target, err := catalogdLeaderPod(ctx, ns)
 	port := int32(443)
 	if err != nil {
@@ -108,17 +108,17 @@ func ensureCatalogPortForward(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to start catalog port-forward to %s: %w", target, err)
 	}
-	sc.catalogAddr = addr
-	sc.catalogCleanup = cleanup
+	sc.CatalogAddr = addr
+	sc.CatalogCleanup = cleanup
 
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		return catalogPortForwardAlive(addr)
 	})
 	return addr, nil
 }
 
 func catalogdLeaderPod(ctx context.Context, ns string) (string, error) {
-	holder, err := k8sClient(ctx, "get", "lease", "catalogd-operator-lock", "-n", ns,
+	holder, err := K8sClient(ctx, "get", "lease", "catalogd-operator-lock", "-n", ns,
 		"-o", "jsonpath={.spec.holderIdentity}")
 	if err != nil {
 		return "", fmt.Errorf("failed to get catalogd leader lease: %w", err)
@@ -156,12 +156,12 @@ func catalogPortForwardAlive(addr string) bool {
 // CatalogdHA, non-leader pods return 404 (empty local cache); resetting
 // lets the next retry potentially reach the leader pod.
 func resetCatalogPortForward(ctx context.Context) {
-	sc := scenarioCtx(ctx)
-	if sc.catalogCleanup != nil {
-		sc.catalogCleanup()
+	sc := Scenario(ctx)
+	if sc.CatalogCleanup != nil {
+		sc.CatalogCleanup()
 	}
-	sc.catalogAddr = ""
-	sc.catalogCleanup = nil
+	sc.CatalogAddr = ""
+	sc.CatalogCleanup = nil
 }
 
 func catalogCurlJq(ctx context.Context, catalogName, jqFilter string) (string, error) {
@@ -185,7 +185,7 @@ func catalogCurlJq(ctx context.Context, catalogName, jqFilter string) (string, e
 }
 
 func CatalogContainsSomePackages(ctx context.Context, catalogName string) error {
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		out, err := catalogCurlJq(ctx, catalogName,
 			`objects | select(.schema == "olm.package") | .name`)
 		if err != nil {
@@ -202,7 +202,7 @@ func CatalogContainsSomePackages(ctx context.Context, catalogName string) error 
 }
 
 func PackageHasSomeChannels(ctx context.Context, packageName, catalogName string) error {
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		out, err := catalogCurlJq(ctx, catalogName,
 			fmt.Sprintf(`objects | select(.schema == "olm.channel") | select(.package == "%s") | .name`, packageName))
 		if err != nil {
@@ -219,7 +219,7 @@ func PackageHasSomeChannels(ctx context.Context, packageName, catalogName string
 }
 
 func PackageHasSomeBundles(ctx context.Context, packageName, catalogName string) error {
-	waitFor(ctx, func() bool {
+	WaitFor(ctx, func() bool {
 		out, err := catalogCurlJq(ctx, catalogName,
 			fmt.Sprintf(`objects | select(.schema == "olm.bundle") | select(.package == "%s") | .name`, packageName))
 		if err != nil {
@@ -236,8 +236,8 @@ func PackageHasSomeBundles(ctx context.Context, packageName, catalogName string)
 }
 
 func RolebindingsReferenceServiceAccount(ctx context.Context, rbNamespace, saName, saNamespace string) error {
-	saNamespace = substituteScenarioVars(saNamespace, scenarioCtx(ctx))
-	out, err := k8sClient(ctx, "get", "rolebindings", "-n", rbNamespace, "-o", "json")
+	saNamespace = SubstituteScenarioVars(saNamespace, Scenario(ctx))
+	out, err := K8sClient(ctx, "get", "rolebindings", "-n", rbNamespace, "-o", "json")
 	if err != nil {
 		return fmt.Errorf("failed to list rolebindings in namespace %q: %w", rbNamespace, err)
 	}
@@ -261,8 +261,8 @@ func RolebindingsReferenceServiceAccount(ctx context.Context, rbNamespace, saNam
 	for _, rb := range rbList.Items {
 		for _, s := range rb.Subjects {
 			if s.Kind == "ServiceAccount" && s.Name == saName && s.Namespace == saNamespace {
-				if rec := RecorderFromContext(ctx); rec != nil {
-					subjectsOut, _ := k8sClient(ctx, "get", "rolebinding", rb.Metadata.Name, "-n", rbNamespace,
+				if rec := CommandRecorderFromContext(ctx); rec != nil {
+					subjectsOut, _ := K8sClient(ctx, "get", "rolebinding", rb.Metadata.Name, "-n", rbNamespace,
 						"-o", "jsonpath={.subjects}")
 					rec.RecordCustom(
 						fmt.Sprintf("kubectl get rolebinding %s -n %s -o jsonpath='{.subjects}' | jq .", rb.Metadata.Name, rbNamespace),
@@ -277,10 +277,10 @@ func RolebindingsReferenceServiceAccount(ctx context.Context, rbNamespace, saNam
 }
 
 func PodHasContainerCount(ctx context.Context, podName string, expected int) error {
-	sc := scenarioCtx(ctx)
+	sc := Scenario(ctx)
 	var actual int
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "pod", podName, "-n", sc.namespace, "-o", "jsonpath={.spec.containers[*].name}")
+	WaitFor(ctx, func() bool {
+		out, err := K8sClient(ctx, "get", "pod", podName, "-n", sc.Namespace, "-o", "jsonpath={.spec.containers[*].name}")
 		if err != nil {
 			return false
 		}
@@ -288,10 +288,10 @@ func PodHasContainerCount(ctx context.Context, podName string, expected int) err
 		actual = len(names)
 		return actual == expected
 	})
-	if rec := RecorderFromContext(ctx); rec != nil {
-		out, _ := k8sClient(ctx, "get", "pod", podName, "-n", sc.namespace, "-o", "jsonpath={.spec.containers[*].name}")
+	if rec := CommandRecorderFromContext(ctx); rec != nil {
+		out, _ := K8sClient(ctx, "get", "pod", podName, "-n", sc.Namespace, "-o", "jsonpath={.spec.containers[*].name}")
 		rec.RecordCustom(
-			fmt.Sprintf("kubectl get pod %s -n %s -o jsonpath='{.spec.containers[*].name}'", podName, sc.namespace),
+			fmt.Sprintf("kubectl get pod %s -n %s -o jsonpath='{.spec.containers[*].name}'", podName, sc.Namespace),
 			out+"\n", "",
 		)
 	}
