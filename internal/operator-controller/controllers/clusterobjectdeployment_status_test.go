@@ -73,6 +73,11 @@ func TestProgressingConditionFromClusterObjectDeployment(t *testing.T) {
 			want: metav1.Condition{Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "owned by another controller"},
 		},
 		{
+			name: "owner conflict (deployment False) maps to Retrying (extension True)",
+			cod:  &metav1.Condition{Status: metav1.ConditionFalse, Reason: ocv1.ClusterObjectDeploymentReasonOwnerConflict, Message: "revision is controlled by another controller"},
+			want: metav1.Condition{Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "revision is controlled by another controller"},
+		},
+		{
 			name: "preconditions not met maps to Retrying",
 			cod:  &metav1.Condition{Status: metav1.ConditionTrue, Reason: ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet, Message: "waiting on secret"},
 			want: metav1.Condition{Status: metav1.ConditionTrue, Reason: ocv1.ReasonRetrying, Message: "waiting on secret"},
@@ -273,4 +278,89 @@ func TestReflectClusterObjectDeploymentStatus(t *testing.T) {
 		require.Equal(t, ocv1.ReasonRollingOut, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing).Reason)
 		require.Equal(t, metav1.ConditionFalse, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled).Status)
 	})
+}
+
+func TestReflectClusterObjectDeploymentStatusOwnerConflict(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(scheme))
+
+	for _, tc := range []struct {
+		name      string
+		installed bool
+	}{
+		{name: "first install"},
+		{name: "upgrade", installed: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", Generation: 3}}
+			if tc.installed {
+				ext.Status.Install = &ocv1.ClusterExtensionInstallStatus{
+					Bundle: ocv1.BundleMetadata{Name: "test.1.2.0", Version: "1.2.0"},
+				}
+				setInstalledStatusConditionSuccess(ext, "Installed bundle test.1.2.0 successfully")
+				ext.Generation++
+			}
+			previous := ext.DeepCopy()
+			cod := codWithProgressing(ext.Name, 2, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonOwnerConflict,
+				"revision is controlled by another controller")
+			cod.Spec.Template.Metadata.Annotations = map[string]string{
+				labels.BundleNameKey: "test.1.3.0", labels.BundleVersionKey: "1.3.0",
+			}
+			cl := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(cod).WithObjects(cod).Build()
+			reflectStatus := ReflectClusterObjectDeploymentStatus(cl)
+
+			res, err := reflectStatus(t.Context(), &reconcileState{}, ext)
+			require.NoError(t, err)
+			require.Nil(t, res)
+			progressing := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+			require.NotNil(t, progressing)
+			require.Equal(t, metav1.ConditionTrue, progressing.Status)
+			require.Equal(t, ocv1.ReasonRetrying, progressing.Reason)
+			require.Equal(t, "revision is controlled by another controller", progressing.Message)
+			require.Equal(t, ext.Generation, progressing.ObservedGeneration)
+			require.Equal(t, previous.Status.Install, ext.Status.Install, "a conflicting rollout must not promote the new bundle")
+
+			installed := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+			require.NotNil(t, installed)
+			if tc.installed {
+				expected := *apimeta.FindStatusCondition(previous.Status.Conditions, ocv1.TypeInstalled)
+				expected.ObservedGeneration = ext.Generation
+				require.Equal(t, &expected, installed)
+			} else {
+				require.Equal(t, metav1.ConditionFalse, installed.Status)
+				require.Equal(t, ocv1.ReasonFailed, installed.Reason)
+			}
+			require.Equal(t, ext.Generation, installed.ObservedGeneration)
+
+			apimeta.SetStatusCondition(&cod.Status.Conditions, metav1.Condition{
+				Type: ocv1.ClusterObjectDeploymentTypeProgressing, Status: metav1.ConditionTrue,
+				Reason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, Message: "latest revision is progressing",
+				ObservedGeneration: cod.Generation,
+			})
+			require.NoError(t, cl.Status().Update(t.Context(), cod))
+			_, err = reflectStatus(t.Context(), &reconcileState{}, ext)
+			require.NoError(t, err)
+			require.Equal(t, ocv1.ReasonRollingOut, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing).Reason)
+			require.Equal(t, previous.Status.Install, ext.Status.Install)
+			if !tc.installed {
+				require.Equal(t, ocv1.ReasonAbsent, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled).Reason)
+			}
+
+			apimeta.SetStatusCondition(&cod.Status.Conditions, metav1.Condition{
+				Type: ocv1.ClusterObjectDeploymentTypeProgressing, Status: metav1.ConditionFalse,
+				Reason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed, Message: "latest revision has progressed",
+				ObservedGeneration: cod.Generation,
+			})
+			require.NoError(t, cl.Status().Update(t.Context(), cod))
+			_, err = reflectStatus(t.Context(), &reconcileState{}, ext)
+			require.NoError(t, err)
+			require.Equal(t, ocv1.ReasonSucceeded, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing).Reason)
+			require.Equal(t, &ocv1.ClusterExtensionInstallStatus{
+				Bundle: ocv1.BundleMetadata{Name: "test.1.3.0", Version: "1.3.0"},
+			}, ext.Status.Install)
+			installed = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+			require.Equal(t, metav1.ConditionTrue, installed.Status)
+			require.Equal(t, ocv1.ReasonSucceeded, installed.Reason)
+		})
+	}
 }

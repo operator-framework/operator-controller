@@ -41,6 +41,72 @@ Feature: Update ClusterExtension
     And ClusterExtension is available
     And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"
 
+  @BoxcutterRuntime
+  Scenario: Update preserves the installed bundle when a foreign-owned revision blocks the deployment
+    Given ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: ${PACKAGE:test}
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": ${CATALOG:test}
+            version: 1.0.0
+      """
+    And ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "${PACKAGE:test}.1.0.0" is installed in version "1.0.0"
+    # The missing namespace keeps the foreign revision from completing and
+    # archiving the healthy installed revision.
+    And ClusterObjectSet with Namespace owner "${TEST_NAMESPACE}" is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${NAME}-2
+      spec:
+        group: ${NAME}
+        revision: 2
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - object:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: ${NAME}-foreign
+                namespace: ${TEST_NAMESPACE}-missing
+              data:
+                k: foreign
+      """
+    And ClusterObjectSet "${NAME}-2" reports Ready as False with Reason PreconditionsNotMet
+    When ClusterExtension version is updated to "1.0.1"
+    Then ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason OwnerConflict and Message includes:
+      """
+      ClusterObjectSet "${NAME}-2" (revision 2) is controlled by v1 Namespace "${TEST_NAMESPACE}"
+      """
+    And ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+      """
+      ClusterObjectSet "${NAME}-2" (revision 2) is controlled by v1 Namespace "${TEST_NAMESPACE}"
+      """
+    And ClusterExtension reports Installed as True with Reason Succeeded
+    And bundle "${PACKAGE:test}.1.0.0" is installed in version "1.0.0"
+    And ClusterExtension is available
+    When ClusterObjectSet "${NAME}-2" lifecycle is set to "Archived"
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"
+    And ClusterObjectSet "${NAME}-3" reports Ready as True with Reason AllObjectsReady
+
   Scenario: Cannot update extension to non successor version
     Given ClusterExtension is applied
       """
