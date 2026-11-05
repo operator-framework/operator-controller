@@ -16,7 +16,7 @@ Create chart name and version as used by the chart label.
 Return the name of the active component for a prefix, but _only_ if one is enabled
 */}}
 {{- define "component.name.prefix" -}}
-{{- if and (not .Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) .Values.options.objectController.enabled -}}
+{{- if and (not .Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) (include "objectController.enabled" .) -}}
 object-controller-
 {{- else if and (.Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) -}}
 operator-controller-
@@ -47,7 +47,7 @@ Insertion of additional rules for RBAC
 Returns "operator-controller", "catalogd" or "olmv1" depending on enabled components
 */}}
 {{- define "olmv1.label.name" -}}
-{{- if and (not .Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) .Values.options.objectController.enabled -}}
+{{- if and (not .Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) (include "objectController.enabled" .) -}}
 object-controller
 {{- else if (and .Values.options.operatorController.enabled (not .Values.options.catalogd.enabled)) -}}
 operator-controller
@@ -55,6 +55,34 @@ operator-controller
 catalogd
 {{- else -}}
 olmv1
+{{- end -}}
+{{- end -}}
+
+{{/*
+Default to a separate object-controller whenever operator-controller uses Boxcutter.
+An explicit enabled value also permits installing object-controller on its own.
+Disabling it while Boxcutter is active would leave ClusterObjectSets without a controller.
+Return an empty string when disabled so the helper can be used in conditionals.
+*/}}
+{{- define "objectController.enabled" -}}
+{{- $operatorController := .Values.options.operatorController | default dict -}}
+{{- $features := $operatorController.features | default dict -}}
+{{- if and $operatorController.enabled (has "BoxcutterRuntime" $features.enabled) (has "BoxcutterRuntime" $features.disabled) -}}
+{{- fail "BoxcutterRuntime cannot appear in both options.operatorController.features.enabled and options.operatorController.features.disabled" -}}
+{{- end -}}
+{{- $boxcutterEnabled := and $operatorController.enabled (has "BoxcutterRuntime" $features.enabled) (not (has "BoxcutterRuntime" $features.disabled)) -}}
+{{- if and $boxcutterEnabled (eq (toJson .Values.options.objectController.enabled) "false") -}}
+{{- fail "options.objectController.enabled=false is incompatible with enabled BoxcutterRuntime" -}}
+{{- end -}}
+{{- $enabled := .Values.options.objectController.enabled -}}
+{{- if eq (toJson $enabled) "null" -}}
+{{- $enabled = $boxcutterEnabled -}}
+{{- end -}}
+{{- if $enabled -}}
+{{- if ne .Values.options.featureSet "experimental" -}}
+{{- fail "objectController requires options.featureSet=experimental" -}}
+{{- end -}}
+true
 {{- end -}}
 {{- end -}}
 

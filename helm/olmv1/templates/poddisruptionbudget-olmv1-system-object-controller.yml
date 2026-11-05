@@ -1,4 +1,4 @@
-{{- if and .Values.options.objectController.enabled .Values.options.objectController.podDisruptionBudget.enabled }}
+{{- if and (include "objectController.enabled" .) .Values.options.objectController.podDisruptionBudget.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:

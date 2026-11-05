@@ -1,5 +1,5 @@
 {{- $options := list }}
-{{- if .Values.options.objectController.enabled }}
+{{- if include "objectController.enabled" . }}
 {{- $options = append $options "object-controller" }}
 {{- end }}
 {{- if .Values.options.catalogd.enabled }}

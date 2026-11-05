@@ -1,5 +1,5 @@
 {{/* this is a common component */}}
-{{- if or .Values.options.catalogd.enabled .Values.options.operatorController.enabled .Values.options.objectController.enabled -}}
+{{- if or .Values.options.catalogd.enabled .Values.options.operatorController.enabled (include "objectController.enabled" .) -}}
 apiVersion: v1
 kind: Namespace
 metadata:
