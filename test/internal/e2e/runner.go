@@ -1,5 +1,5 @@
-// Package shared provides the runner used by component E2E suites.
-package shared
+// Package e2e provides the runner used by component E2E suites.
+package e2e
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	messages "github.com/cucumber/messages/go/v21"
 	"github.com/spf13/pflag"
 
-	"github.com/operator-framework/operator-controller/test/e2e/shared/summary"
+	"github.com/operator-framework/operator-controller/test/internal/summary"
 )
 
 var opts = godog.Options{

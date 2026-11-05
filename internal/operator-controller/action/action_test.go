@@ -9,7 +9,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 
-	"github.com/operator-framework/operator-controller/test"
+	test "github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 var cfg *rest.Config

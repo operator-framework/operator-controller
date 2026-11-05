@@ -9,7 +9,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/stretchr/testify/require"
 
-	"github.com/operator-framework/operator-controller/test/e2e/shared"
+	"github.com/operator-framework/operator-controller/test/internal/e2e"
 )
 
 func TestRunner(t *testing.T) {
@@ -134,7 +134,7 @@ func TestRunner(t *testing.T) {
 
 			var scenarios []string
 			beforeSuite := false
-			status := shared.Run(featureDir, func(tc *godog.TestSuiteContext) {
+			status := e2e.Run(featureDir, func(tc *godog.TestSuiteContext) {
 				tc.BeforeSuite(func() { beforeSuite = true })
 			}, func(sc *godog.ScenarioContext) {
 				sc.Step(`^a passing step$`, func() {})

@@ -1,4 +1,4 @@
-package test
+package testutil
 
 import (
 	"bufio"
@@ -47,7 +47,7 @@ func NewEnv() *envtest.Environment {
 // pathFromProjectRoot returns the absolute path to the given relative path from the project root.
 func pathFromProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
-	p := path.Join(path.Dir(path.Dir(filename)), relativePath)
+	p := path.Join(path.Dir(path.Dir(path.Dir(filename))), relativePath)
 	return p
 }
 

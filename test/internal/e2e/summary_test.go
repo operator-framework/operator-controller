@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/operator-framework/operator-controller/test/e2e/shared/summary"
+	"github.com/operator-framework/operator-controller/test/internal/summary"
 )
 
 func TestSummaryOutsideSuiteDirectory(t *testing.T) {

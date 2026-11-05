@@ -20,18 +20,26 @@ non-technical stakeholders.
 ## Project Structure
 
 ```
-test/e2e/
-├── README.md
-├── features_test.go            # Legacy downstream file entry point
-├── operator-controller/
-│   ├── suite_test.go           # Component suite entry point
-│   └── features/               # All existing features during the first migration stage
-└── shared/
-    ├── runner.go               # Godog options, scenario selection, summary wiring
-    ├── steps/                  # All existing step definitions and hooks
-    │   └── testdata/           # RBAC and resource templates
-    ├── summary/                # Summary generation and embedded templates
-    └── support-bundle.yaml     # Shared diagnostics
+test/
+├── e2e/
+│   ├── README.md
+│   ├── features_test.go        # Legacy file entry point
+│   ├── operator-controller/
+│   │   ├── suite_test.go       # Component suite entry point
+│   │   └── features/           # All existing features during the first migration stage
+│   ├── catalogd/
+│   │   └── features/           # Placeholder for the catalogd suite
+│   ├── object-controller/
+│   │   └── features/           # Placeholder for the object-controller suite
+│   └── platform/
+│       └── features/           # Placeholder for the cross-component suite
+└── internal/
+    ├── e2e/
+    │   ├── runner.go           # Godog options, scenario selection, summary wiring
+    │   ├── steps/              # All existing step definitions and hooks
+    │   │   └── testdata/       # RBAC and resource templates
+    │   └── support-bundle.yaml # Shared diagnostics
+    └── summary/                # Summary generation and embedded templates
 ```
 
 ## Architecture
@@ -39,14 +47,20 @@ test/e2e/
 ### 1. Test Runner (`operator-controller/suite_test.go`)
 
 The component entry point registers the full shared step set and hooks, then calls
-`shared.Run` with its feature directory. The shared runner configures Godog options,
+`e2e.Run` from `test/internal/e2e` with its feature directory. The shared runner configures Godog options,
 scenario selection, and summary generation.
+
+Test helpers live under `test/internal` so their exported functions can be shared
+by test suites without becoming public Go APIs. Envtest helpers used by API and
+controller unit tests live under `internal/testutil`, which is accessible throughout
+the repository.
 
 This is the first stage of the [per-component suite design](../../docs/designs/e2e-per-component.md).
 All existing features remain together under `operator-controller/features/` during
-this stage. Later branches will introduce catalogd, object-controller, and platform
-suites, then separate component-specific steps. Feature contents and step behavior
-are unchanged.
+this stage. The catalogd, object-controller, and platform feature directories contain
+only `.gitkeep` placeholders. Later branches will add their suite entry points and
+move features to their owners, then separate component-specific steps. Feature
+contents and step behavior are unchanged.
 
 ### 2. Feature Files (`operator-controller/features/*.feature`)
 
@@ -102,7 +116,7 @@ Feature: Install ClusterExtension
     And ClusterExtension is available
 ```
 
-### 3. Step Definitions (`shared/steps/steps.go`)
+### 3. Step Definitions (`test/internal/e2e/steps/steps.go`)
 
 Go functions that implement the steps defined in feature files. Each step is registered with a regex pattern that
 matches the Gherkin text.
@@ -154,7 +168,7 @@ func BundleInstalled(ctx context.Context, name, version string) error {
 }
 ```
 
-### 4. Hooks and Context (`shared/steps/hooks.go`)
+### 4. Hooks and Context (`test/internal/e2e/steps/hooks.go`)
 
 Manages test lifecycle and scenario-specific context.
 
@@ -189,7 +203,7 @@ Feature: Your Feature Name
 
 ### 2. Implement Step Definitions
 
-Add step implementations in `shared/steps/steps.go`:
+Add step implementations in `test/internal/e2e/steps/steps.go`:
 
 ```go
 func RegisterSteps(sc *godog.ScenarioContext) {
@@ -285,13 +299,6 @@ are added. Demo scenarios run separately through `make update-demos`.
 
 To select the current component suite, use `./test/e2e/operator-controller/...`
 with the same flags. Additional component suites will be added in the next stage.
-
-The legacy `go test ./test/e2e/features_test.go` invocation remains supported for
-downstream Godog jobs, including their existing flags and `features/...` paths.
-Its `e2e_legacy` build tag excludes the compatibility file from normal package
-discovery, so the aggregate command runs each suite once. Explicit Go file
-invocations ignore build constraints; the downstream command needs no new tag.
-Downstream OTE suite registration is independent of this Godog entry point.
 
 ### Run Standard and Experimental in Parallel
 

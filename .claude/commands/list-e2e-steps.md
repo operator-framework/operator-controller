@@ -16,13 +16,13 @@ When this command is invoked, you MUST:
 
    Run:
    ```bash
-   go test ./test/e2e/features_test.go -d || true 2>&1
+   KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}" go test ./test/e2e/operator-controller -args --godog.definitions 2>&1 || true
    ```
-   The `-d` flag prints all registered step definitions without running tests. Parse each step regex pattern from the output.
+   Set `KUBECONFIG` for suite initialization; the `--godog.definitions` flag prints all registered step definitions without contacting a cluster or running tests. Godog returns status 2 after listing definitions, so `go test` reports `FAIL`. Verify that registered patterns were printed, then parse each step regex pattern from the output.
 
 2. **Read the step registration and handler implementations**
 
-   Read `test/e2e/steps/steps.go` and locate the `RegisterSteps()` function. For each regex pattern from step 1, find its corresponding `sc.Step()` call and the handler function it references.
+   Read `test/internal/e2e/steps/steps.go` and locate the `RegisterSteps()` function. For each regex pattern from step 1, find its corresponding `sc.Step()` call and the handler function it references.
 
    Then read each handler function's signature to determine:
    - What parameters it accepts (string, int, `*godog.DocString`, etc.)

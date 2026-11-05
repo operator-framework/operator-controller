@@ -11,8 +11,8 @@ import (
 
 	"github.com/cucumber/godog"
 
-	"github.com/operator-framework/operator-controller/test/e2e/shared"
-	"github.com/operator-framework/operator-controller/test/e2e/shared/steps"
+	"github.com/operator-framework/operator-controller/test/internal/e2e"
+	"github.com/operator-framework/operator-controller/test/internal/e2e/steps"
 )
 
 func TestMain(m *testing.M) {
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 	if err := os.Chdir("operator-controller"); err != nil {
 		log.Fatal(err)
 	}
-	os.Exit(shared.Run("features", func(tc *godog.TestSuiteContext) {
+	os.Exit(e2e.Run("features", func(tc *godog.TestSuiteContext) {
 		tc.BeforeSuite(steps.BeforeSuite)
 	}, func(sc *godog.ScenarioContext) {
 		steps.RegisterSteps(sc)
