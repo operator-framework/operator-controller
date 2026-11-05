@@ -4,7 +4,8 @@
 # List of components to include
 options:
   objectController:
-    enabled: false
+    # null follows operatorController's BoxcutterRuntime gate. Set true to deploy independently.
+    enabled: null
     deployment:
       image: quay.io/operator-framework/object-controller:devel
       replicas: 1
