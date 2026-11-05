@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	clocktesting "k8s.io/utils/clock/testing"
+	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
@@ -140,7 +141,8 @@ func TestClusterObjectDeploymentReconcilerDeadlineCoversEntireRevision(t *testin
 		cos, found = getCOS(t, c, cosName)
 		require.True(t, found)
 		require.Equal(t, 10*time.Minute-elapsed, result.RequeueAfter, "revision conditions: %+v", cos.Status.Conditions)
-		require.EqualValues(t, completedPhases, cos.Status.ObjectCounts.Ready)
+		require.NotNil(t, cos.Status.ObjectCounts.Ready)
+		require.EqualValues(t, completedPhases, *cos.Status.ObjectCounts.Ready)
 		require.True(t, cos.Status.CompletedAt.IsZero())
 		condition := progressing(t, c)
 		require.NotNil(t, condition)
@@ -322,7 +324,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineSchedulingAndRecovery(t *testi
 
 	// Partial phase progress neither extends the budget nor clears the timeout.
 	clk.Step(time.Minute)
-	cos.Status.ObservedPhases = []ocv1.ObservedPhase{{Name: "resources", ObjectCounts: ocv1.ObjectCounts{Total: 1, Ready: 1}}}
+	cos.Status.ObservedPhases = []ocv1.ObservedPhase{{Name: "resources", ObjectCounts: ocv1.ObjectCounts{Total: ptr.To(int64(1)), Present: ptr.To(int64(1)), Synced: ptr.To(int64(1)), Ready: ptr.To(int64(1))}}}
 	require.NoError(t, c.Status().Update(t.Context(), cos))
 	result, err = reconcileDeadlineDeployment(t, c, clk)
 	require.NoError(t, err)

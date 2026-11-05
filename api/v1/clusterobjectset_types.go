@@ -630,7 +630,7 @@ type ObjectCounts struct {
 	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
-	Total int64 `json:"total"`
+	Total *int64 `json:"total,omitempty"`
 
 	// present is the number of objects in this phase that exist on the
 	// cluster and are owned by this object set, or another in the same group.
@@ -639,21 +639,21 @@ type ObjectCounts struct {
 	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
-	Present int64 `json:"present"`
+	Present *int64 `json:"present,omitempty"`
 
 	// synced is the number of objects in this phase whose cluster state
 	// matches the desired state. Set to zero during teardown.
 	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
-	Synced int64 `json:"synced"`
+	Synced *int64 `json:"synced,omitempty"`
 
 	// ready is the number of objects in this phase that are synced
 	// and pass their assertions.
 	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
-	Ready int64 `json:"ready"`
+	Ready *int64 `json:"ready,omitempty"`
 }
 
 // ObjectStatus identifies a managed object and its failure messages.

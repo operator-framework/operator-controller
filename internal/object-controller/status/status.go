@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter/machinery"
 	"pkg.package-operator.run/boxcutter/machinery/types"
 	"pkg.package-operator.run/boxcutter/validation"
@@ -21,16 +22,23 @@ import (
 // Returns ObjectCounts with a Total of zero if phases is empty.
 func sumObjectCounts(phases []ocv1.ObservedPhase) ocv1.ObjectCounts {
 	counts := ocv1.ObjectCounts{
-		Total: 0,
+		Total:   ptr.To(int64(0)),
+		Present: ptr.To(int64(0)),
+		Synced:  ptr.To(int64(0)),
+		Ready:   ptr.To(int64(0)),
 	}
 	if len(phases) == 0 {
 		return counts
 	}
 	for i := range phases {
-		counts.Total += phases[i].ObjectCounts.Total
-		counts.Present += phases[i].ObjectCounts.Present
-		counts.Synced += phases[i].ObjectCounts.Synced
-		counts.Ready += phases[i].ObjectCounts.Ready
+		// Counts are required *int64 pointers that the controller always sets
+		// together, but treat a nil (uncomputed) count as zero so a partially
+		// populated phase still contributes its known counts rather than being
+		// dropped from the aggregate entirely.
+		*counts.Total += ptr.Deref(phases[i].ObjectCounts.Total, 0)
+		*counts.Present += ptr.Deref(phases[i].ObjectCounts.Present, 0)
+		*counts.Synced += ptr.Deref(phases[i].ObjectCounts.Synced, 0)
+		*counts.Ready += ptr.Deref(phases[i].ObjectCounts.Ready, 0)
 	}
 	return counts
 }
@@ -64,7 +72,12 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 		observedPhase := ocv1.ObservedPhase{
 			Name: pres.GetName(),
 		}
-		observedPhase.ObjectCounts.Total = phaseTotals[pres.GetName()]
+		observedPhase.ObjectCounts = ocv1.ObjectCounts{
+			Total:   ptr.To(phaseTotals[pres.GetName()]),
+			Present: ptr.To(int64(0)),
+			Synced:  ptr.To(int64(0)),
+			Ready:   ptr.To(int64(0)),
+		}
 
 		if pres.GetValidationError() != nil {
 			if !precedingPhasesComplete {
@@ -90,23 +103,23 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 		isPaused := false
 		for _, pobj := range pres.GetObjects() {
 			if pobj.IsComplete() {
-				observedPhase.ObjectCounts.Ready++
+				*observedPhase.ObjectCounts.Ready++
 			}
 			switch pobj.Action() {
 			case machinery.ActionCreated:
 				if !pobj.IsPaused() {
-					observedPhase.ObjectCounts.Present++
-					observedPhase.ObjectCounts.Synced++
+					*observedPhase.ObjectCounts.Present++
+					*observedPhase.ObjectCounts.Synced++
 				}
 			case machinery.ActionIdle:
-				observedPhase.ObjectCounts.Present++
-				observedPhase.ObjectCounts.Synced++
+				*observedPhase.ObjectCounts.Present++
+				*observedPhase.ObjectCounts.Synced++
 			case machinery.ActionProgressed:
-				observedPhase.ObjectCounts.Present++
+				*observedPhase.ObjectCounts.Present++
 			case machinery.ActionUpdated, machinery.ActionRecovered:
-				observedPhase.ObjectCounts.Present++
+				*observedPhase.ObjectCounts.Present++
 				if !pobj.IsPaused() {
-					observedPhase.ObjectCounts.Synced++
+					*observedPhase.ObjectCounts.Synced++
 				}
 			case machinery.ActionCollision:
 				// TODO: collect object collisions and put in status
@@ -122,7 +135,7 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 			// TODO: consider reframing as one or more objects have transitioned (rather than all - since there can be differences b/w the revisions)
 			isSuperseded  = (HasSupersededObject(pres) && pres.IsComplete()) || (len(pres.GetObjects()) > 0 && pres.HasProgressed())
 			isReady       = pres.IsComplete() && !isSuperseded
-			isSynced      = observedPhase.ObjectCounts.Synced == observedPhase.ObjectCounts.Total
+			isSynced      = *observedPhase.ObjectCounts.Synced == *observedPhase.ObjectCounts.Total
 			isReconciling = !isSynced && !isPaused
 		)
 
@@ -176,9 +189,10 @@ func UpdateObservedPhasesForTeardown(objSet *ocv1.ClusterObjectSet, tres machine
 			Name: pres.GetName(),
 		}
 
-		observedPhase.ObjectCounts.Total = phaseTotals[pres.GetName()]
-		observedPhase.ObjectCounts.Present = int64(len(pres.Waiting()))
-		observedPhase.ObjectCounts.Synced = 0
+		observedPhase.ObjectCounts.Total = ptr.To(phaseTotals[pres.GetName()])
+		observedPhase.ObjectCounts.Present = ptr.To(int64(len(pres.Waiting())))
+		observedPhase.ObjectCounts.Synced = ptr.To(int64(0))
+		observedPhase.ObjectCounts.Ready = ptr.To(int64(0))
 
 		if name, ok := tres.GetActivePhaseName(); ok && name == pres.GetName() {
 			observedPhase.Status = ocv1.PhaseStatusArchiving

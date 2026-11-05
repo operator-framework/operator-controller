@@ -1203,10 +1203,12 @@ func ClusterObjectSetPhaseHasObjectCounts(ctx context.Context, cosName, phaseNam
 		}
 		for _, phase := range cos.Status.ObservedPhases {
 			if phase.Name == phaseName {
-				return phase.ObjectCounts.Total == total &&
-					phase.ObjectCounts.Present == present &&
-					phase.ObjectCounts.Synced == synced &&
-					phase.ObjectCounts.Ready == ready
+				// Counts are required *int64 pointers; a nil (uncomputed) count
+				// must not match any expected value, so default to -1.
+				return ptr.Deref(phase.ObjectCounts.Total, -1) == total &&
+					ptr.Deref(phase.ObjectCounts.Present, -1) == present &&
+					ptr.Deref(phase.ObjectCounts.Synced, -1) == synced &&
+					ptr.Deref(phase.ObjectCounts.Ready, -1) == ready
 			}
 		}
 		return false
@@ -1228,10 +1230,12 @@ func ClusterObjectSetHasAggregateObjectCounts(ctx context.Context, cosName strin
 		if err := json.Unmarshal([]byte(out), &cos); err != nil || currentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
 			return false
 		}
-		return cos.Status.ObjectCounts.Total == total &&
-			cos.Status.ObjectCounts.Present == present &&
-			cos.Status.ObjectCounts.Synced == synced &&
-			cos.Status.ObjectCounts.Ready == ready
+		// Counts are required *int64 pointers; a nil (uncomputed) count
+		// must not match any expected value, so default to -1.
+		return ptr.Deref(cos.Status.ObjectCounts.Total, -1) == total &&
+			ptr.Deref(cos.Status.ObjectCounts.Present, -1) == present &&
+			ptr.Deref(cos.Status.ObjectCounts.Synced, -1) == synced &&
+			ptr.Deref(cos.Status.ObjectCounts.Ready, -1) == ready
 	})
 	return nil
 }
