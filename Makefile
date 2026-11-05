@@ -297,7 +297,8 @@ test-unit: envtest-k8s-bins #HELP Run the unit tests
                 -cover -coverpkg=$(COVERAGE_PKGS) -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
                 $(UNIT_TEST_DIRS) \
-                -test.gocoverdir=$(COVERAGE_UNIT_DIR)
+                -test.gocoverdir=$(COVERAGE_UNIT_DIR) \
+                | sed -E 's/ of statements in .*/ of statements/'
 
 COVERAGE_REGRESSION_DIR := $(ROOT_DIR)/coverage/regression
 .PHONY: test-regression
