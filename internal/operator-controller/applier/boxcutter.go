@@ -465,12 +465,9 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		}
 	}
 
-	// Refuse to adopt a ClusterObjectDeployment that is already controlled by a
-	// different owner. We adopt one that has no controller (stamping our controller
-	// ownerReference via the apply below) or one we already control, but taking over a
-	// deployment controlled by someone else would fight that owner. Returning an
-	// ordinary error lets the ClusterExtension report Progressing=True/Retrying and
-	// use the normal controller retry backoff.
+	// Refuse foreign-controlled deployments and ownerless deployments without our
+	// managed-by label. Returning an ordinary error lets the ClusterExtension report
+	// Progressing=True/Retrying and use the normal controller retry backoff.
 	if err := bc.checkAdoptable(ctx, ext); err != nil {
 		return false, "", err
 	}
@@ -533,13 +530,10 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 }
 
 // checkAdoptable verifies that the applier may own the ClusterObjectDeployment named
-// after the ClusterExtension. It is adoptable when it does not yet exist, has no
-// controller ownerReference, is already controlled by this ClusterExtension, or is
-// controlled by a reference that matches this ClusterExtension by group, kind, and name
-// but with a different UID — the latter indicates the ClusterExtension was deleted and
-// recreated (for example a backup/restore), which comes back with a fresh UID, so the
-// deployment is logically still ours. When it is controlled by a genuinely different
-// owner, it returns an error rather than fighting that owner for control.
+// after the ClusterExtension. Ownerless deployments must have the operator-controller
+// managed-by label. A deployment controlled by this extension's UID is always adoptable.
+// Other controller UIDs are refused regardless of labels. If a restore leaves a
+// stale owner reference, the deployment can be recreated after garbage collection.
 func (bc *Boxcutter) checkAdoptable(ctx context.Context, ext *ocv1.ClusterExtension) error {
 	existing := &ocv1.ClusterObjectDeployment{}
 	switch err := bc.Client.Get(ctx, client.ObjectKey{Name: ext.Name}, existing); {
@@ -550,7 +544,16 @@ func (bc *Boxcutter) checkAdoptable(ctx context.Context, ext *ocv1.ClusterExtens
 	}
 
 	controller := metav1.GetControllerOf(existing)
-	if controller == nil || controller.UID == ext.UID {
+	if controller == nil {
+		if existing.Labels[labels.ManagedByKey] == labels.ManagedByOperatorController {
+			return nil
+		}
+		return fmt.Errorf(
+			"ClusterObjectDeployment %q has no controller and does not have the required %s=%s label; refusing to adopt it",
+			ext.Name, labels.ManagedByKey, labels.ManagedByOperatorController,
+		)
+	}
+	if controller.UID == ext.UID {
 		return nil
 	}
 

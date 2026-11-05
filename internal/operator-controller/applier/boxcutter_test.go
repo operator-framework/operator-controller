@@ -3,8 +3,10 @@ package applier_test
 import (
 	"context"
 	"errors"
+	"maps"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -30,6 +33,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/testutil"
 	mockapplier "github.com/operator-framework/operator-controller/internal/testutil/mock/applier"
 	mockctrlclient "github.com/operator-framework/operator-controller/internal/testutil/mock/ctrlclient"
+	"github.com/operator-framework/operator-controller/test"
 )
 
 var (
@@ -870,98 +874,230 @@ func TestBoxcutterApply_NilContentUsesExistingCOD(t *testing.T) {
 	})
 }
 
-// TestBoxcutterApply_Adoption verifies the applier only adopts an existing
-// ClusterObjectDeployment when it is not already controlled by a different owner.
+// TestBoxcutterApply_Adoption verifies the managed-by label, controller identity, and
+// recovery after an ownerless deployment is relabelled.
 func TestBoxcutterApply_Adoption(t *testing.T) {
-	type testCase struct {
-		name                   string
-		ext                    *ocv1.ClusterExtension
-		cod                    *ocv1.ClusterObjectDeployment
-		assert                 func(t *testing.T, cl client.Client, applyCompleted bool, applyStatus string, applyErr error)
-		wantExtControllerOwner bool
+	t.Parallel()
+	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}}
+	adoptionLabels := map[string]string{
+		labels.ManagedByKey: labels.ManagedByOperatorController,
 	}
-
-	for _, tc := range []testCase{
+	deploymentLabels := map[string]string{
+		labels.ManagedByKey: labels.ManagedByOperatorController,
+		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+		labels.OwnerNameKey: ext.Name,
+	}
+	controllerRef := func(apiVersion, kind, name string, uid types.UID) *metav1.OwnerReference {
+		return &metav1.OwnerReference{
+			APIVersion: apiVersion, Kind: kind, Name: name, UID: uid, Controller: ptr.To(true),
+		}
+	}
+	const missingLabelError = "has no controller and does not have the required apps.kubernetes.io/managed-by=operator-controller label"
+	type testCase struct {
+		name       string
+		codLabels  map[string]string
+		controller *metav1.OwnerReference
+		wantErr    string
+	}
+	tests := []testCase{
+		{name: "adopts an ownerless deployment with only the managed-by label", codLabels: adoptionLabels},
+		{name: "adopts a fully labelled ownerless deployment", codLabels: deploymentLabels},
 		{
-			name: "adopts an existing deployment with no controller owner reference",
-			ext:  &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}},
-			cod: &ocv1.ClusterObjectDeployment{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-ext"},
+			name: "adopts an ownerless deployment with mismatched owner labels",
+			codLabels: map[string]string{
+				labels.ManagedByKey: labels.ManagedByOperatorController,
+				labels.OwnerKindKey: "Namespace",
+				labels.OwnerNameKey: "other-ext",
 			},
-			assert: func(t *testing.T, _ client.Client, applyCompleted bool, applyStatus string, applyErr error) {
-				require.NoError(t, applyErr)
-				require.True(t, applyCompleted)
-				require.Empty(t, applyStatus)
-			},
-			wantExtControllerOwner: true,
+		},
+		{name: "refuses an unlabelled ownerless deployment", wantErr: missingLabelError},
+		{
+			name:      "refuses an ownerless deployment without the managed-by label",
+			codLabels: map[string]string{labels.OwnerKindKey: ocv1.ClusterExtensionKind, labels.OwnerNameKey: ext.Name},
+			wantErr:   missingLabelError,
 		},
 		{
-			name: "proceeds when the existing deployment is already controlled by this extension",
-			ext:  &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}},
-			cod: &ocv1.ClusterObjectDeployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "test-ext",
-					OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(&ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}}, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))},
-				},
+			name: "refuses an ownerless deployment with a mismatched managed-by label",
+			codLabels: map[string]string{
+				labels.ManagedByKey: "another-controller",
+				labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+				labels.OwnerNameKey: ext.Name,
 			},
-			assert: func(t *testing.T, _ client.Client, applyCompleted bool, applyStatus string, applyErr error) {
-				require.NoError(t, applyErr)
-				require.True(t, applyCompleted)
-				require.Empty(t, applyStatus)
-			},
-			wantExtControllerOwner: true,
+			wantErr: missingLabelError,
 		},
 		{
-			name: "refuses to adopt a deployment controlled by a different owner",
-			ext:  &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext", UID: "test-uid"}},
-			cod: &ocv1.ClusterObjectDeployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "test-ext",
-					OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(&ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "other-ext", UID: "other-uid"}}, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))},
-				},
-			},
-			assert: func(t *testing.T, cl client.Client, applyCompleted bool, applyStatus string, applyErr error) {
-				require.Error(t, applyErr)
-				assert.False(t, applyCompleted)
-				assert.Empty(t, applyStatus)
-
-				t.Log("by surfacing a non-terminal error so retries occur without CE changes")
-				require.NotErrorIs(t, applyErr, reconcile.TerminalError(nil), "error was terminal, but expected non-terminal error so that CE retries occur")
-
-				t.Log("by naming the deployment and the conflicting owner in the message")
-				assert.Contains(t, applyErr.Error(), "test-ext")
-				assert.Contains(t, applyErr.Error(), "other-ext")
-
-				secretList := &corev1.SecretList{}
-				require.NoError(t, cl.List(t.Context(), secretList, client.InNamespace("olmv1-system")))
-				assert.Empty(t, secretList.Items)
-			},
-			wantExtControllerOwner: false,
+			name:       "adopts a deployment controlled by this UID without labels",
+			controller: controllerRef(ocv1.GroupVersion.String(), ocv1.ClusterExtensionKind, ext.Name, ext.UID),
 		},
-	} {
+		{
+			name:       "refuses a stale controller UID without labels",
+			controller: controllerRef(ocv1.GroupVersion.String(), ocv1.ClusterExtensionKind, ext.Name, "old-uid"),
+			wantErr:    `already controlled by ClusterExtension "test-ext"`,
+		},
+		{
+			name:       "refuses a stale controller UID with a different API version in the same group",
+			codLabels:  adoptionLabels,
+			controller: controllerRef(ocv1.GroupVersion.Group+"/v1beta1", ocv1.ClusterExtensionKind, ext.Name, "old-uid"),
+			wantErr:    `already controlled by ClusterExtension "test-ext"`,
+		},
+		{
+			name:       "refuses a stale controller UID with a mismatched owner-name label",
+			codLabels:  map[string]string{labels.OwnerNameKey: "other-ext"},
+			controller: controllerRef(ocv1.GroupVersion.String(), ocv1.ClusterExtensionKind, ext.Name, "old-uid"),
+			wantErr:    `already controlled by ClusterExtension "test-ext"`,
+		},
+		{
+			name:       "refuses a stale controller UID with a mismatched owner-kind label",
+			codLabels:  map[string]string{labels.OwnerKindKey: "Namespace"},
+			controller: controllerRef(ocv1.GroupVersion.String(), ocv1.ClusterExtensionKind, ext.Name, "old-uid"),
+			wantErr:    `already controlled by ClusterExtension "test-ext"`,
+		},
+		{
+			name:       "refuses a stale controller UID despite matching labels",
+			codLabels:  deploymentLabels,
+			controller: controllerRef(ocv1.GroupVersion.String(), ocv1.ClusterExtensionKind, ext.Name, "old-uid"),
+			wantErr:    `already controlled by ClusterExtension "test-ext"`,
+		},
+		{
+			name:       "refuses a foreign controller despite matching labels",
+			codLabels:  deploymentLabels,
+			controller: controllerRef(ocv1.GroupVersion.String(), ocv1.ClusterExtensionKind, "other-ext", "other-uid"),
+			wantErr:    `already controlled by ClusterExtension "other-ext"`,
+		},
+		{
+			name:       "refuses a foreign controller kind despite matching labels",
+			codLabels:  deploymentLabels,
+			controller: controllerRef("v1", "Namespace", ext.Name, "other-uid"),
+			wantErr:    "already controlled by Namespace",
+		},
+		{
+			name:       "refuses a foreign API group despite matching labels",
+			codLabels:  deploymentLabels,
+			controller: controllerRef("other.example.com/v1", ocv1.ClusterExtensionKind, ext.Name, "other-uid"),
+			wantErr:    "already controlled by ClusterExtension",
+		},
+		{
+			name:       "refuses a malformed controller API version",
+			codLabels:  deploymentLabels,
+			controller: controllerRef("invalid/group/version", ocv1.ClusterExtensionKind, ext.Name, "other-uid"),
+			wantErr:    "already controlled by ClusterExtension",
+		},
+		{
+			name:       "refuses an unlabelled foreign-controlled deployment",
+			controller: controllerRef(ocv1.GroupVersion.String(), ocv1.ClusterExtensionKind, "other-ext", "other-uid"),
+			wantErr:    `already controlled by ClusterExtension "other-ext"`,
+		},
+	}
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			scheme := codTestScheme(t)
-			cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tc.cod).Build()
+			original := &ocv1.ClusterObjectDeployment{ObjectMeta: metav1.ObjectMeta{Name: ext.Name, Labels: maps.Clone(tc.codLabels)}}
+			if tc.controller != nil {
+				original.OwnerReferences = []metav1.OwnerReference{*tc.controller}
+			}
+			cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(original).Build()
+			before := &ocv1.ClusterObjectDeployment{}
+			require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: ext.Name}, before))
 			bc := newCODBoxcutter(t, scheme, cl, []client.Object{
 				&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "test-cm", Namespace: "test-ns"}},
 			})
-
-			actualCompleted, actualStatus, actualErr := bc.Apply(t.Context(), dummyBundle, tc.ext, map[string]string{"some": "label"}, map[string]string{})
-			tc.assert(t, cl, actualCompleted, actualStatus, actualErr)
-
-			cod := &ocv1.ClusterObjectDeployment{}
-			require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: tc.ext.Name}, cod))
-			owner := metav1.GetControllerOf(cod)
-			if tc.wantExtControllerOwner {
+			completed, status, err := bc.Apply(t.Context(), dummyBundle, ext, nil, nil)
+			require.Empty(t, status)
+			actual := &ocv1.ClusterObjectDeployment{}
+			require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: ext.Name}, actual))
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				require.True(t, completed)
+				owner := metav1.GetControllerOf(actual)
 				require.NotNil(t, owner)
-				assert.Equal(t, tc.ext.Name, owner.Name)
-				assert.Equal(t, tc.ext.UID, owner.UID)
+				assert.Equal(t, ext.Name, owner.Name)
+				assert.Equal(t, ext.UID, owner.UID)
 				assert.Equal(t, ocv1.ClusterExtensionKind, owner.Kind)
-			} else {
-				require.Equal(t, metav1.GetControllerOf(tc.cod), owner)
+				assert.Equal(t, ocv1.GroupVersion.String(), owner.APIVersion)
+				assert.Equal(t, deploymentLabels, actual.Labels)
+				return
+			}
+			require.ErrorContains(t, err, tc.wantErr)
+			assert.False(t, completed)
+			require.NotErrorIs(t, err, reconcile.TerminalError(nil), "adoption conflicts must retry")
+			assert.Contains(t, err.Error(), ext.Name)
+			assert.Equal(t, before, actual, "refused adoption must leave the deployment unchanged")
+			secrets := &corev1.SecretList{}
+			require.NoError(t, cl.List(t.Context(), secrets))
+			assert.Empty(t, secrets.Items)
+
+			if tc.controller == nil {
+				actual.Labels = maps.Clone(adoptionLabels)
+				require.NoError(t, cl.Update(t.Context(), actual))
+				completed, _, err = bc.Apply(t.Context(), dummyBundle, ext, nil, nil)
+				require.NoError(t, err, "relabelled deployments must recover on retry")
+				assert.True(t, completed)
 			}
 		})
 	}
+}
+
+func TestBoxcutterApply_RecreatesDeploymentAfterDeletion(t *testing.T) {
+	t.Parallel()
+	testEnv := test.NewEnv()
+	config, err := testEnv.Start()
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, test.StopWithRetry(testEnv, time.Minute, time.Second)) })
+	scheme := codTestScheme(t)
+	cl, err := client.New(config, client.Options{Scheme: scheme})
+	require.NoError(t, err)
+	namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "olmv1-system"}}
+	require.NoError(t, cl.Create(t.Context(), namespace))
+
+	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "restored-ext", UID: "new-uid"}}
+	restored := &ocv1.ClusterObjectDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ext.Name,
+			Labels: map[string]string{
+				labels.ManagedByKey: labels.ManagedByOperatorController,
+			},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+					Name: ext.Name, UID: "old-uid", Controller: ptr.To(true),
+				},
+			},
+		},
+		Spec: ocv1.ClusterObjectDeploymentSpec{Template: ocv1.ClusterObjectDeploymentTemplate{
+			Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
+				CollisionProtection: ocv1.CollisionProtectionPrevent,
+				Phases:              []ocv1.ClusterObjectSetPhase{{Name: "resources", Objects: []ocv1.ClusterObjectSetObject{}}},
+			},
+		}},
+	}
+	require.NoError(t, cl.Create(t.Context(), restored, client.FieldOwner("restore-tool")))
+	bc := newCODBoxcutter(t, scheme, cl, []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "restored-cm", Namespace: namespace.Name}},
+	})
+	completed, _, err := bc.Apply(t.Context(), dummyBundle, ext, nil, nil)
+	require.ErrorContains(t, err, `already controlled by ClusterExtension "restored-ext"`)
+	assert.False(t, completed)
+	require.NotErrorIs(t, err, reconcile.TerminalError(nil), "a stale controller UID must retry")
+	actual := &ocv1.ClusterObjectDeployment{}
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: ext.Name}, actual))
+	assert.Equal(t, restored, actual, "a stale controller UID must not be replaced")
+
+	// Envtest has no garbage collector. Delete the single-owner COD to exercise
+	// the ordinary recreate path after garbage collection removes a stale COD.
+	require.NoError(t, cl.Delete(t.Context(), restored))
+	for range 2 {
+		completed, _, err := bc.Apply(t.Context(), dummyBundle, ext, nil, nil)
+		require.NoError(t, err)
+		require.True(t, completed)
+	}
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: ext.Name}, actual))
+	assert.NotEqual(t, restored.UID, actual.UID, "recovery must create a new deployment")
+	assert.Equal(t, labels.ManagedByOperatorController, actual.Labels[labels.ManagedByKey])
+	require.Len(t, actual.OwnerReferences, 1)
+	owner := metav1.GetControllerOf(actual)
+	require.NotNil(t, owner)
+	assert.Equal(t, ext.UID, owner.UID)
 }
 
 // TestBoxcutterApply_Preflights verifies which preflight hook runs for each rollout state
