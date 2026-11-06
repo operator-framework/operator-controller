@@ -34,7 +34,8 @@ func TestSecretPacker_Pack(t *testing.T) {
 		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
 			Objects: []ocv1.ClusterObjectSetObject{{
-				Object: testConfigMap("test-cm", "default"),
+				Type:           ocv1.ObjectTypeInlineManifest,
+				InlineManifest: testConfigMap("test-cm", "default"),
 			}},
 		}}
 
@@ -68,8 +69,8 @@ func TestSecretPacker_Pack(t *testing.T) {
 		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
 			Objects: []ocv1.ClusterObjectSetObject{
-				{Object: testConfigMap("cm-1", "default")},
-				{Object: testConfigMap("cm-2", "default")},
+				{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: testConfigMap("cm-1", "default")},
+				{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: testConfigMap("cm-2", "default")},
 			},
 		}}
 
@@ -84,11 +85,11 @@ func TestSecretPacker_Pack(t *testing.T) {
 		phases := []ocv1.ClusterObjectSetPhase{
 			{
 				Name:    "crds",
-				Objects: []ocv1.ClusterObjectSetObject{{Object: testConfigMap("crd-1", "")}},
+				Objects: []ocv1.ClusterObjectSetObject{{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: testConfigMap("crd-1", "")}},
 			},
 			{
 				Name:    "deploy",
-				Objects: []ocv1.ClusterObjectSetObject{{Object: testConfigMap("deploy-1", "ns")}},
+				Objects: []ocv1.ClusterObjectSetObject{{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: testConfigMap("deploy-1", "ns")}},
 			},
 		}
 
@@ -111,7 +112,7 @@ func TestSecretPacker_Pack(t *testing.T) {
 		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
 			Objects: []ocv1.ClusterObjectSetObject{
-				{Object: testConfigMap("cm-1", "default")},
+				{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: testConfigMap("cm-1", "default")},
 			},
 		}}
 
@@ -129,7 +130,7 @@ func TestSecretPacker_Pack(t *testing.T) {
 		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
 			Objects: []ocv1.ClusterObjectSetObject{
-				{Ref: ocv1.ObjectSourceRef{Name: "existing-secret", Namespace: "ns", Key: "somekey"}},
+				{Type: ocv1.ObjectTypeObjectReference, ObjectReference: ocv1.ObjectSourceRef{Name: "existing-secret", Namespace: "ns", Key: "somekey"}},
 			},
 		}}
 
@@ -149,7 +150,7 @@ func TestSecretPacker_Pack(t *testing.T) {
 
 		phases := []ocv1.ClusterObjectSetPhase{{
 			Name:    "deploy",
-			Objects: []ocv1.ClusterObjectSetObject{{Object: largeObj}},
+			Objects: []ocv1.ClusterObjectSetObject{{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: largeObj}},
 		}}
 
 		result, err := packer.Pack(phases)
@@ -176,8 +177,8 @@ func TestSecretPacker_Pack(t *testing.T) {
 		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
 			Objects: []ocv1.ClusterObjectSetObject{
-				{Object: testConfigMap("same-cm", "default")},
-				{Object: testConfigMap("same-cm", "default")},
+				{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: testConfigMap("same-cm", "default")},
+				{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: testConfigMap("same-cm", "default")},
 			},
 		}}
 
@@ -202,7 +203,7 @@ func TestSecretPacker_Pack(t *testing.T) {
 
 		phases := []ocv1.ClusterObjectSetPhase{{
 			Name:    "deploy",
-			Objects: []ocv1.ClusterObjectSetObject{{Object: obj}},
+			Objects: []ocv1.ClusterObjectSetObject{{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: obj}},
 		}}
 		result, err := packer.Pack(phases)
 		require.NoError(t, err)
@@ -216,7 +217,7 @@ func TestSecretPacker_NameIsRevisionIndependent(t *testing.T) {
 	phases := []ocv1.ClusterObjectSetPhase{{
 		Name: "deploy",
 		Objects: []ocv1.ClusterObjectSetObject{
-			{Object: testConfigMap("test-cm", "default")},
+			{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: testConfigMap("test-cm", "default")},
 		},
 	}}
 

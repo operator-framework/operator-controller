@@ -21,7 +21,7 @@ func TestExtractPhasesForPacking(t *testing.T) {
 	cp := ocv1.CollisionProtectionPrevent
 	acPhases := []ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
 		*ocv1ac.ClusterObjectSetPhase().WithName("deploy").WithObjects(
-			ocv1ac.ClusterObjectSetObject().WithObject(obj).WithCollisionProtection(cp),
+			ocv1ac.ClusterObjectSetObject().WithType(ocv1.ObjectTypeInlineManifest).WithInlineManifest(obj).WithCollisionProtection(cp),
 		),
 	}
 
@@ -30,7 +30,7 @@ func TestExtractPhasesForPacking(t *testing.T) {
 	require.Len(t, result, 1)
 	assert.Equal(t, "deploy", result[0].Name)
 	require.Len(t, result[0].Objects, 1)
-	assert.Equal(t, "ConfigMap", result[0].Objects[0].Object.GetKind())
+	assert.Equal(t, "ConfigMap", result[0].Objects[0].InlineManifest.GetKind())
 	assert.Equal(t, ocv1.CollisionProtectionPrevent, result[0].Objects[0].CollisionProtection)
 }
 
@@ -50,8 +50,8 @@ func TestReplaceInlineWithRefs(t *testing.T) {
 		WithSpec(ocv1ac.ClusterObjectSetSpec().
 			WithPhases(
 				ocv1ac.ClusterObjectSetPhase().WithName("deploy").WithObjects(
-					ocv1ac.ClusterObjectSetObject().WithObject(obj1),
-					ocv1ac.ClusterObjectSetObject().WithObject(obj2),
+					ocv1ac.ClusterObjectSetObject().WithType(ocv1.ObjectTypeInlineManifest).WithInlineManifest(obj1),
+					ocv1ac.ClusterObjectSetObject().WithType(ocv1.ObjectTypeInlineManifest).WithInlineManifest(obj2),
 				),
 			),
 		)
@@ -69,16 +69,16 @@ func TestReplaceInlineWithRefs(t *testing.T) {
 	require.Len(t, rev.Spec.Phases[0].Objects, 2)
 
 	// Object should be nil, Ref should be set
-	assert.Nil(t, rev.Spec.Phases[0].Objects[0].Object)
-	require.NotNil(t, rev.Spec.Phases[0].Objects[0].Ref)
-	assert.Equal(t, "secret-1", *rev.Spec.Phases[0].Objects[0].Ref.Name)
-	assert.Equal(t, "olmv1-system", *rev.Spec.Phases[0].Objects[0].Ref.Namespace)
-	assert.Equal(t, "key-a", *rev.Spec.Phases[0].Objects[0].Ref.Key)
+	assert.Nil(t, rev.Spec.Phases[0].Objects[0].InlineManifest)
+	require.NotNil(t, rev.Spec.Phases[0].Objects[0].ObjectReference)
+	assert.Equal(t, "secret-1", *rev.Spec.Phases[0].Objects[0].ObjectReference.Name)
+	assert.Equal(t, "olmv1-system", *rev.Spec.Phases[0].Objects[0].ObjectReference.Namespace)
+	assert.Equal(t, "key-a", *rev.Spec.Phases[0].Objects[0].ObjectReference.Key)
 
-	assert.Nil(t, rev.Spec.Phases[0].Objects[1].Object)
-	require.NotNil(t, rev.Spec.Phases[0].Objects[1].Ref)
-	assert.Equal(t, "secret-1", *rev.Spec.Phases[0].Objects[1].Ref.Name)
-	assert.Equal(t, "key-b", *rev.Spec.Phases[0].Objects[1].Ref.Key)
+	assert.Nil(t, rev.Spec.Phases[0].Objects[1].InlineManifest)
+	require.NotNil(t, rev.Spec.Phases[0].Objects[1].ObjectReference)
+	assert.Equal(t, "secret-1", *rev.Spec.Phases[0].Objects[1].ObjectReference.Name)
+	assert.Equal(t, "key-b", *rev.Spec.Phases[0].Objects[1].ObjectReference.Key)
 }
 
 func TestReplaceInlineWithRefs_NilSpec(t *testing.T) {

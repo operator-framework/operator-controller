@@ -24,7 +24,8 @@ Feature: ClusterObjectDeployment revision rollout
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
@@ -53,7 +54,8 @@ Feature: ClusterObjectDeployment revision rollout
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
@@ -76,7 +78,8 @@ Feature: ClusterObjectDeployment revision rollout
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
@@ -84,7 +87,8 @@ Feature: ClusterObjectDeployment revision rollout
                     namespace: ${TEST_NAMESPACE}
                   data:
                     k: v
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:

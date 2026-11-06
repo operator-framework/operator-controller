@@ -32,7 +32,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: pvc
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: PersistentVolumeClaim
               metadata:
@@ -48,7 +49,8 @@ Feature: Install ClusterObjectSet
                     storage: 1Mi
         - name: configmap
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -93,7 +95,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: pvc
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: PersistentVolumeClaim
               metadata:
@@ -107,7 +110,8 @@ Feature: Install ClusterObjectSet
                 resources:
                   requests:
                     storage: 1Mi
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: PersistentVolume
               metadata:
@@ -137,7 +141,8 @@ Feature: Install ClusterObjectSet
                         - a-node-name-that-should-not-exist
         - name: configmap
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -180,7 +185,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: cm-1
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -192,7 +198,8 @@ Feature: Install ClusterObjectSet
                 foo: foo
         - name: cm-2
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -259,7 +266,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: phase1
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -271,7 +279,8 @@ Feature: Install ClusterObjectSet
                 foo: bar
         - name: phase2
           objects:
-          - object: 
+          - type: InlineManifest
+            inlineManifest: 
               apiVersion: v1
               kind: ServiceAccount
               metadata:
@@ -282,7 +291,8 @@ Feature: Install ClusterObjectSet
                   bar: exercise-fieldsEqual-probe
         - name: phase3
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: Pod
               metadata:
@@ -308,7 +318,8 @@ Feature: Install ClusterObjectSet
                       type: RuntimeDefault
         - name: phase4
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -413,11 +424,13 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - ref:
+          - type: ObjectReference
+            objectReference:
               name: ${COS_NAME}-ref-secret
               namespace: ${TEST_NAMESPACE}
               key: configmap
-          - ref:
+          - type: ObjectReference
+            objectReference:
               name: ${COS_NAME}-ref-secret
               namespace: ${TEST_NAMESPACE}
               key: deployment
@@ -465,7 +478,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - ref:
+          - type: ObjectReference
+            objectReference:
               name: ${COS_NAME}-mutable-secret
               namespace: ${TEST_NAMESPACE}
               key: configmap
@@ -514,7 +528,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - ref:
+          - type: ObjectReference
+            objectReference:
               name: ${COS_NAME}-change-secret
               namespace: ${TEST_NAMESPACE}
               key: configmap
@@ -618,7 +633,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - ref:
+          - type: ObjectReference
+            objectReference:
               name: ${COS_NAME}-missing-key-secret
               namespace: ${TEST_NAMESPACE}
               key: does-not-exist
@@ -656,7 +672,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - ref:
+          - type: ObjectReference
+            objectReference:
               name: ${COS_NAME}-malformed-secret
               namespace: ${TEST_NAMESPACE}
               key: configmap
@@ -694,7 +711,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: workload
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: apps/v1
               kind: Deployment
               metadata:
@@ -728,7 +746,8 @@ Feature: Install ClusterObjectSet
                           type: RuntimeDefault
         - name: config
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:

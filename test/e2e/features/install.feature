@@ -466,7 +466,8 @@ Feature: Install ClusterExtension
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:

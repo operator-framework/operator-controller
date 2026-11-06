@@ -105,7 +105,8 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		}
 
 		objs = append(objs, *ocv1ac.ClusterObjectSetObject().
-			WithObject(obj))
+			WithType(ocv1.ObjectTypeInlineManifest).
+			WithInlineManifest(obj))
 	}
 
 	revisionAnnotations := map[string]string{
@@ -158,7 +159,8 @@ func (r *SimpleRevisionGenerator) renderObjects(
 		}
 
 		objs = append(objs, *ocv1ac.ClusterObjectSetObject().
-			WithObject(unstr))
+			WithType(ocv1.ObjectTypeInlineManifest).
+			WithInlineManifest(unstr))
 	}
 	return objs, nil
 }
@@ -750,8 +752,11 @@ func extractPhasesForPacking(phases []ocv1ac.ClusterObjectSetPhaseApplyConfigura
 		phase.Objects = make([]ocv1.ClusterObjectSetObject, 0, len(p.Objects))
 		for _, o := range p.Objects {
 			obj := ocv1.ClusterObjectSetObject{}
-			if o.Object != nil {
-				obj.Object = *o.Object
+			if o.Type != nil {
+				obj.Type = *o.Type
+			}
+			if o.InlineManifest != nil {
+				obj.InlineManifest = *o.InlineManifest
 			}
 			if o.CollisionProtection != nil {
 				obj.CollisionProtection = *o.CollisionProtection
@@ -774,11 +779,12 @@ func replaceInlineWithRefs(rev *ocv1ac.ClusterObjectSetApplyConfiguration, pack 
 			if !ok {
 				continue
 			}
-			rev.Spec.Phases[phaseIdx].Objects[objIdx].Object = nil
-			rev.Spec.Phases[phaseIdx].Objects[objIdx].Ref = ocv1ac.ObjectSourceRef().
-				WithName(ref.Name).
-				WithNamespace(ref.Namespace).
-				WithKey(ref.Key)
+			rev.Spec.Phases[phaseIdx].Objects[objIdx] = *ocv1ac.ClusterObjectSetObject().
+				WithType(ocv1.ObjectTypeObjectReference).
+				WithObjectReference(ocv1ac.ObjectSourceRef().
+					WithName(ref.Name).
+					WithNamespace(ref.Namespace).
+					WithKey(ref.Key))
 		}
 	}
 }

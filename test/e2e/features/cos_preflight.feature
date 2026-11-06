@@ -24,7 +24,8 @@ Feature: ClusterObjectSet preflight dry-run validation
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -54,7 +55,8 @@ Feature: ClusterObjectSet preflight dry-run validation
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: Pod
               metadata:
@@ -83,7 +85,8 @@ Feature: ClusterObjectSet preflight dry-run validation
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:

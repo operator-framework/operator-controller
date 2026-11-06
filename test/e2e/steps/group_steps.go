@@ -130,9 +130,9 @@ func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, man
 		count := 0
 		for _, phase := range cos.Spec.Phases {
 			for _, phaseObj := range phase.Objects {
-				desired := &phaseObj.Object
-				if phaseObj.Ref.Name != "" {
-					desired, err = resolveObjectRef(phaseObj.Ref)
+				desired := &phaseObj.InlineManifest
+				if phaseObj.Type == ocv1.ObjectTypeObjectReference {
+					desired, err = resolveObjectRef(phaseObj.ObjectReference)
 					if err != nil {
 						return false
 					}
