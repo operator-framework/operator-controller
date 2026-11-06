@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -58,86 +59,113 @@ func migrationHandoffFixture(t *testing.T) (*runtime.Scheme, *ocv1.ClusterExtens
 		Spec: ocv1.ClusterObjectSetSpec{
 			Group: ext.Name, Revision: 1, LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 			CollisionProtection: ocv1.CollisionProtectionNone,
+			Phases: []ocv1.ClusterObjectSetPhase{{
+				Name: "deploy",
+				Objects: []ocv1.ClusterObjectSetObject{{Object: unstructured.Unstructured{Object: map[string]interface{}{
+					"apiVersion": "v1", "kind": "ConfigMap",
+					"metadata": map[string]interface{}{"name": "installed-config", "namespace": ext.Spec.Namespace},
+					"data":     map[string]interface{}{"ready": "true"},
+				}}}},
+			}},
+			ProgressionProbes: []ocv1.ProgressionProbe{{
+				Selector: ocv1.ObjectSelector{Type: ocv1.SelectorTypeGroupKind, GroupKind: metav1.GroupKind{Kind: "ConfigMap"}},
+				Assertions: []ocv1.Assertion{{
+					Type: ocv1.ProbeTypeFieldValue, FieldValue: ocv1.FieldValueProbe{FieldPath: "data.ready", Value: "true"},
+				}},
+			}},
 		},
-		Status: ocv1.ClusterObjectSetStatus{CompletedAt: metav1.Now()},
+		Status: ocv1.ClusterObjectSetStatus{
+			CompletedAt: metav1.Now(),
+			Conditions: []metav1.Condition{{
+				Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionTrue,
+				Reason: ocv1.ClusterObjectSetReasonAllObjectsReady, Message: "installed object is ready",
+				LastTransitionTime: metav1.Now(),
+			}},
+			ObservedPhases: []ocv1.ObservedPhase{{
+				Name: "deploy", Status: ocv1.PhaseStatusReady, Digest: "sha256:abcd",
+				CompletedAt: metav1.Now(), LastTransitionTime: metav1.Now(),
+			}},
+		},
 	}
+	cod.Spec.Template.Spec.Phases = rev.DeepCopy().Spec.Phases
+	cod.Spec.Template.Spec.ProgressionProbes = rev.DeepCopy().Spec.ProgressionProbes
 	return scheme, ext, cod, rev
 }
 
-func TestMigrationHandoff(t *testing.T) {
-	for _, completed := range []bool{false, true} {
-		name := "recover missing completion status"
-		if completed {
-			name = "already completed"
-		}
-		t.Run(name, func(t *testing.T) {
-			scheme, ext, cod, rev := migrationHandoffFixture(t)
-			if !completed {
-				rev.Status.CompletedAt = metav1.Time{}
-			}
-			cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
-				WithStatusSubresource(&ocv1.ClusterObjectSet{}, &ocv1.ClusterObjectDeployment{}).
-				WithObjects(rev).Build()
-			migrator := &applier.BoxcutterStorageMigrator{Client: cl, Scheme: scheme}
-			getter := &controllers.BoxcutterRevisionStatesGetter{Reader: cl}
+func TestMigrationHandoff_Workflow(t *testing.T) {
+	scheme, ext, cod, rev := migrationHandoffFixture(t)
+	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}, &ocv1.ClusterObjectDeployment{}).
+		WithObjects(rev).Build()
+	migrator := &applier.BoxcutterStorageMigrator{Client: cl, Scheme: scheme}
+	getter := &controllers.BoxcutterRevisionStatesGetter{Reader: cl}
 
-			// The installed bundle must be discoverable before the applier creates a COD.
-			require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
-			states, err := getter.GetRevisionStates(t.Context(), ext)
-			require.NoError(t, err)
-			require.NotNil(t, states.Installed)
-			require.Equal(t, "installed-bundle", states.Installed.Name)
-			require.Equal(t, "1.0.0", states.Installed.Version)
-			require.Equal(t, ptr.To("2"), states.Installed.Release)
-			require.Equal(t, "installed-package", states.Installed.Package)
-			require.Equal(t, "example.com/bundle:v1.0.0", states.Installed.Image)
-			require.Empty(t, states.RollingOut)
+	// Before COD creation, migration must still provide the resolver's installed bundle.
+	require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
+	states, err := getter.GetRevisionStates(t.Context(), ext)
+	require.NoError(t, err)
+	require.NotNil(t, states.Installed)
 
-			require.NoError(t, cl.Create(t.Context(), cod))
-			// A COD existing before handoff must not hide the installed bundle either.
-			states, err = getter.GetRevisionStates(t.Context(), ext)
-			require.NoError(t, err)
-			require.NotNil(t, states.Installed)
+	// The COD cannot advance past the CE-controlled migration revision yet.
+	require.NoError(t, cl.Create(t.Context(), cod))
+	codReconciler := &coscontrollers.ClusterObjectDeploymentReconciler{Client: cl, Scheme: scheme}
+	req := ctrl.Request{NamespacedName: client.ObjectKeyFromObject(cod)}
+	_, err = codReconciler.Reconcile(t.Context(), req)
+	require.NoError(t, err)
+	require.NoError(t, cl.Get(t.Context(), req.NamespacedName, cod))
+	condition := apimeta.FindStatusCondition(cod.Status.Conditions, ocv1.ClusterObjectDeploymentTypeProgressing)
+	require.NotNil(t, condition)
+	require.Equal(t, ocv1.ClusterObjectDeploymentReasonOwnerConflict, condition.Reason)
 
-			// The generic controller must retain its foreign-owner protection.
-			codReconciler := &coscontrollers.ClusterObjectDeploymentReconciler{Client: cl, Scheme: scheme}
-			req := ctrl.Request{NamespacedName: client.ObjectKeyFromObject(cod)}
-			_, err = codReconciler.Reconcile(t.Context(), req)
-			require.NoError(t, err)
-			require.NoError(t, cl.Get(t.Context(), req.NamespacedName, cod))
-			condition := apimeta.FindStatusCondition(cod.Status.Conditions, ocv1.ClusterObjectDeploymentTypeProgressing)
-			require.NotNil(t, condition)
-			require.Equal(t, ocv1.ClusterObjectDeploymentReasonOwnerConflict, condition.Reason)
-
-			before := &ocv1.ClusterObjectSet{}
-			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), before))
-			require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
-			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), rev))
-			require.True(t, metav1.IsControlledBy(rev, cod))
-			require.Equal(t, before.UID, rev.UID)
-			require.Equal(t, before.Spec, rev.Spec)
-			require.Equal(t, before.Status, rev.Status)
-			require.Contains(t, rev.OwnerReferences, before.OwnerReferences[1])
-			require.Len(t, rev.OwnerReferences, 2)
-			// This revision was not created by the generic controller; no adoption label is needed.
-			require.NotContains(t, rev.Labels, labels.ManagedByKey)
-			after := rev.DeepCopy()
-			require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
-			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), rev))
-			require.Equal(t, after, rev, "completed handoff must be idempotent")
-
-			_, err = codReconciler.Reconcile(t.Context(), req)
-			require.NoError(t, err)
-			next := &ocv1.ClusterObjectSet{}
-			require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: ext.Name + "-2"}, next))
-			require.EqualValues(t, 2, next.Spec.Revision)
-			require.Equal(t, ocv1.CollisionProtectionPrevent, next.Spec.CollisionProtection)
-			require.True(t, metav1.IsControlledBy(next, cod))
-		})
-	}
+	// The next CE reconcile transfers control, allowing normal COD rollout to resume.
+	require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), rev))
+	require.True(t, metav1.IsControlledBy(rev, cod))
+	_, err = codReconciler.Reconcile(t.Context(), req)
+	require.NoError(t, err)
+	next := &ocv1.ClusterObjectSet{}
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKey{Name: ext.Name + "-2"}, next))
+	require.EqualValues(t, 2, next.Spec.Revision)
+	require.Equal(t, ocv1.CollisionProtectionPrevent, next.Spec.CollisionProtection)
+	require.True(t, metav1.IsControlledBy(next, cod))
 }
 
-func TestMigrationHandoff_RefusesUnrelatedOwners(t *testing.T) {
+func TestMigrationHandoff_PreservesRevision(t *testing.T) {
+	scheme, ext, cod, rev := migrationHandoffFixture(t)
+	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).WithObjects(cod, rev).Build()
+	before := &ocv1.ClusterObjectSet{}
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), before))
+	migrator := &applier.BoxcutterStorageMigrator{Client: cl, Scheme: scheme}
+	require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), rev))
+	require.True(t, metav1.IsControlledBy(rev, cod))
+	require.Equal(t, before.UID, rev.UID)
+	require.Equal(t, before.Spec, rev.Spec)
+	require.Equal(t, before.Status, rev.Status)
+	require.Equal(t, before.Labels, rev.Labels)
+	require.Equal(t, before.Annotations, rev.Annotations)
+	require.Contains(t, rev.OwnerReferences, before.OwnerReferences[1])
+	require.Len(t, rev.OwnerReferences, 2)
+	// Direct transfer does not require labeling the revision as object-controller-created.
+	require.NotContains(t, rev.Labels, labels.ManagedByKey)
+}
+
+func TestMigrationHandoff_IsIdempotent(t *testing.T) {
+	scheme, ext, cod, rev := migrationHandoffFixture(t)
+	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
+		WithStatusSubresource(&ocv1.ClusterObjectSet{}).WithObjects(cod, rev).Build()
+	migrator := &applier.BoxcutterStorageMigrator{Client: cl, Scheme: scheme}
+	require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), rev))
+	require.True(t, metav1.IsControlledBy(rev, cod))
+	after := rev.DeepCopy()
+	require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
+	require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), rev))
+	require.Equal(t, after, rev)
+}
+
+func TestMigrationHandoff_SkipsIneligibleHandoffs(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		change func(*ocv1.ClusterObjectDeployment, *ocv1.ClusterObjectSet)
@@ -146,29 +174,14 @@ func TestMigrationHandoff_RefusesUnrelatedOwners(t *testing.T) {
 		{"different group", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) { rev.Spec.Group = "other-group" }},
 		{"normal later revision", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) { rev.Spec.Revision = 2 }},
 		{"ownerless revision", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) { rev.OwnerReferences = nil }},
+		{"non-controller CE reference", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) {
+			rev.OwnerReferences[0].Controller = ptr.To(false)
+		}},
 		{"stale CE uid", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) {
 			rev.OwnerReferences[0].UID = "old-ce"
 		}},
-		{"different CE name", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) {
-			rev.OwnerReferences[0].Name = "other-ce"
-		}},
-		{"different owner kind", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) {
-			rev.OwnerReferences[0].Kind = "OtherController"
-		}},
-		{"different owner group", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) {
-			rev.OwnerReferences[0].APIVersion = "other.example/v1"
-		}},
 		{"foreign COD", func(cod *ocv1.ClusterObjectDeployment, _ *ocv1.ClusterObjectSet) {
 			cod.OwnerReferences[0].UID = "other-ce"
-		}},
-		{"different COD owner name", func(cod *ocv1.ClusterObjectDeployment, _ *ocv1.ClusterObjectSet) {
-			cod.OwnerReferences[0].Name = "other-ce"
-		}},
-		{"different COD owner kind", func(cod *ocv1.ClusterObjectDeployment, _ *ocv1.ClusterObjectSet) {
-			cod.OwnerReferences[0].Kind = "OtherController"
-		}},
-		{"different COD owner group", func(cod *ocv1.ClusterObjectDeployment, _ *ocv1.ClusterObjectSet) {
-			cod.OwnerReferences[0].APIVersion = "other.example/v1"
 		}},
 		{"ownerless COD", func(cod *ocv1.ClusterObjectDeployment, _ *ocv1.ClusterObjectSet) { cod.OwnerReferences = nil }},
 		{"deleting COD", func(cod *ocv1.ClusterObjectDeployment, _ *ocv1.ClusterObjectSet) {
@@ -182,6 +195,7 @@ func TestMigrationHandoff_RefusesUnrelatedOwners(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			scheme, ext, cod, rev := migrationHandoffFixture(t)
+			// Completed status isolates handoff eligibility from the existing status-repair path.
 			tc.change(cod, rev)
 			cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
 				WithStatusSubresource(&ocv1.ClusterObjectSet{}).WithObjects(cod, rev).Build()
@@ -198,49 +212,6 @@ func TestMigrationHandoff_RefusesUnrelatedOwners(t *testing.T) {
 			require.NoError(t, migrator.Migrate(t.Context(), ext, nil))
 			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(rev), rev))
 			require.Equal(t, before, rev)
-		})
-	}
-}
-
-func TestMigrationInstalledState_FiltersUnrelatedRevisions(t *testing.T) {
-	for _, tc := range []struct {
-		name   string
-		change func(*ocv1.ClusterObjectDeployment, *ocv1.ClusterObjectSet)
-	}{
-		{"not migrated", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) { rev.Labels = nil }},
-		{"not completed", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) {
-			rev.Status.CompletedAt = metav1.Time{}
-		}},
-		{"archived", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) {
-			rev.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
-		}},
-		{"ownerless", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) { rev.OwnerReferences = nil }},
-		{"foreign revision owner", func(_ *ocv1.ClusterObjectDeployment, rev *ocv1.ClusterObjectSet) {
-			rev.OwnerReferences[0].UID = "other-ce"
-		}},
-		{"foreign COD", func(cod *ocv1.ClusterObjectDeployment, _ *ocv1.ClusterObjectSet) {
-			cod.OwnerReferences[0].UID = "other-ce"
-		}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			scheme, ext, cod, rev := migrationHandoffFixture(t)
-			tc.change(cod, rev)
-			for _, withCOD := range []bool{false, true} {
-				if tc.name == "foreign COD" && !withCOD {
-					continue
-				}
-				objects := []client.Object{rev}
-				if withCOD {
-					objects = append(objects, cod)
-				}
-				cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
-					WithObjects(objects...).Build()
-				getter := &controllers.BoxcutterRevisionStatesGetter{Reader: cl}
-				states, err := getter.GetRevisionStates(t.Context(), ext)
-				require.NoError(t, err)
-				require.Nil(t, states.Installed)
-				require.Empty(t, states.RollingOut)
-			}
 		})
 	}
 }

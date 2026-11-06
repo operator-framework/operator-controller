@@ -251,7 +251,8 @@ type boxcutterStorageMigratorClient interface {
 }
 
 // Migrate creates a ClusterObjectSet from an existing Helm release if no revisions exist yet.
-// The migration is idempotent and skipped if revisions already exist or no Helm release is found.
+// Existing migration revisions have their completion status repaired and are handed
+// to the extension's deployment once it exists. No Helm release means no migration.
 func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) error {
 	// Managed namespace mode (spec.namespace empty) means this is a new-style extension
 	// that never had a Helm release, so there is nothing to migrate. The previous CRD

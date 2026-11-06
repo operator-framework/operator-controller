@@ -22,7 +22,6 @@ import (
 	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -54,13 +53,8 @@ func IsHelmMigrationFor(rev *ocv1.ClusterObjectSet, ext *ocv1.ClusterExtension) 
 	return IsControlledByExtension(rev, ext)
 }
 
-// IsControlledByExtension checks the controller's identity as well as its UID.
-// Matching names or labels alone must not authorize a migration handoff.
+// IsControlledByExtension checks whether the object's controller has this
+// ClusterExtension's UID.
 func IsControlledByExtension(obj metav1.Object, ext *ocv1.ClusterExtension) bool {
-	owner := metav1.GetControllerOf(obj)
-	if owner == nil || owner.UID != ext.UID || owner.Name != ext.Name || owner.Kind != ocv1.ClusterExtensionKind {
-		return false
-	}
-	gv, err := schema.ParseGroupVersion(owner.APIVersion)
-	return err == nil && gv.Group == ocv1.GroupVersion.Group
+	return metav1.IsControlledBy(obj, ext)
 }
