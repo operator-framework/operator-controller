@@ -512,9 +512,6 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: group
       type:
         scalar: string
-    - name: kind
-      type:
-        scalar: string
     - name: messages
       type:
         list:
@@ -527,7 +524,7 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: namespace
       type:
         scalar: string
-    - name: version
+    - name: resource
       type:
         scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.ObjectType
