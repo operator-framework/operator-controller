@@ -143,7 +143,8 @@ func TestBoxcutterRevisionStatesGetter_DoesNotReportUnownedResources(t *testing.
 		{name: "COD/COS not owned by extension", objects: []client.Object{otherCOD, otherCOS}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cl := fake.NewClientBuilder().WithScheme(sch).WithObjects(tc.objects...).Build()
+			cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(sch), coscontrollers.SetupIndexes).
+				WithObjects(tc.objects...).Build()
 			getter := &BoxcutterRevisionStatesGetter{Reader: cl}
 
 			states, err := getter.GetRevisionStates(context.Background(), ext)

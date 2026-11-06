@@ -232,9 +232,8 @@ func (r *SimpleRevisionGenerator) buildClusterObjectSet(
 }
 
 // BoxcutterStorageMigrator migrates ClusterExtensions from Helm-based storage to
-// ClusterObjectSet storage, enabling upgrades from older operator-controller versions.
-// TODO(COD): Adapt Helm storage migration for ClusterObjectDeployment-backed
-// installations and remove direct COS discovery when that migration path is in place.
+// ClusterObjectDeployment-backed storage. The migration revision initially belongs
+// to the ClusterExtension; once its deployment exists, control is handed to it.
 type BoxcutterStorageMigrator struct {
 	ActionClientGetter helmclient.ActionClientGetter
 	RevisionGenerator  RevisionGenerator
@@ -247,6 +246,7 @@ type boxcutterStorageMigratorClient interface {
 	Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error
 	List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
+	Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error
 	Status() client.StatusWriter
 }
 
@@ -266,7 +266,10 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		return fmt.Errorf("listing ClusterObjectSets before attempting migration: %w", err)
 	}
 	if len(existingRevisions) != 0 {
-		return m.ensureMigratedRevisionStatus(ctx, existingRevisions)
+		if err := m.ensureMigratedRevisionStatus(ctx, existingRevisions); err != nil {
+			return err
+		}
+		return m.handoffMigratedRevision(ctx, ext, existingRevisions)
 	}
 
 	ac, err := m.ActionClientGetter.ActionClientFor(ctx, ext)
@@ -344,6 +347,52 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 	// Since we're creating this revision from a successfully deployed Helm release, we know it
 	// represents a working installation and can safely mark it as succeeded immediately.
 	return m.ensureRevisionStatus(ctx, *rev.GetName())
+}
+
+// handoffMigratedRevision transfers only this CE's Helm migration revision to
+// its verified deployment. COD creation and status events already enqueue the CE,
+// so a first pass without a deployment can finish via the normal bundle applier.
+func (m *BoxcutterStorageMigrator) handoffMigratedRevision(ctx context.Context, ext *ocv1.ClusterExtension, existing []ocv1.ClusterObjectSet) error {
+	for i := range existing {
+		if !revisions.IsHelmMigrationFor(&existing[i], ext) {
+			continue
+		}
+		cod := &ocv1.ClusterObjectDeployment{}
+		if err := m.Client.Get(ctx, client.ObjectKey{Name: ext.Name}, cod); err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
+			return fmt.Errorf("getting deployment for migration handoff: %w", err)
+		}
+		if !revisions.IsControlledByExtension(cod, ext) || !cod.DeletionTimestamp.IsZero() {
+			return nil
+		}
+
+		// Read again after the completion-status update, which may have changed
+		// resourceVersion, and revalidate the owner before changing it.
+		rev := &ocv1.ClusterObjectSet{}
+		if err := m.Client.Get(ctx, client.ObjectKeyFromObject(&existing[i]), rev); err != nil {
+			return fmt.Errorf("getting revision for migration handoff: %w", err)
+		}
+		if !revisions.IsHelmMigrationFor(rev, ext) {
+			return nil
+		}
+		if rev.Status.CompletedAt.IsZero() {
+			return fmt.Errorf("waiting for migration revision %q completion status before handoff", rev.Name)
+		}
+		before := rev.DeepCopy()
+		if err := controllerutil.RemoveControllerReference(ext, rev, m.Scheme); err != nil {
+			return fmt.Errorf("removing migration revision controller: %w", err)
+		}
+		if err := controllerutil.SetControllerReference(cod, rev, m.Scheme); err != nil {
+			return fmt.Errorf("setting migration revision controller: %w", err)
+		}
+		if err := m.Client.Patch(ctx, rev, client.MergeFromWithOptions(before, client.MergeFromWithOptimisticLock{})); err != nil {
+			return fmt.Errorf("transferring migration revision to deployment: %w", err)
+		}
+		return nil
+	}
+	return nil
 }
 
 // ensureMigratedRevisionStatus checks if revision 1 exists and needs its status set.

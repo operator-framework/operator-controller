@@ -44,13 +44,11 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 	rs := &RevisionStates{}
 	cod := &ocv1.ClusterObjectDeployment{}
 	if err := d.Reader.Get(ctx, client.ObjectKey{Name: ext.Name}, cod); err != nil {
-		if apierrors.IsNotFound(err) {
-			// Without a COD, there is no revision state this ClusterExtension should report.
-			return rs, nil
+		if !apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("getting ClusterObjectDeployment %q: %w", ext.Name, err)
 		}
-		return nil, fmt.Errorf("getting ClusterObjectDeployment %q: %w", ext.Name, err)
-	}
-	if !metav1.IsControlledBy(cod, ext) {
+		cod = nil
+	} else if !revisions.IsControlledByExtension(cod, ext) {
 		// Do not report status for a deployment owned by someone else, even if it
 		// has the name this ClusterExtension expects to use.
 		return rs, nil
@@ -68,7 +66,12 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 
 		// Group membership is based on the name and does not prove ownership.
 		// Ignore revisions outside this deployment's ownership chain.
-		if !metav1.IsControlledBy(&rev, cod) {
+		ownedByDeployment := cod != nil && metav1.IsControlledBy(&rev, cod)
+		// Before COD creation and the explicit handoff, the completed Helm
+		// migration revision is still controlled by the CE. Retain its installed
+		// metadata so resolution uses the existing bundle as the upgrade origin.
+		pendingMigration := revisions.IsHelmMigrationFor(&rev, ext) && !rev.Status.CompletedAt.IsZero()
+		if !ownedByDeployment && !pendingMigration {
 			continue
 		}
 
