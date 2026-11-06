@@ -55,7 +55,7 @@ func TestClusterObjectDeploymentGroupEvents(t *testing.T) {
 				assert.NoError(collect, cl.Get(t.Context(), client.ObjectKey{Name: cod.Name + "-1"}, owned))
 			}, 10*time.Second, 10*time.Millisecond)
 			owned.Status.CompletedAt = metav1.Now()
-			owned.Status.ObjectCounts = ocv1.ObjectCounts{Total: 1, Present: 1, Synced: 1, Ready: 1}
+			owned.Status.ObjectCounts = ocv1.ObjectCounts{Total: ptr.To(int64(1)), Present: ptr.To(int64(1)), Synced: ptr.To(int64(1)), Ready: ptr.To(int64(1))}
 			setCOSReady(owned, metav1.ConditionTrue, ocv1.ClusterObjectSetReasonAllObjectsReady)
 			require.NoError(t, cl.Status().Update(t.Context(), owned))
 			waitForCODCondition(t, cl, cod.Name, ocv1.ClusterObjectDeploymentTypeAvailable,
@@ -75,7 +75,7 @@ func TestClusterObjectDeploymentGroupEvents(t *testing.T) {
 
 			// A ready foreign revision cannot supply the COD's availability.
 			setCOSReady(foreign, metav1.ConditionTrue, ocv1.ClusterObjectSetReasonAllObjectsReady)
-			foreign.Status.ObjectCounts = ocv1.ObjectCounts{Total: 1, Present: 1, Synced: 1, Ready: 1}
+			foreign.Status.ObjectCounts = ocv1.ObjectCounts{Total: ptr.To(int64(1)), Present: ptr.To(int64(1)), Synced: ptr.To(int64(1)), Ready: ptr.To(int64(1))}
 			require.NoError(t, cl.Status().Update(t.Context(), foreign))
 			markCOSReady(t, cl, owned.Name, false)
 			waitForCODCondition(t, cl, cod.Name, ocv1.ClusterObjectDeploymentTypeAvailable,
@@ -91,7 +91,7 @@ func TestClusterObjectDeploymentGroupEvents(t *testing.T) {
 				metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonOwnerConflict, cod.Generation)
 			require.True(t, apierrors.IsNotFound(cl.Get(t.Context(), client.ObjectKey{Name: cod.Name + "-4"}, &ocv1.ClusterObjectSet{})))
 			require.NoError(t, cl.Get(t.Context(), client.ObjectKeyFromObject(owned), owned))
-			require.Equal(t, ocv1.ObjectCounts{Total: 1, Present: 1, Synced: 1, Ready: 1}, owned.Status.ObjectCounts)
+			require.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(1)), Present: ptr.To(int64(1)), Synced: ptr.To(int64(1)), Ready: ptr.To(int64(1))}, owned.Status.ObjectCounts)
 
 			// Only the foreign COS changes here. Its group event must release the
 			// conflict and reconcile the already-updated COD template.
