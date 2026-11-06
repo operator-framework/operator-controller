@@ -664,19 +664,14 @@ type ObjectStatus struct {
 	// +optional
 	Group string `json:"group,omitempty"`
 
-	// version is the API version of the object. Must be between 1 and
-	// 63 characters.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=63
-	// +required
-	Version string `json:"version,omitempty"`
-
-	// kind is the kind of the object. Must be between 1 and 63
+	// resource is the lowercase, plural resource type of the object
+	// (for example, "pods" or "configmaps"). Must be between 1 and 63
 	// characters.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:XValidation:rule=`!format.dns1035Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, must start with a letter, and must end with an alphanumeric character."
 	// +required
-	Kind string `json:"kind,omitempty"`
+	Resource string `json:"resource,omitempty"`
 
 	// namespace is the namespace of the object. Empty for cluster-scoped
 	// resources. At most 253 characters (DNS subdomain max).
