@@ -17,9 +17,38 @@ import (
 )
 
 func Test_ObjectNameForBaseAndSuffix(t *testing.T) {
-	name := util.ObjectNameForBaseAndSuffix("my.object.thing.has.a.really.really.really.really.really.long.name", "suffix")
-	require.Len(t, name, 63)
-	require.Equal(t, "my.object.thing.has.a.really.really.really.really.really-suffix", name)
+	for _, tc := range []struct {
+		name     string
+		base     string
+		suffix   string
+		expected string
+	}{
+		{
+			name:     "base and suffix add up to less than 63 characters",
+			base:     strings.Repeat("a", 55),
+			suffix:   "service",
+			expected: strings.Repeat("a", 55) + "-service",
+		},
+		{
+			// the "-" separator would push the name to 64 characters
+			name:     "base and suffix add up to 63 characters",
+			base:     strings.Repeat("a", 56),
+			suffix:   "service",
+			expected: strings.Repeat("a", 55) + "-service",
+		},
+		{
+			name:     "base and suffix add up to more than 63 characters",
+			base:     "my.object.thing.has.a.really.really.really.really.really.long.name",
+			suffix:   "suffix",
+			expected: "my.object.thing.has.a.really.really.really.really.really-suffix",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			name := util.ObjectNameForBaseAndSuffix(tc.base, tc.suffix)
+			require.Equal(t, tc.expected, name)
+			require.LessOrEqual(t, len(name), 63)
+		})
+	}
 }
 
 func TestMergeMaps(t *testing.T) {
