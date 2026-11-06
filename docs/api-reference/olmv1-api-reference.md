@@ -474,7 +474,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `metadata` _[ClusterObjectDeploymentTemplateMetadata](#clusterobjectdeploymenttemplatemetadata)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `metadata` _[ClusterObjectDeploymentTemplateMetadata](#clusterobjectdeploymenttemplatemetadata)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | MinProperties: 1 <br />Optional: \{\} <br /> |
 | `spec` _[ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)_ | spec contains the desired revision content. Group, revision, lifecycle state,<br />and ownership are assigned by the controller and cannot be set here. |  | Required: \{\} <br /> |
 
 
@@ -485,15 +485,16 @@ _Appears in:_
 ClusterObjectDeploymentTemplateMetadata contains labels and annotations
 propagated to each ClusterObjectSet revision created from the template.
 
-
+_Validation:_
+- MinProperties: 1
 
 _Appears in:_
 - [ClusterObjectDeploymentTemplate](#clusterobjectdeploymenttemplate)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `labels` _object (keys:string, values:string)_ | labels is a set of key/value pairs propagated to each revision's metadata. |  | MaxProperties: 32 <br />Optional: \{\} <br /> |
-| `annotations` _object (keys:string, values:string)_ | annotations is a set of key/value pairs propagated to each revision's<br />metadata. The controller validates them against the Kubernetes annotation<br />rules (key format and total size) before creating a revision; invalid<br />annotations are reported on the deployment's Progressing condition. |  | MaxProperties: 32 <br />Optional: \{\} <br /> |
+| `labels` _object (keys:string, values:string)_ | labels is a set of key/value pairs propagated to each revision's metadata. |  | MaxProperties: 32 <br />MinProperties: 1 <br />Optional: \{\} <br /> |
+| `annotations` _object (keys:string, values:string)_ | annotations is a set of key/value pairs propagated to each revision's<br />metadata. The controller validates them against the Kubernetes annotation<br />rules (key format and total size) before creating a revision; invalid<br />annotations are reported on the deployment's Progressing condition. |  | MaxProperties: 32 <br />MinProperties: 1 <br />Optional: \{\} <br /> |
 
 
 #### ClusterObjectDeploymentTemplateSpec
@@ -510,7 +511,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phases` _[ClusterObjectSetPhase](#clusterobjectsetphase) array_ | phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains<br />at most 50 objects using the existing inline object or immutable Secret reference<br />representation. Phase, object, and probe order participate in template identity. |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
-| `progressDeadlineMinutes` _integer_ | progressDeadlineMinutes is the maximum number of minutes a revision may take<br />to roll out, measured from the ClusterObjectSet's creation timestamp. Time<br />spent waiting for the ClusterObjectSet to be created is not counted. The<br />deadline covers all phases together; completing a phase does not reset it.<br />Once a revision has completed, the deadline no longer applies, even if it<br />later becomes unhealthy. When omitted, no deadline is enforced. The minimum<br />period is 10 minutes, and the maximum is 720 minutes (12 hours). |  | Maximum: 720 <br />Minimum: 10 <br />Optional: \{\} <br /> |
+| `progressDeadlineMinutes` _integer_ | progressDeadlineMinutes is the maximum number of minutes a revision may take<br />to roll out, measured from the ClusterObjectSet's creation timestamp. Time<br />spent waiting for the ClusterObjectSet to be created is not counted. The<br />deadline covers all phases together; completing a phase does not reset it.<br />Once a revision has completed, the deadline no longer applies, even if it<br />later becomes unhealthy. When omitted, no deadline is enforced. The minimum<br />period is 1 minute, and the maximum is 720 minutes (12 hours). |  | Maximum: 720 <br />Minimum: 1 <br />Optional: \{\} <br /> |
 | `progressionProbes` _[ProgressionProbe](#progressionprobe) array_ | progressionProbes supplies custom readiness probes for objects in every phase.<br />The existing ClusterObjectSet selector and assertion semantics apply. |  | MaxItems: 20 <br />MinItems: 1 <br />Optional: \{\} <br /> |
 | `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is the required default collision protection strategy for objects in the revision.<br />Objects and phases may override it. |  | Enum: [Prevent IfNoController None] <br />Required: \{\} <br /> |
 
@@ -555,7 +556,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `name` _string_ | name is a required identifier for this phase.<br />phase names must follow the DNS label standard as defined in [RFC 1123].<br />They must contain only lowercase alphanumeric characters or hyphens (-),<br />start and end with an alphanumeric character, and be no longer than 63 characters.<br />Common phase names include: namespaces, policies, rbac, crds, storage, deploy, publish.<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />MinLength: 1 <br />Required: \{\} <br /> |
 | `objects` _[ClusterObjectSetObject](#clusterobjectsetobject) array_ | objects is a required list of all Kubernetes objects that belong to this phase.<br />All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50. |  | ExactlyOneOf: [object ref] <br />MaxItems: 50 <br />Required: \{\} <br /> |
-| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection specifies the default collision protection strategy for all objects<br />in this phase. Individual objects can override this value.<br />When set, this value is used as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection.<br />When omitted, we use .spec.collistionProtection as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
+| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection specifies the default collision protection strategy for all objects<br />in this phase. Individual objects can override this value.<br />When set, this value is used as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection.<br />When omitted, we use .spec.collisionProtection as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
 
 
 #### CollisionProtection
@@ -564,7 +565,8 @@ _Underlying type:_ _string_
 
 CollisionProtection specifies if and how ownership collisions are prevented.
 
-
+_Validation:_
+- Enum: [Prevent IfNoController None]
 
 _Appears in:_
 - [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
@@ -665,7 +667,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `type` _[SelectorType](#selectortype)_ | type is a required field which specifies the type of selector to use.<br />The allowed selector types are "GroupKind" and "Label".<br />When set to "GroupKind", all objects which match the specified group and kind will be selected.<br />When set to "Label", all objects which match the specified labels and/or expressions will be selected.<br />**Experimental channel:**  |  | Enum: [GroupKind Label] <br />Required: \{\} <br /> |
-| `groupKind` _[GroupKind](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#groupkind-v1-meta)_ | groupKind specifies the group and kind of objects to select.<br />Required when type is "GroupKind".<br />Uses the Kubernetes format specified here:<br />https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#GroupKind<br />**Experimental channel:**  |  | Optional: \{\} <br /> |
+| `groupKind` _[GroupKind](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#groupkind-v1-meta)_ | groupKind specifies the group and kind of objects to select. Note that this selector<br />has a limitation in that it does not discriminate based on the version of the object;<br />until this gap is closed users of this selector should take into account the possibility<br />of different versions of the same groupKind not being able to pass assertions in the<br />same way.<br />Required when type is "GroupKind".<br />Uses the Kubernetes format specified here:<br />https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#GroupKind<br />**Experimental channel:**  |  | Optional: \{\} <br /> |
 | `label` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#labelselector-v1-meta)_ | label is the label selector definition.<br />Required when type is "Label".<br />A probe using a Label selector will be executed against every object matching the labels or expressions; you must use care<br />when using this type of selector. For example, if multiple Kind objects are selected via labels then the probe is<br />likely to fail because the values of different Kind objects rarely share the same schema.<br />The LabelSelector field uses the following Kubernetes format:<br />https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector<br />Requires exactly one of matchLabels or matchExpressions.<br />**Experimental channel:**  |  | Optional: \{\} <br /> |
 
 
@@ -684,7 +686,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `name` _string_ | name is the name of the referenced Secret. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
-| `namespace` _string_ | namespace is the namespace of the referenced Secret.<br />When empty, defaults to the OLM system namespace during ref resolution. |  | MaxLength: 63 <br />Optional: \{\} <br /> |
+| `namespace` _string_ | namespace is the namespace of the referenced Secret.<br />When empty, defaults to the OLM system namespace during ref resolution. |  | MaxLength: 63 <br />MinLength: 1 <br />Optional: \{\} <br /> |
 | `key` _string_ | key is the data key within the referenced Secret containing the<br />object manifest content. The value at this key must be a<br />JSON-serialized Kubernetes object manifest. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
 
 
@@ -740,7 +742,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `selector` _[ObjectSelector](#objectselector)_ | selector is a required field which defines the method by which we select objects to apply the below<br />assertions to. Any object which matches the defined selector will have all the associated assertions<br />applied against it.<br />If no objects within a phase are selected by the provided selector, then all assertions defined here<br />are considered to have succeeded.<br />**Experimental channel:**  |  | Required: \{\} <br /> |
-| `assertions` _[Assertion](#assertion) array_ | assertions is a required list of checks which will run against the objects selected by the selector. If<br />one or more assertions fail then the phase within which the object lives will be not be considered<br />'Ready', blocking rollout of all subsequent phases.<br />**Experimental channel:**  |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
+| `assertions` _[Assertion](#assertion) array_ | assertions is a required list of checks which will run against the objects selected by the selector. If<br />one or more assertions fail then the phase within which the object lives will not be considered<br />'Ready', blocking rollout of all subsequent phases.<br />**Experimental channel:**  |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
 
 
 #### ResolvedCatalogSource

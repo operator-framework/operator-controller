@@ -144,7 +144,6 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
   @ProgressDeadline
   Scenario: Progressing is False with ProgressDeadlineExceeded when the revision never becomes ready
     Given namespace "${TEST_NAMESPACE}" is available
-    And min value for ClusterObjectDeployment .spec.template.spec.progressDeadlineMinutes is set to 1
     When resource is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -202,7 +201,6 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
   @ProgressDeadline
   Scenario: A hard stall is reported instead of the progress deadline even after it elapses
     Given namespace "${TEST_NAMESPACE}" is available
-    And min value for ClusterObjectDeployment .spec.template.spec.progressDeadlineMinutes is set to 1
     And resource is applied
       """
       apiVersion: v1

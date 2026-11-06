@@ -46,6 +46,8 @@ const (
 )
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.phases) || has(self.phases)",message="phases cannot be removed once set"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.progressionProbes) || has(self.progressionProbes)",message="progressionProbes cannot be removed once set"
 type ClusterObjectSetSpec struct {
 	// group is a required, immutable identifier that links related revisions together.
 	// All revisions sharing the same group form an ordered sequence, regardless of owner references.
@@ -73,7 +75,6 @@ type ClusterObjectSetSpec struct {
 	// new revision has been completely rolled out.
 	//
 	// +required
-	// +kubebuilder:validation:Enum=Active;Archived
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Archived' && oldSelf == self", message="cannot un-archive"
 	LifecycleState ClusterObjectSetLifecycleState `json:"lifecycleState,omitempty"`
 
@@ -108,11 +109,12 @@ type ClusterObjectSetSpec struct {
 	// Each phase in the list must have a unique name. The maximum number of phases is 20.
 	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
+	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=map
 	// +listMapKey=name
-	// +optional
-	Phases []ClusterObjectSetPhase `json:"phases,omitempty"` //nolint:kubeapilinter
+	// +required
+	Phases []ClusterObjectSetPhase `json:"phases,omitempty"`
 
 	// progressionProbes is an optional field which provides the ability to define custom readiness probes
 	// for objects defined within spec.phases. As documented in that field, most kubernetes-native objects
@@ -144,7 +146,6 @@ type ClusterObjectSetSpec struct {
 	// its own collisionProtection. The resolution order is: object > phase > spec.
 	//
 	// +required
-	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="collisionProtection is immutable"
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
@@ -163,7 +164,7 @@ type ProgressionProbe struct {
 	Selector ObjectSelector `json:"selector,omitzero"`
 
 	// assertions is a required list of checks which will run against the objects selected by the selector. If
-	// one or more assertions fail then the phase within which the object lives will be not be considered
+	// one or more assertions fail then the phase within which the object lives will not be considered
 	// 'Ready', blocking rollout of all subsequent phases.
 	//
 	// +kubebuilder:validation:MinItems=1
@@ -192,7 +193,11 @@ type ObjectSelector struct {
 	// <opcon:experimental>
 	Type SelectorType `json:"type,omitempty"`
 
-	// groupKind specifies the group and kind of objects to select.
+	// groupKind specifies the group and kind of objects to select. Note that this selector
+	// has a limitation in that it does not discriminate based on the version of the object;
+	// until this gap is closed users of this selector should take into account the possibility
+	// of different versions of the same groupKind not being able to pass assertions in the
+	// same way.
 	//
 	// Required when type is "GroupKind".
 	//
@@ -349,6 +354,7 @@ type FieldValueProbe struct {
 }
 
 // ClusterObjectSetLifecycleState specifies the lifecycle state of the ClusterObjectSet.
+// +kubebuilder:validation:Enum=Active;Archived
 type ClusterObjectSetLifecycleState string
 
 const (
@@ -393,11 +399,10 @@ type ClusterObjectSetPhase struct {
 	// When set, this value is used as the default for any object in this phase that does not
 	// explicitly specify its own collisionProtection.
 	//
-	// When omitted, we use .spec.collistionProtection as the default for any object in this phase that does not
+	// When omitted, we use .spec.collisionProtection as the default for any object in this phase that does not
 	// explicitly specify its own collisionProtection.
 	//
 	// +optional
-	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
@@ -447,7 +452,6 @@ type ClusterObjectSetObject struct {
 	// When omitted, the value is inherited from the phase, then spec.
 	//
 	// +optional
-	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
@@ -459,13 +463,16 @@ type ObjectSourceRef struct {
 	// +required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start and end with an alphanumeric character."
 	Name string `json:"name,omitempty"`
 
 	// namespace is the namespace of the referenced Secret.
 	// When empty, defaults to the OLM system namespace during ref resolution.
 	//
 	// +optional
+	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start and end with an alphanumeric character."
 	Namespace string `json:"namespace,omitempty"`
 
 	// key is the data key within the referenced Secret containing the
@@ -475,10 +482,12 @@ type ObjectSourceRef struct {
 	// +required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[-._a-zA-Z0-9]+$')`,message="must consist only of alphanumeric characters, '-', '_', or '.'"
 	Key string `json:"key,omitempty"`
 }
 
 // CollisionProtection specifies if and how ownership collisions are prevented.
+// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 type CollisionProtection string
 
 const (
@@ -546,7 +555,7 @@ type ClusterObjectSetStatus struct {
 	// +listType=map
 	// +listMapKey=name
 	// +optional
-	ObservedPhases []ObservedPhase `json:"observedPhases,omitempty"` //nolint:kubeapilinter
+	ObservedPhases []ObservedPhase `json:"observedPhases,omitempty"`
 
 	// completedAt is the timestamp at which the revision was first observed to be
 	// ready, meaning it had successfully rolled out and all of its objects passed
@@ -554,7 +563,7 @@ type ClusterObjectSetStatus struct {
 	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable, once set"
 	// +optional
-	CompletedAt metav1.Time `json:"completedAt,omitzero"`
+	CompletedAt metav1.Time `json:"completedAt,omitempty,omitzero"`
 }
 
 // ObservedPhase records the observed content digest of a resolved phase.
@@ -579,7 +588,7 @@ type ObservedPhase struct {
 	// Ready.
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf == null",message="completedAt is immutable, once set"
-	CompletedAt metav1.Time `json:"completedAt,omitzero"`
+	CompletedAt metav1.Time `json:"completedAt,omitempty,omitzero"`
 
 	// message is a phase-level message providing context about the
 	// current status (e.g. a validation error for InvalidSpecification
@@ -592,6 +601,7 @@ type ObservedPhase struct {
 
 	// digest is the digest of the phase's resolved object content
 	// at first successful resolution, in the format "<algorithm>:<hex>".
+	// Currently, sha256 is the only supported algorithm.
 	//
 	// +required
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0",message="digest is immutable"
@@ -608,7 +618,7 @@ type ObservedPhase struct {
 	// +required
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Format=date-time
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitzero"`
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty,omitzero"`
 
 	// objectDetails lists objects in this phase that are not yet
 	// complete. For Reconciling, Pending, and Stabilizing phases, this
@@ -660,7 +670,9 @@ type ObjectCounts struct {
 type ObjectStatus struct {
 	// group is the API group of the object (empty string for core
 	// resources). At most 253 characters (DNS subdomain max).
+	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Subdomain().validate(self).hasValue()`,message="the value must be a valid DNS subdomain: lowercase alphanumeric characters, hyphens, and dots, starting and ending with an alphanumeric character."
 	// +optional
 	Group string `json:"group,omitempty"`
 
@@ -680,7 +692,9 @@ type ObjectStatus struct {
 
 	// namespace is the namespace of the object. Empty for cluster-scoped
 	// resources. At most 253 characters (DNS subdomain max).
+	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start and end with an alphanumeric character."
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
@@ -688,6 +702,7 @@ type ObjectStatus struct {
 	// characters (DNS subdomain max).
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:XValidation:rule=`self != "." && self != ".." && !self.contains("/") && !self.contains("%")`,message="name must be a valid object name: it may not be '.' or '..' or contain '/' or '%'"
 	// +required
 	Name string `json:"name,omitempty"`
 
@@ -697,6 +712,7 @@ type ObjectStatus struct {
 	// Each message is at most 1024 characters; longer messages are truncated
 	// by the controller.
 	// +kubebuilder:validation:MaxItems=18
+	// +kubebuilder:validation:items:MinLength=1
 	// +kubebuilder:validation:items:MaxLength=1024
 	// +listType=atomic
 	// +optional

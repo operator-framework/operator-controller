@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.22.0
+    controller-gen.kubebuilder.io/version: v0.23.0
     olm.operatorframework.io/generator: experimental
   name: clusterobjectsets.olm.operatorframework.io
 spec:
@@ -162,7 +162,7 @@ spec:
                         When set, this value is used as the default for any object in this phase that does not
                         explicitly specify its own collisionProtection.
 
-                        When omitted, we use .spec.collistionProtection as the default for any object in this phase that does not
+                        When omitted, we use .spec.collisionProtection as the default for any object in this phase that does not
                         explicitly specify its own collisionProtection.
                       enum:
                       - Prevent
@@ -250,17 +250,32 @@ spec:
                                 maxLength: 253
                                 minLength: 1
                                 type: string
+                                x-kubernetes-validations:
+                                - message: must consist only of alphanumeric characters,
+                                    '-', '_', or '.'
+                                  rule: self.matches('^[-._a-zA-Z0-9]+$')
                               name:
                                 description: name is the name of the referenced Secret.
                                 maxLength: 253
                                 minLength: 1
                                 type: string
+                                x-kubernetes-validations:
+                                - message: the value must consist of only lowercase
+                                    alphanumeric characters and hyphens, and must
+                                    start and end with an alphanumeric character.
+                                  rule: '!format.dns1123Label().validate(self).hasValue()'
                               namespace:
                                 description: |-
                                   namespace is the namespace of the referenced Secret.
                                   When empty, defaults to the OLM system namespace during ref resolution.
                                 maxLength: 63
+                                minLength: 1
                                 type: string
+                                x-kubernetes-validations:
+                                - message: the value must consist of only lowercase
+                                    alphanumeric characters and hyphens, and must
+                                    start and end with an alphanumeric character.
+                                  rule: '!format.dns1123Label().validate(self).hasValue()'
                             required:
                             - key
                             - name
@@ -278,6 +293,7 @@ spec:
                   - objects
                   type: object
                 maxItems: 20
+                minItems: 1
                 type: array
                 x-kubernetes-list-map-keys:
                 - name
@@ -308,7 +324,7 @@ spec:
                     assertions:
                       description: |-
                         assertions is a required list of checks which will run against the objects selected by the selector. If
-                        one or more assertions fail then the phase within which the object lives will be not be considered
+                        one or more assertions fail then the phase within which the object lives will not be considered
                         'Ready', blocking rollout of all subsequent phases.
                       items:
                         description: Assertion is a discriminated union which defines
@@ -440,7 +456,11 @@ spec:
                       properties:
                         groupKind:
                           description: |-
-                            groupKind specifies the group and kind of objects to select.
+                            groupKind specifies the group and kind of objects to select. Note that this selector
+                            has a limitation in that it does not discriminate based on the version of the object;
+                            until this gap is closed users of this selector should take into account the possibility
+                            of different versions of the same groupKind not being able to pass assertions in the
+                            same way.
 
                             Required when type is "GroupKind".
 
@@ -568,8 +588,14 @@ spec:
             - collisionProtection
             - group
             - lifecycleState
+            - phases
             - revision
             type: object
+            x-kubernetes-validations:
+            - message: phases cannot be removed once set
+              rule: '!has(oldSelf.phases) || has(self.phases)'
+            - message: progressionProbes cannot be removed once set
+              rule: '!has(oldSelf.progressionProbes) || has(self.progressionProbes)'
           status:
             description: |-
               status is optional and defines the observed state of the ClusterObjectSet.
@@ -734,6 +760,7 @@ spec:
                       description: |-
                         digest is the digest of the phase's resolved object content
                         at first successful resolution, in the format "<algorithm>:<hex>".
+                        Currently, sha256 is the only supported algorithm.
                       maxLength: 256
                       minLength: 1
                       type: string
@@ -827,7 +854,13 @@ spec:
                               group is the API group of the object (empty string for core
                               resources). At most 253 characters (DNS subdomain max).
                             maxLength: 253
+                            minLength: 1
                             type: string
+                            x-kubernetes-validations:
+                            - message: 'the value must be a valid DNS subdomain: lowercase
+                                alphanumeric characters, hyphens, and dots, starting
+                                and ending with an alphanumeric character.'
+                              rule: '!format.dns1123Subdomain().validate(self).hasValue()'
                           kind:
                             description: |-
                               kind is the kind of the object. Must be between 1 and 63
@@ -844,6 +877,7 @@ spec:
                               by the controller.
                             items:
                               maxLength: 1024
+                              minLength: 1
                               type: string
                             maxItems: 18
                             type: array
@@ -855,12 +889,23 @@ spec:
                             maxLength: 253
                             minLength: 1
                             type: string
+                            x-kubernetes-validations:
+                            - message: 'name must be a valid object name: it may not
+                                be ''.'' or ''..'' or contain ''/'' or ''%'''
+                              rule: self != "." && self != ".." && !self.contains("/")
+                                && !self.contains("%")
                           namespace:
                             description: |-
                               namespace is the namespace of the object. Empty for cluster-scoped
                               resources. At most 253 characters (DNS subdomain max).
                             maxLength: 253
+                            minLength: 1
                             type: string
+                            x-kubernetes-validations:
+                            - message: the value must consist of only lowercase alphanumeric
+                                characters and hyphens, and must start and end with
+                                an alphanumeric character.
+                              rule: '!format.dns1123Label().validate(self).hasValue()'
                           version:
                             description: |-
                               version is the API version of the object. Must be between 1 and
