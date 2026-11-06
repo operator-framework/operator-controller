@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/component-base/featuregate"
@@ -59,6 +59,9 @@ type scenarioContext struct {
 	extensionObjects     []client.Object
 	revisionSecrets      []resource
 	resourceUIDs         map[string]types.UID
+	upgradeObjects       []*unstructured.Unstructured
+	upgradePods          []corev1.Pod
+	upgradeStorageUIDs   map[string]types.UID
 	proxy                *recordingProxy
 	catalogAddr          string
 	catalogCleanup       func()
@@ -159,10 +162,17 @@ func BeforeSuite() {
 		featureGates[catalogdHAFeature] = true
 	}
 
+	if err := refreshOLMConfiguration(); err != nil {
+		logger.Info("OLM deployments not found; skipping feature gate detection (upgrade scenarios will install OLM in Background)")
+	}
+}
+
+// refreshOLMConfiguration must also run after installing or upgrading OLM:
+// extension resource discovery depends on the deployed runtime's feature gates.
+func refreshOLMConfiguration() error {
 	olm, catalogdDep, err := detectOLMDeployments()
 	if err != nil {
-		logger.Info("OLM deployments not found; skipping feature gate detection (upgrade scenarios will install OLM in Background)")
-		return
+		return err
 	}
 	olmNamespace = olm.Namespace
 	componentNamespaces["operator-controller"] = olmNamespace
@@ -185,22 +195,26 @@ func BeforeSuite() {
 		}
 	}
 
-	featureGatePattern := regexp.MustCompile(`--feature-gates=([[:alnum:]]+)=(true|false)`)
+	featureGates[features.BoxcutterRuntime] = false
 	for _, c := range olm.Spec.Template.Spec.Containers {
 		if c.Name == "manager" {
 			for _, arg := range c.Args {
-				if matches := featureGatePattern.FindStringSubmatch(arg); matches != nil {
-					v, err := strconv.ParseBool(matches[2])
-					if err != nil {
-						panic(fmt.Errorf("failed to parse feature gate %q=%q: %v", matches[1], matches[2], err))
+				if gates, found := strings.CutPrefix(arg, "--feature-gates="); found {
+					for _, gate := range strings.Split(gates, ",") {
+						name, value, _ := strings.Cut(gate, "=")
+						v, err := strconv.ParseBool(value)
+						if err != nil {
+							return fmt.Errorf("failed to parse feature gate %q: %w", gate, err)
+						}
+						featureGates[featuregate.Feature(name)] = v
 					}
-					featureGates[featuregate.Feature(matches[1])] = v
 				}
 			}
 		}
 	}
 
 	logger.Info(fmt.Sprintf("Enabled feature gates: %v", featureGates))
+	return nil
 }
 
 func CheckFeatureTags(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
