@@ -33,7 +33,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/testutil"
 	mockapplier "github.com/operator-framework/operator-controller/internal/testutil/mock/applier"
 	mockctrlclient "github.com/operator-framework/operator-controller/internal/testutil/mock/ctrlclient"
-	"github.com/operator-framework/operator-controller/test"
 )
 
 var (
@@ -1040,10 +1039,10 @@ func TestBoxcutterApply_Adoption(t *testing.T) {
 
 func TestBoxcutterApply_RecreatesDeploymentAfterDeletion(t *testing.T) {
 	t.Parallel()
-	testEnv := test.NewEnv()
+	testEnv := testutil.NewEnv()
 	config, err := testEnv.Start()
 	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, test.StopWithRetry(testEnv, time.Minute, time.Second)) })
+	t.Cleanup(func() { require.NoError(t, testutil.StopWithRetry(testEnv, time.Minute, time.Second)) })
 	scheme := codTestScheme(t)
 	cl, err := client.New(config, client.Options{Scheme: scheme})
 	require.NoError(t, err)

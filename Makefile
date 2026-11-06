@@ -439,11 +439,11 @@ ifeq ($(strip $(GODOG_ARGS)),)
 	set +e; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="~@Serial && ~@demo" --godog.concurrency=100; \
+	go test -count=1 -v ./test/e2e/... -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="~@Serial && ~@demo" --godog.concurrency=100; \
 	parallelExit=$$?; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="@Serial && ~@demo" --godog.concurrency=1; \
+	go test -p 1 -count=1 -v ./test/e2e/... -timeout $(or $(E2E_TIMEOUT),20m) -args --godog.tags="@Serial && ~@demo" --godog.concurrency=1; \
 	serialExit=$$?; \
 	if [[ $$parallelExit -ne 0 ]] || [[ $$serialExit -ne 0 ]]; then \
 		echo "e2e tests failed: parallel=$$parallelExit serial=$$serialExit"; \
@@ -454,7 +454,7 @@ else
 	if [[ -z "$$E2E_PROMETHEUS_PORT" ]]; then echo "error: failed to extract prometheus hostPort from $(KIND_CONFIG)" >&2; exit 1; fi; \
 	KUBECONFIG=$(E2E_KUBECONFIG) \
 	PROMETHEUS_URL=http://localhost:$$E2E_PROMETHEUS_PORT \
-	go test -count=1 -v ./test/e2e/features_test.go -timeout=$(or $(E2E_TIMEOUT),20m) -args $(GODOG_ARGS)
+	go test -count=1 -v ./test/e2e/... -timeout=$(or $(E2E_TIMEOUT),20m) -args $(GODOG_ARGS)
 endif
 
 .PHONY: e2e-coverage-%
@@ -487,7 +487,7 @@ e2e/%: #EXHELP Run e2e scenario against a cluster created by e2e-setup or experi
 	@feature=$$(echo "$*" | cut -d/ -f1); \
 	scenario=$$(echo "$*" | cut -d/ -f2-); \
 	if [ "$$scenario" = "$$feature" ]; then scenario=""; fi; \
-	KUBECONFIG=$(KUBECONFIG) go test -count=1 -v ./test/e2e/features_test.go \
+	KUBECONFIG=$(KUBECONFIG) go test -count=1 -v ./test/e2e/operator-controller/... \
 	  -timeout $(E2E_TIMEOUT) \
 	  -args --godog.concurrency=1 --e2e.scenario="$$scenario" "features/$$feature.feature"
 
@@ -748,7 +748,7 @@ demo-e2e:
 	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found in PATH."; exit 1; }
 	@mkdir -p $(DEMO_OUTPUT_DIR)
 	KUBECONFIG=$(KUBECONFIG_DIR)/operator-controller-experimental-e2e.kubeconfig \
-	DEMO_OUTPUT_DIR=$(DEMO_OUTPUT_DIR) go test -count=1 -v ./test/e2e/features_test.go -timeout 30m \
+	DEMO_OUTPUT_DIR=$(DEMO_OUTPUT_DIR) go test -p 1 -count=1 -v ./test/e2e/... -timeout 30m \
 	  -args --godog.tags="@demo" --godog.concurrency=1
 
 .PHONY: demo-svg

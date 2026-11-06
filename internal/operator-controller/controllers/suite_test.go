@@ -37,8 +37,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/shared/util/image"
+	test "github.com/operator-framework/operator-controller/internal/testutil"
 	mockcontrollers "github.com/operator-framework/operator-controller/internal/testutil/mock/controllers"
-	"github.com/operator-framework/operator-controller/test"
 )
 
 func newScheme(t *testing.T) *apimachineryruntime.Scheme {
