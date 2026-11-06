@@ -9,11 +9,18 @@ const (
 	// It distinguishes OLM-managed ref Secrets from user-created Secrets.
 	SecretTypeObjectData corev1.SecretType = "olm.operatorframework.io/object-data" //nolint:gosec // G101 false positive: this is a Kubernetes Secret type identifier, not a credential
 
-	// ManagedByKey identifies the controller managing a resource.
+	// ManagedByKey is the well-known Kubernetes label recording the controller that
+	// manages a resource.
 	ManagedByKey = "apps.kubernetes.io/managed-by"
 
 	// ManagedByOperatorController identifies resources managed by operator-controller.
 	ManagedByOperatorController = "operator-controller"
+
+	// ManagedByObjectController is the ManagedByKey value stamped on ClusterObjectSets
+	// created by the object-controller. It is the signal that an ownerless revision in
+	// a ClusterObjectDeployment's group was created by the object-controller and may
+	// therefore be adopted.
+	ManagedByObjectController = "object-controller"
 
 	// OwnerKindKey is the label key used to record the kind of the owner
 	// resource responsible for creating or managing a ClusterObjectSet.

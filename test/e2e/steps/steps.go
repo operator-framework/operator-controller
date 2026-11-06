@@ -1060,36 +1060,47 @@ func ClusterObjectDeploymentConsistentlyReportsCondition(ctx context.Context, na
 	return consistentlyCondition(ctx, "clusterobjectdeployment", substituteScenarioVars(name, scenarioCtx(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), conditionReason, d)
 }
 
-// consistently invokes check every tick until duration elapses. Each call is one
-// observation of the live cluster state: check returns a non-nil error to report a
-// transient failure whose true state is unknown (e.g. a failed API read), which is
-// tolerated only within maxTransientGap; it uses require/assert for hard failures that
-// must fail the test immediately (e.g. an observed value that deviates from what is
-// expected). A nil return is a successful observation. consistently fails if no
-// observation ever succeeds within the window, so it cannot pass vacuously when the
-// resource is never successfully read.
+// consistently invokes check every tick until the expected state has held for the full
+// window, then returns success. Each call is one observation of the live cluster state:
+// check returns a non-nil error to report a transient failure whose true state is unknown
+// (e.g. a failed API read), which is tolerated only within maxTransientGap; it uses
+// require/assert for hard failures that must fail the test immediately (e.g. an observed
+// value that deviates from what is expected). A nil return is a successful observation.
+//
+// The window is measured from the first successful observation, not from the step start,
+// so a transient read outage at the start of the window delays it rather than failing it
+// (maxTransientGap can exceed a short window, in which case the start-of-step behaviour
+// would otherwise fail the step without ever reading the resource). consistently still
+// fails if no observation ever succeeds (it cannot pass vacuously when the resource is
+// never successfully read) or if reads stay unavailable for longer than maxTransientGap.
 func consistently(ctx context.Context, duration time.Duration, check func(context.Context) error) error {
 	t := godog.T(ctx)
 	const maxTransientGap = 10 * time.Second
-	lastObserved := time.Now()
+	var windowStart time.Time  // set on the first successful observation; the window is measured from here
+	lastObserved := time.Now() // last successful observation (or start), to bound transient read outages
 	observed := false
-	// Poll for the whole window rather than until a condition becomes true: the condition
-	// always returns false, so PollUntilContextTimeout runs check every tick (starting
-	// immediately) until it times out, which is the success case. A transient check error is
-	// tolerated only within maxTransientGap; a hard failure inside check fails the test
-	// immediately via require.
-	err := wait.PollUntilContextTimeout(ctx, tick, duration, true, func(ctx context.Context) (bool, error) {
+	// Allow the window itself plus one transient-gap of slack, so an outage at the start of
+	// the window postpones it instead of failing. A transient check error is tolerated only
+	// within maxTransientGap of the last successful observation; a hard failure inside check
+	// fails the test immediately via require.
+	err := wait.PollUntilContextTimeout(ctx, tick, duration+maxTransientGap, true, func(ctx context.Context) (bool, error) {
 		if cerr := check(ctx); cerr != nil {
 			require.LessOrEqualf(t, time.Since(lastObserved), maxTransientGap,
-				"consistency check could not observe the expected state for over %s during the window: %v", maxTransientGap, cerr)
-		} else {
-			observed = true
-			lastObserved = time.Now()
+				"consistency check could not observe the expected state for over %s: %v", maxTransientGap, cerr)
+			return false, nil
 		}
-		return false, nil
+		now := time.Now()
+		observed = true
+		lastObserved = now
+		if windowStart.IsZero() {
+			windowStart = now
+		}
+		// Stop once the expected state has held for the full window since the first
+		// successful observation. A deviation during the window fails hard inside check.
+		return now.Sub(windowStart) >= duration, nil
 	})
-	// A full-window run ends with a timeout (or context cancellation), which is expected;
-	// anything else is a real error.
+	// Reaching the overall deadline without the window completing is only acceptable if we at
+	// least observed the state (checked below); anything else is a real error.
 	if err != nil && !wait.Interrupted(err) {
 		return err
 	}
