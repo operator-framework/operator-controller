@@ -41,7 +41,7 @@ func TestValidate(t *testing.T) {
 	defaultDeploymentSpec := func(s *ClusterObjectDeploymentSpec) *ClusterObjectDeploymentSpec {
 		s.Template.Spec.CollisionProtection = CollisionProtectionPrevent
 		s.Template.Spec.Phases = []ClusterObjectSetPhase{
-			{Name: "deploy", Objects: []ClusterObjectSetObject{{Object: configMap()}}},
+			{Name: "deploy", Objects: []ClusterObjectSetObject{{Type: ObjectTypeInlineManifest, InlineManifest: configMap()}}},
 		}
 		return s
 	}
@@ -235,7 +235,7 @@ func newRevisionHistoryLimitCOD(name string, limit *int32) *ClusterObjectDeploym
 				Spec: ClusterObjectDeploymentTemplateSpec{
 					CollisionProtection: CollisionProtectionPrevent,
 					Phases: []ClusterObjectSetPhase{
-						{Name: "deploy", Objects: []ClusterObjectSetObject{{Object: configMap()}}},
+						{Name: "deploy", Objects: []ClusterObjectSetObject{{Type: ObjectTypeInlineManifest, InlineManifest: configMap()}}},
 					},
 				},
 			},

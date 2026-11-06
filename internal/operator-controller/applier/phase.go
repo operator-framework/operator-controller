@@ -156,15 +156,15 @@ func init() {
 // Helm-to-Boxcutter migration where the same resources may come from different sources
 // (Helm release manifest vs bundle manifest) and need to produce identical phases.
 func compareClusterObjectSetObjectApplyConfigurations(a, b ocv1ac.ClusterObjectSetObjectApplyConfiguration) int {
-	aGVK := a.Object.GroupVersionKind()
-	bGVK := b.Object.GroupVersionKind()
+	aGVK := a.InlineManifest.GroupVersionKind()
+	bGVK := b.InlineManifest.GroupVersionKind()
 
 	return cmp.Or(
 		cmp.Compare(aGVK.Group, bGVK.Group),
 		cmp.Compare(aGVK.Version, bGVK.Version),
 		cmp.Compare(aGVK.Kind, bGVK.Kind),
-		cmp.Compare(a.Object.GetNamespace(), b.Object.GetNamespace()),
-		cmp.Compare(a.Object.GetName(), b.Object.GetName()),
+		cmp.Compare(a.InlineManifest.GetNamespace(), b.InlineManifest.GetNamespace()),
+		cmp.Compare(a.InlineManifest.GetName(), b.InlineManifest.GetName()),
 	)
 }
 
@@ -176,7 +176,7 @@ func PhaseSort(unsortedObjs []ocv1ac.ClusterObjectSetObjectApplyConfiguration) [
 	phaseMap := make(map[Phase][]ocv1ac.ClusterObjectSetObjectApplyConfiguration)
 
 	for _, obj := range unsortedObjs {
-		phase := determinePhase(obj.Object.GroupVersionKind().GroupKind())
+		phase := determinePhase(obj.InlineManifest.GroupVersionKind().GroupKind())
 		phaseMap[phase] = append(phaseMap[phase], obj)
 	}
 

@@ -599,11 +599,11 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 		objs := make([]client.Object, 0, len(specPhase.Objects))
 		for _, specObj := range specPhase.Objects {
 			var obj *unstructured.Unstructured
-			switch {
-			case specObj.Object.Object != nil:
-				obj = specObj.Object.DeepCopy()
-			case specObj.Ref.Name != "":
-				resolved, err := c.resolveObjectRef(ctx, specObj.Ref)
+			switch specObj.Type {
+			case ocv1.ObjectTypeInlineManifest:
+				obj = specObj.InlineManifest.DeepCopy()
+			case ocv1.ObjectTypeObjectReference:
+				resolved, err := c.resolveObjectRef(ctx, specObj.ObjectReference)
 				if err != nil {
 					return nil, nil, nil, fmt.Errorf("resolving ref in phase %q: %w", specPhase.Name, err)
 				}
@@ -865,10 +865,10 @@ func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx contex
 
 	for _, phase := range cos.Spec.Phases {
 		for _, obj := range phase.Objects {
-			if obj.Ref.Name == "" {
+			if obj.Type != ocv1.ObjectTypeObjectReference {
 				continue
 			}
-			sr := secretRef{name: obj.Ref.Name, namespace: obj.Ref.Namespace}
+			sr := secretRef{name: obj.ObjectReference.Name, namespace: obj.ObjectReference.Namespace}
 			if _, ok := seen[sr]; !ok {
 				seen[sr] = struct{}{}
 				refs = append(refs, sr)

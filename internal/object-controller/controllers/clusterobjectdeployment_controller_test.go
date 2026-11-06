@@ -44,7 +44,8 @@ func codFixture() *ocv1.ClusterObjectDeployment {
 					Phases: []ocv1.ClusterObjectSetPhase{{
 						Name: "resources",
 						Objects: []ocv1.ClusterObjectSetObject{{
-							Object: unstructured.Unstructured{Object: map[string]interface{}{
+							Type: ocv1.ObjectTypeInlineManifest,
+							InlineManifest: unstructured.Unstructured{Object: map[string]interface{}{
 								"apiVersion": "v1",
 								"kind":       "ConfigMap",
 								"metadata":   map[string]interface{}{"name": "cm", "namespace": "ns"},
@@ -194,7 +195,7 @@ func Test_ClusterObjectDeploymentReconciler_Available(t *testing.T) {
 		// Change the template so a new revision is created while revision 1 stays Ready.
 		cod := &ocv1.ClusterObjectDeployment{}
 		require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
-		cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"k": "v"}
+		cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.Object["data"] = map[string]interface{}{"k": "v"}
 		require.NoError(t, c.Update(t.Context(), cod))
 
 		_, err = reconcileCOD(t, c) // creates revision 2; revision 1 is still active and Ready
@@ -217,7 +218,7 @@ func Test_ClusterObjectDeploymentReconciler_Available(t *testing.T) {
 		// Change the template so a new revision is created while revision 1 stays Ready.
 		cod := &ocv1.ClusterObjectDeployment{}
 		require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
-		cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"k": "v"}
+		cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.Object["data"] = map[string]interface{}{"k": "v"}
 		require.NoError(t, c.Update(t.Context(), cod))
 
 		_, err = reconcileCOD(t, c) // creates revision 2
@@ -533,7 +534,7 @@ func Test_ClusterObjectDeploymentReconciler_CreatesNewRevisionOnTemplateChange(t
 	// Change the template.
 	cod := &ocv1.ClusterObjectDeployment{}
 	require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
-	cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"k": "v"}
+	cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.Object["data"] = map[string]interface{}{"k": "v"}
 	require.NoError(t, c.Update(t.Context(), cod))
 
 	_, err = reconcileCOD(t, c)
@@ -1151,7 +1152,7 @@ func Test_ClusterObjectDeploymentReconciler_OwnerConflict(t *testing.T) {
 			if tc.owner != nil {
 				foreign.OwnerReferences = []metav1.OwnerReference{*tc.owner}
 			}
-			foreign.Spec.Phases[0].Objects[0].Object.SetName("foreign-cm")
+			foreign.Spec.Phases[0].Objects[0].InlineManifest.SetName("foreign-cm")
 			setCOSReady(foreign, metav1.ConditionTrue, ocv1.ClusterObjectSetReasonAllObjectsReady)
 			objects := []client.Object{cod, foreign}
 			if tc.owned {

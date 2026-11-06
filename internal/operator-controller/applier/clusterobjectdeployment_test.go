@@ -56,7 +56,7 @@ func TestBuildClusterObjectDeployment(t *testing.T) {
 	obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 
 	objects := []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
-		*ocv1ac.ClusterObjectSetObject().WithObject(*obj),
+		*ocv1ac.ClusterObjectSetObject().WithType(ocv1.ObjectTypeInlineManifest).WithInlineManifest(*obj),
 	}
 
 	annotations := map[string]string{
@@ -184,8 +184,8 @@ func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
 	require.NotNil(t, cod.Spec.Template.Spec.Phases)
 	for _, phase := range cod.Spec.Template.Spec.Phases {
 		for _, obj := range phase.Objects {
-			assert.Nil(t, obj.Object, "phase %s should have no inline objects", *phase.Name)
-			assert.NotNil(t, obj.Ref, "phase %s should have refs", *phase.Name)
+			assert.Nil(t, obj.InlineManifest, "phase %s should have no inline objects", *phase.Name)
+			assert.NotNil(t, obj.ObjectReference, "phase %s should have refs", *phase.Name)
 		}
 	}
 

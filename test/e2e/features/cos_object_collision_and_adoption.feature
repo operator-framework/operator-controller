@@ -38,7 +38,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -73,7 +74,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -97,7 +99,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -127,7 +130,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -151,7 +155,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -195,7 +200,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -237,7 +243,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -269,7 +276,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -293,7 +301,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -339,7 +348,8 @@ Feature: ClusterObjectSet object collision and adoption
         phases:
         - name: resources
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:

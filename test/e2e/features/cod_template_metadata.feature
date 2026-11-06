@@ -29,7 +29,8 @@ Feature: ClusterObjectDeployment template metadata propagation
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
@@ -66,7 +67,8 @@ Feature: ClusterObjectDeployment template metadata propagation
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:

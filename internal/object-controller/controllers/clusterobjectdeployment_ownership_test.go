@@ -36,7 +36,7 @@ func TestClusterObjectDeploymentGroupEvents(t *testing.T) {
 			cod := codFixture()
 			cod.Name = "cod-group-events-" + resolution
 			cod.UID = ""
-			cod.Spec.Template.Spec.Phases[0].Objects[0].Object.SetName("owned-" + resolution)
+			cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.SetName("owned-" + resolution)
 			require.NoError(t, cl.Create(t.Context(), cod))
 			t.Cleanup(func() {
 				ctx := context.Background()
@@ -67,7 +67,7 @@ func TestClusterObjectDeploymentGroupEvents(t *testing.T) {
 				OwnerReferences: []metav1.OwnerReference{foreignControllerReference()},
 			}
 			foreign.Spec.Revision = 3
-			foreign.Spec.Phases[0].Objects[0].Object.SetName("foreign-" + resolution)
+			foreign.Spec.Phases[0].Objects[0].InlineManifest.SetName("foreign-" + resolution)
 			foreign.Status = ocv1.ClusterObjectSetStatus{}
 			require.NoError(t, cl.Create(t.Context(), foreign))
 			waitForCODCondition(t, cl, cod.Name, ocv1.ClusterObjectDeploymentTypeProgressing,

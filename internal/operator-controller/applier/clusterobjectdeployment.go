@@ -146,11 +146,12 @@ func replaceInlineWithRefsInCOD(cod *ocv1ac.ClusterObjectDeploymentApplyConfigur
 			if !ok {
 				continue
 			}
-			cod.Spec.Template.Spec.Phases[phaseIdx].Objects[objIdx].Object = nil
-			cod.Spec.Template.Spec.Phases[phaseIdx].Objects[objIdx].Ref = ocv1ac.ObjectSourceRef().
-				WithName(ref.Name).
-				WithNamespace(ref.Namespace).
-				WithKey(ref.Key)
+			cod.Spec.Template.Spec.Phases[phaseIdx].Objects[objIdx] = *ocv1ac.ClusterObjectSetObject().
+				WithType(ocv1.ObjectTypeObjectReference).
+				WithObjectReference(ocv1ac.ObjectSourceRef().
+					WithName(ref.Name).
+					WithNamespace(ref.Namespace).
+					WithKey(ref.Key))
 		}
 	}
 }

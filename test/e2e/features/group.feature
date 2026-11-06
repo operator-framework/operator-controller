@@ -43,7 +43,8 @@ Feature: Track ClusterObjectSet revisions by group
         phases:
         - name: config
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -69,7 +70,8 @@ Feature: Track ClusterObjectSet revisions by group
         phases:
         - name: config
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -112,7 +114,8 @@ Feature: Track ClusterObjectSet revisions by group
         phases:
         - name: config
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -137,7 +140,8 @@ Feature: Track ClusterObjectSet revisions by group
         phases:
         - name: config
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:

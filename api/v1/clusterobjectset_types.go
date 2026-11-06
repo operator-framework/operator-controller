@@ -401,31 +401,56 @@ type ClusterObjectSetPhase struct {
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
+// ObjectType defines the type of objects provided in the Objects set.
+// +kubebuilder:validation:Enum=InlineManifest;ObjectReference
+type ObjectType string
+
+const (
+	ObjectTypeInlineManifest  ObjectType = "InlineManifest"
+	ObjectTypeObjectReference ObjectType = "ObjectReference"
+)
+
 // ClusterObjectSetObject represents a Kubernetes object to be applied as part
 // of a phase, along with its collision protection settings.
 //
-// Exactly one of object or ref must be set.
+// Exactly one of inlineManifest or objectReference must be set.
 //
-// +kubebuilder:validation:ExactlyOneOf={object,ref}
+// +union
+// +kubebuilder:validation:XValidation:rule="self.type == 'InlineManifest' ?has(self.inlineManifest) : !has(self.inlineManifest)",message="inlineManifest is required when type is InlineManifest, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="self.type == 'ObjectReference' ?has(self.objectReference) : !has(self.objectReference)",message="objectReference is required when type is ObjectReference, and forbidden otherwise"
 type ClusterObjectSetObject struct {
-	// object is an optional embedded Kubernetes object to be applied.
+	// type is a required field which specifies the type of object to use.
 	//
-	// Exactly one of object or ref must be set.
+	// The allowed selector types are "InlineManifest" and "ObjectReference".
+	//
+	// When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.
+	// When set to "ObjectReference", objects are supplied as references to a Secret that holds the serialized object manifest.
+	//
+	// +unionDiscriminator
+	// +required
+	// <opcon:experimental>
+	Type ObjectType `json:"type,omitempty"`
+
+	// inlineManifest is an optional embedded Kubernetes object to be applied.
+	//
+	// Exactly one of inlineManifest or objectReference must be set.
 	//
 	// This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
 	//
 	// +kubebuilder:validation:EmbeddedResource
 	// +kubebuilder:pruning:PreserveUnknownFields
+	// +unionMember
 	// +optional
-	Object unstructured.Unstructured `json:"object,omitzero"`
+	InlineManifest unstructured.Unstructured `json:"inlineManifest,omitempty,omitzero"`
 
-	// ref is an optional reference to a Secret that holds the serialized
+	// objectReference is an optional reference to a Secret that holds the serialized
 	// object manifest.
 	//
-	// Exactly one of object or ref must be set.
+	// Exactly one of inlineManifest or objectReference must be set.
 	//
+	// +unionMember
 	// +optional
-	Ref ObjectSourceRef `json:"ref,omitzero"`
+	ObjectReference ObjectSourceRef `json:"objectReference,omitzero"`
 
 	// collisionProtection controls whether the operator can adopt and modify objects
 	// that already exist on the cluster.

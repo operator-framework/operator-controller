@@ -524,18 +524,18 @@ _Appears in:_
 ClusterObjectSetObject represents a Kubernetes object to be applied as part
 of a phase, along with its collision protection settings.
 
-Exactly one of object or ref must be set.
+Exactly one of inlineManifest or objectReference must be set.
 
-_Validation:_
-- ExactlyOneOf: [object ref]
+
 
 _Appears in:_
 - [ClusterObjectSetPhase](#clusterobjectsetphase)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `object` _[Unstructured](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#unstructured-unstructured-v1)_ | object is an optional embedded Kubernetes object to be applied.<br />Exactly one of object or ref must be set.<br />This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields. |  | EmbeddedResource: \{\} <br />Optional: \{\} <br /> |
-| `ref` _[ObjectSourceRef](#objectsourceref)_ | ref is an optional reference to a Secret that holds the serialized<br />object manifest.<br />Exactly one of object or ref must be set. |  | Optional: \{\} <br /> |
+| `type` _[ObjectType](#objecttype)_ | type is a required field which specifies the type of object to use.<br />The allowed selector types are "InlineManifest" and "ObjectReference".<br />When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.<br />When set to "ObjectReference", objects are supplied as references to a Secret that holds the serialized object manifest.<br />**Experimental channel:**  |  | Enum: [InlineManifest ObjectReference] <br />Required: \{\} <br /> |
+| `inlineManifest` _[Unstructured](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#unstructured-unstructured-v1)_ | inlineManifest is an optional embedded Kubernetes object to be applied.<br />Exactly one of inlineManifest or objectReference must be set.<br />This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields. |  | EmbeddedResource: \{\} <br />Optional: \{\} <br /> |
+| `objectReference` _[ObjectSourceRef](#objectsourceref)_ | objectReference is an optional reference to a Secret that holds the serialized<br />object manifest.<br />Exactly one of inlineManifest or objectReference must be set. |  | Optional: \{\} <br /> |
 | `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection controls whether the operator can adopt and modify objects<br />that already exist on the cluster.<br />Allowed values are: "Prevent", "IfNoController", and "None".<br />When set to "Prevent", the operator only manages objects it created itself.<br />This prevents ownership collisions.<br />When set to "IfNoController", the operator can adopt and modify pre-existing objects<br />that are not owned by another controller.<br />This is useful for taking over management of manually-created resources.<br />When set to "None", the operator can adopt and modify any pre-existing object, even if<br />owned by another controller.<br />Use this setting with extreme caution as it may cause multiple controllers to fight over<br />the same resource, resulting in increased load on the API server and etcd.<br />When omitted, the value is inherited from the phase, then spec. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
 
 
@@ -554,7 +554,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `name` _string_ | name is a required identifier for this phase.<br />phase names must follow the DNS label standard as defined in [RFC 1123].<br />They must contain only lowercase alphanumeric characters or hyphens (-),<br />start and end with an alphanumeric character, and be no longer than 63 characters.<br />Common phase names include: namespaces, policies, rbac, crds, storage, deploy, publish.<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />MinLength: 1 <br />Required: \{\} <br /> |
-| `objects` _[ClusterObjectSetObject](#clusterobjectsetobject) array_ | objects is a required list of all Kubernetes objects that belong to this phase.<br />All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50. |  | ExactlyOneOf: [object ref] <br />MaxItems: 50 <br />Required: \{\} <br /> |
+| `objects` _[ClusterObjectSetObject](#clusterobjectsetobject) array_ | objects is a required list of all Kubernetes objects that belong to this phase.<br />All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50. |  | MaxItems: 50 <br />Required: \{\} <br /> |
 | `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection specifies the default collision protection strategy for all objects<br />in this phase. Individual objects can override this value.<br />When set, this value is used as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection.<br />When omitted, we use .spec.collistionProtection as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
 
 
@@ -688,6 +688,24 @@ _Appears in:_
 | `key` _string_ | key is the data key within the referenced Secret containing the<br />object manifest content. The value at this key must be a<br />JSON-serialized Kubernetes object manifest. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
 
 
+
+
+#### ObjectType
+
+_Underlying type:_ _string_
+
+ObjectType defines the type of objects provided in the Objects set.
+
+_Validation:_
+- Enum: [InlineManifest ObjectReference]
+
+_Appears in:_
+- [ClusterObjectSetObject](#clusterobjectsetobject)
+
+| Field | Description |
+| --- | --- |
+| `InlineManifest` |  |
+| `ObjectReference` |  |
 
 
 

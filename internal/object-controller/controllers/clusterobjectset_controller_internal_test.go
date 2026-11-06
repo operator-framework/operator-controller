@@ -467,7 +467,8 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 				Phases: []ocv1.ClusterObjectSetPhase{{
 					Name: "phase1",
 					Objects: []ocv1.ClusterObjectSetObject{{
-						Ref: ocv1.ObjectSourceRef{
+						Type: ocv1.ObjectTypeObjectReference,
+						ObjectReference: ocv1.ObjectSourceRef{
 							Name:      "test-secret",
 							Namespace: "test-ns",
 							Key:       "obj",
@@ -497,7 +498,8 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 				Phases: []ocv1.ClusterObjectSetPhase{{
 					Name: "phase1",
 					Objects: []ocv1.ClusterObjectSetObject{{
-						Ref: ocv1.ObjectSourceRef{
+						Type: ocv1.ObjectTypeObjectReference,
+						ObjectReference: ocv1.ObjectSourceRef{
 							Name:      "test-secret",
 							Namespace: "test-ns",
 							Key:       "obj",
@@ -522,8 +524,9 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 		cos := &ocv1.ClusterObjectSet{
 			Spec: ocv1.ClusterObjectSetSpec{
 				Phases: []ocv1.ClusterObjectSetPhase{{
-					Name:    "phase1",
+					Name: "phase1",
 					Objects: []ocv1.ClusterObjectSetObject{{
+						Type: ocv1.ObjectTypeInlineManifest,
 						// Inline object, no ref
 					}},
 				}},
@@ -557,8 +560,8 @@ func TestVerifyReferencedSecretsImmutable(t *testing.T) {
 				Phases: []ocv1.ClusterObjectSetPhase{{
 					Name: "phase1",
 					Objects: []ocv1.ClusterObjectSetObject{
-						{Ref: ocv1.ObjectSourceRef{Name: "test-secret", Namespace: "test-ns", Key: "obj"}},
-						{Ref: ocv1.ObjectSourceRef{Name: "test-secret", Namespace: "test-ns", Key: "obj2"}},
+						{Type: ocv1.ObjectTypeObjectReference, ObjectReference: ocv1.ObjectSourceRef{Name: "test-secret", Namespace: "test-ns", Key: "obj"}},
+						{Type: ocv1.ObjectTypeObjectReference, ObjectReference: ocv1.ObjectSourceRef{Name: "test-secret", Namespace: "test-ns", Key: "obj2"}},
 					},
 				}},
 			},

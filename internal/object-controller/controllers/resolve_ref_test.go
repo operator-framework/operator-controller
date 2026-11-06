@@ -300,7 +300,8 @@ func newRefTestCOS(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterObjectSet
 					Name: "deploy",
 					Objects: []ocv1.ClusterObjectSetObject{
 						{
-							Ref: ref,
+							Type:            ocv1.ObjectTypeObjectReference,
+							ObjectReference: ref,
 						},
 					},
 				},
