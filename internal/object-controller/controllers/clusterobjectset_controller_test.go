@@ -938,7 +938,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_VerifyReferencedSecrets(t *testin
 
 			ext := newTestClusterExtension()
 			rev1 := newTestClusterObjectSet(t, clusterObjectSetName, ext, testScheme)
-			// Reference two Secrets so verifyReferencedSecretsImmutable reads both.
+			// Reference two Secrets so immutable verification reads both.
 			rev1.Spec.Phases = []ocv1.ClusterObjectSetPhase{{
 				Name: "everything",
 				Objects: []ocv1.ClusterObjectSetObject{
