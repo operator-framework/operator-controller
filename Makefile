@@ -61,19 +61,30 @@ ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]]
 	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
 endif
 
-# bingo manages consistent tooling versions for things like kind, etc.
-include .bingo/Variables.mk
-
-# Use the controller-gen version from go.mod.
+# Tool versions are pinned by go.mod.
+CONFTEST := go tool conftest
 CONTROLLER_GEN := go tool controller-gen
+CRD_DIFF := go tool crdify
+CRD_REF_DOCS := go tool crd-ref-docs
+GOLANGCI_LINT := go tool golangci-lint
+GORELEASER := go tool goreleaser
+HELM := go tool helm
+KIND := go tool kind
+KUBE_SCORE := go tool kube-score
+MOCKGEN := go tool mockgen
+SETUP_ENVTEST := go tool setup-envtest
+YAMLFMT := go tool yamlfmt
 
-# mockgen is installed by bingo with a versioned name (mockgen-v0.6.0).
-# Redefine MOCKGEN to an unversioned symlink so that go generate can find it on PATH.
-_MOCKGEN_BINGO := $(MOCKGEN)
-MOCKGEN := $(ROOT_DIR)/bin/mockgen
-$(MOCKGEN): $(_MOCKGEN_BINGO)
+# These commands need build tags, which go tool does not accept.
+OPERATOR_SDK := $(ROOT_DIR)/bin/operator-sdk
+OPM := $(ROOT_DIR)/bin/opm
+OPERATOR_SDK_VERSION := $(shell go list -m -f '{{.Version}}' github.com/operator-framework/operator-sdk)
+$(OPERATOR_SDK): go.mod go.sum
 	@mkdir -p $(dir $@)
-	@ln -sf $< $@
+	go build -tags=containers_image_openpgp -ldflags=-X=github.com/operator-framework/operator-sdk/internal/version.Version=$(OPERATOR_SDK_VERSION) -o $@ github.com/operator-framework/operator-sdk/cmd/operator-sdk
+$(OPM): go.mod go.sum
+	@mkdir -p $(dir $@)
+	go build -tags=containers_image_openpgp -o $@ github.com/operator-framework/operator-registry/cmd/opm
 
 ifeq ($(origin KIND_CLUSTER_NAME), undefined)
 KIND_CLUSTER_NAME := operator-controller
@@ -134,11 +145,11 @@ help-extended: #HELP Display extended help.
 #SECTION Development
 
 .PHONY: lint
-lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
+lint: lint-custom #HELP Run golangci linter.
 	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: lint-helm
-lint-helm: $(HELM) $(CONFTEST) #HELP Run helm linter
+lint-helm: #HELP Run helm linter
 	$(HELM) lint helm/olmv1
 	(set -euo pipefail; $(HELM) template olmv1 helm/olmv1) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -
 
@@ -151,7 +162,7 @@ lint-custom: custom-linter-build #EXHELP Call custom linter for the project
 	go vet -tags=$(GO_BUILD_TAGS) -vettool=./bin/custom-linter ./...
 
 .PHONY: lint-api-diff
-lint-api-diff: $(GOLANGCI_LINT) #HELP Validate API changes using kube-api-linter with diff-aware analysis
+lint-api-diff: #HELP Validate API changes using kube-api-linter with diff-aware analysis
 	hack/api-lint-diff/run.sh
 
 .PHONY: tidy #HELP Run go mod tidy.
@@ -185,7 +196,7 @@ $(EXPERIMENTAL_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml
 $(EXPERIMENTAL_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml helm/e2e.yaml
 HELM_SETTINGS ?=
 .PHONY: $(MANIFESTS)
-$(MANIFESTS): $(HELM) $(CONFTEST)
+$(MANIFESTS):
 	@mkdir -p $(MANIFEST_HOME)
 	$(HELM) template olmv1 helm/olmv1 $(addprefix --values ,$($@)) $(addprefix --set ,$(HELM_SETTINGS)) > $@
 	$(CONFTEST) test --policy hack/conftest/policy/ -n main --combine $@
@@ -194,14 +205,14 @@ $(MANIFESTS): $(HELM) $(CONFTEST)
 
 # Generate manifests stored in source-control
 .PHONY: manifests
-manifests: update-crds $(MANIFESTS) $(HELM) #EXHELP Generate OLMv1 manifests
+manifests: update-crds $(MANIFESTS) #EXHELP Generate OLMv1 manifests
 	# These are testing existing manifest options without saving the results
 	$(HELM) template olmv1 helm/olmv1 --values helm/tilt.yaml $(addprefix --set ,$(HELM_SETTINGS)) > /dev/null
 	$(HELM) template olmv1 helm/olmv1 --set "options.openshift.enabled=true" > /dev/null
 
 .PHONY: generate-mocks
-generate-mocks: $(MOCKGEN) #EXHELP Generate mock implementations for testing.
-	PATH="$(ROOT_DIR)/bin:$$PATH" go generate ./...
+generate-mocks: #EXHELP Generate mock implementations for testing.
+	go generate ./...
 
 .PHONY: generate
 generate: generate-mocks #EXHELP Generate code containing DeepCopy, DeepCopyInto, DeepCopyObject, and ApplyConfiguration type implementations.
@@ -215,19 +226,15 @@ generate: generate-mocks #EXHELP Generate code containing DeepCopy, DeepCopyInto
 	done
 
 .PHONY: verify
-verify: tidy kind-verify-versions fmt generate manifests update-tls-profiles crd-ref-docs update-registryv1-bundle-schema verify-bingo #HELP Verify all generated code is up-to-date.
+verify: tidy kind-verify-versions fmt generate manifests update-tls-profiles crd-ref-docs update-registryv1-bundle-schema #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
-.PHONY: verify-bingo
-verify-bingo: $(BINGO)
-	$(BINGO) get -v -t 20
-
 .PHONY: fix-lint
-fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
+fix-lint: #EXHELP Fix lint issues
 	$(GOLANGCI_LINT) run --fix --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: fmt
-fmt: $(YAMLFMT) #EXHELP Formats code
+fmt: #EXHELP Formats code
 	go fmt ./...
 	$(YAMLFMT) -gitignore_excludes testdata
 
@@ -245,7 +252,7 @@ CRD_DIFF_UPDATED_REF := file://
 CRD_DIFF_OPCON_SOURCE := helm/olmv1/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml
 CRD_DIFF_CATD_SOURCE := helm/olmv1/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml
 CRD_DIFF_CONFIG := crd-diff-config.yaml
-verify-crd-compatibility: $(CRD_DIFF) manifests
+verify-crd-compatibility: manifests
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "${CRD_DIFF_ORIGINAL_REF}${CRD_DIFF_OPCON_SOURCE}" ${CRD_DIFF_UPDATED_REF}${CRD_DIFF_OPCON_SOURCE}
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "${CRD_DIFF_ORIGINAL_REF}${CRD_DIFF_CATD_SOURCE}" ${CRD_DIFF_UPDATED_REF}${CRD_DIFF_CATD_SOURCE}
 
@@ -277,12 +284,12 @@ COVERAGE_PKGS := $(shell go list ./... | grep -vE "/test/|/testutils|/testutil/m
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 
 .PHONY: envtest-k8s-bins #HELP Uses setup-envtest to download and install the binaries required to run ENVTEST-test based locally at the project/bin directory.
-envtest-k8s-bins: $(SETUP_ENVTEST)
+envtest-k8s-bins:
 	mkdir -p $(ROOT_DIR)/bin
 	$(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)
 
 .PHONY: test-unit
-test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
+test-unit: envtest-k8s-bins #HELP Run the unit tests
 	rm -rf $(COVERAGE_UNIT_DIR) && mkdir -p $(COVERAGE_UNIT_DIR)
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use -p path $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE))" \
             CGO_ENABLED=1 go test \
@@ -290,7 +297,8 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 -cover -coverpkg=$(COVERAGE_PKGS) -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
                 $(UNIT_TEST_DIRS) \
-                -test.gocoverdir=$(COVERAGE_UNIT_DIR)
+                -test.gocoverdir=$(COVERAGE_UNIT_DIR) \
+                | sed -E 's/ of statements in .*/ of statements/'
 
 COVERAGE_REGRESSION_DIR := $(ROOT_DIR)/coverage/regression
 .PHONY: test-regression
@@ -348,7 +356,7 @@ E2E_KUBECONFIG = $(KUBECONFIG_DIR)/$*.kubeconfig
 CATALOGD_CERT_SECRET = catalogd-service-cert-$(VERSION)
 
 .PHONY: kind-cluster-%
-kind-cluster-%: $(KIND) #EXHELP Create a kind cluster named after the stem (%).
+kind-cluster-%: #EXHELP Create a kind cluster named after the stem (%).
 	@KIND_NODE_IMAGE=$$(K8S_VERSION=$(K8S_VERSION) $(VALIDATE_KINDEST_NODE_SCRIPT)) || exit 1; \
 	$(KIND) delete cluster --name $* 2>/dev/null || true; \
 	$(KIND) create cluster --name $* --config $(KIND_CONFIG) --image "$$KIND_NODE_IMAGE"; \
@@ -375,7 +383,7 @@ kind-deploy-%: kind-load-% manifests
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: lint-deployed-%
-lint-deployed-%: kind-deploy-% $(KUBE_SCORE)
+lint-deployed-%: kind-deploy-%
 	(export KUBECONFIG=$(E2E_KUBECONFIG); \
 	for ns in $$(printf "olmv1-system\n%s\n" "$(CATD_NAMESPACE)" | uniq); do \
 		for resource in $$(kubectl api-resources --verbs=list --namespaced -o name); do \
@@ -394,7 +402,7 @@ wait-%: lint-deployed-%
 	KUBECONFIG=$(E2E_KUBECONFIG) kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert
 
 .PHONY: fluentbit-%
-fluentbit-%: wait-% $(HELM)
+fluentbit-%: wait-%
 ifeq ($(strip $(ARTIFACT_PATH)),)
 	@echo "ARTIFACT_PATH unset; skipping fluent-bit deployment"
 else
@@ -406,7 +414,7 @@ else
 endif
 
 .PHONY: prometheus-%
-prometheus-%: wait-% $(HELM)
+prometheus-%: wait-%
 ifeq ($(strip $(E2E_SUMMARY_OUTPUT)),)
 	@echo "E2E_SUMMARY_OUTPUT unset; skipping prometheus deployment"
 else
@@ -454,7 +462,7 @@ e2e-coverage-%: e2e-run-%
 	KUBECONFIG=$(E2E_KUBECONFIG) COVERAGE_NAME=$* ./hack/test/e2e-coverage.sh
 
 .PHONY: kind-clean-%
-kind-clean-%: $(KIND) #EXHELP Delete the kind cluster named after the stem (%).
+kind-clean-%: #EXHELP Delete the kind cluster named after the stem (%).
 	$(KIND) delete cluster --name $*
 
 test-e2e: e2e-coverage-operator-controller-e2e #HELP Run e2e test suite on local kind cluster
@@ -584,8 +592,8 @@ kind-verify-versions:
 	@K8S_VERSION=$(K8S_VERSION) $(VALIDATE_KINDEST_NODE_SCRIPT) > /dev/null
 
 .PHONY: kind-update-images
-kind-update-images: $(KIND) #EXHELP Regenerate the kindest/node image map in validate_kindest_node.sh.
-	hack/tools/update-kind-images.sh $(KIND)
+kind-update-images: #EXHELP Regenerate the kindest/node image map in validate_kindest_node.sh.
+	hack/tools/update-kind-images.sh "$$(go tool -n kind)"
 
 
 #SECTION Build
@@ -671,7 +679,7 @@ export ENABLE_RELEASE_PIPELINE
 export GORELEASER_ARGS
 
 .PHONY: release
-release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
+release: #EXHELP Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	OPCON_IMAGE_REPO=$(OPCON_IMAGE_REPO) CATD_IMAGE_REPO=$(CATD_IMAGE_REPO) OBJECT_CONTROLLER_IMAGE_REPO=$(OBJECT_CONTROLLER_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
@@ -691,7 +699,7 @@ quickstart: manifests #EXHELP Generate the unified installation release manifest
 .PHONY: crd-ref-docs
 API_REFERENCE_FILENAME := olmv1-api-reference.md
 API_REFERENCE_DIR := $(ROOT_DIR)/docs/api-reference
-crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
+crd-ref-docs: #EXHELP Generate the API Reference Documents.
 	rm -f $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME)
 	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/ \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \

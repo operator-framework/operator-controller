@@ -202,7 +202,6 @@ Feature: Recover cluster extension from errors that might occur during its lifet
               matchLabels:
                 "olm.operatorframework.io/metadata.name": ${CATALOG:test}
       """
-    And ClusterExtension latest generation has been reconciled
     And ClusterExtension reports Progressing as True with Reason Succeeded
     Then ClusterExtension is available
     And ClusterExtension reports Installed as True

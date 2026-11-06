@@ -17,9 +17,9 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-// An empty owner name creates an ownerless revision. Resolve a real cluster-scoped
-// owner before creation so garbage collection and reconciliation see valid metadata.
-func ClusterObjectSetWithNamespaceOwnerApplied(ctx context.Context, ownerName string, template *godog.DocString) error {
+// ResourceWithNamespaceOwnerApplied resolves a real cluster-scoped Namespace owner
+// before applying the resource so garbage collection sees valid owner metadata.
+func ResourceWithNamespaceOwnerApplied(ctx context.Context, ownerName string, template *godog.DocString) error {
 	sc := scenarioCtx(ctx)
 	obj, err := toUnstructured(substituteScenarioVars(template.Content, sc))
 	if err != nil {

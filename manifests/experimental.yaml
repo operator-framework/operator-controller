@@ -1293,7 +1293,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.22.0
+    controller-gen.kubebuilder.io/version: v0.23.0
     olm.operatorframework.io/generator: experimental
   name: clusterobjectdeployments.olm.operatorframework.io
 spec:
@@ -1535,6 +1535,7 @@ spec:
                                     == 1
                               maxItems: 50
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - name
                           - objects
@@ -1840,6 +1841,19 @@ spec:
                   Progressing is False with reason InvalidSpecification when spec.template.metadata
                   contains labels or annotations that are not valid for the resulting
                   ClusterObjectSet; no new revision is created until the metadata is corrected.
+                  Progressing is False with reason OwnerConflict when the highest active,
+                  non-deleting revision in the deployment's group is controlled by another
+                  controller. No new revision is created while the conflict persists, even if
+                  an owned revision has completed or exceeded its progress deadline.
+                  Progressing is False with reason UnmanagedRevision when the highest active,
+                  non-deleting revision in the deployment's group has no controller owner and is
+                  not labeled apps.kubernetes.io/managed-by=object-controller, the proof that the
+                  object-controller created it; such a revision is not adopted and no higher
+                  revision is created while it persists. Recover by removing the revision or by
+                  restoring the managed-by label on it. A revision that instead still references an
+                  older UID of this deployment (for example after a restore) is left to garbage
+                  collection rather than adopted, and no higher revision is created until GC removes
+                  it; this resolves without user action and is not reported as a distinct condition.
 
                   While a rollout is incomplete, Progressing also reflects why the latest (head
                   active) ClusterObjectSet revision is not yet Ready. It is True with reason
@@ -1853,10 +1867,19 @@ spec:
                   named ClusterObjectSet revision for the specific cause.
 
                   Available is True with reason Available when at least one active (non-archived)
-                  ClusterObjectSet revision is Ready, so the deployment remains available across
+                  owned ClusterObjectSet revision is Ready, so the deployment remains available across
                   rollouts while a previous revision is still Ready. It is False with reason
-                  Unavailable when active revisions exist but none are Ready yet, or with reason
-                  NoActiveRevision when no active revision exists.
+                  Unavailable when owned active revisions exist but none are Ready yet, or with reason
+                  NoActiveRevision when no owned active revision exists. Only an ownerless revision
+                  is adopted before status is calculated, and only when it carries the
+                  apps.kubernetes.io/managed-by=object-controller label that proves the
+                  object-controller created it; an ownerless revision missing that label is left
+                  untouched and, when it leads the group, blocks the rollout and is reported on the
+                  Progressing condition with reason UnmanagedRevision. A revision that still carries a
+                  controller owner reference is never adopted: foreign-owned revisions are excluded,
+                  and a stale reference to an older UID of this deployment (for example after a
+                  restore) is left to garbage collection rather than rewriting the reference to race
+                  it.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -2202,6 +2225,7 @@ spec:
                           rule: (has(self.object)?1:0)+(has(self.ref)?1:0) == 1
                       maxItems: 50
                       type: array
+                      x-kubernetes-list-type: atomic
                   required:
                   - name
                   - objects
@@ -2500,8 +2524,10 @@ spec:
             - revision
             type: object
           status:
-            description: status is optional and defines the observed state of the
-              ClusterObjectSet.
+            description: |-
+              status is optional and defines the observed state of the ClusterObjectSet.
+              Cannot be removed once set; this is to prevent immutable fields such as completedAt
+              from being cleared by an update which omits the status.
             properties:
               completedAt:
                 description: |-
@@ -2844,6 +2870,8 @@ spec:
         x-kubernetes-validations:
         - message: metadata.name must be <spec.group>-<spec.revision>
           rule: self.metadata.name == '%s-%d'.format([self.spec.group, self.spec.revision])
+        - message: status cannot be removed once set
+          rule: '!has(oldSelf.status) || has(self.status)'
     selectableFields:
     - jsonPath: .spec.group
     served: true

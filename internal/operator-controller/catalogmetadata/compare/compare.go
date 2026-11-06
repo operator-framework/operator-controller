@@ -7,7 +7,7 @@ import (
 	bsemver "github.com/blang/semver/v4"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	slicesutil "github.com/operator-framework/operator-controller/internal/shared/util/slices"

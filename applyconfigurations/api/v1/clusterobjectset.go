@@ -47,6 +47,8 @@ type ClusterObjectSetApplyConfiguration struct {
 	// spec defines the desired state of the ClusterObjectSet.
 	Spec *ClusterObjectSetSpecApplyConfiguration `json:"spec,omitempty"`
 	// status is optional and defines the observed state of the ClusterObjectSet.
+	// Cannot be removed once set; this is to prevent immutable fields such as completedAt
+	// from being cleared by an update which omits the status.
 	Status *ClusterObjectSetStatusApplyConfiguration `json:"status,omitempty"`
 }
 

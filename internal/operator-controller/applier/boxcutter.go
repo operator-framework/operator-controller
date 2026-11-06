@@ -465,6 +465,13 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		}
 	}
 
+	// Refuse foreign-controlled deployments and ownerless deployments without our
+	// managed-by label. Returning an ordinary error lets the ClusterExtension report
+	// Progressing=True/Retrying and use the normal controller retry backoff.
+	if err := bc.checkAdoptable(ctx, ext); err != nil {
+		return false, "", err
+	}
+
 	// Generate the desired ClusterObjectDeployment and the Secrets its template refs.
 	cod, secrets, err := bc.RevisionGenerator.GenerateClusterObjectDeployment(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
@@ -520,6 +527,40 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	}
 
 	return true, "", nil
+}
+
+// checkAdoptable verifies that the applier may own the ClusterObjectDeployment named
+// after the ClusterExtension. Ownerless deployments must have the operator-controller
+// managed-by label. A deployment controlled by this extension's UID is always adoptable.
+// Other controller UIDs are refused regardless of labels. If a restore leaves a
+// stale owner reference, the deployment can be recreated after garbage collection.
+func (bc *Boxcutter) checkAdoptable(ctx context.Context, ext *ocv1.ClusterExtension) error {
+	existing := &ocv1.ClusterObjectDeployment{}
+	switch err := bc.Client.Get(ctx, client.ObjectKey{Name: ext.Name}, existing); {
+	case apierrors.IsNotFound(err):
+		return nil
+	case err != nil:
+		return fmt.Errorf("getting ClusterObjectDeployment %q: %w", ext.Name, err)
+	}
+
+	controller := metav1.GetControllerOf(existing)
+	if controller == nil {
+		if existing.Labels[labels.ManagedByKey] == labels.ManagedByOperatorController {
+			return nil
+		}
+		return fmt.Errorf(
+			"ClusterObjectDeployment %q has no controller and does not have the required %s=%s label; refusing to adopt it",
+			ext.Name, labels.ManagedByKey, labels.ManagedByOperatorController,
+		)
+	}
+	if controller.UID == ext.UID {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"ClusterObjectDeployment %q is already controlled by %s %q; refusing to adopt it",
+		ext.Name, controller.Kind, controller.Name,
+	)
 }
 
 // runPreflights runs the configured preflight checks for a desired apply. It determines whether

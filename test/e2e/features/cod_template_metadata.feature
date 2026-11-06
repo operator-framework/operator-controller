@@ -40,6 +40,9 @@ Feature: ClusterObjectDeployment template metadata propagation
       """
     Then ClusterObjectSet "${NAME}-1" has group "${NAME}"
     And ClusterObjectSet "${NAME}-1" has label "team" with value "platform"
+    # The controller marks every revision it creates as object-controller-managed, the
+    # signal that lets it safely adopt an ownerless group member.
+    And ClusterObjectSet "${NAME}-1" has label "apps.kubernetes.io/managed-by" with value "object-controller"
     And ClusterObjectSet "${NAME}-1" contains annotation "note" with value
       """
       hello

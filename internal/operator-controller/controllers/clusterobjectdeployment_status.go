@@ -68,9 +68,10 @@ func progressingConditionFromClusterObjectDeployment(codProgressing *metav1.Cond
 		prog.Reason = ocv1.ReasonSucceeded
 		prog.Message = "Desired state reached"
 	case ocv1.ClusterObjectDeploymentReasonRevisionObjectCollision,
-		ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet:
-		// The head revision is impeded by a foreign-owned object or an unmet precondition. These clear
-		// on their own once the obstruction is resolved, so the extension keeps retrying.
+		ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet,
+		ocv1.ClusterObjectDeploymentReasonOwnerConflict:
+		// A foreign controller owns a revision or one of its objects, or a precondition is unmet.
+		// Reconciliation resumes automatically once the obstruction is resolved, so keep retrying.
 		prog.Reason = ocv1.ReasonRetrying
 	case ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded:
 		prog.Status = metav1.ConditionFalse
@@ -113,9 +114,13 @@ func setInstalledFromClusterObjectDeployment(ext *ocv1.ClusterExtension, cod *oc
 	if ext.Status.Install == nil {
 		// Nothing has ever been installed (first install in progress or failing).
 		setInstalledStatusConditionFalse(ext, installFailureReasonFromClusterObjectDeployment(cod), "No bundle installed")
+		return
 	}
-	// Otherwise a bundle is already installed (from a prior completion) and a new rollout is in flight;
-	// leave Installed=True and .status.install unchanged until the rollout completes.
+	// A bundle from a prior completion stays installed while a new rollout is in flight.
+	// Acknowledge the current spec without changing its installed bundle or condition details.
+	if installed := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled); installed != nil {
+		installed.ObservedGeneration = ext.GetGeneration()
+	}
 }
 
 // clusterObjectDeploymentRolloutComplete reports whether the deployment's current-generation rollout
@@ -153,6 +158,7 @@ func installFailureReasonFromClusterObjectDeployment(cod *ocv1.ClusterObjectDepl
 		switch prog.Reason {
 		case ocv1.ClusterObjectDeploymentReasonRevisionObjectCollision,
 			ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet,
+			ocv1.ClusterObjectDeploymentReasonOwnerConflict,
 			ocv1.ClusterObjectDeploymentReasonRevisionInvalidSpecification,
 			ocv1.ClusterObjectDeploymentReasonInvalidSpecification,
 			ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded:

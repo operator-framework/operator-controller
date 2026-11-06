@@ -57,6 +57,7 @@ func buildClusterObjectDeployment(
 
 	return ocv1ac.ClusterObjectDeployment(ext.Name).
 		WithLabels(ownerLabels).
+		WithLabels(map[string]string{labels.ManagedByKey: labels.ManagedByOperatorController}).
 		WithSpec(spec)
 }
 

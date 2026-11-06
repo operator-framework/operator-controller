@@ -73,6 +73,7 @@ func TestBuildClusterObjectDeployment(t *testing.T) {
 	assert.Equal(t, "test-value", result.Spec.Template.Metadata.Annotations["test-key"], "annotations propagate via template metadata")
 	assert.Equal(t, ocv1.ClusterExtensionKind, result.Labels[labels.OwnerKindKey])
 	assert.Equal(t, "ext", result.Labels[labels.OwnerNameKey])
+	assert.Equal(t, labels.ManagedByOperatorController, result.Labels[labels.ManagedByKey])
 
 	require.NotNil(t, result.Spec)
 	require.NotNil(t, result.Spec.Template)
@@ -173,6 +174,7 @@ func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
 	t.Log("by checking COD has owner labels")
 	assert.Equal(t, ocv1.ClusterExtensionKind, cod.Labels[labels.OwnerKindKey])
 	assert.Equal(t, "test-ext", cod.Labels[labels.OwnerNameKey])
+	assert.Equal(t, labels.ManagedByOperatorController, cod.Labels[labels.ManagedByKey])
 
 	t.Log("by checking template spec has collision protection set to Prevent")
 	require.NotNil(t, cod.Spec.Template.Spec.CollisionProtection)

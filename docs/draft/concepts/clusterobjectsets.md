@@ -17,9 +17,10 @@ Each ClusterObjectSet has:
 - A **collision protection** strategy — immutable, controlling how pre-existing objects are handled
 - **Status conditions** — reporting rollout progress, availability, and success
 
-<!-- TODO(COD): Update this integration description when operator-controller
-manages ClusterObjectDeployments instead of ClusterObjectSets directly. -->
-ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, the operator-controller uses ClusterObjectSets as the mechanism to deploy and upgrade ClusterExtensions.
+ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, when `BoxcutterRuntime` is enabled, operator-controller creates and updates a ClusterObjectDeployment (COD) for each ClusterExtension. The COD controller creates the immutable ClusterObjectSet revisions that deploy and upgrade the extension.
+
+For a standalone walkthrough that manages mutable desired content through COS
+revisions, see [Manage standalone ClusterObjectDeployments](../tutorials/manage-clusterobjectdeployments.md).
 
 The `group` value must be 1–52 characters long, start with a lowercase letter,
 contain only lowercase letters, digits or hyphens, and end with a letter or digit.
@@ -34,13 +35,27 @@ they have different controller owners or no owner references. They share the
 server-side apply field manager `cos-group/<group>`. Different groups remain
 subject to normal object collision protection.
 
+### Revision membership and management
+
+The immutable `spec.group` identifies a COS's revision chain. Controller owner
+references record management relationships: a COD owns the COS revisions it
+creates, and each COS owns the Kubernetes objects it manages.
+
+A standalone COS, a COD-owned COS, and a COS owned by another controller are
+siblings when their groups match. Adding, changing, or removing a COS's controller
+owner reference leaves its revision chain unchanged. For example, deleting a COD
+with orphan propagation removes its owner references from the surviving COSs;
+those COSs remain in the same group and retain the same handoff behavior.
+Archived and deleting COSs are excluded from the active sibling list.
+
 ### Controller deployment
 
 The experimental `object-controller` runs in its own Deployment with its own service
-account and leader-election lease. It watches ClusterObjectSets and the objects they
-manage; it does not require ClusterExtension or ClusterCatalog resources or controllers.
-The operator-controller continues to resolve and unpack bundles, create ClusterObjectSets,
-and observe their status when `BoxcutterRuntime` is enabled.
+account and leader-election lease. It watches ClusterObjectDeployments,
+ClusterObjectSets, and the objects they manage; it does not require ClusterExtension
+or ClusterCatalog resources or controllers. When `BoxcutterRuntime` is enabled,
+operator-controller resolves and unpacks bundles, applies ClusterObjectDeployments,
+and observes their rollout status.
 
 The Helm chart automatically enables object-controller alongside operator-controller
 when `BoxcutterRuntime` is enabled. To deploy it independently, first build an image
@@ -202,7 +217,7 @@ Each object in a phase can be stored in one of two ways (exactly one must be set
 `ref`
 :   A reference to a Secret that holds the serialized object manifest. The `ref` specifies the Secret name, namespace, and data key containing either a JSON-encoded manifest or gzip-compressed JSON bytes. This allows ClusterObjectSets to manage bundles that would otherwise exceed etcd's 1.5 MiB object size limit.
 
-When operator-controller creates ClusterObjectSets for ClusterExtensions, it automatically externalizes objects into immutable Secrets:
+When operator-controller renders ClusterObjectDeployment templates for ClusterExtensions, it automatically externalizes objects into immutable Secrets:
 
 - Secrets are packed up to 900 KiB each, leaving headroom below the etcd limit
 - Objects larger than 900 KiB are gzip-compressed before storage (ref resolution auto-detects and transparently decompresses gzip-compressed values so consumers see the original JSON manifest)
@@ -262,11 +277,11 @@ ready.
 
 ### ClusterObjectDeployment Progressing
 
-While a rollout is incomplete, a ClusterObjectDeployment (COD) reflects *why* its
-head active revision is not yet `Ready` on its own `Progressing` condition, so you
-can tell a rollout that is merely in progress from one that is stalled on
-something you must fix. Each reason names the revision; inspect that
-ClusterObjectSet for the specific cause.
+A ClusterObjectDeployment (COD) reports rollout progress and ownership conflicts
+on its `Progressing` condition. While a rollout is incomplete, it also reflects
+*why* its head active revision is not yet `Ready`, so you can tell a rollout that
+is merely in progress from one that is stalled on something you must fix.
+For revision failures, inspect the named ClusterObjectSet for the specific cause.
 
 | Status | Reason | Meaning | What to do |
 | --- | --- | --- | --- |
@@ -276,7 +291,23 @@ ClusterObjectSet for the specific cause.
 | False | `RevisionInvalidSpecification` | The head revision's own objects are invalid | Correct the template so the rendered objects are valid |
 | False | `ProgressDeadlineExceeded` | A still-retrying revision exceeded its deadline (see [Progress deadline](#progress-deadline)) | See above |
 | False | `InvalidSpecification` | The deployment's own `spec.template.metadata` is invalid, so no revision is created | Fix the template labels/annotations |
+| False | `OwnerConflict` | The highest active, non-deleting revision in the deployment's group is controlled by another controller; no new revision is created | Resolve the revision's controller ownership, or archive or delete the conflicting revision |
 | False | `NewClusterObjectSetProgressed` | The head revision completed its rollout | None |
+
+`OwnerConflict` concerns ownership of the ClusterObjectSet itself, while
+`RevisionObjectCollision` concerns ownership of objects within a revision.
+`OwnerConflict` takes precedence even if an owned revision has completed or
+exceeded its progress deadline. Availability still depends only on owned active
+revisions; a previous ready revision can keep the COD `Available=True` during the
+conflict.
+
+For a ClusterExtension, `OwnerConflict` maps to `Progressing=True` with reason
+`Retrying`, preserving the deployment's message about the conflicting revision
+and its controller. A first install reports `Installed=False` with reason
+`Failed`. During an upgrade, the previously installed bundle and its `Installed=True`
+condition are preserved until the new rollout completes, with `observedGeneration`
+updated to acknowledge the current spec. Reconciliation resumes automatically when
+the ownership conflict clears.
 
 `RevisionObjectCollision` and `RevisionInvalidSpecification` are *hard stalls*:
 they will not resolve on their own, so they report `Progressing=False` and take
@@ -293,7 +324,7 @@ The first time a revision becomes ready, the controller stamps `status.completed
 
 ## How operator-controller uses ClusterObjectSets
 
-Within OLM, ClusterObjectSets serve as the deployment mechanism for `ClusterExtensions`. The operator-controller is one consumer of the ClusterObjectSet API.
+With `BoxcutterRuntime` enabled, ClusterObjectSets serve as the deployment mechanism for `ClusterExtensions`. The operator-controller is one consumer of the ClusterObjectSet API.
 
 ### Installation
 
@@ -302,42 +333,45 @@ When a ClusterExtension is installed:
 1. The operator-controller resolves a bundle from the catalog
 2. The bundle's Kubernetes manifests are sorted into phases by resource kind
 3. Objects are packed into immutable Secrets
-4. A ClusterObjectSet is created with `revision: 1` in `Active` lifecycle state
-5. Phases roll out sequentially — each phase waits for all its objects to become ready before the next phase begins
+4. The operator-controller applies a ClusterObjectDeployment with the desired content in its template
+5. When a new revision is needed, the COD controller creates an `Active` ClusterObjectSet with a revision number one greater than the highest existing revision in the group (`1` for an empty group)
+6. Phases roll out sequentially — each phase waits for all its objects to become ready before the next phase begins
 
 ### Upgrades
 
 When a ClusterExtension is upgraded to a new version:
 
-1. A new ClusterObjectSet is created with `revision: N+1`
-2. Both old and new revisions are `Active` during the transition
-3. Objects transition ownership from the old revision to the new one
-4. Once the new revision has rolled out successfully, the old revision is archived
-5. Older archived revisions are garbage collected, keeping the last 5 for auditing
+1. The operator-controller updates the ClusterObjectDeployment's template with the new bundle content
+2. The COD controller creates a new ClusterObjectSet with a revision number one greater than the highest existing revision in the group, including archived and foreign-owned ClusterObjectSets
+3. Both old and new revisions are `Active` during the transition
+4. Objects transition ownership from the old revision to the new one
+5. Once the new revision has rolled out successfully, the old revision is archived
+6. The COD controller garbage collects older archived revisions, keeping the last 5 by default for auditing
 
-Once a group reaches revision 9999999999, both the ClusterObjectDeployment
-controller and operator-controller report an error instead of allocating another
-revision. The check happens before creating a ClusterObjectSet and, for
-operator-controller, before pruning history or creating Secrets. Reconciliation
-of unchanged content still works.
+Once a group reaches revision 9999999999, the ClusterObjectDeployment controller
+reports an error instead of allocating another revision. Reconciliation of
+unchanged content still works when no higher active, non-deleting COS is
+controlled by another controller.
 
 ### Relationship with ClusterExtension
 
-A `ClusterExtension` owns one or more `ClusterObjectSet` resources.
+A `ClusterExtension` owns a `ClusterObjectDeployment` with the same name. The COD
+owns the `ClusterObjectSet` revisions it creates, and each COS owns its managed
+Kubernetes objects. These controller owner references enable cascading garbage
+collection when the extension is deleted.
 
-Operator-controller sets `spec.group` to the ClusterExtension's name and retains
-the ClusterExtension controller owner reference for garbage collection. Revision
-lookup uses the group; labels and owner references do not determine membership.
+The COD controller sets each revision's `spec.group` to the COD's name, which is
+also the ClusterExtension's name. Revision lookup uses the group; labels and owner
+references do not determine membership.
 
-When created by operator-controller, ClusterObjectSets carry labels that identify the parent:
+The COD template propagates labels that identify the parent extension to its COS
+revisions:
 
 ```yaml
 metadata:
   labels:
     olm.operatorframework.io/owner-kind: ClusterExtension
     olm.operatorframework.io/owner-name: my-extension
-    olm.operatorframework.io/package-name: my-operator
-    olm.operatorframework.io/bundle-version: 1.2.3
 ```
 
 ## Examples

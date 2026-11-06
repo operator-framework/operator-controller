@@ -54,11 +54,11 @@ install and manage cluster extensions. The project follows a microservices archi
 - `containers_image_openpgp` - required for image handling
 
 **Tools:**
-- controller-gen is managed by the Go tool directive in go.mod.
-- golangci-lint, goreleaser, helm, kind, kustomize, mockgen, setup-envtest, and operator-sdk are managed via .bingo/.
+- Go tool directives in go.mod manage the tools, including kube-score. opm and
+  operator-sdk use tagged builds because go tool does not support build tags.
 
 **Test Mocking:**
-- **gomock** (`go.uber.org/mock`): Used for generated mock implementations. `//go:generate mockgen` directives
+- **gomock** (`go.uber.org/mock`): Used for generated mock implementations. `//go:generate go tool mockgen` directives
   live in `internal/testutil/mock/generate.go` (external and internal exported interfaces) and at interface
   definitions for internal unexported interfaces (source mode). Run `make generate-mocks` to regenerate.
   All interface mocks should be gomock-generated. Test fakes that return preconfigured values without
@@ -370,7 +370,6 @@ ScalarField string `json:"scalarField,omitempty"`
 - `/PROJECT` - Kubebuilder project config
 - `/OWNERS` & `/OWNERS_ALIASES` - Maintainer lists
 - `/mkdocs.yml` - Documentation site config
-- `/.bingo/*.mod` - Tool dependencies (managed by bingo)
 - `/.golangci.yaml` - Linter configuration
 - `/kind-config.yaml` - Kind cluster config
 

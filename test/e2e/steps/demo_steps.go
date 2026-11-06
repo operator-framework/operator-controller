@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/cucumber/godog"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func RegisterDemoSteps(sc *godog.ScenarioContext) {
@@ -64,7 +65,7 @@ func CatalogReportsConditionWithoutReason(ctx context.Context, catalogUserName, 
 		}
 		catalogName = catalogUserName
 	}
-	err := waitForCondition(ctx, "clustercatalog", catalogName, conditionType, conditionStatus, nil, nil)
+	err := waitForCondition(ctx, "clustercatalog", catalogName, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
 	if err == nil {
 		if rec := RecorderFromContext(ctx); rec != nil {
 			out, _ := k8sClient(ctx, "get", "clustercatalog", catalogName,

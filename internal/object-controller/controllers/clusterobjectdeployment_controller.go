@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/util/workqueue"
@@ -96,25 +97,145 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 		return ctrl.Result{}, err
 	}
 
+	owned, adoptionErr := c.adoptOrphans(ctx, cod, revisions)
+
 	// Garbage collection is best-effort housekeeping and must not block rollout or
 	// status reconciliation: a persistently failing prune (e.g. a delete denied by
 	// an admission policy) would otherwise indefinitely stall deployment of an
 	// updated template and leave status stale even with a healthy active revision.
 	// Preserve the error, continue reconciling, and return it joined with the
 	// rollout outcome so the failure is still surfaced and retried.
-	gcErr := c.garbageCollectArchivedRevisions(ctx, cod, revisions)
+	gcErr := c.garbageCollectArchivedRevisions(ctx, cod, owned)
+	setAvailable(cod, owned)
 
-	result, rolloutErr := c.reconcileRollout(ctx, cod, revisions)
+	// Group membership determines revision ordering, while controller ownership
+	// determines management authority. Never create a competing revision above a
+	// leader we do not manage, even if an older owned revision has completed: a
+	// revision controlled by a foreign owner, an ownerless revision the object-controller
+	// cannot prove it created (missing the managed-by label), or a revision still
+	// referencing an older UID of this deployment (e.g. a restored revision), which we
+	// leave to garbage collection rather than racing it by rewriting its owner reference.
+	if latest := latestActiveRevision(revisions); latest != nil {
+		owner := metav1.GetControllerOf(latest)
+		if hasForeignController(cod, latest) {
+			setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonOwnerConflict,
+				fmt.Sprintf("ClusterObjectSet %q (revision %d) is controlled by %s %s %q (UID %q); no higher revision will be created while this owner conflict persists",
+					latest.Name, latest.Spec.Revision, owner.APIVersion, owner.Kind, owner.Name, owner.UID))
+			return ctrl.Result{}, errors.Join(adoptionErr, gcErr)
+		}
+		if owner != nil && !metav1.IsControlledBy(latest, cod) {
+			// Stale same-name reference to an older UID of this deployment (e.g. a
+			// restored revision). We do not rewrite the reference to race garbage
+			// collection, which deletes a revision whose owner UID no longer exists. This
+			// is transient and self-healing: the watch on group members re-reconciles us
+			// once GC removes it. We simply hold off creating a competing revision and
+			// leave the status untouched rather than flapping a condition for a momentary
+			// state.
+			return ctrl.Result{}, errors.Join(adoptionErr, gcErr)
+		}
+		if isUnmanagedRevision(cod, latest) {
+			setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonUnmanagedRevision,
+				fmt.Sprintf("ClusterObjectSet %q (revision %d) is not labeled %s=%s, so the object-controller cannot prove it created it; it is not adopted, and no higher revision will be created while this unmanaged revision persists",
+					latest.Name, latest.Spec.Revision, labels.ManagedByKey, labels.ManagedByObjectController))
+			return ctrl.Result{}, errors.Join(adoptionErr, gcErr)
+		}
+	}
+	if adoptionErr != nil {
+		setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "waiting for revisions to be adopted")
+		return ctrl.Result{}, errors.Join(adoptionErr, gcErr)
+	}
+
+	result, rolloutErr := c.reconcileRollout(ctx, cod, owned, revisions)
 	return result, errors.Join(gcErr, rolloutErr)
+}
+
+// adoptOrphans returns the deployment's owned revisions, adopting non-deleting,
+// ownerless revisions that carry the object-controller managed-by label. Successful
+// adoptions also update the group slice before conflict detection. Other group members
+// are left untouched: an ownerless revision missing the managed-by label (surfaced on the
+// Progressing condition as UnmanagedRevision when it leads the group), and a revision
+// still referencing an older UID of this deployment (e.g. a restored revision), which is
+// left to garbage collection rather than racing it by rewriting its owner reference —
+// when such a revision leads the group, reconcile simply holds off creating a competing
+// revision until GC removes it.
+func (c *ClusterObjectDeploymentReconciler) adoptOrphans(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) ([]ocv1.ClusterObjectSet, error) {
+	owned := make([]ocv1.ClusterObjectSet, 0, len(revisions))
+	var errs []error
+	for i := range revisions {
+		rev := &revisions[i]
+		if hasForeignController(cod, rev) {
+			continue
+		}
+		if metav1.IsControlledBy(rev, cod) {
+			owned = append(owned, *rev)
+			continue
+		}
+		if !rev.DeletionTimestamp.IsZero() {
+			continue
+		}
+		// A revision that still carries a controller owner reference is not adopted
+		// here. A foreign owner is handled above; a stale same-name reference to an
+		// older UID of this deployment (e.g. a restored revision) is left for garbage
+		// collection rather than rewriting the reference to race it.
+		if metav1.GetControllerOf(rev) != nil {
+			continue
+		}
+		// Only adopt an ownerless group member the object-controller can prove it
+		// created: it must carry the managed-by label, or it merely shares the group.
+		if isUnmanagedRevision(cod, rev) {
+			continue
+		}
+
+		adopted := rev.DeepCopy()
+		// SetControllerReference adds our controller reference to the ownerless revision
+		// and preserves unrelated owner references.
+		if err := controllerutil.SetControllerReference(cod, adopted, c.Scheme); err != nil {
+			errs = append(errs, fmt.Errorf("setting controller reference on revision %q: %w", rev.Name, err))
+			continue
+		}
+		if err := c.Client.Patch(ctx, adopted, client.MergeFromWithOptions(rev, client.MergeFromWithOptimisticLock{})); err != nil {
+			errs = append(errs, fmt.Errorf("adopting revision %q: %w", rev.Name, err))
+			continue
+		}
+		*rev = *adopted
+		owned = append(owned, *rev)
+	}
+	return owned, errors.Join(errs...)
+}
+
+// isUnmanagedRevision reports whether an ownerless, non-foreign group member cannot be
+// proven to belong to this deployment and so must not be adopted. It is proven ours only
+// when it carries the object-controller managed-by label. Callers must first exclude
+// members that still have a controller owner reference: foreign owners (see
+// hasForeignController) and stale same-name references to an older UID of this deployment
+// are handled separately, so this only distinguishes a labeled orphan (adoptable) from an
+// unlabeled one that merely shares the deployment's group.
+func isUnmanagedRevision(cod *ocv1.ClusterObjectDeployment, cos *ocv1.ClusterObjectSet) bool {
+	if metav1.IsControlledBy(cos, cod) {
+		return false
+	}
+	return cos.Labels[labels.ManagedByKey] != labels.ManagedByObjectController
+}
+
+// hasForeignController distinguishes another controller from an adoptable orphan
+// or a reference to an older UID of a deployment with the same group, kind, and
+// name. API versions within the same group identify the same controller kind.
+func hasForeignController(cod *ocv1.ClusterObjectDeployment, cos *ocv1.ClusterObjectSet) bool {
+	owner := metav1.GetControllerOf(cos)
+	if owner == nil {
+		return false
+	}
+	gv, err := schema.ParseGroupVersion(owner.APIVersion)
+	return err != nil || gv.Group != ocv1.GroupVersion.Group ||
+		owner.Kind != ocv1.ClusterObjectDeploymentKind || owner.Name != cod.Name
 }
 
 // reconcileRollout creates a new ClusterObjectSet revision when the template has
 // changed (or no active revision exists) and reflects the latest revision's
-// rollout progress in the deployment's Available and Progressing conditions.
-func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) (ctrl.Result, error) {
+// rollout progress in the deployment's Progressing condition. Rollout decisions
+// use owned revisions; revision allocation uses the entire group.
+func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context, cod *ocv1.ClusterObjectDeployment, owned, group []ocv1.ClusterObjectSet) (ctrl.Result, error) {
 	hash := templateHash(cod.Spec.Template)
-
-	setAvailable(cod, revisions)
 
 	// The template metadata is propagated verbatim onto each revision's
 	// ClusterObjectSet. Invalid labels or annotations would make that revision
@@ -125,10 +246,10 @@ func (c *ClusterObjectDeploymentReconciler) reconcileRollout(ctx context.Context
 		return ctrl.Result{}, nil
 	}
 
-	latest := latestActiveRevision(revisions)
+	latest := latestActiveRevision(owned)
 	if latest == nil || latest.Labels[labels.TemplateHashKey] != hash {
 		var err error
-		latest, err = c.createRevision(ctx, cod, revisions, hash)
+		latest, err = c.createRevision(ctx, cod, group, hash)
 		if err != nil {
 			setProgressing(cod, metav1.ConditionTrue, ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressing, "waiting for new revision to be created")
 			return ctrl.Result{}, err
@@ -224,18 +345,8 @@ func (c *ClusterObjectDeploymentReconciler) listRevisions(ctx context.Context, g
 // revisions must be sorted ascending by revision number (oldest first), as
 // returned by listRevisions.
 //
-// NOTE: The candidate revisions come from listRevisions, which selects by
-// spec.group (equal to the deployment name) rather than by this deployment's
-// controller owner reference. This is deliberate and consistent with the rest of
-// OLMv1: sibling membership of a revision family is defined by spec.group, not by
-// ownership (see createRevision's naming/grouping and the ClusterObjectSet
-// controller's own sibling archival, both keyed on spec.group). A consequence is
-// that a ClusterObjectSet sharing this group but created by a different owner
-// would be counted toward the limit and could be deleted here. That is tolerated
-// because the deployment name is the group and is treated as an exclusive
-// namespace for its revisions — nothing else should create ClusterObjectSets in
-// it. If siblinghood is ever redefined in terms of ownership, this function and
-// listRevisions must be updated together to filter by owner reference and UID.
+// The caller supplies only owned (including successfully adopted) revisions.
+// Foreign-owned group members neither count toward the limit nor get pruned.
 func (c *ClusterObjectDeploymentReconciler) garbageCollectArchivedRevisions(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
 	limit := defaultRevisionHistoryLimit
 	if cod.Spec.RevisionHistoryLimit != nil {
@@ -258,7 +369,9 @@ func (c *ClusterObjectDeploymentReconciler) garbageCollectArchivedRevisions(ctx 
 	// the others on every reconcile.
 	var errs []error
 	for i := 0; i < len(archived)-limit; i++ {
-		if err := c.Client.Delete(ctx, archived[i]); err != nil && !apierrors.IsNotFound(err) {
+		if err := c.Client.Delete(ctx, archived[i], client.Preconditions{
+			UID: &archived[i].UID, ResourceVersion: &archived[i].ResourceVersion,
+		}); err != nil && !apierrors.IsNotFound(err) {
 			errs = append(errs, fmt.Errorf("deleting archived revision %q: %w", archived[i].Name, err))
 		}
 	}
@@ -277,8 +390,6 @@ func archivedTeardownComplete(rev *ocv1.ClusterObjectSet) bool {
 
 // createRevision builds and creates the next ClusterObjectSet revision owned by
 // the deployment. Any create error, including AlreadyExists, is returned.
-//
-// TODO: revisit AlreadyExists handling under the adoption use-case.
 func (c *ClusterObjectDeploymentReconciler) createRevision(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet, hash string) (*ocv1.ClusterObjectSet, error) {
 	revision, err := nextRevisionNumber(revisions)
 	if err != nil {
@@ -328,6 +439,12 @@ func newCODDeadlineAwareRateLimiter(delegate workqueue.TypedRateLimiter[ctrl.Req
 			if err := reader.List(ctx, &revisions, client.MatchingFields{clusterObjectSetGroupIndex: cod.Name}); err != nil {
 				return 0, false, err
 			}
+			if latest := latestActiveRevision(revisions.Items); latest != nil && hasForeignController(cod, latest) {
+				return 0, false, nil
+			}
+			revisions.Items = slices.DeleteFunc(revisions.Items, func(rev ocv1.ClusterObjectSet) bool {
+				return hasForeignController(cod, &rev) || !metav1.IsControlledBy(&rev, cod)
+			})
 			latest := latestActiveRevision(revisions.Items)
 			if latest == nil || latest.Labels[labels.TemplateHashKey] != templateHash(cod.Spec.Template) {
 				// Creating the desired revision is outside the MVP deadline.
@@ -400,15 +517,8 @@ func (c *ClusterObjectDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) e
 				predicate.ResourceVersionChangedPredicate{},
 			),
 		).
-		Owns(
-			&ocv1.ClusterObjectSet{},
-			builder.WithPredicates(
-				predicate.ResourceVersionChangedPredicate{},
-			),
-		).
-		// A ClusterObjectSet's spec.group matches the name of the ClusterObjectDeployment
-		// that owns (or should adopt) it. Owns() only enqueues already-owned revisions, so
-		// this watch additionally surfaces not-yet-adopted (orphan) ClusterObjectSets.
+		// Observe every group member, including foreign-owned revisions, so
+		// ownership conflicts and their resolution always trigger reconciliation.
 		Watches(
 			&ocv1.ClusterObjectSet{},
 			handler.EnqueueRequestsFromMapFunc(mapClusterObjectSetToClusterObjectDeployment),
@@ -532,9 +642,11 @@ func truncateBytes(s string, maxBytes int) string {
 // deployment template. It does not set the owner reference; the caller does.
 func buildClusterObjectSet(cod *ocv1.ClusterObjectDeployment, revision int64, hash string) *ocv1.ClusterObjectSet {
 	// Propagate the template's metadata labels and annotations verbatim to the
-	// revision. The controller-managed TemplateHashKey label is set last so it
-	// always wins over any caller-supplied value; it records which template produced
-	// this revision so the controller can detect template changes. Ownership is
+	// revision. The controller-managed TemplateHashKey and ManagedByKey labels are set
+	// last so they always win over any caller-supplied value; TemplateHashKey records
+	// which template produced this revision so the controller can detect template
+	// changes, and ManagedByKey marks the revision as object-controller-created so an
+	// ownerless group member can be safely adopted. Controller ownership is otherwise
 	// expressed through the controller owner reference and the revision's spec.group,
 	// so no owner-kind/owner-name labels are set.
 	revLabels := maps.Clone(cod.Spec.Template.Metadata.Labels)
@@ -542,6 +654,7 @@ func buildClusterObjectSet(cod *ocv1.ClusterObjectDeployment, revision int64, ha
 		revLabels = map[string]string{}
 	}
 	revLabels[labels.TemplateHashKey] = hash
+	revLabels[labels.ManagedByKey] = labels.ManagedByObjectController
 
 	return &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{

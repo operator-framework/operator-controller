@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	corev1 "k8s.io/api/core/v1"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -178,11 +177,11 @@ func clusterCatalogUnpackedAfterPodCreation(ctx context.Context, namespace, reso
 			return false
 		}
 
-		serving := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogdv1.TypeServing)
+		serving := currentCondition(catalog.Generation, catalog.Status.Conditions, catalogdv1.TypeServing)
 		if serving == nil || serving.Status != metav1.ConditionTrue || serving.Reason != catalogdv1.ReasonAvailable {
 			return false
 		}
-		progressing := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogdv1.TypeProgressing)
+		progressing := currentCondition(catalog.Generation, catalog.Status.Conditions, catalogdv1.TypeProgressing)
 		if progressing == nil || progressing.Status != metav1.ConditionTrue || progressing.Reason != catalogdv1.ReasonSucceeded {
 			return false
 		}
@@ -275,7 +274,7 @@ func ScenarioCatalogReportsCondition(ctx context.Context, catalogUserName, condi
 		}
 		catalogName = catalogUserName
 	}
-	err := waitForCondition(ctx, "clustercatalog", catalogName, conditionType, conditionStatus, &conditionReason, nil)
+	err := waitForCondition(ctx, "clustercatalog", catalogName, conditionType, metav1.ConditionStatus(conditionStatus), &conditionReason, nil)
 	if err == nil {
 		if rec := RecorderFromContext(ctx); rec != nil {
 			out, _ := k8sClient(ctx, "get", "clustercatalog", catalogName,
