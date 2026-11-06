@@ -24,7 +24,8 @@ Feature: ClusterObjectSet static preflight validation
         phases:
         - name: phase-a
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -34,7 +35,8 @@ Feature: ClusterObjectSet static preflight validation
                 k: v
         - name: phase-b
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:
@@ -64,7 +66,8 @@ Feature: ClusterObjectSet static preflight validation
         phases:
         - name: phase-a
           objects:
-          - object:
+          - type: InlineManifest
+            inlineManifest:
               apiVersion: v1
               kind: ConfigMap
               metadata:

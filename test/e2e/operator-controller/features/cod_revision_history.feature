@@ -25,7 +25,8 @@ Feature: ClusterObjectDeployment revision history limit
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
@@ -50,7 +51,8 @@ Feature: ClusterObjectDeployment revision history limit
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
@@ -78,7 +80,8 @@ Feature: ClusterObjectDeployment revision history limit
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:

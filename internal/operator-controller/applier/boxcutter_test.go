@@ -110,7 +110,8 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 					WithName("configuration").
 					WithObjects(
 						ocv1ac.ClusterObjectSetObject().
-							WithObject(unstructured.Unstructured{
+							WithType(ocv1.ObjectTypeInlineManifest).
+							WithInlineManifest(unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -126,7 +127,8 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 								},
 							}),
 						ocv1ac.ClusterObjectSetObject().
-							WithObject(unstructured.Unstructured{
+							WithType(ocv1.ObjectTypeInlineManifest).
+							WithInlineManifest(unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "Secret",
@@ -817,9 +819,9 @@ func TestBoxcutterApply_WritesClusterObjectDeployment(t *testing.T) {
 	sawRef := false
 	for _, ph := range cod.Spec.Template.Spec.Phases {
 		for _, o := range ph.Objects {
-			require.Nil(t, o.Object.Object, "object should be externalized to a Secret ref")
-			require.NotNil(t, o.Ref)
-			refNames[o.Ref.Name] = struct{}{}
+			require.Nil(t, o.InlineManifest.Object, "object should be externalized to a Secret ref")
+			require.NotNil(t, o.ObjectRef)
+			refNames[o.ObjectRef.Name] = struct{}{}
 			sawRef = true
 		}
 	}

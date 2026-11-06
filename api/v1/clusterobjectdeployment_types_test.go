@@ -57,19 +57,19 @@ func TestClusterObjectDeploymentValidity(t *testing.T) {
 			cod.Spec.Template.Spec.Phases[0].Objects[0].CollisionProtection = "Invalid"
 		}},
 		{name: "object reference", mutate: func(cod *ClusterObjectDeployment) {
-			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{Ref: ObjectSourceRef{Name: "objects", Key: "configmap"}}
+			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{Type: ObjectTypeObjectReference, ObjectRef: ObjectSourceRef{Name: "objects", Key: "configmap"}}
 		}, valid: true},
 		{name: "both inline object and reference", mutate: func(cod *ClusterObjectDeployment) {
-			cod.Spec.Template.Spec.Phases[0].Objects[0].Ref = ObjectSourceRef{Name: "objects", Key: "configmap"}
+			cod.Spec.Template.Spec.Phases[0].Objects[0].ObjectRef = ObjectSourceRef{Name: "objects", Key: "configmap"}
 		}},
 		{name: "neither inline object nor reference", mutate: func(cod *ClusterObjectDeployment) {
 			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{}
 		}},
 		{name: "reference key missing", mutate: func(cod *ClusterObjectDeployment) {
-			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{Ref: ObjectSourceRef{Name: "objects"}}
+			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{Type: ObjectTypeObjectReference, ObjectRef: ObjectSourceRef{Name: "objects"}}
 		}},
 		{name: "inline object kind missing", mutate: func(cod *ClusterObjectDeployment) {
-			cod.Spec.Template.Spec.Phases[0].Objects[0].Object.SetKind("")
+			cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.SetKind("")
 		}},
 		{name: "progression probe", mutate: func(cod *ClusterObjectDeployment) {
 			cod.Spec.Template.Spec.ProgressionProbes = []ProgressionProbe{codProbe("ready")}
@@ -138,7 +138,7 @@ func TestClusterObjectDeploymentTemplateIsMutable(t *testing.T) {
 	secondObject := configMap()
 	secondObject.SetName("second-cm")
 	cod.Spec.Template.Spec.Phases = append(cod.Spec.Template.Spec.Phases, ClusterObjectSetPhase{
-		Name: "second", Objects: []ClusterObjectSetObject{{Object: secondObject}},
+		Name: "second", Objects: []ClusterObjectSetObject{{Type: ObjectTypeInlineManifest, InlineManifest: secondObject}},
 	})
 	cod.Spec.Template.Spec.CollisionProtection = CollisionProtectionIfNoController
 	cod.Spec.Template.Spec.ProgressionProbes = []ProgressionProbe{codProbe("first"), codProbe("second")}
@@ -148,7 +148,7 @@ func TestClusterObjectDeploymentTemplateIsMutable(t *testing.T) {
 	// COS immutability rules must not apply to the mutable deployment template.
 	cod.Spec.Template.Spec.Phases[0], cod.Spec.Template.Spec.Phases[1] = cod.Spec.Template.Spec.Phases[1], cod.Spec.Template.Spec.Phases[0]
 	cod.Spec.Template.Spec.Phases[0].Name = "renamed"
-	cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"mode": "updated"}
+	cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.Object["data"] = map[string]interface{}{"mode": "updated"}
 	cod.Spec.Template.Spec.CollisionProtection = CollisionProtectionNone
 	cod.Spec.Template.Spec.ProgressionProbes[0], cod.Spec.Template.Spec.ProgressionProbes[1] = cod.Spec.Template.Spec.ProgressionProbes[1], cod.Spec.Template.Spec.ProgressionProbes[0]
 	cod.Spec.Template.Spec.ProgressionProbes[0].Assertions[0].FieldValue.Value = "updated"
@@ -346,7 +346,7 @@ func newTestClusterObjectDeployment(name string) *ClusterObjectDeployment {
 			Template: ClusterObjectDeploymentTemplate{
 				Spec: ClusterObjectDeploymentTemplateSpec{
 					CollisionProtection: CollisionProtectionPrevent,
-					Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{{Object: configMap()}}}},
+					Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{{Type: ObjectTypeInlineManifest, InlineManifest: configMap()}}}},
 				},
 			},
 		},
@@ -366,7 +366,7 @@ func codPhases(count int) func(*ClusterObjectDeployment) {
 		cod.Spec.Template.Spec.Phases = make([]ClusterObjectSetPhase, count)
 		for i := range cod.Spec.Template.Spec.Phases {
 			cod.Spec.Template.Spec.Phases[i] = ClusterObjectSetPhase{
-				Name: fmt.Sprintf("phase-%d", i), Objects: []ClusterObjectSetObject{{Object: configMap()}},
+				Name: fmt.Sprintf("phase-%d", i), Objects: []ClusterObjectSetObject{{Type: ObjectTypeInlineManifest, InlineManifest: configMap()}},
 			}
 		}
 	}
@@ -378,7 +378,7 @@ func codPhaseObjects(count int) func(*ClusterObjectDeployment) {
 		for i := range objects {
 			obj := configMap()
 			obj.SetName(fmt.Sprintf("configmap-%d", i))
-			objects[i] = ClusterObjectSetObject{Object: obj}
+			objects[i] = ClusterObjectSetObject{Type: ObjectTypeInlineManifest, InlineManifest: obj}
 		}
 		cod.Spec.Template.Spec.Phases[0].Objects = objects
 	}

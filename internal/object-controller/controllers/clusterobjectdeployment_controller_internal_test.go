@@ -27,7 +27,7 @@ func testTemplate() ocv1.ClusterObjectDeploymentTemplate {
 				{
 					Name: "resources",
 					Objects: []ocv1.ClusterObjectSetObject{
-						{Object: unstructured.Unstructured{Object: map[string]interface{}{
+						{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: unstructured.Unstructured{Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
 							"metadata":   map[string]interface{}{"name": "cm", "namespace": "ns"},
@@ -52,7 +52,7 @@ func Test_templateHash_isStableAndSensitive(t *testing.T) {
 
 	// A change to a phase object changes the hash.
 	changed := testTemplate()
-	changed.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"k": "v"}
+	changed.Spec.Phases[0].Objects[0].InlineManifest.Object["data"] = map[string]interface{}{"k": "v"}
 	require.NotEqual(t, h1, templateHash(changed))
 
 	// A change to ONLY progressionProbes (a mutable COS field) still changes the hash.

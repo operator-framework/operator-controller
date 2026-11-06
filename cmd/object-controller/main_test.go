@@ -102,7 +102,7 @@ func TestStandaloneController(t *testing.T) {
 				"metadata": map[string]any{"name": name, "namespace": ns.Name},
 				"data":     map[string]any{"hello": "world"},
 			}}
-			obj := ocv1.ClusterObjectSetObject{Object: manifest}
+			obj := ocv1.ClusterObjectSetObject{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: manifest}
 			if name == "secret-ref" {
 				data, err := json.Marshal(manifest.Object)
 				require.NoError(t, err)
@@ -111,7 +111,7 @@ func TestStandaloneController(t *testing.T) {
 					Immutable:  ptr.To(true), Data: map[string][]byte{"object": data},
 				}
 				require.NoError(t, cl.Create(ctx, secret))
-				obj = ocv1.ClusterObjectSetObject{Ref: ocv1.ObjectSourceRef{Name: secret.Name, Namespace: secret.Namespace, Key: "object"}}
+				obj = ocv1.ClusterObjectSetObject{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: secret.Name, Namespace: secret.Namespace, Key: "object"}}
 			}
 			cos := &ocv1.ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{Name: name + "-1"},

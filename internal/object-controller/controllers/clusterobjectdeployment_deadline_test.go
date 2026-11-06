@@ -69,7 +69,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineCoversEntireRevision(t *testin
 	for i := range 5 {
 		phase := phaseTemplate.DeepCopy()
 		phase.Name = fmt.Sprintf("phase-%d", i+1)
-		phase.Objects[0].Object.SetName(phase.Name)
+		phase.Objects[0].InlineManifest.SetName(phase.Name)
 		cod.Spec.Template.Spec.Phases = append(cod.Spec.Template.Spec.Phases, *phase)
 	}
 
@@ -102,7 +102,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineCoversEntireRevision(t *testin
 					isComplete: i < completedPhases,
 					objects: []machinery.ObjectResult{newMockObjectResult(mockCtrl, objectResultConfig{
 						action:   machinery.ActionCreated,
-						object:   phase.Objects[0].Object.DeepCopy(),
+						object:   phase.Objects[0].InlineManifest.DeepCopy(),
 						complete: i < completedPhases,
 						paused:   i > completedPhases,
 						probes: machinerytypes.ProbeResultContainer{
@@ -192,7 +192,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineCoversEntireRevision(t *testin
 	// A later revision receives a fresh budget despite the deployment's age and
 	// the previous revision's earlier timeout.
 	require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(cod), cod))
-	cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"version": "second"}
+	cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.Object["data"] = map[string]interface{}{"version": "second"}
 	require.NoError(t, c.Update(t.Context(), cod))
 	_, err = reconcileDeadlineDeployment(t, c, clk)
 	require.NoError(t, err)
@@ -398,7 +398,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineRetainsAvailability(t *testing
 
 	clk.Step(time.Hour)
 	require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(cod), cod))
-	cod.Spec.Template.Spec.Phases[0].Objects[0].Object.Object["data"] = map[string]interface{}{"version": "second"}
+	cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.Object["data"] = map[string]interface{}{"version": "second"}
 	require.NoError(t, c.Update(t.Context(), cod))
 	result, err := reconcileDeadlineDeployment(t, c, clk)
 	require.NoError(t, err)

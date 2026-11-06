@@ -273,7 +273,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 						Objects: func() []ClusterObjectSetObject {
 							objects := make([]ClusterObjectSetObject, 51)
 							for i := range objects {
-								objects[i] = ClusterObjectSetObject{Object: configMap()}
+								objects[i] = ClusterObjectSetObject{InlineManifest: configMap()}
 							}
 							return objects
 						}(),
@@ -423,7 +423,8 @@ func TestClusterObjectSetValidity(t *testing.T) {
 						Name: "deploy",
 						Objects: []ClusterObjectSetObject{
 							{
-								Object: configMap(),
+								Type:           ObjectTypeInlineManifest,
+								InlineManifest: configMap(),
 							},
 						},
 					},
@@ -431,7 +432,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			},
 			valid: true,
 		},
-		"object with inline object is valid": {
+		"object with inlineObject is valid": {
 			spec: ClusterObjectSetSpec{
 				Group:               "validity-inline-object",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
@@ -442,7 +443,8 @@ func TestClusterObjectSetValidity(t *testing.T) {
 						Name: "deploy",
 						Objects: []ClusterObjectSetObject{
 							{
-								Object: configMap(),
+								Type:           ObjectTypeInlineManifest,
+								InlineManifest: configMap(),
 							},
 						},
 					},
@@ -450,7 +452,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			},
 			valid: true,
 		},
-		"object with ref is valid": {
+		"object with objectRef is valid": {
 			spec: ClusterObjectSetSpec{
 				Group:               "validity-ref-object",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
@@ -461,7 +463,8 @@ func TestClusterObjectSetValidity(t *testing.T) {
 						Name: "deploy",
 						Objects: []ClusterObjectSetObject{
 							{
-								Ref: ObjectSourceRef{Name: "my-secret", Key: "my-key"},
+								Type:      ObjectTypeObjectReference,
+								ObjectRef: ObjectSourceRef{Name: "my-secret", Key: "my-key"},
 							},
 						},
 					},
@@ -469,27 +472,27 @@ func TestClusterObjectSetValidity(t *testing.T) {
 			},
 			valid: true,
 		},
-		"object ref requires a name": {
+		"objectRef requires a name": {
 			spec:          refSpec("validity-case-21", ObjectSourceRef{Key: "my-key"}),
 			valid:         false,
-			expectedError: "ref.name: Required value",
+			expectedError: "objectRef.name: Required value",
 		},
-		"object ref requires a key": {
+		"objectRef requires a key": {
 			spec:          refSpec("validity-case-22", ObjectSourceRef{Name: "my-secret"}),
 			valid:         false,
-			expectedError: "ref.key: Required value",
+			expectedError: "objectRef.key: Required value",
 		},
-		"object ref name cannot exceed 253 characters": {
+		"objectRef name cannot exceed 253 characters": {
 			spec:          refSpec("validity-case-23", ObjectSourceRef{Name: strings.Repeat("a", 254), Key: "my-key"}),
 			valid:         false,
-			expectedError: "ref.name: Too long",
+			expectedError: "objectRef.name: Too long",
 		},
-		"object ref namespace cannot exceed 63 characters": {
+		"objectRef namespace cannot exceed 63 characters": {
 			spec:          refSpec("validity-case-24", ObjectSourceRef{Name: "my-secret", Key: "my-key", Namespace: strings.Repeat("a", 64)}),
 			valid:         false,
-			expectedError: "ref.namespace: Too long",
+			expectedError: "objectRef.namespace: Too long",
 		},
-		"object with both object and ref is invalid": {
+		"object with type InlineManifest but objectRef also set is invalid": {
 			spec: ClusterObjectSetSpec{
 				Group:               "validity-object-and-ref",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
@@ -500,17 +503,18 @@ func TestClusterObjectSetValidity(t *testing.T) {
 						Name: "deploy",
 						Objects: []ClusterObjectSetObject{
 							{
-								Object: configMap(),
-								Ref:    ObjectSourceRef{Name: "my-secret", Key: "my-key"},
+								Type:           ObjectTypeInlineManifest,
+								InlineManifest: configMap(),
+								ObjectRef:      ObjectSourceRef{Name: "my-secret", Key: "my-key"},
 							},
 						},
 					},
 				},
 			},
 			valid:         false,
-			expectedError: "exactly one of the fields in [object ref] must be set",
+			expectedError: "objectRef is required when type is ObjectReference, and forbidden otherwise",
 		},
-		"object with neither object nor ref is invalid": {
+		"object without a type is invalid": {
 			spec: ClusterObjectSetSpec{
 				Group:               "validity-object-and-ref-missing",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
@@ -526,7 +530,25 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				},
 			},
 			valid:         false,
-			expectedError: "exactly one of the fields in [object ref] must be set",
+			expectedError: "spec.phases[0].objects[0].type: Required value",
+		},
+		"object with type InlineManifest but no object is invalid": {
+			spec: ClusterObjectSetSpec{
+				Group:               "validity-object-type-no-object",
+				LifecycleState:      ClusterObjectSetLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases: []ClusterObjectSetPhase{
+					{
+						Name: "deploy",
+						Objects: []ClusterObjectSetObject{
+							{Type: ObjectTypeInlineManifest},
+						},
+					},
+				},
+			},
+			valid:         false,
+			expectedError: "inlineManifest is required when type is InlineManifest, and forbidden otherwise",
 		},
 		"progressionProbe with GroupKind selector and ConditionEqual assertion is valid": {
 			spec: probeSpec("validity-case-27", ProgressionProbe{
@@ -937,7 +959,7 @@ func refSpec(group string, ref ObjectSourceRef) ClusterObjectSetSpec {
 		Phases: []ClusterObjectSetPhase{
 			{
 				Name:    "deploy",
-				Objects: []ClusterObjectSetObject{{Ref: ref}},
+				Objects: []ClusterObjectSetObject{{Type: ObjectTypeObjectReference, ObjectRef: ref}},
 			},
 		},
 	}

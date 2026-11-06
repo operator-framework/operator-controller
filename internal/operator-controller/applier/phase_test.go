@@ -21,7 +21,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "single deploy obj",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "apps/v1",
 							"kind":       "Deployment",
@@ -34,7 +34,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseDeploy)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "apps/v1",
 									"kind":       "Deployment",
@@ -49,7 +49,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "all phases",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "admissionregistration.k8s.io/v1",
 							"kind":       "ValidatingWebhookConfiguration",
@@ -57,7 +57,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "apps/v1",
 							"kind":       "Deployment",
@@ -65,7 +65,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "Namespace",
@@ -73,7 +73,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "some.api/v1",
 							"kind":       "SomeCustomResource",
@@ -81,7 +81,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "rbac.authorization.k8s.io/v1",
 							"kind":       "ClusterRole",
@@ -89,7 +89,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "rbac.authorization.k8s.io/v1",
 							"kind":       "ClusterRoleBinding",
@@ -97,7 +97,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "rbac.authorization.k8s.io/v1",
 							"kind":       "RoleBinding",
@@ -105,7 +105,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "rbac.authorization.k8s.io/v1",
 							"kind":       "Role",
@@ -113,7 +113,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "PersistentVolume",
@@ -121,7 +121,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "networking.k8s.io/v1",
 							"kind":       "NetworkPolicy",
@@ -129,7 +129,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "apiextensions.k8s.io/v1",
 							"kind":       "CustomResourceDefinition",
@@ -137,7 +137,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ServiceAccount",
@@ -145,7 +145,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "Secret",
@@ -153,7 +153,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "Service",
@@ -161,7 +161,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "cert-manager.io/v1",
 							"kind":       "Certificate",
@@ -172,7 +172,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "autoscaling.k8s.io/v1",
 							"kind":       "VerticalPodAutoscaler",
@@ -180,7 +180,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "monitoring.coreos.com/v1",
 							"kind":       "PrometheusRule",
@@ -193,7 +193,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseNamespaces)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "Namespace",
@@ -206,7 +206,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhasePolicies)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "networking.k8s.io/v1",
 									"kind":       "NetworkPolicy",
@@ -219,7 +219,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseIdentity)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ServiceAccount",
@@ -232,7 +232,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseConfiguration)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "Secret",
@@ -245,7 +245,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseStorage)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "PersistentVolume",
@@ -258,7 +258,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseCRDs)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "apiextensions.k8s.io/v1",
 									"kind":       "CustomResourceDefinition",
@@ -271,7 +271,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseRoles)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "rbac.authorization.k8s.io/v1",
 									"kind":       "ClusterRole",
@@ -279,7 +279,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "rbac.authorization.k8s.io/v1",
 									"kind":       "Role",
@@ -292,7 +292,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseBindings)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "rbac.authorization.k8s.io/v1",
 									"kind":       "ClusterRoleBinding",
@@ -300,7 +300,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "rbac.authorization.k8s.io/v1",
 									"kind":       "RoleBinding",
@@ -313,7 +313,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseInfrastructure)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "Service",
@@ -321,7 +321,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "cert-manager.io/v1",
 									"kind":       "Certificate",
@@ -337,7 +337,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseDeploy)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "apps/v1",
 									"kind":       "Deployment",
@@ -345,7 +345,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "some.api/v1",
 									"kind":       "SomeCustomResource",
@@ -358,7 +358,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseScaling)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "autoscaling.k8s.io/v1",
 									"kind":       "VerticalPodAutoscaler",
@@ -371,7 +371,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhasePublish)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "monitoring.coreos.com/v1",
 									"kind":       "PrometheusRule",
@@ -384,7 +384,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseAdmission)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "admissionregistration.k8s.io/v1",
 									"kind":       "ValidatingWebhookConfiguration",
@@ -399,7 +399,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "sorted and batched",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "apps/v1",
 							"kind":       "Deployment",
@@ -407,7 +407,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -415,7 +415,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ServiceAccount",
@@ -428,7 +428,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseIdentity)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ServiceAccount",
@@ -441,7 +441,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseConfiguration)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -454,7 +454,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseDeploy)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "apps/v1",
 									"kind":       "Deployment",
@@ -474,7 +474,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "sort by group across infrastructure and deploy phases",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "apps/v1",
 							"kind":       "Deployment",
@@ -485,7 +485,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "cert-manager.io/v1",
 							"kind":       "Certificate",
@@ -501,7 +501,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseInfrastructure)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "cert-manager.io/v1",
 									"kind":       "Certificate",
@@ -517,7 +517,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseDeploy)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "apps/v1",
 									"kind":       "Deployment",
@@ -535,7 +535,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "sort by version within same group and phase",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "batch/v1",
 							"kind":       "Job",
@@ -546,7 +546,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "batch/v1beta1",
 							"kind":       "CronJob",
@@ -562,7 +562,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseDeploy)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "batch/v1",
 									"kind":       "Job",
@@ -573,7 +573,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "batch/v1beta1",
 									"kind":       "CronJob",
@@ -591,7 +591,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "sort by kind within same group, version, and phase",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "Secret",
@@ -602,7 +602,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -618,7 +618,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseConfiguration)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -629,7 +629,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "Secret",
@@ -647,7 +647,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "sort by namespace within same GVK and phase",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -659,7 +659,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -671,7 +671,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -688,7 +688,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseConfiguration)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -700,7 +700,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -712,7 +712,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -731,7 +731,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "sort by name within same GVK, namespace, and phase",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -743,7 +743,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -755,7 +755,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -772,7 +772,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseConfiguration)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -784,7 +784,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -796,7 +796,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -815,7 +815,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "comprehensive sorting - all dimensions",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "apps/v1",
 							"kind":       "Deployment",
@@ -827,7 +827,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "Secret",
@@ -839,7 +839,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "Secret",
@@ -851,7 +851,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -863,7 +863,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "apps/v1",
 							"kind":       "Deployment",
@@ -875,7 +875,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "ConfigMap",
@@ -892,7 +892,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseConfiguration)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -904,7 +904,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
@@ -916,7 +916,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "Secret",
@@ -928,7 +928,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "Secret",
@@ -945,7 +945,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseDeploy)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "apps/v1",
 									"kind":       "Deployment",
@@ -957,7 +957,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "apps/v1",
 									"kind":       "Deployment",
@@ -976,7 +976,7 @@ func Test_PhaseSort(t *testing.T) {
 			name: "cluster-scoped vs namespaced resources - empty namespace sorts first",
 			objs: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "rbac.authorization.k8s.io/v1",
 							"kind":       "ClusterRole",
@@ -987,7 +987,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "rbac.authorization.k8s.io/v1",
 							"kind":       "ClusterRole",
@@ -998,7 +998,7 @@ func Test_PhaseSort(t *testing.T) {
 					},
 				},
 				{
-					Object: &unstructured.Unstructured{
+					InlineManifest: &unstructured.Unstructured{
 						Object: map[string]interface{}{
 							"apiVersion": "rbac.authorization.k8s.io/v1",
 							"kind":       "Role",
@@ -1015,7 +1015,7 @@ func Test_PhaseSort(t *testing.T) {
 					Name: ptr.To(string(applier.PhaseRoles)),
 					Objects: []ocv1ac.ClusterObjectSetObjectApplyConfiguration{
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "rbac.authorization.k8s.io/v1",
 									"kind":       "ClusterRole",
@@ -1026,7 +1026,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "rbac.authorization.k8s.io/v1",
 									"kind":       "ClusterRole",
@@ -1037,7 +1037,7 @@ func Test_PhaseSort(t *testing.T) {
 							},
 						},
 						{
-							Object: &unstructured.Unstructured{
+							InlineManifest: &unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "rbac.authorization.k8s.io/v1",
 									"kind":       "Role",
