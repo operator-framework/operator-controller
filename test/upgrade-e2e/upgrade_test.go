@@ -30,8 +30,12 @@ func TestMain(m *testing.M) {
 	opts.Paths = pflag.Args()
 
 	sc := godog.TestSuite{
+		TestSuiteInitializer: func(tc *godog.TestSuiteContext) {
+			tc.BeforeSuite(steps.BeforeSuite)
+		},
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
 			sc.Before(steps.CreateScenarioContext)
+			sc.After(steps.ScenarioCleanup)
 			steps.RegisterSteps(sc)
 		},
 		Options: &opts,

@@ -236,6 +236,11 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	// Upgrade-specific steps
 	sc.Step(`^(?i)the latest stable OLM release is installed$`, LatestStableOLMReleaseIsInstalled)
 	sc.Step(`^(?i)OLM is upgraded$`, OLMIsUpgraded)
+	sc.Step(`^(?i)Helm-backed extension resource identities are remembered$`, RememberHelmExtensionIdentities)
+	sc.Step(`^(?i)pre-existing ClusterExtension storage has transitioned after OLM upgrade$`, PreExistingExtensionStorageTransitioned)
+	sc.Step(`^(?i)updated ClusterExtension storage is healthy$`, UpdatedExtensionStorageIsHealthy)
+	sc.Step(`^(?i)extension resources keep their pre-upgrade identities$`, ExtensionKeepsPreUpgradeIdentities)
+	sc.Step(`^(?i)retained extension resources keep their pre-upgrade identities$`, RetainedExtensionKeepsPreUpgradeIdentities)
 	sc.Step(`^(?i)(catalogd|operator-controller) is ready to reconcile resources$`, ComponentIsReadyToReconcile)
 	sc.Step(`^(?i)all (ClusterCatalog|ClusterExtension) resources are reconciled$`, allResourcesAreReconciled)
 	sc.Step(`^(?i)ClusterExtension is reconciled$`, ClusterExtensionIsReconciled)
@@ -2570,11 +2575,18 @@ func helmReleaseFromSecret(secret *corev1.Secret) (*release.Release, error) {
 		return nil, err
 	}
 
-	var rel release.Release
-	if err = json.Unmarshal(releaseJsonBytes, &rel); err != nil {
+	// The chunked storage driver wraps release.Release because Helm excludes
+	// Labels from its JSON representation. Restore those labels explicitly so
+	// storage assertions can verify the persisted bundle metadata.
+	var wrapped struct {
+		release.Release
+		Labels map[string]string `json:"labels"`
+	}
+	if err = json.Unmarshal(releaseJsonBytes, &wrapped); err != nil {
 		return nil, err
 	}
-	return &rel, nil
+	wrapped.Release.Labels = wrapped.Labels
+	return &wrapped.Release, nil
 }
 
 // collectHelmReleaseObjects returns a slice of client.Object containing the manifests in rel

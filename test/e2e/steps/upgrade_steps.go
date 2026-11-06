@@ -8,13 +8,29 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
+
+// waitForUpgradeCheck retains the last failed assertion, including controller
+// conditions, so migration failures report their cause rather than just a timeout.
+func waitForUpgradeCheck(ctx context.Context, check func() error) error {
+	var lastErr error
+	err := wait.PollUntilContextTimeout(ctx, tick, timeout, true, func(context.Context) (bool, error) {
+		lastErr = check()
+		return lastErr == nil, nil
+	})
+	if err != nil {
+		return fmt.Errorf("upgrade assertion timed out: %w: %v", err, lastErr)
+	}
+	return nil
+}
 
 // leaseNames maps component labels to their leader election lease names.
 var leaseNames = map[string]string{
@@ -22,28 +38,18 @@ var leaseNames = map[string]string{
 	"operator-controller": "9c4404e7.operatorframework.io",
 }
 
-var (
-	installOperator = sync.OnceValue(func() error {
-		err := runInstallScript("RELEASE_INSTALL")
-		if err != nil {
-			return err
-		}
-		olm, _, err := detectOLMDeployments()
-		if err != nil {
-			return err
-		}
-		olmNamespace = olm.Namespace
-		return nil
-	})
-	upgradeOperator = sync.OnceValue(func() error {
-		return runInstallScript("RELEASE_UPGRADE")
-	})
-)
-
 // LatestStableOLMReleaseIsInstalled downloads and executes the latest stable OLM release install script.
-// Uses sync.Once to ensure the install only happens once across multiple scenarios.
 func LatestStableOLMReleaseIsInstalled(_ context.Context) error {
-	return installOperator()
+	if err := runInstallScript("RELEASE_INSTALL"); err != nil {
+		return err
+	}
+	if err := refreshOLMConfiguration(); err != nil {
+		return err
+	}
+	if featureGates[features.BoxcutterRuntime] {
+		return fmt.Errorf("upgrade coverage requires an initial standard OLM installation")
+	}
+	return nil
 }
 
 func runInstallScript(envVar string) error {
@@ -72,9 +78,11 @@ func runInstallScript(envVar string) error {
 }
 
 // OLMIsUpgraded applies the locally built OLM manifest to upgrade OLM.
-// Uses sync.Once to ensure the upgrade only happens once across multiple scenarios.
-func OLMIsUpgraded(ctx context.Context) error {
-	return upgradeOperator()
+func OLMIsUpgraded(_ context.Context) error {
+	if err := runInstallScript("RELEASE_UPGRADE"); err != nil {
+		return err
+	}
+	return refreshOLMConfiguration()
 }
 
 // ComponentIsReadyToReconcile waits for the named component's deployment to be fully rolled out,
@@ -105,17 +113,55 @@ func ComponentIsReadyToReconcile(ctx context.Context, component string) error {
 	}
 
 	// Leader election can take up to LeaseDuration (137s) + RetryPeriod (26s) ≈ 163s in the worst case
-	waitFor(ctx, func() bool {
+	if err := waitForUpgradeCheck(ctx, func() error {
 		output, err := k8sClient(ctx, "get", "lease", leaseName, "-n", ns,
 			"-o", "jsonpath={.spec.holderIdentity}")
 		if err != nil || output == "" {
-			return false
+			return fmt.Errorf("waiting for %s leader lease: %s (%v)", component, output, err)
 		}
 		// Extract pod name from lease holder identity (format: <pod-name>_<suffix>)
 		podName := strings.Split(output, "_")[0]
+		// A lease left by the previous controller is insufficient. Require its
+		// holder to belong to the fully rolled-out deployment's current ReplicaSet.
+		podJSON, err := k8sClient(ctx, "get", "pod", podName, "-n", ns, "-o", "json")
+		if err != nil {
+			return fmt.Errorf("reading %s leader pod: %w", component, err)
+		}
+		var pod corev1.Pod
+		if err := json.Unmarshal([]byte(podJSON), &pod); err != nil {
+			return err
+		}
+		if !podReady(&pod) || metav1.GetControllerOf(&pod) == nil {
+			return fmt.Errorf("%s leader pod %s is not ready or has no controller", component, podName)
+		}
+		rsJSON, err := k8sClient(ctx, "get", "replicaset", metav1.GetControllerOf(&pod).Name, "-n", ns, "-o", "json")
+		if err != nil {
+			return err
+		}
+		depJSON, err := k8sClient(ctx, "get", "deployment", depName, "-n", ns, "-o", "json")
+		if err != nil {
+			return err
+		}
+		var rs appsv1.ReplicaSet
+		var dep appsv1.Deployment
+		if err := json.Unmarshal([]byte(rsJSON), &rs); err != nil {
+			return err
+		}
+		if err := json.Unmarshal([]byte(depJSON), &dep); err != nil {
+			return err
+		}
+		owner := metav1.GetControllerOf(&rs)
+		revision := dep.Annotations["deployment.kubernetes.io/revision"]
+		if owner == nil || owner.Kind != "Deployment" || owner.UID != dep.UID ||
+			metav1.GetControllerOf(&pod).Kind != "ReplicaSet" || metav1.GetControllerOf(&pod).UID != rs.UID ||
+			!generationObserved(dep.Generation, dep.Status.ObservedGeneration) || revision == "" || rs.Annotations["deployment.kubernetes.io/revision"] != revision {
+			return fmt.Errorf("%s lease holder %s is not from deployment revision %s", component, podName, revision)
+		}
 		sc.leaderPods[component] = podName
-		return true
-	})
+		return nil
+	}); err != nil {
+		return err
+	}
 
 	logger.V(1).Info("Component is ready to reconcile", "component", component, "leaderPod", sc.leaderPods[component])
 	return nil
