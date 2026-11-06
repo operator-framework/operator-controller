@@ -87,9 +87,12 @@ type ClusterObjectDeploymentTemplate struct {
 
 // ClusterObjectDeploymentTemplateMetadata contains labels and annotations
 // propagated to each ClusterObjectSet revision created from the template.
+// At least one of labels or annotations must be set.
+// +kubebuilder:validation:MinProperties=1
 type ClusterObjectDeploymentTemplateMetadata struct {
 	// labels is a set of key/value pairs propagated to each revision's metadata.
 	// +optional
+	// +kubebuilder:validation:MinProperties=1
 	// +kubebuilder:validation:MaxProperties=32
 	Labels map[string]string `json:"labels,omitempty"`
 
@@ -98,6 +101,7 @@ type ClusterObjectDeploymentTemplateMetadata struct {
 	// rules (key format and total size) before creating a revision; invalid
 	// annotations are reported on the deployment's Progressing condition.
 	// +optional
+	// +kubebuilder:validation:MinProperties=1
 	// +kubebuilder:validation:MaxProperties=32
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
@@ -105,14 +109,15 @@ type ClusterObjectDeploymentTemplateMetadata struct {
 // ClusterObjectDeploymentTemplateSpec contains mutable ClusterObjectSet content.
 type ClusterObjectDeploymentTemplateSpec struct {
 	// phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains
-	// at most 50 objects using the existing inline object or immutable Secret reference
-	// representation. Phase, object, and probe order participate in template identity.
+	// at most 50 objects, each expressed either as an inlineManifest (an embedded
+	// Kubernetes object) or an objectRef (a reference to an immutable Secret holding
+	// a serialized manifest). Phase, object, and probe order participate in template identity.
 	// +required
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=map
 	// +listMapKey=name
-	Phases []ClusterObjectSetPhase `json:"phases"` //nolint:kubeapilinter // These are ordered groups of objects, not an enum describing lifecycle state.
+	Phases []ClusterObjectSetPhase `json:"phases,omitempty"` // These are ordered groups of objects, not an enum describing lifecycle state.
 
 	// progressDeadlineMinutes is the maximum number of minutes a revision may take
 	// to roll out, measured from the ClusterObjectSet's creation timestamp. Time
@@ -120,25 +125,26 @@ type ClusterObjectDeploymentTemplateSpec struct {
 	// deadline covers all phases together; completing a phase does not reset it.
 	// Once a revision has completed, the deadline no longer applies, even if it
 	// later becomes unhealthy. When omitted, no deadline is enforced. The minimum
-	// period is 10 minutes, and the maximum is 720 minutes (12 hours).
+	// period is 1 minute, and the maximum is 720 minutes (12 hours).
 	//
-	// +kubebuilder:validation:Minimum:=10
+	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:Maximum:=720
 	// +optional
 	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
 
 	// progressionProbes supplies custom readiness probes for objects in every phase.
-	// The existing ClusterObjectSet selector and assertion semantics apply.
+	// The same selector and assertion semantics as ClusterObjectSet.spec.progressionProbes apply.
+	// When set, must contain 1 to 20 probes.
 	// +optional
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=atomic
 	ProgressionProbes []ProgressionProbe `json:"progressionProbes,omitempty"`
 
-	// collisionProtection is the required default collision protection strategy for objects in the revision.
-	// Objects and phases may override it.
+	// collisionProtection is the required default collision protection strategy for all objects
+	// in the revision. Individual phases or objects may override this value.
+	// The resolution order is: object > phase > spec.
 	// +required
-	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
@@ -216,8 +222,9 @@ type ClusterObjectDeploymentStatus struct {
 type ClusterObjectDeployment struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// metadata is the standard object's metadata. Names are valid COS groups of at
-	// most 52 characters; child names also include a hyphen and up to ten revision digits.
+	// metadata is the standard object's metadata. Names must be valid ClusterObjectSet group
+	// names of at most 52 characters; child ClusterObjectSet names also include a hyphen and
+	// up to ten revision digits.
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 

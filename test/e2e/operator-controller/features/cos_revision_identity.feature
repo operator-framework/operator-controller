@@ -20,6 +20,18 @@ Feature: Validate ClusterObjectSet revision identity
         revision: 1
         lifecycleState: Active
         collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cm
+                namespace: ${TEST_NAMESPACE}
+              data:
+                k: v
       """
     Then resource "clusterobjectset/<name>" is eventually not found
 
@@ -41,6 +53,18 @@ Feature: Validate ClusterObjectSet revision identity
         revision: 1
         lifecycleState: Active
         collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cm
+                namespace: ${TEST_NAMESPACE}
+              data:
+                k: v
       """
     And resource "clusterobjectset/${NAME}-1" UID is remembered
     # The existing COS is Active. Request Archived in the duplicate so that an
@@ -57,6 +81,18 @@ Feature: Validate ClusterObjectSet revision identity
         revision: 1
         lifecycleState: Archived
         collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cm
+                namespace: ${TEST_NAMESPACE}
+              data:
+                k: v
       """
     Then resource "clusterobjectset/${NAME}-1" keeps its UID
     And resource "clusterobjectset/${NAME}-1" matches
@@ -65,4 +101,16 @@ Feature: Validate ClusterObjectSet revision identity
         group: ${NAME}
         revision: 1
         lifecycleState: Active
+        phases:
+        - name: resources
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cm
+                namespace: ${TEST_NAMESPACE}
+              data:
+                k: v
       """

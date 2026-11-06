@@ -21,7 +21,8 @@ spec:
       phases:
       - name: configuration
         objects:
-        - object:
+        - type: InlineManifest
+          inlineManifest:
             apiVersion: v1
             kind: ConfigMap
             metadata:
