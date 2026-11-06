@@ -25,74 +25,51 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
+
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 )
 
-// CatalogBundleSource preserves Catalog resolution and lifecycle policies.
-type CatalogBundleSource struct {
+// CatalogSource preserves Catalog resolution and lifecycle policies.
+type CatalogSource struct {
 	Resolver resolve.Resolver
 	Client   client.Client
 }
 
-var _ BundleSource = (*CatalogBundleSource)(nil)
+var (
+	_ Resolver                         = (*CatalogSource)(nil)
+	_ resolve.PackageDeprecationSource = (*CatalogSource)(nil)
+	_ resolve.ChannelDeprecationSource = (*CatalogSource)(nil)
+	_ resolve.BundleDeprecationSource  = (*CatalogSource)(nil)
+)
 
-// Resolve continues the first rolling revision or resolves a Catalog bundle,
-// retaining the existing catalog-deletion fallback and deprecation evidence rule.
-func (s *CatalogBundleSource) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, revisions *RevisionStates) (BundleResolution, error) {
+// ValidateSource rejects a missing Catalog payload before any rollout
+// continuation, resolution, or catalog access.
+func (s *CatalogSource) ValidateSource(ext *ocv1.ClusterExtension) error {
 	if ext.Spec.Source.Catalog == nil {
-		return BundleResolution{}, fmt.Errorf("catalog source requires spec.source.catalog")
+		return fmt.Errorf("catalog source requires spec.source.catalog")
 	}
-	if len(revisions.RollingOut) > 0 {
-		return BundleResolution{Revision: revisions.RollingOut[0]}, nil
-	}
+	return nil
+}
+
+// Resolve selects a Catalog bundle for the extension.
+func (s *CatalogSource) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*RevisionMetadata, error) {
 	log.FromContext(ctx).V(1).Info("resolving bundle")
-	var bm *ocv1.BundleMetadata
-	if revisions.Installed != nil {
-		bm = &revisions.Installed.BundleMetadata
-	}
-	bundle, version, deprecation, err := s.Resolver.Resolve(ctx, ext, bm)
-	// Once the catalog resolver selects one package, it returns that catalog's
-	// deprecation data even when no bundle matches. An empty, non-nil deprecation
-	// means the selected catalog has no deprecation entries; nil on failure means
-	// no catalog package was selected. Keep the success check for resolver
-	// implementations that may return nil on success.
-	result := BundleResolution{Deprecation: deprecation, DeprecationKnown: err == nil || deprecation != nil}
+	bundle, version, err := s.Resolver.Resolve(ctx, ext, installedBundle)
 	if err != nil {
-		state := &reconcileState{revisionStates: revisions}
-		err = handleCatalogResolutionError(ctx, s.Client, state, ext, err)
-		result.Revision = state.resolvedRevisionMetadata
-		return result, err
+		return nil, err
 	}
-	result.Revision = &RevisionMetadata{
+	return &RevisionMetadata{
 		Package: bundle.Package,
 		Image:   bundle.Image,
 		// Preserve MetadataFor's feature-gated version/release normalization.
 		BundleMetadata: bundleutil.MetadataFor(bundle.Name, *version),
-	}
-	return result, nil
+	}, nil
 }
 
-// SetDeprecationStatus applies Catalog deprecation evidence, including on errors.
-func (s *CatalogBundleSource) SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string, resolution BundleResolution) {
-	SetDeprecationStatus(ext, installedBundleName, resolution.Deprecation, resolution.DeprecationKnown)
-}
-
-// ReconcileOnCatalogChange preserves the existing fan-out to Catalog extensions.
-// Catalog-to-extension provenance and selector-specific filtering remain unchanged.
-func (s *CatalogBundleSource) ReconcileOnCatalogChange(*ocv1.ClusterExtension, *ocv1.ClusterCatalog) bool {
-	return true
-}
-
-// CanMaintainWithoutContent preserves the original name/version comparison.
-func (s *CatalogBundleSource) CanMaintainWithoutContent(_ *ocv1.ClusterExtension, revisions *RevisionStates, resolution BundleResolution) bool {
-	return revisions != nil && revisions.Installed != nil && resolution.Revision != nil &&
-		resolution.Revision.Name == revisions.Installed.Name &&
-		resolution.Revision.Version == revisions.Installed.Version
-}
-
-// handleCatalogResolutionError owns recovery when Catalog resolution fails.
+// RecoverFromResolutionError owns recovery when Catalog resolution fails.
 //
 // Decision logic (evaluated in order):
 //  1. No installed bundle → Retry (cannot proceed without any bundle)
@@ -101,20 +78,21 @@ func (s *CatalogBundleSource) CanMaintainWithoutContent(_ *ocv1.ClusterExtension
 //  4. Catalogs exist → Retry (transient error, catalog may be updating)
 //  5. Catalogs deleted → Fallback to installed bundle (maintain current state)
 //
-// When falling back (case 5), we set the resolved bundle to the installed bundle and return
-// no error, allowing the Apply step to run and maintain resources using the existing installation.
-// The controller watches ClusterCatalog resources, so reconciliation will automatically resume
-// when catalogs return, enabling upgrades.
-func handleCatalogResolutionError(ctx context.Context, c client.Client, state *reconcileState, ext *ocv1.ClusterExtension, err error) error {
+// When falling back (case 5), we return the installed bundle and no error,
+// allowing the Apply step to run and maintain resources using the existing
+// installation. The controller watches ClusterCatalog resources, so
+// reconciliation will automatically resume when catalogs return, enabling
+// upgrades.
+func (s *CatalogSource) RecoverFromResolutionError(ctx context.Context, ext *ocv1.ClusterExtension, revisions *RevisionStates, resolveErr error) (*RevisionMetadata, error) {
 	l := log.FromContext(ctx)
 
 	// No installed bundle and resolution failed - cannot proceed
-	if state.revisionStates.Installed == nil {
-		msg := fmt.Sprintf("failed to resolve bundle: %v", err)
-		setStatusProgressing(ext, err)
-		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+	if revisions.Installed == nil {
+		msg := fmt.Sprintf("failed to resolve bundle: %v", resolveErr)
+		setStatusProgressing(ext, resolveErr)
+		setInstalledStatusFromRevisionStates(ext, revisions)
 		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
-		return err
+		return nil, resolveErr
 	}
 
 	// Check if the spec is requesting a specific version that differs from installed
@@ -122,54 +100,54 @@ func handleCatalogResolutionError(ctx context.Context, c client.Client, state *r
 	if ext.Spec.Source.Catalog != nil {
 		specVersion = ext.Spec.Source.Catalog.Version
 	}
-	installedVersion := state.revisionStates.Installed.Version
+	installedVersion := revisions.Installed.Version
 
 	// If spec requests a different version, we cannot fall back - must fail and retry
 	if specVersion != "" && specVersion != installedVersion {
-		msg := fmt.Sprintf("unable to upgrade to version %s: %v (currently installed: %s)", specVersion, err, installedVersion)
-		l.Error(err, "resolution failed and spec requests version change - cannot fall back",
+		msg := fmt.Sprintf("unable to upgrade to version %s: %v (currently installed: %s)", specVersion, resolveErr, installedVersion)
+		l.Error(resolveErr, "resolution failed and spec requests version change - cannot fall back",
 			"requestedVersion", specVersion,
 			"installedVersion", installedVersion)
-		setStatusProgressing(ext, err)
-		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+		setStatusProgressing(ext, resolveErr)
+		setInstalledStatusFromRevisionStates(ext, revisions)
 		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
-		return err
+		return nil, resolveErr
 	}
 
 	// No version change requested - check if ClusterCatalogs exist
 	// Only fall back if ClusterCatalogs have been deleted
-	catalogsExist, catalogCheckErr := CheckCatalogsExist(ctx, c, ext)
+	catalogsExist, catalogCheckErr := CheckCatalogsExist(ctx, s.Client, ext)
 	if catalogCheckErr != nil {
-		msg := fmt.Sprintf("failed to resolve bundle: %v", err)
+		msg := fmt.Sprintf("failed to resolve bundle: %v", resolveErr)
 		var catalogName string
 		if ext.Spec.Source.Catalog != nil {
 			catalogName = getCatalogNameFromSelector(ext.Spec.Source.Catalog.Selector)
 		}
 		l.Error(catalogCheckErr, "error checking if ClusterCatalogs exist, will retry resolution",
-			"resolutionError", err,
+			"resolutionError", resolveErr,
 			"packageName", getPackageName(ext),
 			"catalogName", catalogName)
-		setStatusProgressing(ext, err)
-		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+		setStatusProgressing(ext, resolveErr)
+		setInstalledStatusFromRevisionStates(ext, revisions)
 		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
-		return err
+		return nil, resolveErr
 	}
 
 	if catalogsExist {
 		// ClusterCatalogs exist but resolution failed - likely a transient issue (ClusterCatalog updating, cache stale, etc.)
 		// Retry resolution instead of falling back
-		msg := fmt.Sprintf("failed to resolve bundle, retrying: %v", err)
+		msg := fmt.Sprintf("failed to resolve bundle, retrying: %v", resolveErr)
 		var catalogName string
 		if ext.Spec.Source.Catalog != nil {
 			catalogName = getCatalogNameFromSelector(ext.Spec.Source.Catalog.Selector)
 		}
-		l.Error(err, "resolution failed but matching ClusterCatalogs exist - retrying instead of falling back",
+		l.Error(resolveErr, "resolution failed but matching ClusterCatalogs exist - retrying instead of falling back",
 			"packageName", getPackageName(ext),
 			"catalogName", catalogName)
-		setStatusProgressing(ext, err)
-		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+		setStatusProgressing(ext, resolveErr)
+		setInstalledStatusFromRevisionStates(ext, revisions)
 		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
-		return err
+		return nil, resolveErr
 	}
 
 	// ClusterCatalogs don't exist (deleted) - fall back to installed bundle to maintain current state.
@@ -180,17 +158,62 @@ func handleCatalogResolutionError(ctx context.Context, c client.Client, state *r
 		catalogName = getCatalogNameFromSelector(ext.Spec.Source.Catalog.Selector)
 	}
 	l.Info("matching ClusterCatalogs unavailable or deleted - falling back to installed bundle to maintain workload",
-		"resolutionError", err.Error(),
+		"resolutionError", resolveErr.Error(),
 		"packageName", getPackageName(ext),
 		"catalogName", catalogName,
-		"installedBundle", state.revisionStates.Installed.Name,
-		"installedVersion", state.revisionStates.Installed.Version)
+		"installedBundle", revisions.Installed.Name,
+		"installedVersion", revisions.Installed.Version)
 	// Set installed status based on current revision states (needed before Apply runs)
-	setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-	state.resolvedRevisionMetadata = state.revisionStates.Installed
-	// Return no error to allow Apply step to run and maintain resources.
+	setInstalledStatusFromRevisionStates(ext, revisions)
+	// Return the installed bundle so the Apply step runs and maintains resources.
 	// Apply will set Progressing=Succeeded when it completes successfully.
-	return nil
+	return maintainInstalled(revisions), nil
+}
+
+// GetPackageDeprecation returns catalog deprecation evidence for the desired
+// package. CatalogSource requires a resolver that provides deprecations;
+// production wiring always uses *resolve.CatalogResolver.
+func (s *CatalogSource) GetPackageDeprecation(ctx context.Context, ext *ocv1.ClusterExtension) (*declcfg.Deprecation, error) {
+	deprecations, ok := s.Resolver.(resolve.PackageDeprecationSource)
+	if !ok {
+		return nil, fmt.Errorf("catalog source requires a resolver that provides package deprecations (got %T)", s.Resolver)
+	}
+	return deprecations.GetPackageDeprecation(ctx, ext)
+}
+
+// GetChannelDeprecations returns catalog deprecation evidence for the desired
+// channels; channel-scoped entries are filtered when the evidence is
+// projected onto conditions.
+func (s *CatalogSource) GetChannelDeprecations(ctx context.Context, ext *ocv1.ClusterExtension) (*declcfg.Deprecation, error) {
+	deprecations, ok := s.Resolver.(resolve.ChannelDeprecationSource)
+	if !ok {
+		return nil, fmt.Errorf("catalog source requires a resolver that provides channel deprecations (got %T)", s.Resolver)
+	}
+	return deprecations.GetChannelDeprecations(ctx, ext)
+}
+
+// GetBundleDeprecations returns catalog deprecation evidence for the given
+// bundles; bundle-scoped entries are filtered when the evidence is projected
+// onto conditions.
+func (s *CatalogSource) GetBundleDeprecations(ctx context.Context, ext *ocv1.ClusterExtension, bundles ...ocv1.BundleMetadata) (*declcfg.Deprecation, error) {
+	deprecations, ok := s.Resolver.(resolve.BundleDeprecationSource)
+	if !ok {
+		return nil, fmt.Errorf("catalog source requires a resolver that provides bundle deprecations (got %T)", s.Resolver)
+	}
+	return deprecations.GetBundleDeprecations(ctx, ext, bundles...)
+}
+
+// ReconcileOnCatalogChange preserves the existing fan-out to Catalog extensions.
+// Catalog-to-extension provenance and selector-specific filtering remain unchanged.
+func (s *CatalogSource) ReconcileOnCatalogChange(*ocv1.ClusterExtension, *ocv1.ClusterCatalog) bool {
+	return true
+}
+
+// CanMaintainWithoutContent preserves the original name/version comparison.
+func (s *CatalogSource) CanMaintainWithoutContent(_ *ocv1.ClusterExtension, revisions *RevisionStates, resolved *RevisionMetadata) bool {
+	return revisions != nil && revisions.Installed != nil && resolved != nil &&
+		resolved.Name == revisions.Installed.Name &&
+		resolved.Version == revisions.Installed.Version
 }
 
 // getCatalogNameFromSelector extracts the catalog name from the selector if available.

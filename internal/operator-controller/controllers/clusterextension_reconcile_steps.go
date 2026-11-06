@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
@@ -123,9 +124,12 @@ func RetrieveRevisionStates(r RevisionStatesGetter) ReconcileStepFunc {
 	}
 }
 
-// ResolveBundle selects the extension's source policy before resolving, including
-// when a revision is already rolling out. Sources own recovery and status evidence.
-func ResolveBundle(sources BundleSources) ReconcileStepFunc {
+// ResolveBundle selects the extension's source policy, then resolves a
+// bundle. The shared step owns engagement: the source payload is validated
+// before rollout continuation, Resolve is called only at steady state,
+// recovery runs only when Resolve fails, and deprecation evidence is
+// collected from the source on every reconcile.
+func ResolveBundle(sources Resolvers) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		source, err := sources.For(ext)
 		if err != nil {
@@ -135,24 +139,93 @@ func ResolveBundle(sources BundleSources) ReconcileStepFunc {
 			return nil, err
 		}
 		state.bundleSource = source
-		resolution, err := source.Resolve(ctx, ext, state.revisionStates)
-		state.bundleResolution = resolution
-		installedBundleName := ""
-		if state.revisionStates.Installed != nil {
-			installedBundleName = state.revisionStates.Installed.Name
+
+		var resolveErr error
+		if err := source.ValidateSource(ext); err != nil {
+			// Malformed source payloads fail closed before rollout
+			// continuation, resolution, or any backend call.
+			resolveErr = err
+		} else if len(state.revisionStates.RollingOut) > 0 {
+			// Steady-state gate: continue the first rolling revision without
+			// consulting resolution.
+			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
+		} else {
+			var installedBundle *ocv1.BundleMetadata
+			if state.revisionStates.Installed != nil {
+				installedBundle = &state.revisionStates.Installed.BundleMetadata
+			}
+			var resolved *RevisionMetadata
+			resolved, resolveErr = source.Resolve(ctx, ext, installedBundle)
+			if resolveErr != nil {
+				resolved, resolveErr = source.RecoverFromResolutionError(ctx, ext, state.revisionStates, resolveErr)
+			}
+			state.resolvedRevisionMetadata = resolved
 		}
 
-		source.SetDeprecationStatus(ext, installedBundleName, resolution)
+		// Deprecation evidence is collected from the source on every
+		// reconcile, including rollout continuation and resolution failures.
+		SetDeprecationStatus(ext, installedBundleName(state.revisionStates), deprecationEvidenceFromSource(ctx, source, ext, state.revisionStates))
 
-		if err != nil {
-			setStatusProgressing(ext, err)
+		if resolveErr != nil {
+			setStatusProgressing(ext, resolveErr)
 			setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-			ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, fmt.Sprintf("failed to resolve bundle: %v", err))
-			return nil, err
+			ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, fmt.Sprintf("failed to resolve bundle: %v", resolveErr))
+			return nil, resolveErr
 		}
-		state.resolvedRevisionMetadata = resolution.Revision
 		return nil, nil
 	}
+}
+
+// deprecationEvidenceFromSource collects deprecation evidence from the
+// source's optional deprecation interfaces. Sources that implement none of
+// them have no deprecation data and are reported exactly like sources whose
+// evaluation found no deprecations. A failing query from a capable source
+// makes the evidence unknown for every dimension.
+func deprecationEvidenceFromSource(ctx context.Context, source Resolver, ext *ocv1.ClusterExtension, revisions *RevisionStates) DeprecationEvidence {
+	l := log.FromContext(ctx)
+	evidence := DeprecationEvidence{Known: true}
+	if pds, ok := source.(resolve.PackageDeprecationSource); ok {
+		deprecation, err := pds.GetPackageDeprecation(ctx, ext)
+		if err != nil {
+			l.V(1).Info("package deprecation evidence unavailable", "error", err.Error())
+			return DeprecationEvidence{}
+		}
+		evidence.PackageDeprecation = deprecation
+	}
+	if cds, ok := source.(resolve.ChannelDeprecationSource); ok {
+		deprecation, err := cds.GetChannelDeprecations(ctx, ext)
+		if err != nil {
+			l.V(1).Info("channel deprecation evidence unavailable", "error", err.Error())
+			return DeprecationEvidence{}
+		}
+		evidence.ChannelDeprecation = deprecation
+	}
+	if bds, ok := source.(resolve.BundleDeprecationSource); ok {
+		var bundles []ocv1.BundleMetadata
+		if revisions != nil {
+			if revisions.Installed != nil {
+				bundles = append(bundles, revisions.Installed.BundleMetadata)
+			}
+			for _, rolling := range revisions.RollingOut {
+				bundles = append(bundles, rolling.BundleMetadata)
+			}
+		}
+		deprecation, err := bds.GetBundleDeprecations(ctx, ext, bundles...)
+		if err != nil {
+			l.V(1).Info("bundle deprecation evidence unavailable", "error", err.Error())
+			return DeprecationEvidence{}
+		}
+		evidence.BundleDeprecation = deprecation
+	}
+	return evidence
+}
+
+// installedBundleName returns the name of the installed bundle, if any.
+func installedBundleName(revisions *RevisionStates) string {
+	if revisions != nil && revisions.Installed != nil {
+		return revisions.Installed.Name
+	}
+	return ""
 }
 
 func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
@@ -169,7 +242,7 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 		imageFS, _, _, err := i.Pull(ctx, ext.GetName(), state.resolvedRevisionMetadata.Image, cache)
 
 		if err != nil {
-			if state.bundleSource != nil && state.bundleSource.CanMaintainWithoutContent(ext, state.revisionStates, state.bundleResolution) {
+			if state.bundleSource != nil && state.bundleSource.CanMaintainWithoutContent(ext, state.revisionStates, state.resolvedRevisionMetadata) {
 				l.V(1).Info("bundle content unavailable, maintaining current installation",
 					"bundle", state.resolvedRevisionMetadata.Name,
 					"version", state.resolvedRevisionMetadata.Version,
@@ -255,7 +328,7 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 
 		// Refresh source-specific deprecation conditions for the newly running bundle.
 		if rolloutSucceeded && state.revisionStates.Installed != nil && state.bundleSource != nil {
-			state.bundleSource.SetDeprecationStatus(ext, state.revisionStates.Installed.Name, state.bundleResolution)
+			SetDeprecationStatus(ext, state.revisionStates.Installed.Name, deprecationEvidenceFromSource(ctx, state.bundleSource, ext, state.revisionStates))
 		}
 
 		// If there was an error applying the resolved bundle,

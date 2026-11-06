@@ -24,36 +24,54 @@ import (
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
-// TestSource is an in-memory policy, not a production API source. In particular,
-// it selects its own revision even while another revision is rolling out.
+// TestSource is an in-memory policy, not a production API source. It provides
+// no deprecation evidence: sources without deprecation data are reported
+// exactly like sources whose evaluation found none.
 type TestSource struct {
-	result   BundleResolution
+	result   *RevisionMetadata
 	err      error
 	maintain bool
 	enqueue  bool
 }
 
-func (s *TestSource) Resolve(context.Context, *ocv1.ClusterExtension, *RevisionStates) (BundleResolution, error) {
+func (s *TestSource) ValidateSource(*ocv1.ClusterExtension) error {
+	return nil
+}
+
+func (s *TestSource) Resolve(context.Context, *ocv1.ClusterExtension, *ocv1.BundleMetadata) (*RevisionMetadata, error) {
 	return s.result, s.err
 }
 
-func (s *TestSource) SetDeprecationStatus(ext *ocv1.ClusterExtension, installed string, result BundleResolution) {
-	status := metav1.ConditionUnknown
-	if result.DeprecationKnown {
-		status = metav1.ConditionFalse
-	}
-	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type: ocv1.TypeDeprecated, Status: status, Reason: "TestSourcePolicy",
-		Message: installed, ObservedGeneration: ext.Generation,
-	})
+func (s *TestSource) RecoverFromResolutionError(_ context.Context, _ *ocv1.ClusterExtension, _ *RevisionStates, resolveErr error) (*RevisionMetadata, error) {
+	return nil, resolveErr
 }
 
 func (s *TestSource) ReconcileOnCatalogChange(*ocv1.ClusterExtension, *ocv1.ClusterCatalog) bool {
 	return s.enqueue
 }
 
-func (s *TestSource) CanMaintainWithoutContent(*ocv1.ClusterExtension, *RevisionStates, BundleResolution) bool {
+func (s *TestSource) CanMaintainWithoutContent(*ocv1.ClusterExtension, *RevisionStates, *RevisionMetadata) bool {
 	return s.maintain
+}
+
+// deprecatingResolver is a resolver fake that also provides deprecation
+// evidence, standing in for *resolve.CatalogResolver.
+type deprecatingResolver struct {
+	resolve.Func
+	deprecation *declcfg.Deprecation
+	queryErr    error
+}
+
+func (r deprecatingResolver) GetPackageDeprecation(context.Context, *ocv1.ClusterExtension) (*declcfg.Deprecation, error) {
+	return r.deprecation, r.queryErr
+}
+
+func (r deprecatingResolver) GetChannelDeprecations(context.Context, *ocv1.ClusterExtension) (*declcfg.Deprecation, error) {
+	return r.deprecation, r.queryErr
+}
+
+func (r deprecatingResolver) GetBundleDeprecations(context.Context, *ocv1.ClusterExtension, ...ocv1.BundleMetadata) (*declcfg.Deprecation, error) {
+	return r.deprecation, r.queryErr
 }
 
 type forbiddenCatalogClient struct{ client.Client }
@@ -82,36 +100,68 @@ func sourceRevision(name, version string) *RevisionMetadata {
 	return &RevisionMetadata{Package: "example", Image: "example/bundle:latest", BundleMetadata: ocv1.BundleMetadata{Name: name, Version: version}}
 }
 
-func forbiddenCatalogResolver(context.Context, *ocv1.ClusterExtension, *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+func forbiddenCatalogResolver(context.Context, *ocv1.ClusterExtension, *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, error) {
 	panic("source isolation violated: catalog resolver used")
 }
 
-func TestSourceSelectionOwnsResolutionAndDeprecation(t *testing.T) {
+// TestSourceWithoutDeprecationDataManifestsAsNotDeprecated covers the contract
+// for sources that implement none of the deprecation interfaces: absence of
+// the capability manifests exactly like an evaluation that found no
+// deprecations, on success and on resolution failure alike.
+func TestSourceWithoutDeprecationDataManifestsAsNotDeprecated(t *testing.T) {
+	resolutionErr := errors.New("test source failed")
+	for _, tc := range []struct {
+		name string
+		err  error
+	}{
+		{name: "success"},
+		{name: "resolution error", err: resolutionErr},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			installed := sourceRevision("old", "1.0.0")
+			state := &reconcileState{revisionStates: &RevisionStates{Installed: installed}}
+			source := &TestSource{result: sourceRevision("selected", "2.0.0"), err: tc.err}
+			ext := sourceExtension("TestSource")
+			_, err := ResolveBundle(Resolvers{"TestSource": source})(t.Context(), state, ext)
+			require.ErrorIs(t, err, tc.err)
+			for _, condType := range []string{ocv1.TypeDeprecated, ocv1.TypePackageDeprecated, ocv1.TypeChannelDeprecated, ocv1.TypeBundleDeprecated} {
+				condition := apimeta.FindStatusCondition(ext.Status.Conditions, condType)
+				require.NotNil(t, condition)
+				require.Equal(t, metav1.ConditionFalse, condition.Status)
+				require.Equal(t, ocv1.ReasonNotDeprecated, condition.Reason)
+			}
+		})
+	}
+}
+
+func TestSourceSelectionOwnsResolution(t *testing.T) {
 	resolutionErr := errors.New("test source failed")
 	for _, rolling := range []bool{false, true} {
 		for _, sourceErr := range []error{nil, resolutionErr, reconcile.TerminalError(resolutionErr)} {
 			t.Run(testingName(rolling, sourceErr), func(t *testing.T) {
 				installed := sourceRevision("old", "1.0.0")
 				target := sourceRevision("selected", "2.0.0")
+				rollingRevision := sourceRevision("rolling", "1.1.0")
 				state := &reconcileState{revisionStates: &RevisionStates{Installed: installed}}
 				if rolling {
-					state.revisionStates.RollingOut = []*RevisionMetadata{sourceRevision("rolling", "1.1.0")}
+					state.revisionStates.RollingOut = []*RevisionMetadata{rollingRevision}
 				}
-				source := &TestSource{result: BundleResolution{Revision: target, DeprecationKnown: true}, err: sourceErr}
-				sources := BundleSources{
+				source := &TestSource{result: target, err: sourceErr}
+				sources := Resolvers{
 					"TestSource": source,
-					ocv1.SourceTypeCatalog: &CatalogBundleSource{
+					ocv1.SourceTypeCatalog: &CatalogSource{
 						Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{},
 					},
 				}
 				ext := sourceExtension("TestSource")
 				_, err := ResolveBundle(sources)(t.Context(), state, ext)
+				if rolling {
+					// Rollout continuation is selected without consulting resolution.
+					require.NoError(t, err)
+					require.Same(t, rollingRevision, state.resolvedRevisionMetadata)
+					return
+				}
 				require.ErrorIs(t, err, sourceErr)
-				condition := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeDeprecated)
-				require.NotNil(t, condition)
-				require.Equal(t, "TestSourcePolicy", condition.Reason)
-				require.Equal(t, metav1.ConditionFalse, condition.Status)
-				require.Equal(t, "old", condition.Message)
 				if sourceErr != nil {
 					require.Nil(t, state.resolvedRevisionMetadata)
 					require.Equal(t, installed.BundleMetadata, ext.Status.Install.Bundle)
@@ -120,7 +170,6 @@ func TestSourceSelectionOwnsResolutionAndDeprecation(t *testing.T) {
 				require.Same(t, target, state.resolvedRevisionMetadata)
 				_, err = ApplyBundle(successfulSourceApplier{})(t.Context(), state, ext)
 				require.NoError(t, err)
-				require.Equal(t, "selected", apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeDeprecated).Message)
 			})
 		}
 	}
@@ -142,9 +191,9 @@ func TestSourceLookupRejectsUnknownAndNilBeforeRollout(t *testing.T) {
 	for _, sourceType := range []string{"Unknown", "Nil", "TypedNil"} {
 		for _, rolling := range []bool{false, true} {
 			t.Run(sourceType+"/"+testingName(rolling, nil), func(t *testing.T) {
-				sources := BundleSources{
+				sources := Resolvers{
 					"Nil": nil, "TypedNil": typedNil,
-					ocv1.SourceTypeCatalog: &CatalogBundleSource{Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{}},
+					ocv1.SourceTypeCatalog: &CatalogSource{Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{}},
 				}
 				state := &reconcileState{revisionStates: &RevisionStates{}}
 				if rolling {
@@ -162,12 +211,32 @@ func TestCatalogSourcePreservesFirstRollingRevision(t *testing.T) {
 	first, last := sourceRevision("first", "1.0.0"), sourceRevision("last", "2.0.0")
 	state := &reconcileState{revisionStates: &RevisionStates{RollingOut: []*RevisionMetadata{first, last}}}
 	ext := sourceExtension(ocv1.SourceTypeCatalog)
-	sources := BundleSources{ocv1.SourceTypeCatalog: &CatalogBundleSource{Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{}}}
+	sources := Resolvers{ocv1.SourceTypeCatalog: &CatalogSource{Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{}}}
 	_, err := ResolveBundle(sources)(t.Context(), state, ext)
 	require.NoError(t, err)
 	require.Same(t, first, state.resolvedRevisionMetadata)
-	require.False(t, state.bundleResolution.DeprecationKnown)
-	require.Equal(t, metav1.ConditionUnknown, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeDeprecated).Status)
+}
+
+// TestDeprecationEvidenceCollectedDuringRollout covers deprecation evidence
+// collection while a rollout is in progress: resolution is not consulted
+// (the resolver panics if called), and evidence still populates conditions.
+func TestDeprecationEvidenceCollectedDuringRollout(t *testing.T) {
+	deprecation := &declcfg.Deprecation{Entries: []declcfg.DeprecationEntry{{
+		Reference: declcfg.PackageScopedReference{Schema: declcfg.SchemaPackage, Name: "example"}, Message: "deprecated package",
+	}}}
+	rolling := sourceRevision("rolling", "1.1.0")
+	state := &reconcileState{revisionStates: &RevisionStates{RollingOut: []*RevisionMetadata{rolling}}}
+	ext := sourceExtension(ocv1.SourceTypeCatalog)
+	r := deprecatingResolver{
+		Func:        resolve.Func(forbiddenCatalogResolver),
+		deprecation: deprecation,
+	}
+	_, err := ResolveBundle(Resolvers{ocv1.SourceTypeCatalog: &CatalogSource{Resolver: r, Client: &forbiddenCatalogClient{}}})(t.Context(), state, ext)
+	require.NoError(t, err)
+	require.Same(t, rolling, state.resolvedRevisionMetadata)
+	condition := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypePackageDeprecated)
+	require.Equal(t, metav1.ConditionTrue, condition.Status)
+	require.Equal(t, "deprecated package", condition.Message)
 }
 
 func TestCatalogPolicyRequiresCatalogConfiguration(t *testing.T) {
@@ -182,14 +251,14 @@ func TestCatalogPolicyRequiresCatalogConfiguration(t *testing.T) {
 	}
 	ext := sourceExtension(ocv1.SourceTypeCatalog)
 	ext.Spec.Source.Catalog = nil
-	source := &CatalogBundleSource{Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{}}
+	source := &CatalogSource{Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{}}
 	for _, rolling := range []bool{false, true} {
 		t.Run(testingName(rolling, nil), func(t *testing.T) {
 			state := &reconcileState{revisionStates: &RevisionStates{}}
 			if rolling {
 				state.revisionStates.RollingOut = []*RevisionMetadata{sourceRevision("rolling", "1.0.0")}
 			}
-			_, err := ResolveBundle(BundleSources{ocv1.SourceTypeCatalog: source})(t.Context(), state, ext)
+			_, err := ResolveBundle(Resolvers{ocv1.SourceTypeCatalog: source})(t.Context(), state, ext)
 			require.ErrorContains(t, err, "catalog source requires spec.source.catalog")
 			require.Nil(t, state.resolvedRevisionMetadata)
 		})
@@ -205,22 +274,25 @@ func TestCatalogSourceDeprecationEvidence(t *testing.T) {
 		name        string
 		err         error
 		deprecation *declcfg.Deprecation
-		known       bool
+		queryErr    error
 		status      metav1.ConditionStatus
 	}{
-		{name: "success empty", known: true, status: metav1.ConditionFalse},
-		{name: "error without evidence", err: resolutionErr, status: metav1.ConditionUnknown},
-		{name: "error with evidence", err: resolutionErr, deprecation: deprecation, known: true, status: metav1.ConditionTrue},
+		{name: "success empty", status: metav1.ConditionFalse},
+		{name: "error without evidence", err: resolutionErr, queryErr: errors.New("catalog data unavailable"), status: metav1.ConditionUnknown},
+		{name: "error with evidence", err: resolutionErr, deprecation: deprecation, status: metav1.ConditionTrue},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ext := sourceExtension(ocv1.SourceTypeCatalog)
 			state := &reconcileState{revisionStates: &RevisionStates{}}
-			r := resolve.Func(func(context.Context, *ocv1.ClusterExtension, *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
-				return &declcfg.Bundle{Name: "example.v1", Package: "example", Image: "example/bundle:v1"}, &declcfg.VersionRelease{Version: semver.MustParse("1.0.0")}, tc.deprecation, tc.err
-			})
-			_, err := ResolveBundle(BundleSources{ocv1.SourceTypeCatalog: &CatalogBundleSource{Resolver: r, Client: &forbiddenCatalogClient{}}})(t.Context(), state, ext)
+			r := deprecatingResolver{
+				Func: resolve.Func(func(context.Context, *ocv1.ClusterExtension, *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, error) {
+					return &declcfg.Bundle{Name: "example.v1", Package: "example", Image: "example/bundle:v1"}, &declcfg.VersionRelease{Version: semver.MustParse("1.0.0")}, tc.err
+				}),
+				deprecation: tc.deprecation,
+				queryErr:    tc.queryErr,
+			}
+			_, err := ResolveBundle(Resolvers{ocv1.SourceTypeCatalog: &CatalogSource{Resolver: r, Client: &forbiddenCatalogClient{}}})(t.Context(), state, ext)
 			require.ErrorIs(t, err, tc.err)
-			require.Equal(t, tc.known, state.bundleResolution.DeprecationKnown)
 			require.Equal(t, tc.status, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypePackageDeprecated).Status)
 		})
 	}
@@ -241,10 +313,10 @@ func TestCatalogSourceFallbackPreservesVersionStringPolicy(t *testing.T) {
 				ext.Spec.Source.Catalog = &ocv1.CatalogFilter{PackageName: "example", Version: version}
 				installed := sourceRevision("installed", "1.0.0")
 				state := &reconcileState{revisionStates: &RevisionStates{Installed: installed}}
-				r := resolve.Func(func(context.Context, *ocv1.ClusterExtension, *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
-					return nil, nil, nil, resolutionErr
+				r := resolve.Func(func(context.Context, *ocv1.ClusterExtension, *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, error) {
+					return nil, nil, resolutionErr
 				})
-				_, err := ResolveBundle(BundleSources{ocv1.SourceTypeCatalog: &CatalogBundleSource{Resolver: r, Client: builder.Build()}})(t.Context(), state, ext)
+				_, err := ResolveBundle(Resolvers{ocv1.SourceTypeCatalog: &CatalogSource{Resolver: r, Client: builder.Build()}})(t.Context(), state, ext)
 				if catalogExists || version == ">=1.0.0" {
 					require.ErrorIs(t, err, resolutionErr)
 					require.Nil(t, state.resolvedRevisionMetadata)
@@ -265,19 +337,19 @@ func TestUnpackUsesSelectedSourceMaintenancePolicy(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		sourceType string
-		source     BundleSource
+		source     Resolver
 		wantError  bool
 	}{
-		{name: "catalog legacy name version", sourceType: ocv1.SourceTypeCatalog, source: &CatalogBundleSource{Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{}}},
-		{name: "test rejects maintenance", sourceType: "TestSource", source: &TestSource{result: BundleResolution{Revision: target}}, wantError: true},
-		{name: "test permits maintenance", sourceType: "TestSource", source: &TestSource{result: BundleResolution{Revision: target}, maintain: true}},
+		{name: "catalog legacy name version", sourceType: ocv1.SourceTypeCatalog, source: &CatalogSource{Resolver: resolve.Func(forbiddenCatalogResolver), Client: &forbiddenCatalogClient{}}},
+		{name: "test rejects maintenance", sourceType: "TestSource", source: &TestSource{result: target}, wantError: true},
+		{name: "test permits maintenance", sourceType: "TestSource", source: &TestSource{result: target, maintain: true}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			state := &reconcileState{
 				revisionStates: &RevisionStates{Installed: installed, RollingOut: []*RevisionMetadata{target}},
 			}
 			ext := sourceExtension(tc.sourceType)
-			_, err := ResolveBundle(BundleSources{tc.sourceType: tc.source})(t.Context(), state, ext)
+			_, err := ResolveBundle(Resolvers{tc.sourceType: tc.source})(t.Context(), state, ext)
 			require.NoError(t, err)
 			_, err = UnpackBundle(&imageutil.FakePuller{Error: pullErr}, nil)(t.Context(), state, ext)
 			if tc.wantError {
@@ -300,8 +372,8 @@ func TestCatalogEventUsesSourcePolicy(t *testing.T) {
 		objects = append(objects, ext)
 	}
 	c := fake.NewClientBuilder().WithScheme(sch).WithObjects(objects...).Build()
-	sources := BundleSources{
-		ocv1.SourceTypeCatalog: &CatalogBundleSource{Client: &forbiddenCatalogClient{}},
+	sources := Resolvers{
+		ocv1.SourceTypeCatalog: &CatalogSource{Client: &forbiddenCatalogClient{}},
 		"TestSource":           &TestSource{}, "InterestedTestSource": &TestSource{enqueue: true}, "Nil": nil,
 	}
 	requests := clusterExtensionRequestsForCatalog(c, logr.Discard(), sources)(t.Context(), &ocv1.ClusterCatalog{})

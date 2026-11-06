@@ -109,7 +109,7 @@ type boxcutterReconcilerConfigurator struct {
 	mgr                   manager.Manager
 	preflights            []applier.Preflight
 	regv1ManifestProvider applier.ManifestProvider
-	bundleSources         controllers.BundleSources
+	bundleSources         controllers.Resolvers
 	imageCache            imageutil.Cache
 	imagePuller           imageutil.Puller
 	finalizers            crfinalizer.Finalizers
@@ -119,7 +119,7 @@ type helmReconcilerConfigurator struct {
 	mgr                   manager.Manager
 	preflights            []applier.Preflight
 	regv1ManifestProvider applier.ManifestProvider
-	bundleSources         controllers.BundleSources
+	bundleSources         controllers.Resolvers
 	imageCache            imageutil.Cache
 	imagePuller           imageutil.Puller
 	finalizers            crfinalizer.Finalizers
@@ -471,12 +471,12 @@ func run() error {
 		}
 	}
 
-	bundleSources := controllers.BundleSources{
-		ocv1.SourceTypeCatalog: &controllers.CatalogBundleSource{Resolver: resolver, Client: cl},
+	bundleSources := controllers.Resolvers{
+		ocv1.SourceTypeCatalog: &controllers.CatalogSource{Resolver: resolver, Client: cl},
 	}
 	ceReconciler := &controllers.ClusterExtensionReconciler{
-		Client:        cl,
-		BundleSources: bundleSources,
+		Client:    cl,
+		Resolvers: bundleSources,
 	}
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		_, err = ceReconciler.SetupWithManagerForBoxcutter(mgr)
@@ -639,7 +639,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		RevisionGenerator:  rg,
 		FieldOwner:         fieldOwner,
 	}
-	ceReconciler.BundleSources = c.bundleSources
+	ceReconciler.Resolvers = c.bundleSources
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.ValidateClusterExtension(
@@ -698,7 +698,7 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		TrackingCache:                 c.trackingCache,
 	}
 	revisionStatesGetter := &controllers.HelmRevisionStatesGetter{ActionClientGetter: acg}
-	ceReconciler.BundleSources = c.bundleSources
+	ceReconciler.Resolvers = c.bundleSources
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.ValidateClusterExtension(

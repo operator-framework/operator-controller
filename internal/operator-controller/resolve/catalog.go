@@ -32,41 +32,36 @@ type CatalogResolver struct {
 	Validations      []ValidationFunc
 }
 
-// Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
-func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+// Resolve returns a Bundle from a catalog that needs to get installed on the
+// cluster. Deprecation data is deliberately not part of the result: it is
+// available through the deprecation source methods implemented by
+// CatalogResolver.
+func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *declcfg.VersionRelease, error) {
 	l := log.FromContext(ctx)
 	packageName := ext.Spec.Source.Catalog.PackageName
 	versionRange := ext.Spec.Source.Catalog.Version
 	channels := ext.Spec.Source.Catalog.Channels
 
 	// Unless overridden, select all catalogs.
-	var selector = labels.Everything()
-	var err error
-	if ext.Spec.Source.Catalog != nil {
-		selector, err = metav1.LabelSelectorAsSelector(ext.Spec.Source.Catalog.Selector)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
-		}
-		// A nothing (empty) selector selects everything
-		if selector == labels.Nothing() {
-			selector = labels.Everything()
-		}
+	selector, err := desiredCatalogSelector(ext)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	var versionRangeConstraints bsemver.Range
 	if versionRange != "" {
 		versionRangeConstraints, err = compare.NewVersionRange(versionRange)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("desired version range %q is invalid: %w", versionRange, err)
+			return nil, nil, fmt.Errorf("desired version range %q is invalid: %w", versionRange, err)
 		}
 	}
 
 	cat, packageFBC, err := r.selectPackage(ctx, packageName, selector)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	if cat == nil {
-		return nil, nil, nil, fmt.Errorf("package %q not found in any eligible catalog", packageName)
+		return nil, nil, fmt.Errorf("package %q not found in any eligible catalog", packageName)
 	}
 
 	// A non-nil deprecation means that one catalog's package data was read,
@@ -75,9 +70,9 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 	if len(packageFBC.Deprecations) > 0 {
 		deprecation = &packageFBC.Deprecations[0]
 	}
-	failed := func(err error) (*declcfg.Bundle, *declcfg.VersionRelease, *declcfg.Deprecation, error) {
+	failed := func(err error) (*declcfg.Bundle, *declcfg.VersionRelease, error) {
 		l.Info("resolution failed", "catalog", cat.Name, "error", err)
-		return nil, nil, deprecation, fmt.Errorf("resolving package %q from catalog %q: %w", packageName, cat.Name, err)
+		return nil, nil, fmt.Errorf("resolving package %q from catalog %q: %w", packageName, cat.Name, err)
 	}
 
 	var predicates []filterutil.Predicate[declcfg.Bundle]
@@ -130,7 +125,71 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 	}
 
 	l.V(4).Info("resolution succeeded", "catalog", cat.Name, "bundle", resolvedBundle.Name)
-	return resolvedBundle, resolvedBundleVersion, deprecation, nil
+	return resolvedBundle, resolvedBundleVersion, nil
+}
+
+// GetPackageDeprecation returns the deprecation data recorded for the
+// extension's desired package. It implements PackageDeprecationSource.
+func (r *CatalogResolver) GetPackageDeprecation(ctx context.Context, ext *ocv1.ClusterExtension) (*declcfg.Deprecation, error) {
+	return r.packageDeprecation(ctx, ext)
+}
+
+// GetChannelDeprecations returns the deprecation data recorded for the
+// extension's desired package; channel-scoped entries are filtered when the
+// evidence is projected onto conditions. It implements ChannelDeprecationSource.
+func (r *CatalogResolver) GetChannelDeprecations(ctx context.Context, ext *ocv1.ClusterExtension) (*declcfg.Deprecation, error) {
+	return r.packageDeprecation(ctx, ext)
+}
+
+// GetBundleDeprecations returns the deprecation data recorded for the
+// extension's desired package; bundle-scoped entries are filtered when the
+// evidence is projected onto conditions. It implements BundleDeprecationSource.
+func (r *CatalogResolver) GetBundleDeprecations(ctx context.Context, ext *ocv1.ClusterExtension, _ ...ocv1.BundleMetadata) (*declcfg.Deprecation, error) {
+	return r.packageDeprecation(ctx, ext)
+}
+
+// packageDeprecation reads the desired package's deprecation data from the
+// selected catalog. A non-nil result with no entries means the package was
+// found and has no deprecations; an error means no deprecation evidence
+// could be established.
+func (r *CatalogResolver) packageDeprecation(ctx context.Context, ext *ocv1.ClusterExtension) (*declcfg.Deprecation, error) {
+	if ext.Spec.Source.Catalog == nil {
+		return nil, fmt.Errorf("catalog deprecations require spec.source.catalog")
+	}
+	packageName := ext.Spec.Source.Catalog.PackageName
+	selector, err := desiredCatalogSelector(ext)
+	if err != nil {
+		return nil, err
+	}
+	cat, packageFBC, err := r.selectPackage(ctx, packageName, selector)
+	if err != nil {
+		return nil, err
+	}
+	if cat == nil {
+		return nil, fmt.Errorf("package %q not found in any eligible catalog", packageName)
+	}
+	if len(packageFBC.Deprecations) == 0 {
+		return &declcfg.Deprecation{Schema: declcfg.SchemaDeprecation, Package: packageName}, nil
+	}
+	return &packageFBC.Deprecations[0], nil
+}
+
+// desiredCatalogSelector returns the catalog selector for the extension.
+// An absent Catalog payload or empty selector selects every catalog.
+func desiredCatalogSelector(ext *ocv1.ClusterExtension) (labels.Selector, error) {
+	selector := labels.Everything()
+	if ext.Spec.Source.Catalog == nil {
+		return selector, nil
+	}
+	selector, err := metav1.LabelSelectorAsSelector(ext.Spec.Source.Catalog.Selector)
+	if err != nil {
+		return nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
+	}
+	// A nothing (empty) selector selects everything
+	if selector == labels.Nothing() {
+		selector = labels.Everything()
+	}
+	return selector, nil
 }
 
 type resolutionError struct {

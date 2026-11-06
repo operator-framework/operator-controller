@@ -21,45 +21,70 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
-
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-// BundleSource owns resolution and lifecycle policies for an installation source.
-// Resolve includes rollout continuation and recovery from resolution errors.
-// SetDeprecationStatus is called even on resolution errors, and again after a
-// successful apply with the newly installed bundle name.
-type BundleSource interface {
-	Resolve(context.Context, *ocv1.ClusterExtension, *RevisionStates) (BundleResolution, error)
-	SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string, resolution BundleResolution)
-	ReconcileOnCatalogChange(*ocv1.ClusterExtension, *ocv1.ClusterCatalog) bool
-	CanMaintainWithoutContent(*ocv1.ClusterExtension, *RevisionStates, BundleResolution) bool
+// Resolver is the mandatory behavior of an object that can resolve a bundle
+// from a source. The shared reconciliation steps own engagement policy:
+// ValidateSource runs before rollout continuation and resolution, Resolve is
+// called only at steady state with no rollout in progress,
+// RecoverFromResolutionError is invoked only when Resolve fails, and
+// CanMaintainWithoutContent is consulted only when bundle content cannot be
+// pulled. Implementations must not hide preconditions or fallbacks inside
+// Resolve.
+//
+// Deprecation evidence is deliberately not part of this contract: sources
+// that can provide it implement the optional deprecation interfaces in the
+// resolve package (see resolve.PackageDeprecationSource), and consumers use
+// type assertions against those interfaces to collect evidence on every
+// reconcile. A source without deprecation data is reported exactly like a
+// source whose evaluation found no deprecations.
+type Resolver interface {
+	// ValidateSource verifies the extension's source payload is complete
+	// enough to reconcile. It runs before rollout continuation and
+	// resolution, so malformed payloads fail closed without backend calls.
+	ValidateSource(ext *ocv1.ClusterExtension) error
+
+	// Resolve selects the bundle to install or upgrade to. It is called only
+	// at steady state, with no rollout in progress.
+	Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*RevisionMetadata, error)
+
+	// RecoverFromResolutionError is invoked only when Resolve returned an
+	// error. Returning a nil error with a non-nil result authorizes
+	// maintaining the installed bundle (see maintainInstalled); returning an
+	// error classifies the failure for retry.
+	RecoverFromResolutionError(ctx context.Context, ext *ocv1.ClusterExtension, revisions *RevisionStates, resolveErr error) (*RevisionMetadata, error)
+
+	// CanMaintainWithoutContent authorizes maintaining the current
+	// installation when bundle content cannot be pulled.
+	CanMaintainWithoutContent(ext *ocv1.ClusterExtension, revisions *RevisionStates, resolved *RevisionMetadata) bool
+
+	// ReconcileOnCatalogChange reports whether a ClusterCatalog event should
+	// enqueue reconciles for extensions served by this source.
+	ReconcileOnCatalogChange(ext *ocv1.ClusterExtension, catalog *ocv1.ClusterCatalog) bool
 }
 
-// BundleResolution carries the selected revision and source-provided deprecation
-// evidence. A nil Deprecation with DeprecationKnown true means known-empty data.
-// Results returned alongside an error still carry evidence for status reporting.
-type BundleResolution struct {
-	Revision         *RevisionMetadata
-	Deprecation      *declcfg.Deprecation
-	DeprecationKnown bool
-}
-
-// BundleSources selects a source policy using spec.source.sourceType.
-type BundleSources map[string]BundleSource
+// Resolvers selects a source policy using spec.source.sourceType.
+type Resolvers map[string]Resolver
 
 // For returns the configured policy or an error before any source is invoked.
-func (sources BundleSources) For(ext *ocv1.ClusterExtension) (BundleSource, error) {
+func (sources Resolvers) For(ext *ocv1.ClusterExtension) (Resolver, error) {
 	source := sources[ext.Spec.Source.SourceType]
-	if source == nil || nilBundleSource(source) {
+	if source == nil || nilResolver(source) {
 		return nil, fmt.Errorf("unsupported sourceType %q: bundle source is not configured", ext.Spec.Source.SourceType)
 	}
 	return source, nil
 }
 
+// maintainInstalled is the general installed-bundle fallback action: it
+// targets the installed revision so the shared unpack and apply pipeline
+// maintains the existing installation.
+func maintainInstalled(revisions *RevisionStates) *RevisionMetadata {
+	return revisions.Installed
+}
+
 // Interfaces can contain typed nil implementations; reject these at lookup too.
-func nilBundleSource(source BundleSource) bool {
+func nilResolver(source Resolver) bool {
 	v := reflect.ValueOf(source)
 	switch v.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
