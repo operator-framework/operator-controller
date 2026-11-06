@@ -87,9 +87,11 @@ type ClusterObjectDeploymentTemplate struct {
 
 // ClusterObjectDeploymentTemplateMetadata contains labels and annotations
 // propagated to each ClusterObjectSet revision created from the template.
+// +kubebuilder:validation:MinProperties=1
 type ClusterObjectDeploymentTemplateMetadata struct {
 	// labels is a set of key/value pairs propagated to each revision's metadata.
 	// +optional
+	// +kubebuilder:validation:MinProperties=1
 	// +kubebuilder:validation:MaxProperties=32
 	Labels map[string]string `json:"labels,omitempty"`
 
@@ -98,6 +100,7 @@ type ClusterObjectDeploymentTemplateMetadata struct {
 	// rules (key format and total size) before creating a revision; invalid
 	// annotations are reported on the deployment's Progressing condition.
 	// +optional
+	// +kubebuilder:validation:MinProperties=1
 	// +kubebuilder:validation:MaxProperties=32
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
@@ -112,7 +115,7 @@ type ClusterObjectDeploymentTemplateSpec struct {
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=map
 	// +listMapKey=name
-	Phases []ClusterObjectSetPhase `json:"phases"` //nolint:kubeapilinter // These are ordered groups of objects, not an enum describing lifecycle state.
+	Phases []ClusterObjectSetPhase `json:"phases,omitempty"` // These are ordered groups of objects, not an enum describing lifecycle state.
 
 	// progressDeadlineMinutes is the maximum number of minutes a revision may take
 	// to roll out, measured from the ClusterObjectSet's creation timestamp. Time
@@ -120,9 +123,9 @@ type ClusterObjectDeploymentTemplateSpec struct {
 	// deadline covers all phases together; completing a phase does not reset it.
 	// Once a revision has completed, the deadline no longer applies, even if it
 	// later becomes unhealthy. When omitted, no deadline is enforced. The minimum
-	// period is 10 minutes, and the maximum is 720 minutes (12 hours).
+	// period is 1 minute, and the maximum is 720 minutes (12 hours).
 	//
-	// +kubebuilder:validation:Minimum:=10
+	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:Maximum:=720
 	// +optional
 	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
@@ -138,7 +141,6 @@ type ClusterObjectDeploymentTemplateSpec struct {
 	// collisionProtection is the required default collision protection strategy for objects in the revision.
 	// Objects and phases may override it.
 	// +required
-	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 

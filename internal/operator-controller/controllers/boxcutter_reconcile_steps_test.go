@@ -64,6 +64,12 @@ func TestBoxcutterRevisionStatesGetter_GroupIndex(t *testing.T) {
 				Group: cosDef.group, Revision: cosDef.revision,
 				LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
 				CollisionProtection: ocv1.CollisionProtectionPrevent,
+				Phases: []ocv1.ClusterObjectSetPhase{
+					{
+						Name:    "test-phase",
+						Objects: []ocv1.ClusterObjectSetObject{},
+					},
+				},
 			},
 		}
 		if cosDef.group != group {
