@@ -35,7 +35,7 @@ require (
 	go.podman.io/image/v5 v5.42.0
 	go.uber.org/mock v0.6.0
 	golang.org/x/exp v0.0.0-20260603202125-055de637280b
-	golang.org/x/sync v0.24.0
+	golang.org/x/sync v0.25.0
 	golang.org/x/tools v0.52.0
 	helm.sh/helm/v3 v3.22.1
 	k8s.io/api v0.37.1
