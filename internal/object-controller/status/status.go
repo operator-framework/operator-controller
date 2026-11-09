@@ -43,7 +43,7 @@ func sumObjectCounts(phases []ocv1.ObservedPhase) ocv1.ObjectCounts {
 	return counts
 }
 
-func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machinery.RevisionResult, now metav1.Time) {
+func UpdateObservedPhasesForReconcile(mapper apimeta.RESTMapper, objSet *ocv1.ClusterObjectSet, rres machinery.RevisionResult, now metav1.Time) {
 	if objSet == nil || rres == nil {
 		return
 	}
@@ -165,7 +165,7 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 				if obj.IsComplete() || obj.Action() == machinery.ActionProgressed {
 					continue
 				}
-				observedPhase.ObjectDetails = append(observedPhase.ObjectDetails, objectStatus(obj))
+				observedPhase.ObjectDetails = append(observedPhase.ObjectDetails, objectStatus(mapper, obj))
 			}
 		}
 		updateObservedPhaseStatus(objSet, observedPhase, now)
@@ -173,7 +173,7 @@ func UpdateObservedPhasesForReconcile(objSet *ocv1.ClusterObjectSet, rres machin
 	objSet.Status.ObjectCounts = sumObjectCounts(objSet.Status.ObservedPhases)
 }
 
-func UpdateObservedPhasesForTeardown(objSet *ocv1.ClusterObjectSet, tres machinery.RevisionTeardownResult, now metav1.Time) {
+func UpdateObservedPhasesForTeardown(mapper apimeta.RESTMapper, objSet *ocv1.ClusterObjectSet, tres machinery.RevisionTeardownResult, now metav1.Time) {
 	if objSet == nil || tres == nil {
 		return
 	}
@@ -207,8 +207,7 @@ func UpdateObservedPhasesForTeardown(objSet *ocv1.ClusterObjectSet, tres machine
 		for _, ref := range pres.Waiting() {
 			observedPhase.ObjectDetails = append(observedPhase.ObjectDetails, ocv1.ObjectStatus{
 				Group:     ref.Group,
-				Version:   ref.Version,
-				Kind:      ref.Kind,
+				Resource:  resourceFor(mapper, ref),
 				Namespace: ref.Namespace,
 				Name:      ref.Name,
 				Messages:  []string{"awaiting deletion"},
@@ -269,13 +268,32 @@ func HasSupersededObject(pres machinery.PhaseResult) bool {
 	return false
 }
 
+// resourceFor returns the lowercase, plural resource name for ref's GroupVersionKind,
+// as required by ObjectStatus.resource. It resolves the resource via the RESTMapper so
+// that, e.g., a ConfigMap is reported as "configmaps" rather than the "ConfigMap" kind
+// (which would fail the field's dns1035 label validation and cause the status update to
+// be rejected). When the type is not yet known to the mapper (for example a CRD applied
+// by an earlier phase whose discovery has not propagated), it falls back to the
+// lowercased kind, which is still a dns1035-valid identifier for the type.
+func resourceFor(mapper apimeta.RESTMapper, ref types.ObjectRef) string {
+	if mapper != nil {
+		var versions []string
+		if ref.Version != "" {
+			versions = []string{ref.Version}
+		}
+		if mapping, err := mapper.RESTMapping(ref.GroupKind(), versions...); err == nil {
+			return mapping.Resource.Resource
+		}
+	}
+	return strings.ToLower(ref.Kind)
+}
+
 // objectStatus returns details describing why obj is not yet complete.
-func objectStatus(obj machinery.ObjectResult) ocv1.ObjectStatus {
+func objectStatus(mapper apimeta.RESTMapper, obj machinery.ObjectResult) ocv1.ObjectStatus {
 	ref := types.ToObjectRef(obj.Object())
 	objStatus := ocv1.ObjectStatus{
 		Group:     ref.Group,
-		Version:   ref.Version,
-		Kind:      ref.Kind,
+		Resource:  resourceFor(mapper, ref),
 		Namespace: ref.Namespace,
 		Name:      ref.Name,
 	}

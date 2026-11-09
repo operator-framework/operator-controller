@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,6 +23,17 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
+
+// testMapper resolves the GroupVersionKinds exercised by these tests to their plural
+// resource names, mirroring how the controller's real RESTMapper populates
+// ObjectStatus.resource. Types it does not know fall back to the lowercased kind.
+var testMapper = func() apimeta.RESTMapper {
+	m := apimeta.NewDefaultRESTMapper(nil)
+	m.Add(corev1.SchemeGroupVersion.WithKind("ConfigMap"), apimeta.RESTScopeNamespace)
+	m.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, apimeta.RESTScopeNamespace)
+	m.Add(schema.GroupVersionKind{Group: "apiextensions.k8s.io", Version: "v1", Kind: "CustomResourceDefinition"}, apimeta.RESTScopeRoot)
+	return m
+}()
 
 func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 	now := metav1.Now()
@@ -42,7 +54,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				&fakePhaseResult{name: "p1", complete: true},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		// phases must not be updated when there is a revision-level validation error
 		assert.Equal(t, ocv1.PhaseStatusReconciling, cos.Status.ObservedPhases[0].Status)
 	})
@@ -58,7 +70,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				&fakePhaseResult{name: "p1", complete: true, validationError: ve},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusInvalidSpecification, cos.Status.ObservedPhases[0].Status)
 		assert.Equal(t, int64(1), *cos.Status.ObservedPhases[0].ObjectCounts.Total)
 	})
@@ -89,7 +101,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				&fakePhaseResult{name: "p1", complete: false, validationError: ve},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusPreconditionsNotMet, cos.Status.ObservedPhases[0].Status)
 	})
 
@@ -117,7 +129,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				&fakePhaseResult{name: "p1", complete: false, validationError: ve},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusInvalidSpecification, cos.Status.ObservedPhases[0].Status)
 	})
 
@@ -143,7 +155,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				&fakePhaseResult{name: "p2", complete: false, validationError: ve},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusPending, cos.Status.ObservedPhases[1].Status)
 		assert.Equal(t, int64(1), *cos.Status.ObservedPhases[1].ObjectCounts.Total)
 	})
@@ -172,7 +184,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases, 2)
 		assert.Equal(t, ocv1.PhaseStatusSuperseded, cos.Status.ObservedPhases[0].Status)
 		assert.Equal(t, int64(2), *cos.Status.ObservedPhases[0].ObjectCounts.Total)
@@ -192,7 +204,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				&fakePhaseResult{name: "p1", complete: true, progressed: true},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusReady, cos.Status.ObservedPhases[0].Status)
 	})
 
@@ -212,7 +224,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusSuperseded, cos.Status.ObservedPhases[0].Status)
 	})
 
@@ -230,7 +242,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		require.NotNil(t, cos.Status.ObservedPhases)
 		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(1)), Present: ptr.To(int64(0)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, cos.Status.ObservedPhases[0].ObjectCounts)
 		assert.Equal(t, ocv1.PhaseStatusReconciling, cos.Status.ObservedPhases[0].Status)
@@ -249,7 +261,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusReady, cos.Status.ObservedPhases[0].Status)
 		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(2)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(2)), Ready: ptr.To(int64(2))}, cos.Status.ObservedPhases[0].ObjectCounts)
 	})
@@ -267,7 +279,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusStabilizing, cos.Status.ObservedPhases[0].Status)
 		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(2)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(2)), Ready: ptr.To(int64(1))}, cos.Status.ObservedPhases[0].ObjectCounts)
 	})
@@ -288,7 +300,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusStabilizing, cos.Status.ObservedPhases[0].Status)
 		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(3)), Synced: ptr.To(int64(3)), Ready: ptr.To(int64(0))}, cos.Status.ObservedPhases[0].ObjectCounts)
 	})
@@ -309,7 +321,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		// isPaused=true → default case → Pending (read-only while earlier phase is rolling out)
 		assert.Equal(t, ocv1.PhaseStatusPending, cos.Status.ObservedPhases[0].Status)
 		// ActionUpdated+paused: Present; ActionRecovered+paused: Present; ActionCreated+paused: nothing
@@ -340,7 +352,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases, 2)
 		assert.Equal(t, ocv1.PhaseStatusPending, cos.Status.ObservedPhases[1].Status)
 		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(1)), Ready: ptr.To(int64(1))}, cos.Status.ObservedPhases[1].ObjectCounts)
@@ -360,7 +372,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusReady, cos.Status.ObservedPhases[0].Status)
 		assert.Empty(t, cos.Status.ObservedPhases[0].ObjectDetails)
 	})
@@ -378,7 +390,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusSuperseded, cos.Status.ObservedPhases[0].Status)
 		assert.Empty(t, cos.Status.ObservedPhases[0].ObjectDetails)
 	})
@@ -396,7 +408,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusStabilizing, cos.Status.ObservedPhases[0].Status)
 		assert.Len(t, cos.Status.ObservedPhases[0].ObjectDetails, 1)
 	})
@@ -415,7 +427,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusReconciling, cos.Status.ObservedPhases[0].Status)
 		assert.Len(t, cos.Status.ObservedPhases[0].ObjectDetails, 1)
 	})
@@ -435,7 +447,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases[0].ObjectDetails, 1)
 		assert.Equal(t, "my-cm", cos.Status.ObservedPhases[0].ObjectDetails[0].Name)
 	})
@@ -462,7 +474,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 				}},
 			},
 		}
-		UpdateObservedPhasesForReconcile(&cos, result, now)
+		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		// p1: Total=2,Present=2,Synced=2,Ready=2 — p2: Total=3,Present=1,Synced=1,Ready=0
 		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(5)), Present: ptr.To(int64(3)), Synced: ptr.To(int64(3)), Ready: ptr.To(int64(2))}, cos.Status.ObjectCounts)
 	})
@@ -482,7 +494,7 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1", waiting: []boxcuttertypes.ObjectRef{{}, {}}},
 			},
 		}
-		UpdateObservedPhasesForTeardown(&cos, result, now)
+		UpdateObservedPhasesForTeardown(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases, 1)
 		phase := cos.Status.ObservedPhases[0]
 		assert.Equal(t, ocv1.PhaseStatusArchiving, phase.Status)
@@ -508,12 +520,11 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1", waiting: []boxcuttertypes.ObjectRef{ref}},
 			},
 		}
-		UpdateObservedPhasesForTeardown(&cos, result, now)
+		UpdateObservedPhasesForTeardown(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases[0].ObjectDetails, 1)
 		detail := cos.Status.ObservedPhases[0].ObjectDetails[0]
 		assert.Equal(t, corev1.SchemeGroupVersion.Group, detail.Group)
-		assert.Equal(t, corev1.SchemeGroupVersion.Version, detail.Version)
-		assert.Equal(t, "ConfigMap", detail.Kind)
+		assert.Equal(t, "configmaps", detail.Resource)
 		assert.Equal(t, "default", detail.Namespace)
 		assert.Equal(t, "my-cm", detail.Name)
 		assert.Equal(t, []string{"awaiting deletion"}, detail.Messages)
@@ -530,7 +541,7 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1"},
 			},
 		}
-		UpdateObservedPhasesForTeardown(&cos, result, now)
+		UpdateObservedPhasesForTeardown(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases, 1)
 		phase := cos.Status.ObservedPhases[0]
 		assert.Equal(t, ocv1.PhaseStatusArchived, phase.Status)
@@ -563,7 +574,7 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1", waiting: []boxcuttertypes.ObjectRef{{}, {}}},
 			},
 		}
-		UpdateObservedPhasesForTeardown(&cos, result, now)
+		UpdateObservedPhasesForTeardown(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases, 3)
 
 		phases := cos.Status.ObservedPhases
@@ -610,7 +621,7 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p2", waiting: []boxcuttertypes.ObjectRef{{}}},
 			},
 		}
-		UpdateObservedPhasesForTeardown(&cos, result, now)
+		UpdateObservedPhasesForTeardown(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases, 2)
 		// p1 not in GetPhases — must not be touched
 		assert.Equal(t, ocv1.PhaseStatusReconciling, cos.Status.ObservedPhases[0].Status)
@@ -627,7 +638,7 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1", waiting: []boxcuttertypes.ObjectRef{{}}},
 			},
 		}
-		UpdateObservedPhasesForTeardown(&cos, result, now)
+		UpdateObservedPhasesForTeardown(testMapper, &cos, result, now)
 		assert.True(t, cos.Status.ObservedPhases[0].CompletedAt.IsZero())
 	})
 
@@ -644,7 +655,7 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 				&fakePhaseTeardownResult{name: "p1", waiting: []boxcuttertypes.ObjectRef{{}}},
 			},
 		}
-		UpdateObservedPhasesForTeardown(&cos, result, now)
+		UpdateObservedPhasesForTeardown(testMapper, &cos, result, now)
 		require.NotNil(t, cos.Status.ObservedPhases[0].CompletedAt)
 		assert.Equal(t, earlier, cos.Status.ObservedPhases[0].CompletedAt)
 	})
@@ -756,23 +767,22 @@ func TestObjectStatus(t *testing.T) {
 	obj.SetNamespace("default")
 
 	t.Run("populates object identity from GVK and object ref", func(t *testing.T) {
-		result := objectStatus(&fakeObjectResult{obj: obj, probes: boxcuttertypes.ProbeResultContainer{}})
+		result := objectStatus(testMapper, &fakeObjectResult{obj: obj, probes: boxcuttertypes.ProbeResultContainer{}})
 		assert.Equal(t, corev1.SchemeGroupVersion.Group, result.Group)
-		assert.Equal(t, corev1.SchemeGroupVersion.Version, result.Version)
-		assert.Equal(t, "ConfigMap", result.Kind)
+		assert.Equal(t, "configmaps", result.Resource)
 		assert.Equal(t, "default", result.Namespace)
 		assert.Equal(t, "my-cm", result.Name)
 	})
 
 	t.Run("collision returns ownership collision message", func(t *testing.T) {
-		result := objectStatus(&fakeCollisionResult{
+		result := objectStatus(testMapper, &fakeCollisionResult{
 			fakeObjectResult: fakeObjectResult{obj: obj, probes: boxcuttertypes.ProbeResultContainer{}},
 		})
 		assert.Equal(t, []string{"object ownership collision"}, result.Messages)
 	})
 
 	t.Run("failing probe with message", func(t *testing.T) {
-		result := objectStatus(&fakeObjectResult{
+		result := objectStatus(testMapper, &fakeObjectResult{
 			obj: obj,
 			probes: boxcuttertypes.ProbeResultContainer{
 				"readiness": {Status: boxcuttertypes.ProbeStatusFalse, Messages: []string{"not ready"}},
@@ -782,7 +792,7 @@ func TestObjectStatus(t *testing.T) {
 	})
 
 	t.Run("failing probe without message shows status", func(t *testing.T) {
-		result := objectStatus(&fakeObjectResult{
+		result := objectStatus(testMapper, &fakeObjectResult{
 			obj: obj,
 			probes: boxcuttertypes.ProbeResultContainer{
 				"readiness": {Status: boxcuttertypes.ProbeStatusFalse},
@@ -792,7 +802,7 @@ func TestObjectStatus(t *testing.T) {
 	})
 
 	t.Run("passing probe is omitted and falls back to not yet complete", func(t *testing.T) {
-		result := objectStatus(&fakeObjectResult{
+		result := objectStatus(testMapper, &fakeObjectResult{
 			obj: obj,
 			probes: boxcuttertypes.ProbeResultContainer{
 				"readiness": {Status: boxcuttertypes.ProbeStatusTrue},
@@ -802,7 +812,7 @@ func TestObjectStatus(t *testing.T) {
 	})
 
 	t.Run("paused non-idle delegates to pausedObjectMessages", func(t *testing.T) {
-		result := objectStatus(&fakeObjectResult{
+		result := objectStatus(testMapper, &fakeObjectResult{
 			obj:    obj,
 			paused: true,
 			action: machinery.ActionCreated,
@@ -812,7 +822,7 @@ func TestObjectStatus(t *testing.T) {
 	})
 
 	t.Run("no issues returns not yet complete", func(t *testing.T) {
-		result := objectStatus(&fakeObjectResult{
+		result := objectStatus(testMapper, &fakeObjectResult{
 			obj:    obj,
 			action: machinery.ActionIdle,
 			probes: boxcuttertypes.ProbeResultContainer{},
@@ -828,7 +838,7 @@ func TestObjectStatus(t *testing.T) {
 				Messages: []string{"failed"},
 			}
 		}
-		result := objectStatus(&fakeObjectResult{obj: obj, probes: probes})
+		result := objectStatus(testMapper, &fakeObjectResult{obj: obj, probes: probes})
 		require.Len(t, result.Messages, 18)
 		assert.Equal(t, "additional objectDetails messages were removed for size constraints", result.Messages[17])
 	})

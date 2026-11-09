@@ -2818,13 +2818,6 @@ spec:
                               resources). At most 253 characters (DNS subdomain max).
                             maxLength: 253
                             type: string
-                          kind:
-                            description: |-
-                              kind is the kind of the object. Must be between 1 and 63
-                              characters.
-                            maxLength: 63
-                            minLength: 1
-                            type: string
                           messages:
                             description: |-
                               messages lists the failure reasons for this object. The maximum
@@ -2851,17 +2844,22 @@ spec:
                               resources. At most 253 characters (DNS subdomain max).
                             maxLength: 253
                             type: string
-                          version:
+                          resource:
                             description: |-
-                              version is the API version of the object. Must be between 1 and
-                              63 characters.
+                              resource is the lowercase, plural resource type of the object
+                              (for example, "pods" or "configmaps"). Must be between 1 and 63
+                              characters.
                             maxLength: 63
                             minLength: 1
                             type: string
+                            x-kubernetes-validations:
+                            - message: the value must consist of only lowercase alphanumeric
+                                characters and hyphens, must start with a letter,
+                                and must end with an alphanumeric character.
+                              rule: '!format.dns1035Label().validate(self).hasValue()'
                         required:
-                        - kind
                         - name
-                        - version
+                        - resource
                         type: object
                       maxItems: 50
                       type: array
