@@ -942,8 +942,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_VerifyReferencedSecrets(t *testin
 			rev1.Spec.Phases = []ocv1.ClusterObjectSetPhase{{
 				Name: "everything",
 				Objects: []ocv1.ClusterObjectSetObject{
-					{Ref: ocv1.ObjectSourceRef{Name: "secret-a", Namespace: "ns", Key: "configmap"}},
-					{Ref: ocv1.ObjectSourceRef{Name: "secret-b", Namespace: "ns", Key: "configmap"}},
+					{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: "secret-a", Namespace: "ns", Key: "configmap"}},
+					{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: "secret-b", Namespace: "ns", Key: "configmap"}},
 				},
 			}}
 
@@ -1007,7 +1007,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ReferencedContentValidationRecove
 	rev1.Spec.Phases = []ocv1.ClusterObjectSetPhase{{
 		Name: "everything",
 		Objects: []ocv1.ClusterObjectSetObject{
-			{Ref: ocv1.ObjectSourceRef{Name: "manifest", Namespace: "ns", Key: "configmap"}},
+			{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: "manifest", Namespace: "ns", Key: "configmap"}},
 		},
 	}}
 
@@ -1558,7 +1558,8 @@ func newTestClusterObjectSet(t *testing.T, revisionName string, ext *ocv1.Cluste
 					Name: "everything",
 					Objects: []ocv1.ClusterObjectSetObject{
 						{
-							Object: unstructured.Unstructured{
+							Type: ocv1.ObjectTypeInlineManifest,
+							InlineManifest: unstructured.Unstructured{
 								Object: map[string]interface{}{
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",

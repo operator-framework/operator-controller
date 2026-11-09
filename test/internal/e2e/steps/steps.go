@@ -1316,17 +1316,17 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 	for i, phase := range rev.Spec.Phases {
 		for j, phaseObj := range phase.Objects {
 			var obj *unstructured.Unstructured
-			switch {
-			case phaseObj.Ref.Name != "":
-				resolved, err := resolveObjectRef(phaseObj.Ref)
+			switch phaseObj.Type {
+			case ocv1.ObjectTypeObjectReference:
+				resolved, err := resolveObjectRef(phaseObj.ObjectRef)
 				if err != nil {
 					return fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
 				}
 				obj = resolved
-			case len(phaseObj.Object.Object) > 0:
-				obj = &phaseObj.Object
+			case ocv1.ObjectTypeInlineManifest:
+				obj = &phaseObj.InlineManifest
 			default:
-				return fmt.Errorf("clusterobjectset %q phase %d object %d has neither ref nor inline object", revisionName, i, j)
+				return fmt.Errorf("clusterobjectset %q phase %d object %d has unknown type %q", revisionName, i, j, phaseObj.Type)
 			}
 			kind := obj.GetKind()
 			name := obj.GetName()
@@ -1402,9 +1402,9 @@ func ClusterObjectSetPhaseObjectsManagedInSecrets(ctx context.Context, revisionN
 				if !ok {
 					return false
 				}
-				ref, refOK, _ := unstructured.NestedMap(obj, "ref")
+				ref, refOK, _ := unstructured.NestedMap(obj, "objectRef")
 				if !refOK || len(ref) == 0 {
-					logger.V(1).Info("object does not use ref", "revision", revisionName)
+					logger.V(1).Info("object does not use objectRef", "revision", revisionName)
 					return false
 				}
 				name, _, _ := unstructured.NestedString(ref, "name")
@@ -1610,7 +1610,7 @@ func collectReferredSecretNames(ctx context.Context, revisionName string) ([]str
 			if !ok {
 				continue
 			}
-			name, _, _ := unstructured.NestedString(phaseObj, "ref", "name")
+			name, _, _ := unstructured.NestedString(phaseObj, "objectRef", "name")
 			if name != "" && !seen.Has(name) {
 				seen.Insert(name)
 				names = append(names, name)
@@ -1653,11 +1653,11 @@ func collectReferredSecretRefs(ctx context.Context, revisionName string) ([]refe
 			if !ok {
 				continue
 			}
-			name, _, _ := unstructured.NestedString(phaseObj, "ref", "name")
+			name, _, _ := unstructured.NestedString(phaseObj, "objectRef", "name")
 			if name == "" {
 				continue
 			}
-			ns, _, _ := unstructured.NestedString(phaseObj, "ref", "namespace")
+			ns, _, _ := unstructured.NestedString(phaseObj, "objectRef", "namespace")
 			if ns == "" {
 				ns = olmNamespace
 			}
@@ -2611,17 +2611,17 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 		phase := &rev.Spec.Phases[i]
 		for j := range phase.Objects {
 			specObj := &phase.Objects[j]
-			switch {
-			case specObj.Ref.Name != "":
-				resolved, err := resolveObjectRef(specObj.Ref)
+			switch specObj.Type {
+			case ocv1.ObjectTypeObjectReference:
+				resolved, err := resolveObjectRef(specObj.ObjectRef)
 				if err != nil {
 					return nil, fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
 				}
 				objs = append(objs, resolved)
-			case len(specObj.Object.Object) > 0:
-				objs = append(objs, &specObj.Object)
+			case ocv1.ObjectTypeInlineManifest:
+				objs = append(objs, &specObj.InlineManifest)
 			default:
-				return nil, fmt.Errorf("object %d in phase %q has neither object nor ref", j, phase.Name)
+				return nil, fmt.Errorf("object %d in phase %q has unknown type %q", j, phase.Name, specObj.Type)
 			}
 		}
 	}

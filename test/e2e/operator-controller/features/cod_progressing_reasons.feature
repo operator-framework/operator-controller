@@ -38,7 +38,8 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
@@ -99,7 +100,8 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
             phases:
             - name: resources
               objects:
-              - ref:
+              - type: ObjectReference
+                objectRef:
                   name: ${NAME}-mutable-secret
                   namespace: ${TEST_NAMESPACE}
                   key: configmap
@@ -170,7 +172,8 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: apps/v1
                   kind: Deployment
                   metadata:
@@ -227,7 +230,8 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
             phases:
             - name: resources
               objects:
-              - object:
+              - type: InlineManifest
+                inlineManifest:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
