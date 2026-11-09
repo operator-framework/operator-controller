@@ -22,7 +22,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/object-controller/scheme"
-	"github.com/operator-framework/operator-controller/test"
+	test "github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func TestValidateMetricsFlags(t *testing.T) {

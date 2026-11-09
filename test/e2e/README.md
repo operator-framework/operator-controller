@@ -20,34 +20,49 @@ non-technical stakeholders.
 ## Project Structure
 
 ```
-test/e2e/
-├── README.md                   # This file
-├── features_test.go            # Test runner and suite initialization
-├── features/                   # Gherkin feature files
-│   ├── install.feature         # ClusterExtension installation scenarios
-│   ├── update.feature          # ClusterExtension update scenarios
-│   ├── recover.feature         # Recovery scenarios
-│   ├── status.feature          # ClusterExtension status scenarios
-│   └── metrics.feature         # Metrics endpoint scenarios
-└── steps/                      # Step definitions and test utilities
-    ├── steps.go                # Step definition implementations
-    ├── hooks.go                # Test hooks and scenario context
-    └── testdata/               # Test data (RBAC templates)
-        ├── serviceaccount-template.yaml
-        ├── olm-sa-helm-rbac-template.yaml
-        ├── olm-sa-boxcutter-rbac-template.yaml
-        ├── pvc-probe-sa-boxcutter-rbac-template.yaml
-        ├── cluster-admin-rbac-template.yaml
-        └── metrics-reader-rbac-template.yaml
+test/
+├── e2e/
+│   ├── README.md
+│   ├── features_test.go        # Legacy file entry point
+│   ├── operator-controller/
+│   │   ├── suite_test.go       # Component suite entry point
+│   │   └── features/           # All existing features during the first migration stage
+│   ├── catalogd/
+│   │   └── features/           # Placeholder for the catalogd suite
+│   ├── object-controller/
+│   │   └── features/           # Placeholder for the object-controller suite
+│   └── platform/
+│       └── features/           # Placeholder for the cross-component suite
+└── internal/
+    ├── e2e/
+    │   ├── runner.go           # Godog options, scenario selection, summary wiring
+    │   ├── steps/              # All existing step definitions and hooks
+    │   │   └── testdata/       # RBAC and resource templates
+    │   └── support-bundle.yaml # Shared diagnostics
+    └── summary/                # Summary generation and embedded templates
 ```
 
 ## Architecture
 
-### 1. Test Runner (`features_test.go`)
+### 1. Test Runner (`operator-controller/suite_test.go`)
 
-The main test entry point that configures and runs the Godog test suite.
+The component entry point registers the full shared step set and hooks, then calls
+`e2e.Run` from `test/internal/e2e` with its feature directory. The shared runner configures Godog options,
+scenario selection, and summary generation.
 
-### 2. Feature Files (`features/*.feature`)
+Test helpers live under `test/internal` so their exported functions can be shared
+by test suites without becoming public Go APIs. Envtest helpers used by API and
+controller unit tests live under `internal/testutil`, which is accessible throughout
+the repository.
+
+This is the first stage of the [per-component suite design](../../docs/designs/e2e-per-component.md).
+All existing features remain together under `operator-controller/features/` during
+this stage. The catalogd, object-controller, and platform feature directories contain
+only `.gitkeep` placeholders. Later branches will add their suite entry points and
+move features to their owners, then separate component-specific steps. Feature
+contents and step behavior are unchanged.
+
+### 2. Feature Files (`operator-controller/features/*.feature`)
 
 Gherkin files that describe test scenarios in natural language.
 
@@ -101,7 +116,7 @@ Feature: Install ClusterExtension
     And ClusterExtension is available
 ```
 
-### 3. Step Definitions (`steps/steps.go`)
+### 3. Step Definitions (`test/internal/e2e/steps/steps.go`)
 
 Go functions that implement the steps defined in feature files. Each step is registered with a regex pattern that
 matches the Gherkin text.
@@ -153,7 +168,7 @@ func BundleInstalled(ctx context.Context, name, version string) error {
 }
 ```
 
-### 4. Hooks and Context (`steps/hooks.go`)
+### 4. Hooks and Context (`test/internal/e2e/steps/hooks.go`)
 
 Manages test lifecycle and scenario-specific context.
 
@@ -171,7 +186,7 @@ Replaces `${TEST_NAMESPACE}`, `${NAME}`, `${SCENARIO_ID}`, `${PACKAGE:<name>}`, 
 
 ### 1. Create a Feature File
 
-Create a new `.feature` file in `test/e2e/features/`:
+Create a new `.feature` file in `test/e2e/operator-controller/features/`:
 
 ```gherkin
 Feature: Your Feature Name
@@ -188,7 +203,7 @@ Feature: Your Feature Name
 
 ### 2. Implement Step Definitions
 
-Add step implementations in `steps/steps.go`:
+Add step implementations in `test/internal/e2e/steps/steps.go`:
 
 ```go
 func RegisterSteps(sc *godog.ScenarioContext) {
@@ -269,6 +284,22 @@ make test-e2e                      # Standard features
 make test-experimental-e2e         # Experimental features
 ```
 
+### Run Suites Against an Existing Cluster
+
+The aggregate package pattern discovers component suites automatically. Preserve
+the two-pass tag policy and disable Go test caching when running it directly:
+
+```bash
+go test -count=1 -v ./test/e2e/... -args --godog.tags="~@Serial && ~@demo" --godog.concurrency=100
+go test -p 1 -count=1 -v ./test/e2e/... -args --godog.tags="@Serial && ~@demo" --godog.concurrency=1
+```
+
+`-p 1` also serializes packages, keeping serial scenarios exclusive as more suites
+are added. Demo scenarios run separately through `make update-demos`.
+
+To select the current component suite, use `./test/e2e/operator-controller/...`
+with the same flags. Additional component suites will be added in the next stage.
+
 ### Run Standard and Experimental in Parallel
 
 Both suites can run simultaneously on separate KIND clusters (see the Makefile
@@ -340,27 +371,27 @@ make experimental-e2e-teardown     # Experimental cluster
 ### Run Specific Feature
 
 ```bash
-go test test/e2e/features_test.go -- features/install.feature
+go test -count=1 ./test/e2e/operator-controller/... -args features/install.feature
 ```
 
 ### Run Specific Scenario by Tag
 
 ```bash
-go test test/e2e/features_test.go --godog.tags="@WebhookProviderCertManager"
+go test -count=1 ./test/e2e/operator-controller/... -args --godog.tags="@WebhookProviderCertManager"
 ```
 
 ### Run with Debug Logging
 
 ```bash
-go test -v test/e2e/features_test.go --log.debug
+go test -count=1 -v ./test/e2e/operator-controller/... -args --log.debug
 ```
 
 ### CLI Options
 
-Godog options can be passed after `--`:
+Godog options can be passed after `-args`:
 
 ```bash
-go test test/e2e/features_test.go \
+go test -count=1 ./test/e2e/operator-controller/... -args \
   --godog.format=pretty \
   --godog.tags="@WebhookProviderCertManager"
 ```
@@ -378,7 +409,7 @@ Available formats: `pretty`, `cucumber`, `progress`, `junit`
 **Example:**
 
 ```bash
-go test test/e2e/features_test.go --log.debug --k8s.cli=oc
+go test -count=1 ./test/e2e/operator-controller/... -args --log.debug --k8s.cli=oc
 ```
 
 ### Environment Variables
@@ -459,7 +490,7 @@ features.
 A list of available, implemented steps can be obtained by running:
 
 ```shell
-go test test/e2e/features_test.go -d
+go test -count=1 ./test/e2e/operator-controller/... -args --godog.definitions
 ```
 
 When working with [Claude Code](https://claude.com/claude-code), run the `/list-e2e-steps` command to get a categorized

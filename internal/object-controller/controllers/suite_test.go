@@ -28,7 +28,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/test"
+	test "github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func newScheme(t *testing.T) *apimachineryruntime.Scheme {
