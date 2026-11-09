@@ -20,24 +20,40 @@ func pendingHelmMigrationFixture(t *testing.T) (*runtime.Scheme, *ocv1.ClusterEx
 	t.Helper()
 	scheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(scheme))
-	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "migrating", UID: "current-ce"}}
-	cod := &ocv1.ClusterObjectDeployment{ObjectMeta: metav1.ObjectMeta{
-		Name: ext.Name, UID: "current-cod",
-		OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))},
-	}}
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "migrating",
+			UID:  "current-ce",
+		},
+	}
+	cod := &ocv1.ClusterObjectDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ext.Name,
+			UID:  "current-cod",
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind)),
+			},
+		},
+	}
 	rev := &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   ext.Name + "-1",
 			Labels: map[string]string{labels.MigratedFromHelmKey: "true"},
 			Annotations: map[string]string{
-				labels.BundleNameKey: "installed-bundle", labels.BundleVersionKey: "1.0.0",
-				labels.BundleReleaseKey: "2", labels.PackageNameKey: "installed-package",
+				labels.BundleNameKey:      "installed-bundle",
+				labels.BundleVersionKey:   "1.0.0",
+				labels.BundleReleaseKey:   "2",
+				labels.PackageNameKey:     "installed-package",
 				labels.BundleReferenceKey: "example.com/bundle:v1.0.0",
 			},
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))},
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind)),
+			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
-			Group: ext.Name, Revision: 1, LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+			Group:               ext.Name,
+			Revision:            1,
+			LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
 			CollisionProtection: ocv1.CollisionProtectionNone,
 		},
 		Status: ocv1.ClusterObjectSetStatus{CompletedAt: metav1.Now()},
@@ -50,8 +66,13 @@ func TestBoxcutterRevisionStatesGetter_ReportsPendingHelmMigration(t *testing.T)
 		name    string
 		present bool
 	}{
-		{name: "deployment absent"},
-		{name: "deployment awaiting handoff", present: true},
+		{
+			name: "deployment absent",
+		},
+		{
+			name:    "deployment awaiting handoff",
+			present: true,
+		},
 	} {
 		t.Run(deployment.name, func(t *testing.T) {
 			scheme, ext, cod, rev := pendingHelmMigrationFixture(t)
@@ -60,13 +81,20 @@ func TestBoxcutterRevisionStatesGetter_ReportsPendingHelmMigration(t *testing.T)
 				objects = append(objects, cod)
 			}
 			cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
-				WithObjects(objects...).Build()
+				WithObjects(objects...).
+				Build()
 			getter := &BoxcutterRevisionStatesGetter{Reader: cl}
 			states, err := getter.GetRevisionStates(t.Context(), ext)
 			require.NoError(t, err)
 			require.Equal(t, &RevisionMetadata{
-				RevisionName: "migrating-1", Package: "installed-package", Image: "example.com/bundle:v1.0.0",
-				BundleMetadata: ocv1.BundleMetadata{Name: "installed-bundle", Version: "1.0.0", Release: ptr.To("2")},
+				RevisionName: "migrating-1",
+				Package:      "installed-package",
+				Image:        "example.com/bundle:v1.0.0",
+				BundleMetadata: ocv1.BundleMetadata{
+					Name:    "installed-bundle",
+					Version: "1.0.0",
+					Release: ptr.To("2"),
+				},
 			}, states.Installed)
 			require.Empty(t, states.RollingOut)
 		})
@@ -78,28 +106,74 @@ func TestBoxcutterRevisionStatesGetter_FiltersIneligibleHelmMigrations(t *testin
 		name   string
 		change func(*ocv1.ClusterObjectSet)
 	}{
-		{"missing migration marker", func(rev *ocv1.ClusterObjectSet) { rev.Labels = nil }},
-		{"not completed", func(rev *ocv1.ClusterObjectSet) { rev.Status.CompletedAt = metav1.Time{} }},
-		{"archived", func(rev *ocv1.ClusterObjectSet) {
-			rev.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
-		}},
-		{"ownerless", func(rev *ocv1.ClusterObjectSet) { rev.OwnerReferences = nil }},
-		{"stale CE uid", func(rev *ocv1.ClusterObjectSet) { rev.OwnerReferences[0].UID = "old-ce" }},
-		{"non-controller CE reference", func(rev *ocv1.ClusterObjectSet) { rev.OwnerReferences[0].Controller = ptr.To(false) }},
-		{"later revision", func(rev *ocv1.ClusterObjectSet) { rev.Spec.Revision = 2 }},
-		{"different group", func(rev *ocv1.ClusterObjectSet) { rev.Spec.Group = "other-group" }},
-		{"deleting revision", func(rev *ocv1.ClusterObjectSet) {
-			rev.DeletionTimestamp = ptr.To(metav1.Now())
-			rev.Finalizers = []string{"test.example/keep"}
-		}},
+		{
+			name: "missing migration marker",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.Labels = nil
+			},
+		},
+		{
+			name: "not completed",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.Status.CompletedAt = metav1.Time{}
+			},
+		},
+		{
+			name: "archived",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.Spec.LifecycleState = ocv1.ClusterObjectSetLifecycleStateArchived
+			},
+		},
+		{
+			name: "ownerless",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.OwnerReferences = nil
+			},
+		},
+		{
+			name: "stale CE uid",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.OwnerReferences[0].UID = "old-ce"
+			},
+		},
+		{
+			name: "non-controller CE reference",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.OwnerReferences[0].Controller = ptr.To(false)
+			},
+		},
+		{
+			name: "later revision",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.Spec.Revision = 2
+			},
+		},
+		{
+			name: "different group",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.Spec.Group = "other-group"
+			},
+		},
+		{
+			name: "deleting revision",
+			change: func(rev *ocv1.ClusterObjectSet) {
+				rev.DeletionTimestamp = ptr.To(metav1.Now())
+				rev.Finalizers = []string{"test.example/keep"}
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, deployment := range []struct {
 				name    string
 				present bool
 			}{
-				{name: "deployment absent"},
-				{name: "deployment awaiting handoff", present: true},
+				{
+					name: "deployment absent",
+				},
+				{
+					name:    "deployment awaiting handoff",
+					present: true,
+				},
 			} {
 				t.Run(deployment.name, func(t *testing.T) {
 					scheme, ext, cod, rev := pendingHelmMigrationFixture(t)
@@ -109,7 +183,8 @@ func TestBoxcutterRevisionStatesGetter_FiltersIneligibleHelmMigrations(t *testin
 						objects = append(objects, cod)
 					}
 					cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
-						WithObjects(objects...).Build()
+						WithObjects(objects...).
+						Build()
 					getter := &BoxcutterRevisionStatesGetter{Reader: cl}
 					states, err := getter.GetRevisionStates(t.Context(), ext)
 					require.NoError(t, err)
@@ -125,7 +200,8 @@ func TestBoxcutterRevisionStatesGetter_RejectsMigrationWithForeignDeployment(t *
 	scheme, ext, cod, rev := pendingHelmMigrationFixture(t)
 	cod.OwnerReferences[0].UID = "other-ce"
 	cl := testutil.WithIndexes(t, fake.NewClientBuilder().WithScheme(scheme), coscontrollers.SetupIndexes).
-		WithObjects(cod, rev).Build()
+		WithObjects(cod, rev).
+		Build()
 	getter := &BoxcutterRevisionStatesGetter{Reader: cl}
 	states, err := getter.GetRevisionStates(t.Context(), ext)
 	require.NoError(t, err)
