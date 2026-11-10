@@ -1057,7 +1057,7 @@ func ClusterObjectDeploymentConsistentlyReportsCondition(ctx context.Context, na
 	if err != nil {
 		return fmt.Errorf("invalid duration %q: %w", durationStr, err)
 	}
-	return consistentlyCondition(ctx, "clusterobjectdeployment", SubstituteScenarioVars(name, Scenario(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), conditionReason, d)
+	return ConsistentlyCondition(ctx, "clusterobjectdeployment", SubstituteScenarioVars(name, Scenario(ctx)), conditionType, metav1.ConditionStatus(conditionStatus), conditionReason, d)
 }
 
 // consistently invokes check every tick until the expected state has held for the full
@@ -1132,11 +1132,11 @@ func conditionCheck(resourceType, resourceName, conditionType string, conditionS
 	}
 }
 
-// consistentlyCondition fails the test if, at any point during duration, the named
+// ConsistentlyCondition fails the test if, at any point during duration, the named
 // Resource's condition deviates from the expected type/status/reason or disappears.
 // Transient API read failures are tolerated only briefly; see consistently and
 // conditionCheck for the exact semantics.
-func consistentlyCondition(ctx context.Context, resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason string, duration time.Duration) error {
+func ConsistentlyCondition(ctx context.Context, resourceType, resourceName, conditionType string, conditionStatus metav1.ConditionStatus, conditionReason string, duration time.Duration) error {
 	return consistently(ctx, duration, conditionCheck(resourceType, resourceName, conditionType, conditionStatus, conditionReason))
 }
 
@@ -1467,7 +1467,7 @@ func ClusterObjectSetReferredSecretsContainLabels(ctx context.Context, revisionN
 	sc := Scenario(ctx)
 	revisionName = SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
-	expected, err := parseKeyValueTable(table, sc)
+	expected, err := ParseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
 	}
@@ -1478,7 +1478,7 @@ func ClusterObjectSetReferredSecretsContainLabels(ctx context.Context, revisionN
 			return false
 		}
 		for _, s := range secrets {
-			if _, _, ok := matchLabels(s.Labels, expected); !ok {
+			if _, _, ok := MatchLabels(s.Labels, expected); !ok {
 				return false
 			}
 		}
@@ -1974,11 +1974,11 @@ func httpGet(url string, token string) (*http.Response, error) {
 // to return a successful response. Stores the response body per pod in the scenario context. Polls with Timeout.
 func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint string, controllerName string) error {
 	sc := Scenario(ctx)
-	svc, err := getMetricsService(controllerName)
+	svc, err := GetMetricsService(controllerName)
 	if err != nil {
 		return err
 	}
-	mPort, err := metricsPort(svc)
+	mPort, err := MetricsPort(svc)
 	if err != nil {
 		return err
 	}
@@ -2004,7 +2004,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 	sc.MetricsResponse = make(map[string]string)
 	for _, p := range pods {
 		if err := func() error {
-			addr, cleanup, err := portForward(ctx, p.Namespace, fmt.Sprintf("pod/%s", p.Name), mPort)
+			addr, cleanup, err := PortForward(ctx, p.Namespace, fmt.Sprintf("pod/%s", p.Name), mPort)
 			if err != nil {
 				return err
 			}
@@ -2699,7 +2699,7 @@ func AnnotationsAreAdded(ctx context.Context, resourceName string, table *godog.
 	sc := Scenario(ctx)
 	resourceName = SubstituteScenarioVars(resourceName, sc)
 
-	pairs, err := parseKeyValueTable(table, sc)
+	pairs, err := ParseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid annotations table: %w", err)
 	}
@@ -2727,7 +2727,7 @@ func LabelsAreAdded(ctx context.Context, resourceName string, table *godog.Table
 	sc := Scenario(ctx)
 	resourceName = SubstituteScenarioVars(resourceName, sc)
 
-	pairs, err := parseKeyValueTable(table, sc)
+	pairs, err := ParseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
 	}
@@ -2755,7 +2755,7 @@ func ResourceHasAnnotations(ctx context.Context, resourceName string, table *god
 	sc := Scenario(ctx)
 	resourceName = SubstituteScenarioVars(resourceName, sc)
 
-	expected, err := parseKeyValueTable(table, sc)
+	expected, err := ParseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid annotations table: %w", err)
 	}
@@ -2786,9 +2786,9 @@ func ResourceHasAnnotations(ctx context.Context, resourceName string, table *god
 	return nil
 }
 
-// matchLabels checks that actual labels contain all expected key-value pairs.
+// MatchLabels checks that actual labels contain all expected key-value pairs.
 // Returns the first mismatched key, the actual value, and false if a mismatch is found.
-func matchLabels(actual, expected map[string]string) (string, string, bool) {
+func MatchLabels(actual, expected map[string]string) (string, string, bool) {
 	for k, v := range expected {
 		if a, found := actual[k]; !found || a != v {
 			return k, a, false
@@ -2804,7 +2804,7 @@ func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Ta
 	sc := Scenario(ctx)
 	resourceName = SubstituteScenarioVars(resourceName, sc)
 
-	expected, err := parseKeyValueTable(table, sc)
+	expected, err := ParseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
 	}
@@ -2823,7 +2823,7 @@ func ResourceHasLabels(ctx context.Context, resourceName string, table *godog.Ta
 		if err := json.Unmarshal([]byte(out), &obj); err != nil {
 			return false
 		}
-		if key, got, ok := matchLabels(obj.GetLabels(), expected); !ok {
+		if key, got, ok := MatchLabels(obj.GetLabels(), expected); !ok {
 			logger.V(1).Info("Label not yet present or value mismatch", "resource", resourceName, "key", key, "expected", expected[key], "actual", got)
 			return false
 		}
@@ -2837,7 +2837,7 @@ func NamespaceHasLabels(ctx context.Context, nsName string, table *godog.Table) 
 	sc := Scenario(ctx)
 	nsName = SubstituteScenarioVars(nsName, sc)
 
-	expected, err := parseKeyValueTable(table, sc)
+	expected, err := ParseKeyValueTable(table, sc)
 	if err != nil {
 		return fmt.Errorf("invalid labels table: %w", err)
 	}
@@ -2851,7 +2851,7 @@ func NamespaceHasLabels(ctx context.Context, nsName string, table *godog.Table) 
 		if err := json.Unmarshal([]byte(out), &obj); err != nil {
 			return false
 		}
-		if key, got, ok := matchLabels(obj.GetLabels(), expected); !ok {
+		if key, got, ok := MatchLabels(obj.GetLabels(), expected); !ok {
 			logger.V(1).Info("Namespace label not yet present or value mismatch", "namespace", nsName, "key", key, "expected", expected[key], "actual", got)
 			return false
 		}
@@ -2929,9 +2929,9 @@ func NamespaceHasNoOwnerReferences(ctx context.Context, nsName string) error {
 	return nil
 }
 
-// nestedString traverses a nested map[string]interface{} by the given keys
+// NestedString traverses a nested map[string]interface{} by the given keys
 // and returns the leaf value as a string.
-func nestedString(obj map[string]interface{}, keys ...string) (string, bool) {
+func NestedString(obj map[string]interface{}, keys ...string) (string, bool) {
 	if len(keys) == 0 {
 		return "", false
 	}
@@ -2947,10 +2947,10 @@ func nestedString(obj map[string]interface{}, keys ...string) (string, bool) {
 	return v, ok
 }
 
-// parseKeyValueTable extracts key-value pairs from a godog data table.
+// ParseKeyValueTable extracts key-value pairs from a godog data table.
 // The table must have a header row with "key" and "value" columns.
 // If sc is non-nil, variable substitution is applied to both keys and values.
-func parseKeyValueTable(table *godog.Table, sc *World) (map[string]string, error) {
+func ParseKeyValueTable(table *godog.Table, sc *World) (map[string]string, error) {
 	if len(table.Rows) < 2 {
 		return nil, fmt.Errorf("table must have a header row and at least one data row")
 	}
@@ -3066,7 +3066,7 @@ func TriggerClusterExtensionReconciliation(ctx context.Context) error {
 		return fmt.Errorf("failed to unmarshal ClusterExtension %s JSON: %w", sc.ClusterExtensionName, err)
 	}
 
-	currentEnforcement, _ := nestedString(obj, "spec", "install", "preflight", "crdUpgradeSafety", "enforcement")
+	currentEnforcement, _ := NestedString(obj, "spec", "install", "preflight", "crdUpgradeSafety", "enforcement")
 
 	newEnforcement := "None"
 	if currentEnforcement == "None" {

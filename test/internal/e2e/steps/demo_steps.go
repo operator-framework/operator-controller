@@ -104,7 +104,7 @@ func ensureCatalogPortForward(ctx context.Context) (string, error) {
 		port = 8443
 	}
 
-	addr, cleanup, err := portForward(ctx, ns, target, port)
+	addr, cleanup, err := PortForward(ctx, ns, target, port)
 	if err != nil {
 		return "", fmt.Errorf("failed to start catalog port-forward to %s: %w", target, err)
 	}
