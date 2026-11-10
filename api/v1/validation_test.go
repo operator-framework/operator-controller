@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -51,6 +52,17 @@ func TestValidate(t *testing.T) {
 			m[fmt.Sprintf("k%d", j)] = "v"
 		}
 		return m
+	}
+	objectSetWithInlineManifest := func(group string, m unstructured.Unstructured) ClusterObjectSetSpec {
+		return ClusterObjectSetSpec{
+			Group:               group,
+			Revision:            1,
+			CollisionProtection: CollisionProtectionPrevent,
+			LifecycleState:      ClusterObjectSetLifecycleStateActive,
+			Phases: []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{
+				{Type: ObjectTypeInlineManifest, InlineManifest: m},
+			}}},
+		}
 	}
 	c := newClient(t)
 	i := 0
@@ -172,6 +184,34 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			want: want{valid: false, errContains: "spec.template.metadata.labels"},
+		},
+		"ClusterObjectSet: valid inline manifest": {
+			args: args{object: objectSetWithInlineManifest("cos-im-valid", configMap())},
+			want: want{valid: true},
+		},
+		"ClusterObjectSet: inline manifest missing metadata.name": {
+			args: args{object: objectSetWithInlineManifest("cos-im-noname", unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"metadata":   map[string]interface{}{},
+			}})},
+			want: want{valid: false, errContains: "metadata.name is required"},
+		},
+		"ClusterObjectSet: inline manifest empty metadata.name": {
+			args: args{object: objectSetWithInlineManifest("cos-im-emptyname", unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"metadata":   map[string]interface{}{"name": ""},
+			}})},
+			want: want{valid: false, errContains: "metadata.name is required"},
+		},
+		"ClusterObjectSet: inline manifest empty apiVersion": {
+			args: args{object: objectSetWithInlineManifest("cos-im-noapiversion", unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": "",
+				"kind":       "ConfigMap",
+				"metadata":   map[string]interface{}{"name": "test-cm"},
+			}})},
+			want: want{valid: false, errContains: "apiVersion and kind must be non-empty"},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {

@@ -236,6 +236,15 @@ spec:
                             type: object
                             x-kubernetes-embedded-resource: true
                             x-kubernetes-preserve-unknown-fields: true
+                            x-kubernetes-validations:
+                            - message: inlineManifest must be a valid Kubernetes resource
+                                with apiVersion, kind, and metadata
+                              rule: has(self.apiVersion) && has(self.kind) && has(self.metadata)
+                            - message: apiVersion and kind must be non-empty
+                              rule: self.apiVersion != '' && self.kind != ''
+                            - message: metadata.name is required
+                              rule: has(self.metadata.name) && self.metadata.name
+                                != ''
                           objectRef:
                             description: |-
                               objectRef is an optional reference to a Secret that holds the serialized
