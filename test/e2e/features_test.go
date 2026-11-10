@@ -7,6 +7,8 @@ package e2e
 import (
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/cucumber/godog"
@@ -16,11 +18,26 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	// Keep legacy paths such as features/install.feature relative to the suite.
-	if err := os.Chdir("operator-controller"); err != nil {
-		log.Fatal(err)
+	// Preserve legacy features/<file> arguments after features move to their owners.
+	for i, arg := range os.Args[1:] {
+		if arg == "features" || arg == "features/" {
+			os.Args[i+1] = "."
+			continue
+		}
+		if !strings.HasPrefix(arg, "features/") {
+			continue
+		}
+		path, line, hasLine := strings.Cut(arg, ":")
+		matches, err := filepath.Glob("*/" + path)
+		if err != nil || len(matches) != 1 {
+			log.Fatalf("expected one component feature for %q, found %d: %v", arg, len(matches), err)
+		}
+		os.Args[i+1] = matches[0]
+		if hasLine {
+			os.Args[i+1] += ":" + line
+		}
 	}
-	os.Exit(e2e.Run("features", func(tc *godog.TestSuiteContext) {
+	os.Exit(e2e.Run(".", func(tc *godog.TestSuiteContext) {
 		tc.BeforeSuite(steps.BeforeSuite)
 	}, func(sc *godog.ScenarioContext) {
 		steps.RegisterSteps(sc)

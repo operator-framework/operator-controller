@@ -26,13 +26,10 @@ test/
 │   ├── features_test.go        # Legacy file entry point
 │   ├── operator-controller/
 │   │   ├── suite_test.go       # Component suite entry point
-│   │   └── features/           # All existing features during the first migration stage
-│   ├── catalogd/
-│   │   └── features/           # Placeholder for the catalogd suite
-│   ├── object-controller/
-│   │   └── features/           # Placeholder for the object-controller suite
-│   └── platform/
-│       └── features/           # Placeholder for the cross-component suite
+│   │   └── features/           # ClusterExtension scenarios
+│   ├── catalogd/              # Catalog HA, proxy, and TLS scenarios
+│   ├── object-controller/     # ClusterObjectSet/Deployment scenarios
+│   └── platform/              # Cross-component metrics and demos
 └── internal/
     ├── e2e/
     │   ├── runner.go           # Godog options, scenario selection, summary wiring
@@ -55,12 +52,11 @@ by test suites without becoming public Go APIs. Envtest helpers used by API and
 controller unit tests live under `internal/testutil`, which is accessible throughout
 the repository.
 
-This is the first stage of the [per-component suite design](../../docs/designs/e2e-per-component.md).
-All existing features remain together under `operator-controller/features/` during
-this stage. The catalogd, object-controller, and platform feature directories contain
-only `.gitkeep` placeholders. Later branches will add their suite entry points and
-move features to their owners, then separate component-specific steps. Feature
-contents and step behavior are unchanged.
+Features follow the ownership in the [per-component suite design](../../docs/designs/e2e-per-component.md).
+Each component has a thin entry point that still registers the full shared step set;
+step ownership is separated in the next stage. The newer `cos_*`, `cod_*`, and
+`group` features belong to object-controller. Feature contents and step behavior
+are unchanged, including ClusterExtension integration assertions in object features.
 
 ### 2. Feature Files (`operator-controller/features/*.feature`)
 
@@ -186,7 +182,7 @@ Replaces `${TEST_NAMESPACE}`, `${NAME}`, `${SCENARIO_ID}`, `${PACKAGE:<name>}`, 
 
 ### 1. Create a Feature File
 
-Create a new `.feature` file in `test/e2e/operator-controller/features/`:
+Create a new `.feature` file in its owning component's `test/e2e/<component>/features/` directory:
 
 ```gherkin
 Feature: Your Feature Name
@@ -297,8 +293,12 @@ go test -p 1 -count=1 -v ./test/e2e/... -args --godog.tags="@Serial && ~@demo" -
 `-p 1` also serializes packages, keeping serial scenarios exclusive as more suites
 are added. Demo scenarios run separately through `make update-demos`.
 
-To select the current component suite, use `./test/e2e/operator-controller/...`
-with the same flags. Additional component suites will be added in the next stage.
+Select `./test/e2e/<component>/...` with the same flags to run just one suite:
+`operator-controller`, `catalogd`, `object-controller`, or `platform`. For example:
+
+```bash
+go test -count=1 -v ./test/e2e/object-controller/... -args --godog.tags="~@Serial && ~@demo"
+```
 
 ### Run Standard and Experimental in Parallel
 
@@ -337,8 +337,10 @@ The cluster persists until explicitly torn down.
 **2. Run individual scenarios:**
 
 ```bash
-# Run all scenarios in a feature file
+# Run all scenarios in a feature file (its component is discovered automatically)
 make e2e/install
+make e2e/revision
+make e2e/ha
 
 # Run scenarios matching a name prefix (case-insensitive)
 make e2e/install/Install                      # all "Install ..." scenarios
