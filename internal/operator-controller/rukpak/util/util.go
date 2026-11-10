@@ -14,7 +14,8 @@ import (
 const maxNameLength = 63
 
 func ObjectNameForBaseAndSuffix(base string, suffix string) string {
-	if len(base)+len(suffix) > maxNameLength {
+	// Account for the "-" separator when checking the length.
+	if len(base)+len(suffix)+1 > maxNameLength {
 		base = base[:maxNameLength-len(suffix)-1]
 	}
 	return fmt.Sprintf("%s-%s", base, suffix)
