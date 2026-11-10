@@ -15,6 +15,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/test/internal/e2e"
 	catalogsteps "github.com/operator-framework/operator-controller/test/internal/e2e/catalogd/steps"
+	operatorsteps "github.com/operator-framework/operator-controller/test/internal/e2e/operator-controller/steps"
 	platformsteps "github.com/operator-framework/operator-controller/test/internal/e2e/platform/steps"
 	"github.com/operator-framework/operator-controller/test/internal/e2e/steps"
 )
@@ -44,6 +45,7 @@ func TestMain(m *testing.M) {
 	}, func(sc *godog.ScenarioContext) {
 		steps.RegisterSteps(sc)
 		catalogsteps.RegisterSteps(sc)
+		operatorsteps.RegisterSteps(sc)
 		platformsteps.RegisterDemoSteps(sc)
 		catalogsteps.RegisterHooks(sc)
 		steps.RegisterHooks(sc, platformsteps.RegisterAsciiCastHooks)
