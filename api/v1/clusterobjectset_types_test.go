@@ -1026,13 +1026,7 @@ func TestObjectCountsOmittedWhenZero(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, string(data), `"objectCounts":{"total":1}`)
 
-	// Per-phase: an unset objectCounts is omitted (name/digest still present).
 	data, err = json.Marshal(ObservedPhase{Name: "deploy", Digest: "sha256:abc"})
 	require.NoError(t, err)
 	require.NotContains(t, string(data), "objectCounts")
-
-	// Per-phase: a count set to 0 serializes objectCounts; unset counts stay omitted.
-	data, err = json.Marshal(ObservedPhase{Name: "deploy", Digest: "sha256:abc", ObjectCounts: ObjectCounts{Present: ptr.To(int64(0))}})
-	require.NoError(t, err)
-	require.Contains(t, string(data), `"objectCounts":{"present":0}`)
 }

@@ -72,7 +72,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		}
 		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusInvalidSpecification, cos.Status.ObservedPhases[0].Status)
-		assert.Equal(t, int64(1), *cos.Status.ObservedPhases[0].ObjectCounts.Total)
+		assert.Equal(t, int64(1), *cos.Status.ObjectCounts.Total)
 	})
 
 	t.Run("forbidden dry-run response reports PreconditionsNotMet not InvalidSpecification", func(t *testing.T) {
@@ -157,7 +157,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		}
 		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusPending, cos.Status.ObservedPhases[1].Status)
-		assert.Equal(t, int64(1), *cos.Status.ObservedPhases[1].ObjectCounts.Total)
+		assert.Equal(t, int64(2), *cos.Status.ObjectCounts.Total)
 	})
 
 	t.Run("per-phase progressed marks phase as Superseded", func(t *testing.T) {
@@ -187,9 +187,8 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases, 2)
 		assert.Equal(t, ocv1.PhaseStatusSuperseded, cos.Status.ObservedPhases[0].Status)
-		assert.Equal(t, int64(2), *cos.Status.ObservedPhases[0].ObjectCounts.Total)
 		assert.Equal(t, ocv1.PhaseStatusSuperseded, cos.Status.ObservedPhases[1].Status)
-		assert.Equal(t, int64(3), *cos.Status.ObservedPhases[1].ObjectCounts.Total)
+		assert.Equal(t, int64(5), *cos.Status.ObjectCounts.Total)
 	})
 
 	t.Run("empty phase with HasProgressed vacuously true does not report Superseded", func(t *testing.T) {
@@ -244,7 +243,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		}
 		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		require.NotNil(t, cos.Status.ObservedPhases)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(1)), Present: ptr.To(int64(0)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, cos.Status.ObservedPhases[0].ObjectCounts)
+		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(1)), Present: ptr.To(int64(0)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, cos.Status.ObjectCounts)
 		assert.Equal(t, ocv1.PhaseStatusReconciling, cos.Status.ObservedPhases[0].Status)
 	})
 
@@ -263,7 +262,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		}
 		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusReady, cos.Status.ObservedPhases[0].Status)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(2)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(2)), Ready: ptr.To(int64(2))}, cos.Status.ObservedPhases[0].ObjectCounts)
+		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(2)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(2)), Ready: ptr.To(int64(2))}, cos.Status.ObjectCounts)
 	})
 
 	t.Run("all idle objects reports Stabilizing", func(t *testing.T) {
@@ -281,7 +280,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		}
 		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusStabilizing, cos.Status.ObservedPhases[0].Status)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(2)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(2)), Ready: ptr.To(int64(1))}, cos.Status.ObservedPhases[0].ObjectCounts)
+		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(2)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(2)), Ready: ptr.To(int64(1))}, cos.Status.ObjectCounts)
 	})
 
 	t.Run("write actions (Created, Updated, Recovered) count as Synced for non-paused objects", func(t *testing.T) {
@@ -302,7 +301,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		}
 		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		assert.Equal(t, ocv1.PhaseStatusStabilizing, cos.Status.ObservedPhases[0].Status)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(3)), Synced: ptr.To(int64(3)), Ready: ptr.To(int64(0))}, cos.Status.ObservedPhases[0].ObjectCounts)
+		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(3)), Synced: ptr.To(int64(3)), Ready: ptr.To(int64(0))}, cos.Status.ObjectCounts)
 	})
 
 	t.Run("all-paused phase reports Pending with write actions not counted as Synced", func(t *testing.T) {
@@ -325,7 +324,7 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		// isPaused=true → default case → Pending (read-only while earlier phase is rolling out)
 		assert.Equal(t, ocv1.PhaseStatusPending, cos.Status.ObservedPhases[0].Status)
 		// ActionUpdated+paused: Present; ActionRecovered+paused: Present; ActionCreated+paused: nothing
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, cos.Status.ObservedPhases[0].ObjectCounts)
+		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, cos.Status.ObjectCounts)
 	})
 
 	t.Run("phase with paused objects from blocked preceding phase reports Pending", func(t *testing.T) {
@@ -355,7 +354,8 @@ func TestUpdateObservedPhasesForReconcile(t *testing.T) {
 		UpdateObservedPhasesForReconcile(testMapper, &cos, result, now)
 		require.Len(t, cos.Status.ObservedPhases, 2)
 		assert.Equal(t, ocv1.PhaseStatusPending, cos.Status.ObservedPhases[1].Status)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(1)), Ready: ptr.To(int64(1))}, cos.Status.ObservedPhases[1].ObjectCounts)
+		// p1: Total2,Present2,Synced2,Ready2 — p2: Total3,Present2,Synced1,Ready1
+		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(5)), Present: ptr.To(int64(4)), Synced: ptr.To(int64(3)), Ready: ptr.To(int64(3))}, cos.Status.ObjectCounts)
 		assert.Len(t, cos.Status.ObservedPhases[1].ObjectDetails, 2)
 	})
 
@@ -499,7 +499,7 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 		phase := cos.Status.ObservedPhases[0]
 		assert.Equal(t, ocv1.PhaseStatusArchiving, phase.Status)
 		assert.Equal(t, "removing all phase objects owned by this object set", phase.Message)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, phase.ObjectCounts)
+		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, cos.Status.ObjectCounts)
 		assert.Len(t, phase.ObjectDetails, 2)
 	})
 
@@ -545,7 +545,7 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 		require.Len(t, cos.Status.ObservedPhases, 1)
 		phase := cos.Status.ObservedPhases[0]
 		assert.Equal(t, ocv1.PhaseStatusArchived, phase.Status)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(5)), Present: ptr.To(int64(0)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, phase.ObjectCounts)
+		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(5)), Present: ptr.To(int64(0)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, cos.Status.ObjectCounts)
 
 		assert.Empty(t, phase.ObjectDetails)
 	})
@@ -582,18 +582,15 @@ func TestUpdateObservedPhasesForTeardown(t *testing.T) {
 		// p1 — pending, waiting for later phases to complete
 		assert.Equal(t, ocv1.PhaseStatusPending, phases[0].Status)
 		assert.Equal(t, "waiting for later phases to complete teardown", phases[0].Message)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(2)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, phases[0].ObjectCounts)
 		assert.Len(t, phases[0].ObjectDetails, 2)
 
 		// p2 — active teardown
 		assert.Equal(t, ocv1.PhaseStatusArchiving, phases[1].Status)
 		assert.Equal(t, "removing all phase objects owned by this object set", phases[1].Message)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(3)), Present: ptr.To(int64(2)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, phases[1].ObjectCounts)
 		assert.Len(t, phases[1].ObjectDetails, 2)
 
 		// p3 — complete (in GonePhaseNames), no waiting objects
 		assert.Equal(t, ocv1.PhaseStatusArchived, phases[2].Status)
-		assert.Equal(t, ocv1.ObjectCounts{Total: ptr.To(int64(4)), Present: ptr.To(int64(0)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))}, phases[2].ObjectCounts)
 
 		assert.Empty(t, phases[2].ObjectDetails)
 

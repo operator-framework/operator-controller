@@ -547,9 +547,6 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: name
       type:
         scalar: string
-    - name: objectCounts
-      type:
-        namedType: com.github.operator-framework.operator-controller.api.v1.ObjectCounts
     - name: objectDetails
       type:
         list:

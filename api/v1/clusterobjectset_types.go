@@ -565,7 +565,7 @@ type ClusterObjectSetStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"` //nolint:kubeapilinter // This CRD uses structural list-map validation, not protobuf serialization.
 
 	// objectCounts reports aggregate object counts across all phases.
-	// Values are sums of the per-phase counts in observedPhases.
+	// Values are sums across all observed phases.
 	// It is omitted until counts have been computed; when present, all count
 	// fields are reported (including zeros).
 	// +optional
@@ -636,10 +636,6 @@ type ObservedPhase struct {
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]+:[a-f0-9]+$')`,message="digest must be in the format '<algorithm>:<hex>'"
 	Digest string `json:"digest,omitempty"`
 
-	// objectCounts reports the number of objects in this phase by state.
-	// +optional
-	ObjectCounts ObjectCounts `json:"objectCounts,omitzero"`
-
 	// lastTransitionTime is the last time the phase transitioned from one status to another.
 	// +required
 	// +kubebuilder:validation:Type=string
@@ -660,15 +656,15 @@ type ObservedPhase struct {
 	ObjectDetails []ObjectStatus `json:"objectDetails,omitempty"`
 }
 
-// ObjectCounts reports the number of objects in a ClusterObjectSet or phase by state.
+// ObjectCounts reports the number of objects in a ClusterObjectSet by state.
 type ObjectCounts struct {
-	// total is the number of objects in this phase.
+	// total is the number of objects in this object set.
 	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
 	Total *int64 `json:"total,omitempty"`
 
-	// present is the number of objects in this phase that exist on the
+	// present is the number of objects in this object set that exist on the
 	// cluster and are owned by this object set, or another in the same group.
 	// During reconcile, this counts objects that the controller has found or
 	// created. During teardown, this decrements toward zero as objects are deleted.
@@ -677,14 +673,14 @@ type ObjectCounts struct {
 	// +kubebuilder:validation:Maximum:=1000
 	Present *int64 `json:"present,omitempty"`
 
-	// synced is the number of objects in this phase whose cluster state
+	// synced is the number of objects in this object set whose cluster state
 	// matches the desired state. Set to zero during teardown.
 	// +required
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Maximum:=1000
 	Synced *int64 `json:"synced,omitempty"`
 
-	// ready is the number of objects in this phase that are synced
+	// ready is the number of objects in this object set that are synced
 	// and pass their assertions.
 	// +required
 	// +kubebuilder:validation:Minimum:=0

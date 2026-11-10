@@ -2712,13 +2712,13 @@ spec:
               objectCounts:
                 description: |-
                   objectCounts reports aggregate object counts across all phases.
-                  Values are sums of the per-phase counts in observedPhases.
+                  Values are sums across all observed phases.
                   It is omitted until counts have been computed; when present, all count
                   fields are reported (including zeros).
                 properties:
                   present:
                     description: |-
-                      present is the number of objects in this phase that exist on the
+                      present is the number of objects in this object set that exist on the
                       cluster and are owned by this object set, or another in the same group.
                       During reconcile, this counts objects that the controller has found or
                       created. During teardown, this decrements toward zero as objects are deleted.
@@ -2728,7 +2728,7 @@ spec:
                     type: integer
                   ready:
                     description: |-
-                      ready is the number of objects in this phase that are synced
+                      ready is the number of objects in this object set that are synced
                       and pass their assertions.
                     format: int64
                     maximum: 1000
@@ -2736,14 +2736,14 @@ spec:
                     type: integer
                   synced:
                     description: |-
-                      synced is the number of objects in this phase whose cluster state
+                      synced is the number of objects in this object set whose cluster state
                       matches the desired state. Set to zero during teardown.
                     format: int64
                     maximum: 1000
                     minimum: 0
                     type: integer
                   total:
-                    description: total is the number of objects in this phase.
+                    description: total is the number of objects in this object set.
                     format: int64
                     maximum: 1000
                     minimum: 0
@@ -2812,48 +2812,6 @@ spec:
                           characters and hyphens, and must start and end with an alphanumeric
                           character.
                         rule: '!format.dns1123Label().validate(self).hasValue()'
-                    objectCounts:
-                      description: objectCounts reports the number of objects in this
-                        phase by state.
-                      properties:
-                        present:
-                          description: |-
-                            present is the number of objects in this phase that exist on the
-                            cluster and are owned by this object set, or another in the same group.
-                            During reconcile, this counts objects that the controller has found or
-                            created. During teardown, this decrements toward zero as objects are deleted.
-                          format: int64
-                          maximum: 1000
-                          minimum: 0
-                          type: integer
-                        ready:
-                          description: |-
-                            ready is the number of objects in this phase that are synced
-                            and pass their assertions.
-                          format: int64
-                          maximum: 1000
-                          minimum: 0
-                          type: integer
-                        synced:
-                          description: |-
-                            synced is the number of objects in this phase whose cluster state
-                            matches the desired state. Set to zero during teardown.
-                          format: int64
-                          maximum: 1000
-                          minimum: 0
-                          type: integer
-                        total:
-                          description: total is the number of objects in this phase.
-                          format: int64
-                          maximum: 1000
-                          minimum: 0
-                          type: integer
-                      required:
-                      - present
-                      - ready
-                      - synced
-                      - total
-                      type: object
                     objectDetails:
                       description: |-
                         objectDetails lists objects in this phase that are not yet

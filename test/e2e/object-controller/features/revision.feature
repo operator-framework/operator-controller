@@ -758,10 +758,6 @@ Feature: Install ClusterObjectSet
         revision: 1
       """
     Then resource "deployment/test-deployment" is installed
-    And ClusterObjectSet "${COS_NAME}" reports phase "workload" object counts: total=1, present=1, synced=1, ready=0
-    And ClusterObjectSet "${COS_NAME}" reports phase "config" object counts: total=1, present=0, synced=0, ready=0
     And ClusterObjectSet "${COS_NAME}" reports aggregate object counts: total=2, present=1, synced=1, ready=0
     And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
-    And ClusterObjectSet "${COS_NAME}" reports phase "workload" object counts: total=1, present=1, synced=1, ready=1
-    And ClusterObjectSet "${COS_NAME}" reports phase "config" object counts: total=1, present=1, synced=1, ready=1
     And ClusterObjectSet "${COS_NAME}" reports aggregate object counts: total=2, present=2, synced=2, ready=2

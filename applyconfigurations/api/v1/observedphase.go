@@ -47,8 +47,6 @@ type ObservedPhaseApplyConfiguration struct {
 	// at first successful resolution, in the format "<algorithm>:<hex>".
 	// Currently, sha256 is the only supported algorithm.
 	Digest *string `json:"digest,omitempty"`
-	// objectCounts reports the number of objects in this phase by state.
-	ObjectCounts *ObjectCountsApplyConfiguration `json:"objectCounts,omitempty"`
 	// lastTransitionTime is the last time the phase transitioned from one status to another.
 	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
 	// objectDetails lists objects in this phase that are not yet
@@ -105,14 +103,6 @@ func (b *ObservedPhaseApplyConfiguration) WithMessage(value string) *ObservedPha
 // If called multiple times, the Digest field is set to the value of the last call.
 func (b *ObservedPhaseApplyConfiguration) WithDigest(value string) *ObservedPhaseApplyConfiguration {
 	b.Digest = &value
-	return b
-}
-
-// WithObjectCounts sets the ObjectCounts field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ObjectCounts field is set to the value of the last call.
-func (b *ObservedPhaseApplyConfiguration) WithObjectCounts(value *ObjectCountsApplyConfiguration) *ObservedPhaseApplyConfiguration {
-	b.ObjectCounts = value
 	return b
 }
 
