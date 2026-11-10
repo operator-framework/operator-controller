@@ -5,14 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/component-base/featuregate"
+	shared "github.com/operator-framework/operator-controller/test/internal/e2e/steps"
 )
-
-// catalogdHAFeature gates scenarios that require a multi-node cluster.
-// It is set to true in BeforeSuite when the cluster has at least 2 nodes,
-// which is the case for the experimental e2e suite (Kind-config-2node.yaml)
-// but not the standard suite.
-const catalogdHAFeature featuregate.Feature = "CatalogdHA"
 
 // CatalogdLeaderPodIsForceDeleted force-deletes the catalogd leader pod to simulate leader loss.
 // The pod is identified from sc.LeaderPods["catalogd"] (populated by a prior
@@ -24,14 +18,14 @@ const catalogdHAFeature featuregate.Feature = "CatalogdHA"
 // experimental 2-node cluster are control-plane nodes that run etcd — stopping either
 // would break etcd quorum and make the API server unreachable for the rest of the test.
 func CatalogdLeaderPodIsForceDeleted(ctx context.Context) error {
-	sc := Scenario(ctx)
+	sc := shared.Scenario(ctx)
 	leaderPod := sc.LeaderPods["catalogd"]
 	if leaderPod == "" {
 		return fmt.Errorf("catalogd leader pod not found in scenario context; run 'catalogd is ready to reconcile resources' first")
 	}
 
-	logger.Info("Force-deleting catalogd leader pod", "pod", leaderPod)
-	if _, err := K8sClient(ctx, "delete", "pod", leaderPod, "-n", NamespaceForComponent("catalogd"),
+	shared.Log().Info("Force-deleting catalogd leader pod", "pod", leaderPod)
+	if _, err := shared.K8sClient(ctx, "delete", "pod", leaderPod, "-n", shared.NamespaceForComponent("catalogd"),
 		"--force", "--grace-period=0"); err != nil {
 		return fmt.Errorf("failed to force-delete catalogd leader pod %q: %w", leaderPod, err)
 	}
@@ -42,11 +36,11 @@ func CatalogdLeaderPodIsForceDeleted(ctx context.Context) error {
 // identity changes to a pod other than the deleted leader.  It updates
 // sc.LeaderPods["catalogd"] with the new leader pod Name.
 func NewCatalogdLeaderIsElected(ctx context.Context) error {
-	sc := Scenario(ctx)
+	sc := shared.Scenario(ctx)
 	oldLeader := sc.LeaderPods["catalogd"]
 
-	WaitFor(ctx, func() bool {
-		holder, err := K8sClient(ctx, "get", "lease", leaseNames["catalogd"], "-n", NamespaceForComponent("catalogd"),
+	shared.WaitFor(ctx, func() bool {
+		holder, err := shared.K8sClient(ctx, "get", "lease", "catalogd-operator-lock", "-n", shared.NamespaceForComponent("catalogd"),
 			"-o", "jsonpath={.spec.holderIdentity}")
 		if err != nil || holder == "" {
 			return false
@@ -56,7 +50,7 @@ func NewCatalogdLeaderIsElected(ctx context.Context) error {
 			return false
 		}
 		sc.LeaderPods["catalogd"] = newPod
-		logger.Info("New catalogd leader elected", "pod", newPod)
+		shared.Log().Info("New catalogd leader elected", "pod", newPod)
 		return true
 	})
 	return nil
