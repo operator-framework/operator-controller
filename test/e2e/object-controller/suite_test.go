@@ -15,7 +15,6 @@ func TestMain(m *testing.M) {
 		tc.BeforeSuite(steps.BeforeSuite)
 	}, func(sc *godog.ScenarioContext) {
 		steps.RegisterSteps(sc)
-		steps.RegisterDemoSteps(sc)
 		steps.RegisterHooks(sc)
 	}))
 }
