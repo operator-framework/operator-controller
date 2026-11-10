@@ -356,7 +356,6 @@ func TestClusterObjectSetDigestImmutable(t *testing.T) {
 		{
 			Name:               "deploy",
 			Digest:             "sha256:abc123",
-			ObjectCounts:       ObjectCounts{Total: ptr.To(int64(1)), Present: ptr.To(int64(0)), Synced: ptr.To(int64(0)), Ready: ptr.To(int64(0))},
 			Status:             PhaseStatusReady,
 			LastTransitionTime: metav1.Now(),
 		},

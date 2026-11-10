@@ -907,7 +907,6 @@ func (in *ObjectStatus) DeepCopy() *ObjectStatus {
 func (in *ObservedPhase) DeepCopyInto(out *ObservedPhase) {
 	*out = *in
 	in.CompletedAt.DeepCopyInto(&out.CompletedAt)
-	in.ObjectCounts.DeepCopyInto(&out.ObjectCounts)
 	in.LastTransitionTime.DeepCopyInto(&out.LastTransitionTime)
 	if in.ObjectDetails != nil {
 		in, out := &in.ObjectDetails, &out.ObjectDetails

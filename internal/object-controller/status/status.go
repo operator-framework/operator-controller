@@ -18,29 +18,25 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-// sumObjectCounts aggregates ObjectCounts across all observed phases into a single total.
-// Returns ObjectCounts with a Total of zero if phases is empty.
-func sumObjectCounts(phases []ocv1.ObservedPhase) ocv1.ObjectCounts {
-	counts := ocv1.ObjectCounts{
-		Total:   ptr.To(int64(0)),
-		Present: ptr.To(int64(0)),
-		Synced:  ptr.To(int64(0)),
-		Ready:   ptr.To(int64(0)),
+// zeroObjectCounts returns an ObjectCounts aggregate initialized to zero.
+func zeroObjectCounts() ocv1.ObjectCounts {
+	return ocv1.ObjectCounts{
+		Total:   new(int64(0)),
+		Present: new(int64(0)),
+		Synced:  new(int64(0)),
+		Ready:   new(int64(0)),
 	}
-	if len(phases) == 0 {
-		return counts
-	}
-	for i := range phases {
-		// Counts are required *int64 pointers that the controller always sets
-		// together, but treat a nil (uncomputed) count as zero so a partially
-		// populated phase still contributes its known counts rather than being
-		// dropped from the aggregate entirely.
-		*counts.Total += ptr.Deref(phases[i].ObjectCounts.Total, 0)
-		*counts.Present += ptr.Deref(phases[i].ObjectCounts.Present, 0)
-		*counts.Synced += ptr.Deref(phases[i].ObjectCounts.Synced, 0)
-		*counts.Ready += ptr.Deref(phases[i].ObjectCounts.Ready, 0)
-	}
-	return counts
+}
+
+// addObjectCounts adds a phase's counts into the running aggregate. Counts are
+// required *int64 pointers that the controller always sets together, but a nil
+// (uncomputed) count is treated as zero so a partially populated phase still
+// contributes its known counts rather than being dropped entirely.
+func addObjectCounts(agg *ocv1.ObjectCounts, counts ocv1.ObjectCounts) {
+	*agg.Total += ptr.Deref(counts.Total, 0)
+	*agg.Present += ptr.Deref(counts.Present, 0)
+	*agg.Synced += ptr.Deref(counts.Synced, 0)
+	*agg.Ready += ptr.Deref(counts.Ready, 0)
 }
 
 func UpdateObservedPhasesForReconcile(mapper apimeta.RESTMapper, objSet *ocv1.ClusterObjectSet, rres machinery.RevisionResult, now metav1.Time) {
@@ -67,16 +63,19 @@ func UpdateObservedPhasesForReconcile(mapper apimeta.RESTMapper, objSet *ocv1.Cl
 	// Collisions are still reported for paused phases below: an object owned by
 	// another controller does not become ownable just because earlier phases roll
 	// out, so it remains actionable regardless of phase ordering.
+	aggregate := zeroObjectCounts()
 	precedingPhasesComplete := true
 	for _, pres := range rres.GetPhases() {
 		observedPhase := ocv1.ObservedPhase{
 			Name: pres.GetName(),
 		}
-		observedPhase.ObjectCounts = ocv1.ObjectCounts{
-			Total:   ptr.To(phaseTotals[pres.GetName()]),
-			Present: ptr.To(int64(0)),
-			Synced:  ptr.To(int64(0)),
-			Ready:   ptr.To(int64(0)),
+		// Per-phase counts are computed locally to derive the phase status and to
+		// feed the object-set aggregate; they are not persisted on the phase status.
+		phaseObjectCounts := ocv1.ObjectCounts{
+			Total:   new(phaseTotals[pres.GetName()]),
+			Present: new(int64(0)),
+			Synced:  new(int64(0)),
+			Ready:   new(int64(0)),
 		}
 
 		if pres.GetValidationError() != nil {
@@ -92,6 +91,7 @@ func UpdateObservedPhasesForReconcile(mapper apimeta.RESTMapper, objSet *ocv1.Cl
 			}
 			// A validation-error phase is not complete; record that for subsequent phases.
 			precedingPhasesComplete = false
+			addObjectCounts(&aggregate, phaseObjectCounts)
 			updateObservedPhaseStatus(objSet, observedPhase, now)
 			continue
 		}
@@ -103,23 +103,23 @@ func UpdateObservedPhasesForReconcile(mapper apimeta.RESTMapper, objSet *ocv1.Cl
 		isPaused := false
 		for _, pobj := range pres.GetObjects() {
 			if pobj.IsComplete() {
-				*observedPhase.ObjectCounts.Ready++
+				*phaseObjectCounts.Ready++
 			}
 			switch pobj.Action() {
 			case machinery.ActionCreated:
 				if !pobj.IsPaused() {
-					*observedPhase.ObjectCounts.Present++
-					*observedPhase.ObjectCounts.Synced++
+					*phaseObjectCounts.Present++
+					*phaseObjectCounts.Synced++
 				}
 			case machinery.ActionIdle:
-				*observedPhase.ObjectCounts.Present++
-				*observedPhase.ObjectCounts.Synced++
+				*phaseObjectCounts.Present++
+				*phaseObjectCounts.Synced++
 			case machinery.ActionProgressed:
-				*observedPhase.ObjectCounts.Present++
+				*phaseObjectCounts.Present++
 			case machinery.ActionUpdated, machinery.ActionRecovered:
-				*observedPhase.ObjectCounts.Present++
+				*phaseObjectCounts.Present++
 				if !pobj.IsPaused() {
-					*observedPhase.ObjectCounts.Synced++
+					*phaseObjectCounts.Synced++
 				}
 			case machinery.ActionCollision:
 				// TODO: collect object collisions and put in status
@@ -135,7 +135,7 @@ func UpdateObservedPhasesForReconcile(mapper apimeta.RESTMapper, objSet *ocv1.Cl
 			// TODO: consider reframing as one or more objects have transitioned (rather than all - since there can be differences b/w the revisions)
 			isSuperseded  = (HasSupersededObject(pres) && pres.IsComplete()) || (len(pres.GetObjects()) > 0 && pres.HasProgressed())
 			isReady       = pres.IsComplete() && !isSuperseded
-			isSynced      = *observedPhase.ObjectCounts.Synced == *observedPhase.ObjectCounts.Total
+			isSynced      = *phaseObjectCounts.Synced == *phaseObjectCounts.Total
 			isReconciling = !isSynced && !isPaused
 		)
 
@@ -168,9 +168,10 @@ func UpdateObservedPhasesForReconcile(mapper apimeta.RESTMapper, objSet *ocv1.Cl
 				observedPhase.ObjectDetails = append(observedPhase.ObjectDetails, objectStatus(mapper, obj))
 			}
 		}
+		addObjectCounts(&aggregate, phaseObjectCounts)
 		updateObservedPhaseStatus(objSet, observedPhase, now)
 	}
-	objSet.Status.ObjectCounts = sumObjectCounts(objSet.Status.ObservedPhases)
+	objSet.Status.ObjectCounts = aggregate
 }
 
 func UpdateObservedPhasesForTeardown(mapper apimeta.RESTMapper, objSet *ocv1.ClusterObjectSet, tres machinery.RevisionTeardownResult, now metav1.Time) {
@@ -184,15 +185,21 @@ func UpdateObservedPhasesForTeardown(mapper apimeta.RESTMapper, objSet *ocv1.Clu
 		phaseTotals[phase.Name] = int64(len(phase.Objects))
 	}
 
+	aggregate := zeroObjectCounts()
 	for _, pres := range tres.GetPhases() {
 		observedPhase := ocv1.ObservedPhase{
 			Name: pres.GetName(),
 		}
 
-		observedPhase.ObjectCounts.Total = ptr.To(phaseTotals[pres.GetName()])
-		observedPhase.ObjectCounts.Present = ptr.To(int64(len(pres.Waiting())))
-		observedPhase.ObjectCounts.Synced = ptr.To(int64(0))
-		observedPhase.ObjectCounts.Ready = ptr.To(int64(0))
+		// Per-phase counts feed the object-set aggregate but are not persisted
+		// on the phase status.
+		counts := ocv1.ObjectCounts{
+			Total:   new(phaseTotals[pres.GetName()]),
+			Present: new(int64(len(pres.Waiting()))),
+			Synced:  new(int64(0)),
+			Ready:   new(int64(0)),
+		}
+		addObjectCounts(&aggregate, counts)
 
 		if name, ok := tres.GetActivePhaseName(); ok && name == pres.GetName() {
 			observedPhase.Status = ocv1.PhaseStatusArchiving
@@ -215,7 +222,7 @@ func UpdateObservedPhasesForTeardown(mapper apimeta.RESTMapper, objSet *ocv1.Clu
 		}
 		updateObservedPhaseStatus(objSet, observedPhase, now)
 	}
-	objSet.Status.ObjectCounts = sumObjectCounts(objSet.Status.ObservedPhases)
+	objSet.Status.ObjectCounts = aggregate
 }
 
 func updateObservedPhaseStatus(objSet *ocv1.ClusterObjectSet, observedPhase ocv1.ObservedPhase, now metav1.Time) {

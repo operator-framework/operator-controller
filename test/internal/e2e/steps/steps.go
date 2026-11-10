@@ -140,7 +140,6 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has observed phase "([^"]+)" with a non-empty digest$`, ClusterObjectSetHasObservedPhase)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is archived$`, ClusterObjectSetIsArchived)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is eventually deleted$`, ClusterObjectSetIsEventuallyDeleted)
-	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports phase "([^"]+)" object counts: total=(\d+), present=(\d+), synced=(\d+), ready=(\d+)$`, ClusterObjectSetPhaseHasObjectCounts)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports aggregate object counts: total=(\d+), present=(\d+), synced=(\d+), ready=(\d+)$`, ClusterObjectSetHasAggregateObjectCounts)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterObjectSetHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterObjectSetHasLabelWithValue)
@@ -1193,36 +1192,6 @@ func ClusterObjectSetIsEventuallyDeleted(ctx context.Context, revisionName strin
 			return false
 		}
 		return strings.TrimSpace(out) == ""
-	})
-	return nil
-}
-
-// ClusterObjectSetPhaseHasObjectCounts waits for a specific phase of the named ClusterObjectSet to
-// report exact object counts for total, present, synced, and available. Polls with timeout.
-func ClusterObjectSetPhaseHasObjectCounts(ctx context.Context, cosName, phaseName string, total, present, synced, ready int64) error {
-	sc := scenarioCtx(ctx)
-	cosName = substituteScenarioVars(cosName, sc)
-	phaseName = substituteScenarioVars(phaseName, sc)
-	waitFor(ctx, func() bool {
-		out, err := k8sClient(ctx, "get", "clusterobjectset", cosName, "-o", "json")
-		if err != nil {
-			return false
-		}
-		var cos ocv1.ClusterObjectSet
-		if err := json.Unmarshal([]byte(out), &cos); err != nil || currentCondition(cos.Generation, cos.Status.Conditions, "Ready") == nil {
-			return false
-		}
-		for _, phase := range cos.Status.ObservedPhases {
-			if phase.Name == phaseName {
-				// Counts are required *int64 pointers; a nil (uncomputed) count
-				// must not match any expected value, so default to -1.
-				return ptr.Deref(phase.ObjectCounts.Total, -1) == total &&
-					ptr.Deref(phase.ObjectCounts.Present, -1) == present &&
-					ptr.Deref(phase.ObjectCounts.Synced, -1) == synced &&
-					ptr.Deref(phase.ObjectCounts.Ready, -1) == ready
-			}
-		}
-		return false
 	})
 	return nil
 }
