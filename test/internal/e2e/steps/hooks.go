@@ -33,17 +33,6 @@ type Resource struct {
 	Namespace string
 }
 
-// deploymentRestore records the original state of a deployment so it can be
-// rolled back after a test that modifies deployment configuration.
-type deploymentRestore struct {
-	Name          string // deployment name
-	Namespace     string
-	containerName string   // container to patch (for env var restores)
-	patchedArgs   bool     // true when container args were modified (for TLS profile patches)
-	originalArgs  []string // original container args; may be nil if args were unset
-	originalEnv   []string // original env vars as "NAME=VALUE" (for proxy patches)
-}
-
 // World holds scenario state shared by component step packages.
 type World struct {
 	ID                   string
@@ -58,11 +47,9 @@ type World struct {
 	RemovedResources     []unstructured.Unstructured
 	MetricsResponse      map[string]string
 	LeaderPods           map[string]string // component name -> leader pod name
-	deploymentRestores   []deploymentRestore
 	ExtensionObjects     []client.Object
 	RevisionSecrets      []Resource
 	ResourceUIDs         map[string]types.UID
-	proxy                *recordingProxy
 	CatalogAddr          string
 	CatalogCleanup       func()
 	LastApplyStderr      string
@@ -102,7 +89,7 @@ var (
 		features.WebhookProviderOpenshiftServiceCA: false,
 		features.BoxcutterRuntime:                  false,
 		features.DeploymentConfig:                  false,
-		catalogdHAFeature:                          false,
+		featuregate.Feature("CatalogdHA"):          false,
 	}
 	logger logr.Logger
 )
@@ -164,7 +151,7 @@ func BeforeSuite() {
 	// step and return early below) still get the gate set correctly.
 	if out, err := K8sClient(context.Background(), "get", "nodes", "--no-headers", "-o", "name"); err == nil &&
 		len(strings.Fields(strings.TrimSpace(out))) >= 2 {
-		FeatureGates[catalogdHAFeature] = true
+		FeatureGates[featuregate.Feature("CatalogdHA")] = true
 	}
 
 	olm, catalogdDep, err := detectOLMDeployments()
@@ -189,7 +176,7 @@ func BeforeSuite() {
 	// was not found or the replica count is not parseable.
 	if catalogdDep != nil {
 		if replicas := catalogdDep.Spec.Replicas; replicas != nil {
-			FeatureGates[catalogdHAFeature] = *replicas >= 2
+			FeatureGates[featuregate.Feature("CatalogdHA")] = *replicas >= 2
 		}
 	}
 
@@ -256,32 +243,9 @@ func stderrOutput(err error) string {
 
 func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context.Context, error) {
 	sc := Scenario(ctx)
-	// Stop the in-process recording proxy if one was started.
-	if sc.proxy != nil {
-		sc.proxy.stop()
-	}
 	// Stop catalog port-forward if one was started.
 	if sc.CatalogCleanup != nil {
 		sc.CatalogCleanup()
-	}
-
-	// Restore any deployments that were modified during the scenario.  Runs
-	// unconditionally (even on failure) to prevent a misconfigured deployment
-	// from bleeding into subsequent scenarios.  Restored in LIFO order so that
-	// multiple patches to the same deployment unwind to the true original.
-	for i := len(sc.deploymentRestores) - 1; i >= 0; i-- {
-		dr := sc.deploymentRestores[i]
-		if dr.patchedArgs {
-			if err2 := patchDeploymentArgs(dr.Namespace, dr.Name, dr.originalArgs); err2 != nil {
-				logger.Info("Error restoring deployment args", "name", dr.Name, "error", err2)
-			} else if _, err2 := K8sClient(ctx, "rollout", "status", "-n", dr.Namespace,
-				fmt.Sprintf("deployment/%s", dr.Name), "--timeout=2m"); err2 != nil {
-				logger.Info("Timeout waiting for deployment rollout after restore", "name", dr.Name)
-			}
-		}
-		if err2 := restoreDeployment(dr); err2 != nil {
-			logger.Info("Error restoring deployment env", "deployment", dr.Name, "namespace", dr.Namespace, "error", err2)
-		}
 	}
 
 	if err != nil {

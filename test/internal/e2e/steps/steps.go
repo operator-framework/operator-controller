@@ -230,18 +230,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, NamedClusterExtensionReportsConditionWithMessageFragment)
 
 	// TLS profile enforcement steps — deployment configuration
-	sc.Step(`^(?i)the "([^"]+)" deployment is configured with custom TLS minimum version "([^"]+)"$`, ConfigureDeploymentWithCustomTLSVersion)
-	sc.Step(`^(?i)the "([^"]+)" deployment is configured with custom TLS version "([^"]+)", ciphers "([^"]+)", and curves "([^"]+)"$`, ConfigureDeploymentWithCustomTLSFull)
 
 	// TLS profile enforcement steps — connection assertions
-	sc.Step(`^(?i)the "([^"]+)" metrics endpoint accepts a TLS 1\.3 connection$`, MetricsEndpointAcceptsTLS13)
-	sc.Step(`^(?i)the "([^"]+)" metrics endpoint rejects a TLS 1\.2 connection$`, MetricsEndpointRejectsTLS12)
-	sc.Step(`^(?i)the "([^"]+)" metrics endpoint negotiates cipher "([^"]+)" over TLS 1\.2$`, MetricsEndpointNegotiatesTLS12Cipher)
-	sc.Step(`^(?i)the "([^"]+)" metrics endpoint rejects a TLS 1\.2 connection offering only cipher "([^"]+)"$`, MetricsEndpointRejectsTLS12ConnectionWithCipher)
-	sc.Step(`^(?i)the "([^"]+)" metrics endpoint accepts a TLS 1\.2 connection with cipher "([^"]+)" and curve "([^"]+)"$`, MetricsEndpointAcceptsTLS12ConnectionWithCurve)
-	sc.Step(`^(?i)the "([^"]+)" metrics endpoint rejects a TLS 1\.2 connection with cipher "([^"]+)" and only curve "([^"]+)"$`, MetricsEndpointRejectsTLS12ConnectionWithCurve)
-	sc.Step(`^(?i)the "([^"]+)" metrics endpoint accepts a connection using only curve "([^"]+)"$`, MetricsEndpointAcceptsConnectionUsingCurve)
-	sc.Step(`^(?i)the "([^"]+)" metrics endpoint rejects a connection using only curve "([^"]+)"$`, MetricsEndpointRejectsConnectionUsingOnlyCurve)
 
 	// Upgrade-specific steps
 	sc.Step(`^(?i)the latest stable OLM release is installed$`, LatestStableOLMReleaseIsInstalled)
@@ -251,13 +241,6 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension is reconciled$`, ClusterExtensionIsReconciled)
 	sc.Step(`^(?i)catalog "([^"]+)" is reconciled$`, ScenarioCatalogIsReconciled)
 	sc.Step(`^(?i)catalog "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ScenarioCatalogReportsCondition)
-
-	sc.Step(`^(?i)the "([^"]+)" component is configured with HTTPS_PROXY "([^"]+)"$`, ConfigureDeploymentWithHTTPSProxy)
-	sc.Step(`^(?i)the "([^"]+)" component is configured with HTTPS_PROXY pointing to a recording proxy$`, StartRecordingProxyAndConfigureDeployment)
-	sc.Step(`^(?i)the recording proxy received a CONNECT request for the catalogd service$`, RecordingProxyReceivedCONNECTForCatalogd)
-
-	sc.Step(`^(?i)the catalogd leader pod is force-deleted$`, CatalogdLeaderPodIsForceDeleted)
-	sc.Step(`^(?i)a new catalogd leader is elected$`, NewCatalogdLeaderIsElected)
 }
 
 func init() {
