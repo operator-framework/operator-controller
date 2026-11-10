@@ -350,10 +350,10 @@ Feature: Install ClusterExtension
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents |
       | test    | 1.0.2   | alpha   |          | BadImage |
-    And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
     # The applier routes progressDeadlineMinutes through the ClusterObjectDeployment template; the
     # deployment enforces the rollout deadline itself, so relax its CRD minimum to accept the value of 1.
-    And min value for ClusterObjectDeployment .spec.template.spec.progressDeadlineMinutes is set to 1
+    # TODO: We should also permanently relax the ClusterExtension's field to allow a minimum of 1
+    And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -387,10 +387,9 @@ Feature: Install ClusterExtension
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents |
       | test    | 1.0.3   | alpha   |          | BadImage |
-    And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
     # The applier routes progressDeadlineMinutes through the ClusterObjectDeployment template; the
     # deployment enforces the rollout deadline itself, so relax its CRD minimum to accept the value of 1.
-    And min value for ClusterObjectDeployment .spec.template.spec.progressDeadlineMinutes is set to 1
+    And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1

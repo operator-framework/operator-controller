@@ -83,6 +83,7 @@ linters:
           linters: 
             disable:
             - nonpointerstructs
+            - nophase
           lintersConfig:
             optionalfields:
               pointers:

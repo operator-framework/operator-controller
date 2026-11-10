@@ -189,7 +189,19 @@ Feature: Track ClusterObjectSet revisions by group
         group: ${NAME}-other
         revision: 1
         lifecycleState: Archived
-        collisionProtection: Prevent
+        collisionProtection: Prevent        
+        phases:
+        - name: resources
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cm
+                namespace: ${TEST_NAMESPACE}
+              data:
+                k: v
       """
     And ClusterExtension is applied
       """

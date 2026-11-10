@@ -33,7 +33,7 @@ import (
 type ClusterObjectSetObjectApplyConfiguration struct {
 	// type is a required field which specifies the type of object to use.
 	//
-	// The allowed selector types are "InlineManifest" and "ObjectReference".
+	// The allowed object types are "InlineManifest" and "ObjectReference".
 	//
 	// When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.
 	// When set to "ObjectReference", objects are supplied as references to a Secret that holds the serialized object manifest.

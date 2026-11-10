@@ -102,15 +102,15 @@ func TestValidate(t *testing.T) {
 			},
 			want: want{valid: true},
 		},
-		"ClusterObjectDeployment: invalid progress deadline < 10": {
+		"ClusterObjectDeployment: valid progress deadline = 1": {
 			args: args{
 				object: ClusterObjectDeploymentSpec{
 					Template: ClusterObjectDeploymentTemplate{
-						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 9},
+						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 1},
 					},
 				},
 			},
-			want: want{valid: false, errContains: "spec.progressDeadlineMinutes"},
+			want: want{valid: true},
 		},
 		"ClusterObjectDeployment: valid progress deadline = 10": {
 			args: args{
@@ -287,6 +287,7 @@ func TestClusterObjectSetCompletedAtImmutable(t *testing.T) {
 			Revision:            1,
 			CollisionProtection: CollisionProtectionPrevent,
 			LifecycleState:      ClusterObjectSetLifecycleStateActive,
+			Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 		},
 	}
 	require.NoError(t, c.Create(t.Context(), cos))
@@ -318,6 +319,7 @@ func TestClusterObjectSetCompletedAtCannotBeRemoved(t *testing.T) {
 			Revision:            1,
 			CollisionProtection: CollisionProtectionPrevent,
 			LifecycleState:      ClusterObjectSetLifecycleStateActive,
+			Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 		},
 	}
 	require.NoError(t, c.Create(t.Context(), cos))
@@ -344,6 +346,7 @@ func TestClusterObjectSetDigestImmutable(t *testing.T) {
 			Revision:            1,
 			CollisionProtection: CollisionProtectionPrevent,
 			LifecycleState:      ClusterObjectSetLifecycleStateActive,
+			Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 		},
 	}
 	require.NoError(t, c.Create(t.Context(), cos))

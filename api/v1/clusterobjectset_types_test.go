@@ -31,6 +31,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.Group = "another-group"
@@ -43,6 +44,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.Group = ""
@@ -55,6 +57,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateArchived
@@ -67,48 +70,14 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.Revision = 2
 			},
 			expectedError: "revision is immutable",
 		},
-		"phases may be initially empty": {
-			spec: ClusterObjectSetSpec{
-				Group:               "immutability-empty-phases",
-				LifecycleState:      ClusterObjectSetLifecycleStateActive,
-				Revision:            1,
-				CollisionProtection: CollisionProtectionPrevent,
-				Phases:              []ClusterObjectSetPhase{},
-			},
-			updateFunc: func(cos *ClusterObjectSet) {
-				cos.Spec.Phases = []ClusterObjectSetPhase{
-					{
-						Name:    "foo",
-						Objects: []ClusterObjectSetObject{},
-					},
-				}
-			},
-			allowed: true,
-		},
-		"phases may be initially unset": {
-			spec: ClusterObjectSetSpec{
-				Group:               "immutability-unset-phases",
-				LifecycleState:      ClusterObjectSetLifecycleStateActive,
-				Revision:            1,
-				CollisionProtection: CollisionProtectionPrevent,
-			},
-			updateFunc: func(cos *ClusterObjectSet) {
-				cos.Spec.Phases = []ClusterObjectSetPhase{
-					{
-						Name:    "foo",
-						Objects: []ClusterObjectSetObject{},
-					},
-				}
-			},
-			allowed: true,
-		},
-		"phases are immutable if not empty": {
+		"phases are immutable once set": {
 			spec: ClusterObjectSetSpec{
 				Group:               "immutability-populated-phases",
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
@@ -137,6 +106,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.CollisionProtection = CollisionProtectionNone
@@ -149,6 +119,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.ProgressionProbes = []ProgressionProbe{validProbe()}
@@ -161,6 +132,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 				ProgressionProbes:   []ProgressionProbe{validProbe()},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
@@ -174,6 +146,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateArchived,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateActive
@@ -186,6 +159,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateArchived
@@ -198,6 +172,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 				Revision:            1,
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Labels = map[string]string{"test": "updated"}
@@ -372,6 +347,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			valid: true,
 		},
@@ -381,6 +357,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionIfNoController,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			valid: true,
 		},
@@ -390,6 +367,7 @@ func TestClusterObjectSetValidity(t *testing.T) {
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				Revision:            1,
 				CollisionProtection: CollisionProtectionNone,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 			valid: true,
 		},
@@ -768,6 +746,7 @@ func TestClusterObjectSetRevisionBounds(t *testing.T) {
 				"group":               group,
 				"lifecycleState":      string(ClusterObjectSetLifecycleStateActive),
 				"collisionProtection": string(CollisionProtectionPrevent),
+				"phases":              []any{map[string]any{"name": "deploy", "objects": []any{}}},
 			}
 			name := group + "-1"
 			if tc.revision != nil {
@@ -819,6 +798,7 @@ func TestClusterObjectSetCanonicalName(t *testing.T) {
 					Revision:            tc.revision,
 					LifecycleState:      ClusterObjectSetLifecycleStateActive,
 					CollisionProtection: CollisionProtectionPrevent,
+					Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 				},
 			}
 			err := c.Create(t.Context(), cos)
@@ -867,6 +847,7 @@ func TestClusterObjectSetGroupValidation(t *testing.T) {
 				"revision":            int64(1),
 				"lifecycleState":      string(ClusterObjectSetLifecycleStateActive),
 				"collisionProtection": string(CollisionProtectionPrevent),
+				"phases":              []any{map[string]any{"name": "deploy", "objects": []any{}}},
 			}
 			if tc.group != nil {
 				spec["group"] = *tc.group
@@ -902,6 +883,7 @@ func TestClusterObjectSetGroupFieldSelector(t *testing.T) {
 				Revision:            fixture.revision,
 				LifecycleState:      ClusterObjectSetLifecycleStateActive,
 				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{}}},
 			},
 		}
 		require.NoError(t, c.Create(t.Context(), cos))
@@ -935,7 +917,13 @@ func probeSpec(group string, probes ...ProgressionProbe) ClusterObjectSetSpec {
 		LifecycleState:      ClusterObjectSetLifecycleStateActive,
 		Revision:            1,
 		CollisionProtection: CollisionProtectionPrevent,
-		ProgressionProbes:   probes,
+		Phases: []ClusterObjectSetPhase{
+			{
+				Name:    "deploy",
+				Objects: []ClusterObjectSetObject{},
+			},
+		},
+		ProgressionProbes: probes,
 	}
 }
 
