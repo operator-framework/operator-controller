@@ -445,6 +445,9 @@ type ClusterObjectSetObject struct {
 	//
 	// +kubebuilder:validation:EmbeddedResource
 	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:XValidation:rule="has(self.apiVersion) && has(self.kind) && has(self.metadata)",message="inlineManifest must be a valid Kubernetes resource with apiVersion, kind, and metadata"
+	// +kubebuilder:validation:XValidation:rule="self.apiVersion != '' && self.kind != ''",message="apiVersion and kind must be non-empty"
+	// +kubebuilder:validation:XValidation:rule="has(self.metadata.name) && self.metadata.name != ''",message="metadata.name is required"
 	// +unionMember
 	// +optional
 	InlineManifest unstructured.Unstructured `json:"inlineManifest,omitempty,omitzero"`
