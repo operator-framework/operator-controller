@@ -18,8 +18,8 @@ type resourceConditions struct {
 	} `json:"status"`
 }
 
-func readResourceConditions(ctx context.Context, resourceType, resourceName string) (*resourceConditions, error) {
-	out, err := k8sClient(ctx, "get", resourceType, resourceName, "-o", "json")
+func ReadResourceConditions(ctx context.Context, resourceType, resourceName string) (*resourceConditions, error) {
+	out, err := K8sClient(ctx, "get", resourceType, resourceName, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("reading %s %q: %w", resourceType, resourceName, err)
 	}
@@ -30,21 +30,21 @@ func readResourceConditions(ctx context.Context, resourceType, resourceName stri
 	return &resource, nil
 }
 
-func generationObserved(generation, observedGeneration int64) bool {
+func GenerationObserved(generation, observedGeneration int64) bool {
 	return generation > 0 && observedGeneration == generation
 }
 
-// currentCondition returns only the requested condition, and only if it reflects
+// CurrentCondition returns only the requested condition, and only if it reflects
 // the current generation. An unrelated up-to-date condition is not sufficient.
-func currentCondition(generation int64, conditions []metav1.Condition, conditionType string) *metav1.Condition {
+func CurrentCondition(generation int64, conditions []metav1.Condition, conditionType string) *metav1.Condition {
 	condition := apimeta.FindStatusCondition(conditions, conditionType)
-	if condition == nil || !generationObserved(generation, condition.ObservedGeneration) {
+	if condition == nil || !GenerationObserved(generation, condition.ObservedGeneration) {
 		return nil
 	}
 	return condition
 }
 
-func conditionMatches(condition *metav1.Condition, conditionStatus metav1.ConditionStatus, reason *string, msgCmp msgMatchFn) bool {
+func ConditionMatches(condition *metav1.Condition, conditionStatus metav1.ConditionStatus, reason *string, msgCmp MsgMatchFn) bool {
 	return condition != nil && condition.Status == conditionStatus &&
 		(reason == nil || condition.Reason == *reason) &&
 		(msgCmp == nil || msgCmp(condition.Message))
