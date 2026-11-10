@@ -1297,8 +1297,8 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 		for j, phaseObj := range phase.Objects {
 			var obj *unstructured.Unstructured
 			switch phaseObj.Type {
-			case ocv1.ObjectTypeObjectReference:
-				resolved, err := ResolveObjectRef(phaseObj.ObjectRef)
+			case ocv1.ObjectTypeSecretReference:
+				resolved, err := ResolveSecretRef(phaseObj.SecretRef)
 				if err != nil {
 					return fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
 				}
@@ -1382,9 +1382,9 @@ func ClusterObjectSetPhaseObjectsManagedInSecrets(ctx context.Context, revisionN
 				if !ok {
 					return false
 				}
-				ref, refOK, _ := unstructured.NestedMap(obj, "objectRef")
+				ref, refOK, _ := unstructured.NestedMap(obj, "secretRef")
 				if !refOK || len(ref) == 0 {
-					logger.V(1).Info("object does not use objectRef", "revision", revisionName)
+					logger.V(1).Info("object does not use secretRef", "revision", revisionName)
 					return false
 				}
 				name, _, _ := unstructured.NestedString(ref, "name")
@@ -1590,7 +1590,7 @@ func CollectReferredSecretNames(ctx context.Context, revisionName string) ([]str
 			if !ok {
 				continue
 			}
-			name, _, _ := unstructured.NestedString(phaseObj, "objectRef", "name")
+			name, _, _ := unstructured.NestedString(phaseObj, "secretRef", "name")
 			if name != "" && !seen.Has(name) {
 				seen.Insert(name)
 				names = append(names, name)
@@ -1633,11 +1633,11 @@ func collectReferredSecretRefs(ctx context.Context, revisionName string) ([]refe
 			if !ok {
 				continue
 			}
-			name, _, _ := unstructured.NestedString(phaseObj, "objectRef", "name")
+			name, _, _ := unstructured.NestedString(phaseObj, "secretRef", "name")
 			if name == "" {
 				continue
 			}
-			ns, _, _ := unstructured.NestedString(phaseObj, "objectRef", "namespace")
+			ns, _, _ := unstructured.NestedString(phaseObj, "secretRef", "namespace")
 			if ns == "" {
 				ns = OLMNamespace
 			}
@@ -2592,8 +2592,8 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 		for j := range phase.Objects {
 			specObj := &phase.Objects[j]
 			switch specObj.Type {
-			case ocv1.ObjectTypeObjectReference:
-				resolved, err := ResolveObjectRef(specObj.ObjectRef)
+			case ocv1.ObjectTypeSecretReference:
+				resolved, err := ResolveSecretRef(specObj.SecretRef)
 				if err != nil {
 					return nil, fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
 				}
@@ -2609,8 +2609,8 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 	return objs, nil
 }
 
-// ResolveObjectRef fetches an object from a Secret ref using kubectl.
-func ResolveObjectRef(ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
+// ResolveSecretRef fetches an object from a Secret ref using kubectl.
+func ResolveSecretRef(ref ocv1.SecretSourceRef) (*unstructured.Unstructured, error) {
 	out, err := K8sClient(context.Background(), "get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("getting Secret %s/%s: %w", ref.Namespace, ref.Name, err)

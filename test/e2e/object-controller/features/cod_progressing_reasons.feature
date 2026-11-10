@@ -100,8 +100,8 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
             phases:
             - name: resources
               objects:
-              - type: ObjectReference
-                objectRef:
+              - type: SecretReference
+                secretRef:
                   name: ${NAME}-mutable-secret
                   namespace: ${TEST_NAMESPACE}
                   key: configmap

@@ -111,7 +111,7 @@ func TestStandaloneController(t *testing.T) {
 					Immutable:  ptr.To(true), Data: map[string][]byte{"object": data},
 				}
 				require.NoError(t, cl.Create(ctx, secret))
-				obj = ocv1.ClusterObjectSetObject{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: secret.Name, Namespace: secret.Namespace, Key: "object"}}
+				obj = ocv1.ClusterObjectSetObject{Type: ocv1.ObjectTypeSecretReference, SecretRef: ocv1.SecretSourceRef{Name: secret.Name, Namespace: secret.Namespace, Key: "object"}}
 			}
 			cos := &ocv1.ClusterObjectSet{
 				ObjectMeta: metav1.ObjectMeta{Name: name + "-1"},

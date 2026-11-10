@@ -511,7 +511,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `phases` _[ClusterObjectSetPhase](#clusterobjectsetphase) array_ | phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains<br />at most 50 objects, each expressed either as an inlineManifest (an embedded<br />Kubernetes object) or an objectRef (a reference to an immutable Secret holding<br />a serialized manifest). Phase, object, and probe order participate in template identity. |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
+| `phases` _[ClusterObjectSetPhase](#clusterobjectsetphase) array_ | phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains<br />at most 50 objects, each expressed either as an inlineManifest (an embedded<br />Kubernetes object) or a secretRef (a reference to an immutable Secret holding<br />a serialized manifest). Phase, object, and probe order participate in template identity. |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
 | `progressDeadlineMinutes` _integer_ | progressDeadlineMinutes is the maximum number of minutes a revision may take<br />to roll out, measured from the ClusterObjectSet's creation timestamp. Time<br />spent waiting for the ClusterObjectSet to be created is not counted. The<br />deadline covers all phases together; completing a phase does not reset it.<br />Once a revision has completed, the deadline no longer applies, even if it<br />later becomes unhealthy. When omitted, no deadline is enforced. The minimum<br />period is 1 minute, and the maximum is 720 minutes (12 hours). |  | Maximum: 720 <br />Minimum: 1 <br />Optional: \{\} <br /> |
 | `progressionProbes` _[ProgressionProbe](#progressionprobe) array_ | progressionProbes supplies custom readiness probes for objects in every phase.<br />The same selector and assertion semantics as ClusterObjectSet.spec.progressionProbes apply.<br />When set, must contain 1 to 20 probes. |  | MaxItems: 20 <br />MinItems: 1 <br />Optional: \{\} <br /> |
 | `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is the required default collision protection strategy for all objects<br />in the revision. Individual phases or objects may override this value.<br />The resolution order is: object > phase > spec. |  | Enum: [Prevent IfNoController None] <br />Required: \{\} <br /> |
@@ -526,7 +526,7 @@ _Appears in:_
 ClusterObjectSetObject represents a Kubernetes object to be applied as part
 of a phase, along with its collision protection settings.
 
-Exactly one of inlineManifest or objectRef must be set.
+Exactly one of inlineManifest or secretRef must be set.
 
 
 
@@ -535,9 +535,9 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `type` _[ObjectType](#objecttype)_ | type is a required field which specifies the type of object to use.<br />The allowed object types are "InlineManifest" and "ObjectReference".<br />When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.<br />When set to "ObjectReference", objects are supplied as references to a Secret that holds the serialized object manifest.<br />**Experimental channel:**  |  | Enum: [InlineManifest ObjectReference] <br />Required: \{\} <br /> |
-| `inlineManifest` _[Unstructured](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#unstructured-unstructured-v1)_ | inlineManifest is an optional embedded Kubernetes object to be applied.<br />Exactly one of inlineManifest or objectRef must be set.<br />This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields. |  | EmbeddedResource: \{\} <br />Optional: \{\} <br /> |
-| `objectRef` _[ObjectSourceRef](#objectsourceref)_ | objectRef is an optional reference to a Secret that holds the serialized<br />object manifest.<br />Exactly one of inlineManifest or objectRef must be set. |  | Optional: \{\} <br /> |
+| `type` _[ObjectType](#objecttype)_ | type is a required field which specifies the type of object to use.<br />The allowed object types are "InlineManifest" and "SecretReference".<br />When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.<br />When set to "SecretReference", objects are supplied as references to a Secret that holds the serialized object manifest.<br />**Experimental channel:**  |  | Enum: [InlineManifest SecretReference] <br />Required: \{\} <br /> |
+| `inlineManifest` _[Unstructured](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#unstructured-unstructured-v1)_ | inlineManifest is an optional embedded Kubernetes object to be applied.<br />Exactly one of inlineManifest or secretRef must be set.<br />This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields. |  | EmbeddedResource: \{\} <br />Optional: \{\} <br /> |
+| `secretRef` _[SecretSourceRef](#secretsourceref)_ | secretRef is an optional reference to a Secret that holds the serialized<br />object manifest.<br />Exactly one of inlineManifest or secretRef must be set. |  | Optional: \{\} <br /> |
 | `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection controls whether the operator can adopt and modify objects<br />that already exist on the cluster.<br />Allowed values are: "Prevent", "IfNoController", and "None".<br />When set to "Prevent", the operator only manages objects it created itself.<br />This prevents ownership collisions.<br />When set to "IfNoController", the operator can adopt and modify pre-existing objects<br />that are not owned by another controller.<br />This is useful for taking over management of manually-created resources.<br />When set to "None", the operator can adopt and modify any pre-existing object, even if<br />owned by another controller.<br />Use this setting with extreme caution as it may cause multiple controllers to fight over<br />the same resource, resulting in increased load on the API server and etcd.<br />When omitted, the value is inherited from the phase, then spec. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
 
 
@@ -672,25 +672,6 @@ _Appears in:_
 | `label` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#labelselector-v1-meta)_ | label is the label selector definition.<br />Required when type is "Label".<br />A probe using a Label selector will be executed against every object matching the labels or expressions; you must use care<br />when using this type of selector. For example, if multiple Kind objects are selected via labels then the probe is<br />likely to fail because the values of different Kind objects rarely share the same schema.<br />The LabelSelector field uses the following Kubernetes format:<br />https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector<br />Requires exactly one of matchLabels or matchExpressions.<br />**Experimental channel:**  |  | Optional: \{\} <br /> |
 
 
-#### ObjectSourceRef
-
-
-
-ObjectSourceRef references content within a Secret that contains a
-serialized object manifest.
-
-
-
-_Appears in:_
-- [ClusterObjectSetObject](#clusterobjectsetobject)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `name` _string_ | name is the name of the referenced Secret. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
-| `namespace` _string_ | namespace is the namespace of the referenced Secret.<br />When empty, defaults to the OLM system namespace during ref resolution. |  | MaxLength: 63 <br />MinLength: 1 <br />Optional: \{\} <br /> |
-| `key` _string_ | key is the data key within the referenced Secret containing the<br />object manifest content. The value at this key must be a<br />JSON-serialized Kubernetes object manifest. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
-
-
 
 
 #### ObjectType
@@ -700,7 +681,7 @@ _Underlying type:_ _string_
 ObjectType defines the type of objects provided in the Objects set.
 
 _Validation:_
-- Enum: [InlineManifest ObjectReference]
+- Enum: [InlineManifest SecretReference]
 
 _Appears in:_
 - [ClusterObjectSetObject](#clusterobjectsetobject)
@@ -708,7 +689,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `InlineManifest` |  |
-| `ObjectReference` |  |
+| `SecretReference` |  |
 
 
 
@@ -796,6 +777,25 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `ref` _string_ | ref contains the resolved image digest-based reference.<br />The digest format allows you to use other tooling to fetch the exact OCI manifests<br />that were used to extract the catalog contents. |  | MaxLength: 1000 <br />Required: \{\} <br /> |
+
+
+#### SecretSourceRef
+
+
+
+SecretSourceRef references content within a Secret that contains a
+serialized object manifest.
+
+
+
+_Appears in:_
+- [ClusterObjectSetObject](#clusterobjectsetobject)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | name is the name of the referenced Secret. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `namespace` _string_ | namespace is the namespace of the referenced Secret.<br />When empty, defaults to the OLM system namespace during ref resolution. |  | MaxLength: 63 <br />MinLength: 1 <br />Optional: \{\} <br /> |
+| `key` _string_ | key is the data key within the referenced Secret containing the<br />object manifest content. The value at this key must be a<br />JSON-serialized Kubernetes object manifest. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
 
 
 #### SelectorType

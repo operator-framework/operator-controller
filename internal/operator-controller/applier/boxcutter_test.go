@@ -820,8 +820,8 @@ func TestBoxcutterApply_WritesClusterObjectDeployment(t *testing.T) {
 	for _, ph := range cod.Spec.Template.Spec.Phases {
 		for _, o := range ph.Objects {
 			require.Nil(t, o.InlineManifest.Object, "object should be externalized to a Secret ref")
-			require.NotNil(t, o.ObjectRef)
-			refNames[o.ObjectRef.Name] = struct{}{}
+			require.NotNil(t, o.SecretRef)
+			refNames[o.SecretRef.Name] = struct{}{}
 			sawRef = true
 		}
 	}

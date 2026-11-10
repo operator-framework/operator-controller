@@ -130,7 +130,7 @@ func TestSecretPacker_Pack(t *testing.T) {
 		phases := []ocv1.ClusterObjectSetPhase{{
 			Name: "deploy",
 			Objects: []ocv1.ClusterObjectSetObject{
-				{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: "existing-secret", Namespace: "ns", Key: "somekey"}},
+				{Type: ocv1.ObjectTypeSecretReference, SecretRef: ocv1.SecretSourceRef{Name: "existing-secret", Namespace: "ns", Key: "somekey"}},
 			},
 		}}
 

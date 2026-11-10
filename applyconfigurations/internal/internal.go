@@ -354,9 +354,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: inlineManifest
       type:
         namedType: io.k8s.apimachinery.pkg.apis.meta.v1.unstructured.Unstructured
-    - name: objectRef
+    - name: secretRef
       type:
-        namedType: com.github.operator-framework.operator-controller.api.v1.ObjectSourceRef
+        namedType: com.github.operator-framework.operator-controller.api.v1.SecretSourceRef
     - name: type
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.ObjectType
@@ -494,18 +494,6 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: type
       type:
         namedType: com.github.operator-framework.operator-controller.api.v1.SelectorType
-- name: com.github.operator-framework.operator-controller.api.v1.ObjectSourceRef
-  map:
-    fields:
-    - name: key
-      type:
-        scalar: string
-    - name: name
-      type:
-        scalar: string
-    - name: namespace
-      type:
-        scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.ObjectStatus
   map:
     fields:
@@ -591,6 +579,18 @@ var schemaYAML = typed.YAMLObject(`types:
   map:
     fields:
     - name: ref
+      type:
+        scalar: string
+- name: com.github.operator-framework.operator-controller.api.v1.SecretSourceRef
+  map:
+    fields:
+    - name: key
+      type:
+        scalar: string
+    - name: name
+      type:
+        scalar: string
+    - name: namespace
       type:
         scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.SelectorType

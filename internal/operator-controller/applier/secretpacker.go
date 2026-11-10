@@ -43,17 +43,17 @@ type SecretPacker struct {
 type PackResult struct {
 	// Secrets to be created before the COS.
 	Secrets []corev1.Secret
-	// Refs maps (phaseIndex, objectIndex) to the ObjectSourceRef
+	// Refs maps (phaseIndex, objectIndex) to the SecretSourceRef
 	// that should replace the inline object in the COS.
-	Refs map[[2]int]ocv1.ObjectSourceRef
+	Refs map[[2]int]ocv1.SecretSourceRef
 }
 
 // Pack takes COS phases with inline objects and produces:
 //  1. A set of immutable Secrets containing the serialized objects
-//  2. A mapping from (phaseIdx, objIdx) to the corresponding ObjectSourceRef
+//  2. A mapping from (phaseIdx, objIdx) to the corresponding SecretSourceRef
 func (p *SecretPacker) Pack(phases []ocv1.ClusterObjectSetPhase) (*PackResult, error) {
 	result := &PackResult{
-		Refs: make(map[[2]int]ocv1.ObjectSourceRef),
+		Refs: make(map[[2]int]ocv1.SecretSourceRef),
 	}
 
 	// pendingRefs tracks which refs belong to the current (not-yet-finalized) Secret.
@@ -76,7 +76,7 @@ func (p *SecretPacker) Pack(phases []ocv1.ClusterObjectSetPhase) (*PackResult, e
 		secret := p.newSecret(currentData)
 		// Back-fill refs for all objects assigned to this Secret.
 		for _, pr := range currentPending {
-			result.Refs[pr.pos] = ocv1.ObjectSourceRef{
+			result.Refs[pr.pos] = ocv1.SecretSourceRef{
 				Name:      secret.Name,
 				Namespace: p.SystemNamespace,
 				Key:       pr.key,
@@ -90,7 +90,7 @@ func (p *SecretPacker) Pack(phases []ocv1.ClusterObjectSetPhase) (*PackResult, e
 
 	for phaseIdx, phase := range phases {
 		for objIdx, obj := range phase.Objects {
-			if obj.Type == ocv1.ObjectTypeObjectReference {
+			if obj.Type == ocv1.ObjectTypeSecretReference {
 				continue // skip ref-only entries
 			}
 

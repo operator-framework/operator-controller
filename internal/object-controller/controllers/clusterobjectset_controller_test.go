@@ -942,8 +942,8 @@ func Test_ClusterObjectSetReconciler_Reconcile_VerifyReferencedSecrets(t *testin
 			rev1.Spec.Phases = []ocv1.ClusterObjectSetPhase{{
 				Name: "everything",
 				Objects: []ocv1.ClusterObjectSetObject{
-					{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: "secret-a", Namespace: "ns", Key: "configmap"}},
-					{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: "secret-b", Namespace: "ns", Key: "configmap"}},
+					{Type: ocv1.ObjectTypeSecretReference, SecretRef: ocv1.SecretSourceRef{Name: "secret-a", Namespace: "ns", Key: "configmap"}},
+					{Type: ocv1.ObjectTypeSecretReference, SecretRef: ocv1.SecretSourceRef{Name: "secret-b", Namespace: "ns", Key: "configmap"}},
 				},
 			}}
 
@@ -1007,7 +1007,7 @@ func Test_ClusterObjectSetReconciler_Reconcile_ReferencedContentValidationRecove
 	rev1.Spec.Phases = []ocv1.ClusterObjectSetPhase{{
 		Name: "everything",
 		Objects: []ocv1.ClusterObjectSetObject{
-			{Type: ocv1.ObjectTypeObjectReference, ObjectRef: ocv1.ObjectSourceRef{Name: "manifest", Namespace: "ns", Key: "configmap"}},
+			{Type: ocv1.ObjectTypeSecretReference, SecretRef: ocv1.SecretSourceRef{Name: "manifest", Namespace: "ns", Key: "configmap"}},
 		},
 	}}
 

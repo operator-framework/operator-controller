@@ -185,7 +185,7 @@ func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
 	for _, phase := range cod.Spec.Template.Spec.Phases {
 		for _, obj := range phase.Objects {
 			assert.Nil(t, obj.InlineManifest, "phase %s should have no inline objects", *phase.Name)
-			assert.NotNil(t, obj.ObjectRef, "phase %s should have refs", *phase.Name)
+			assert.NotNil(t, obj.SecretRef, "phase %s should have refs", *phase.Name)
 		}
 	}
 

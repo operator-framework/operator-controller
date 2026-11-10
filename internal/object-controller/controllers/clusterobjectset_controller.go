@@ -602,8 +602,8 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 			switch specObj.Type {
 			case ocv1.ObjectTypeInlineManifest:
 				obj = specObj.InlineManifest.DeepCopy()
-			case ocv1.ObjectTypeObjectReference:
-				resolved, err := c.resolveObjectRef(ctx, specObj.ObjectRef)
+			case ocv1.ObjectTypeSecretReference:
+				resolved, err := c.resolveSecretRef(ctx, specObj.SecretRef)
 				if err != nil {
 					return nil, nil, nil, fmt.Errorf("resolving ref in phase %q: %w", specPhase.Name, err)
 				}
@@ -644,9 +644,9 @@ func (c *ClusterObjectSetReconciler) buildBoxcutterPhases(ctx context.Context, c
 	return phases, observedPhases, opts, nil
 }
 
-// resolveObjectRef fetches the referenced Secret, reads the value at the specified key,
+// resolveSecretRef fetches the referenced Secret, reads the value at the specified key,
 // auto-detects gzip compression, and deserializes into an unstructured.Unstructured.
-func (c *ClusterObjectSetReconciler) resolveObjectRef(ctx context.Context, ref ocv1.ObjectSourceRef) (*unstructured.Unstructured, error) {
+func (c *ClusterObjectSetReconciler) resolveSecretRef(ctx context.Context, ref ocv1.SecretSourceRef) (*unstructured.Unstructured, error) {
 	secret := &corev1.Secret{}
 	key := client.ObjectKey{Name: ref.Name, Namespace: ref.Namespace}
 	if err := c.Client.Get(ctx, key, secret); err != nil {
@@ -865,10 +865,10 @@ func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx contex
 
 	for _, phase := range cos.Spec.Phases {
 		for _, obj := range phase.Objects {
-			if obj.Type != ocv1.ObjectTypeObjectReference {
+			if obj.Type != ocv1.ObjectTypeSecretReference {
 				continue
 			}
-			sr := secretRef{name: obj.ObjectRef.Name, namespace: obj.ObjectRef.Namespace}
+			sr := secretRef{name: obj.SecretRef.Name, namespace: obj.SecretRef.Namespace}
 			if _, ok := seen[sr]; !ok {
 				seen[sr] = struct{}{}
 				refs = append(refs, sr)
@@ -884,7 +884,7 @@ func (c *ClusterObjectSetReconciler) verifyReferencedSecretsImmutable(ctx contex
 		if err := c.Client.Get(ctx, key, secret); err != nil {
 			if apierrors.IsNotFound(err) {
 				// Secret not yet available — skip verification.
-				// resolveObjectRef will handle the not-found with a retryable error.
+				// resolveSecretRef will handle the not-found with a retryable error.
 				continue
 			}
 			// Remember the first read error but keep checking the remaining refs: a
