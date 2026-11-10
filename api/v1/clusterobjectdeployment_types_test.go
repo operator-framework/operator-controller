@@ -56,17 +56,17 @@ func TestClusterObjectDeploymentValidity(t *testing.T) {
 		{name: "object collision protection invalid", mutate: func(cod *ClusterObjectDeployment) {
 			cod.Spec.Template.Spec.Phases[0].Objects[0].CollisionProtection = "Invalid"
 		}},
-		{name: "object reference", mutate: func(cod *ClusterObjectDeployment) {
-			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{Type: ObjectTypeObjectReference, ObjectRef: ObjectSourceRef{Name: "objects", Key: "configmap"}}
+		{name: "secret reference", mutate: func(cod *ClusterObjectDeployment) {
+			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{Type: ObjectTypeSecretReference, SecretRef: SecretSourceRef{Name: "objects", Key: "configmap"}}
 		}, valid: true},
-		{name: "both inline object and reference", mutate: func(cod *ClusterObjectDeployment) {
-			cod.Spec.Template.Spec.Phases[0].Objects[0].ObjectRef = ObjectSourceRef{Name: "objects", Key: "configmap"}
+		{name: "both inline object and secret reference", mutate: func(cod *ClusterObjectDeployment) {
+			cod.Spec.Template.Spec.Phases[0].Objects[0].SecretRef = SecretSourceRef{Name: "objects", Key: "configmap"}
 		}},
-		{name: "neither inline object nor reference", mutate: func(cod *ClusterObjectDeployment) {
+		{name: "neither inline object nor secret reference", mutate: func(cod *ClusterObjectDeployment) {
 			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{}
 		}},
-		{name: "reference key missing", mutate: func(cod *ClusterObjectDeployment) {
-			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{Type: ObjectTypeObjectReference, ObjectRef: ObjectSourceRef{Name: "objects"}}
+		{name: "secret reference key missing", mutate: func(cod *ClusterObjectDeployment) {
+			cod.Spec.Template.Spec.Phases[0].Objects[0] = ClusterObjectSetObject{Type: ObjectTypeSecretReference, SecretRef: SecretSourceRef{Name: "objects"}}
 		}},
 		{name: "inline object kind missing", mutate: func(cod *ClusterObjectDeployment) {
 			cod.Spec.Template.Spec.Phases[0].Objects[0].InlineManifest.SetKind("")

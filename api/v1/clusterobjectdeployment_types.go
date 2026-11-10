@@ -110,7 +110,7 @@ type ClusterObjectDeploymentTemplateMetadata struct {
 type ClusterObjectDeploymentTemplateSpec struct {
 	// phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains
 	// at most 50 objects, each expressed either as an inlineManifest (an embedded
-	// Kubernetes object) or an objectRef (a reference to an immutable Secret holding
+	// Kubernetes object) or a secretRef (a reference to an immutable Secret holding
 	// a serialized manifest). Phase, object, and probe order participate in template identity.
 	// +required
 	// +kubebuilder:validation:MinItems=1

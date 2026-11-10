@@ -780,8 +780,8 @@ func replaceInlineWithRefs(rev *ocv1ac.ClusterObjectSetApplyConfiguration, pack 
 				continue
 			}
 			rev.Spec.Phases[phaseIdx].Objects[objIdx] = *ocv1ac.ClusterObjectSetObject().
-				WithType(ocv1.ObjectTypeObjectReference).
-				WithObjectRef(ocv1ac.ObjectSourceRef().
+				WithType(ocv1.ObjectTypeSecretReference).
+				WithSecretRef(ocv1ac.SecretSourceRef().
 					WithName(ref.Name).
 					WithNamespace(ref.Namespace).
 					WithKey(ref.Key))

@@ -29,28 +29,28 @@ import (
 // ClusterObjectSetObject represents a Kubernetes object to be applied as part
 // of a phase, along with its collision protection settings.
 //
-// Exactly one of inlineManifest or objectRef must be set.
+// Exactly one of inlineManifest or secretRef must be set.
 type ClusterObjectSetObjectApplyConfiguration struct {
 	// type is a required field which specifies the type of object to use.
 	//
-	// The allowed object types are "InlineManifest" and "ObjectReference".
+	// The allowed object types are "InlineManifest" and "SecretReference".
 	//
 	// When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.
-	// When set to "ObjectReference", objects are supplied as references to a Secret that holds the serialized object manifest.
+	// When set to "SecretReference", objects are supplied as references to a Secret that holds the serialized object manifest.
 	//
 	// <opcon:experimental>
 	Type *apiv1.ObjectType `json:"type,omitempty"`
 	// inlineManifest is an optional embedded Kubernetes object to be applied.
 	//
-	// Exactly one of inlineManifest or objectRef must be set.
+	// Exactly one of inlineManifest or secretRef must be set.
 	//
 	// This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
 	InlineManifest *unstructured.Unstructured `json:"inlineManifest,omitempty"`
-	// objectRef is an optional reference to a Secret that holds the serialized
+	// secretRef is an optional reference to a Secret that holds the serialized
 	// object manifest.
 	//
-	// Exactly one of inlineManifest or objectRef must be set.
-	ObjectRef *ObjectSourceRefApplyConfiguration `json:"objectRef,omitempty"`
+	// Exactly one of inlineManifest or secretRef must be set.
+	SecretRef *SecretSourceRefApplyConfiguration `json:"secretRef,omitempty"`
 	// collisionProtection controls whether the operator can adopt and modify objects
 	// that already exist on the cluster.
 	//
@@ -94,11 +94,11 @@ func (b *ClusterObjectSetObjectApplyConfiguration) WithInlineManifest(value unst
 	return b
 }
 
-// WithObjectRef sets the ObjectRef field in the declarative configuration to the given value
+// WithSecretRef sets the SecretRef field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ObjectRef field is set to the value of the last call.
-func (b *ClusterObjectSetObjectApplyConfiguration) WithObjectRef(value *ObjectSourceRefApplyConfiguration) *ClusterObjectSetObjectApplyConfiguration {
-	b.ObjectRef = value
+// If called multiple times, the SecretRef field is set to the value of the last call.
+func (b *ClusterObjectSetObjectApplyConfiguration) WithSecretRef(value *SecretSourceRefApplyConfiguration) *ClusterObjectSetObjectApplyConfiguration {
+	b.SecretRef = value
 	return b
 }
 

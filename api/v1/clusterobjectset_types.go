@@ -408,29 +408,29 @@ type ClusterObjectSetPhase struct {
 }
 
 // ObjectType defines the type of objects provided in the Objects set.
-// +kubebuilder:validation:Enum=InlineManifest;ObjectReference
+// +kubebuilder:validation:Enum=InlineManifest;SecretReference
 type ObjectType string
 
 const (
 	ObjectTypeInlineManifest  ObjectType = "InlineManifest"
-	ObjectTypeObjectReference ObjectType = "ObjectReference"
+	ObjectTypeSecretReference ObjectType = "SecretReference"
 )
 
 // ClusterObjectSetObject represents a Kubernetes object to be applied as part
 // of a phase, along with its collision protection settings.
 //
-// Exactly one of inlineManifest or objectRef must be set.
+// Exactly one of inlineManifest or secretRef must be set.
 //
 // +union
 // +kubebuilder:validation:XValidation:rule="self.type == 'InlineManifest' ?has(self.inlineManifest) : !has(self.inlineManifest)",message="inlineManifest is required when type is InlineManifest, and forbidden otherwise"
-// +kubebuilder:validation:XValidation:rule="self.type == 'ObjectReference' ?has(self.objectRef) : !has(self.objectRef)",message="objectRef is required when type is ObjectReference, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="self.type == 'SecretReference' ?has(self.secretRef) : !has(self.secretRef)",message="secretRef is required when type is SecretReference, and forbidden otherwise"
 type ClusterObjectSetObject struct {
 	// type is a required field which specifies the type of object to use.
 	//
-	// The allowed object types are "InlineManifest" and "ObjectReference".
+	// The allowed object types are "InlineManifest" and "SecretReference".
 	//
 	// When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.
-	// When set to "ObjectReference", objects are supplied as references to a Secret that holds the serialized object manifest.
+	// When set to "SecretReference", objects are supplied as references to a Secret that holds the serialized object manifest.
 	//
 	// +unionDiscriminator
 	// +required
@@ -439,7 +439,7 @@ type ClusterObjectSetObject struct {
 
 	// inlineManifest is an optional embedded Kubernetes object to be applied.
 	//
-	// Exactly one of inlineManifest or objectRef must be set.
+	// Exactly one of inlineManifest or secretRef must be set.
 	//
 	// This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
 	//
@@ -452,14 +452,14 @@ type ClusterObjectSetObject struct {
 	// +optional
 	InlineManifest unstructured.Unstructured `json:"inlineManifest,omitempty,omitzero"`
 
-	// objectRef is an optional reference to a Secret that holds the serialized
+	// secretRef is an optional reference to a Secret that holds the serialized
 	// object manifest.
 	//
-	// Exactly one of inlineManifest or objectRef must be set.
+	// Exactly one of inlineManifest or secretRef must be set.
 	//
 	// +unionMember
 	// +optional
-	ObjectRef ObjectSourceRef `json:"objectRef,omitzero"`
+	SecretRef SecretSourceRef `json:"secretRef,omitzero"`
 
 	// collisionProtection controls whether the operator can adopt and modify objects
 	// that already exist on the cluster.
@@ -484,9 +484,9 @@ type ClusterObjectSetObject struct {
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
-// ObjectSourceRef references content within a Secret that contains a
+// SecretSourceRef references content within a Secret that contains a
 // serialized object manifest.
-type ObjectSourceRef struct {
+type SecretSourceRef struct {
 	// name is the name of the referenced Secret.
 	//
 	// +required

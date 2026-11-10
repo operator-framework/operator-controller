@@ -424,13 +424,13 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - type: ObjectReference
-            objectRef:
+          - type: SecretReference
+            secretRef:
               name: ${COS_NAME}-ref-secret
               namespace: ${TEST_NAMESPACE}
               key: configmap
-          - type: ObjectReference
-            objectRef:
+          - type: SecretReference
+            secretRef:
               name: ${COS_NAME}-ref-secret
               namespace: ${TEST_NAMESPACE}
               key: deployment
@@ -478,8 +478,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - type: ObjectReference
-            objectRef:
+          - type: SecretReference
+            secretRef:
               name: ${COS_NAME}-mutable-secret
               namespace: ${TEST_NAMESPACE}
               key: configmap
@@ -528,8 +528,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - type: ObjectReference
-            objectRef:
+          - type: SecretReference
+            secretRef:
               name: ${COS_NAME}-change-secret
               namespace: ${TEST_NAMESPACE}
               key: configmap
@@ -633,8 +633,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - type: ObjectReference
-            objectRef:
+          - type: SecretReference
+            secretRef:
               name: ${COS_NAME}-missing-key-secret
               namespace: ${TEST_NAMESPACE}
               key: does-not-exist
@@ -672,8 +672,8 @@ Feature: Install ClusterObjectSet
         phases:
         - name: resources
           objects:
-          - type: ObjectReference
-            objectRef:
+          - type: SecretReference
+            secretRef:
               name: ${COS_NAME}-malformed-secret
               namespace: ${TEST_NAMESPACE}
               key: configmap

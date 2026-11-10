@@ -1413,7 +1413,7 @@ spec:
                         description: |-
                           phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains
                           at most 50 objects, each expressed either as an inlineManifest (an embedded
-                          Kubernetes object) or an objectRef (a reference to an immutable Secret holding
+                          Kubernetes object) or a secretRef (a reference to an immutable Secret holding
                           a serialized manifest). Phase, object, and probe order participate in template identity.
                         items:
                           description: |-
@@ -1465,7 +1465,7 @@ spec:
                                   ClusterObjectSetObject represents a Kubernetes object to be applied as part
                                   of a phase, along with its collision protection settings.
 
-                                  Exactly one of inlineManifest or objectRef must be set.
+                                  Exactly one of inlineManifest or secretRef must be set.
                                 properties:
                                   collisionProtection:
                                     description: |-
@@ -1496,7 +1496,7 @@ spec:
                                     description: |-
                                       inlineManifest is an optional embedded Kubernetes object to be applied.
 
-                                      Exactly one of inlineManifest or objectRef must be set.
+                                      Exactly one of inlineManifest or secretRef must be set.
 
                                       This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
                                     type: object
@@ -1513,12 +1513,12 @@ spec:
                                     - message: metadata.name is required
                                       rule: has(self.metadata.name) && self.metadata.name
                                         != ''
-                                  objectRef:
+                                  secretRef:
                                     description: |-
-                                      objectRef is an optional reference to a Secret that holds the serialized
+                                      secretRef is an optional reference to a Secret that holds the serialized
                                       object manifest.
 
-                                      Exactly one of inlineManifest or objectRef must be set.
+                                      Exactly one of inlineManifest or secretRef must be set.
                                     properties:
                                       key:
                                         description: |-
@@ -1565,13 +1565,13 @@ spec:
                                     description: |-
                                       type is a required field which specifies the type of object to use.
 
-                                      The allowed object types are "InlineManifest" and "ObjectReference".
+                                      The allowed object types are "InlineManifest" and "SecretReference".
 
                                       When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.
-                                      When set to "ObjectReference", objects are supplied as references to a Secret that holds the serialized object manifest.
+                                      When set to "SecretReference", objects are supplied as references to a Secret that holds the serialized object manifest.
                                     enum:
                                     - InlineManifest
-                                    - ObjectReference
+                                    - SecretReference
                                     type: string
                                 required:
                                 - type
@@ -1581,10 +1581,10 @@ spec:
                                     InlineManifest, and forbidden otherwise
                                   rule: 'self.type == ''InlineManifest'' ?has(self.inlineManifest)
                                     : !has(self.inlineManifest)'
-                                - message: objectRef is required when type is ObjectReference,
+                                - message: secretRef is required when type is SecretReference,
                                     and forbidden otherwise
-                                  rule: 'self.type == ''ObjectReference'' ?has(self.objectRef)
-                                    : !has(self.objectRef)'
+                                  rule: 'self.type == ''SecretReference'' ?has(self.secretRef)
+                                    : !has(self.secretRef)'
                               maxItems: 50
                               type: array
                               x-kubernetes-list-type: atomic
@@ -2209,7 +2209,7 @@ spec:
                           ClusterObjectSetObject represents a Kubernetes object to be applied as part
                           of a phase, along with its collision protection settings.
 
-                          Exactly one of inlineManifest or objectRef must be set.
+                          Exactly one of inlineManifest or secretRef must be set.
                         properties:
                           collisionProtection:
                             description: |-
@@ -2240,7 +2240,7 @@ spec:
                             description: |-
                               inlineManifest is an optional embedded Kubernetes object to be applied.
 
-                              Exactly one of inlineManifest or objectRef must be set.
+                              Exactly one of inlineManifest or secretRef must be set.
 
                               This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
                             type: object
@@ -2255,12 +2255,12 @@ spec:
                             - message: metadata.name is required
                               rule: has(self.metadata.name) && self.metadata.name
                                 != ''
-                          objectRef:
+                          secretRef:
                             description: |-
-                              objectRef is an optional reference to a Secret that holds the serialized
+                              secretRef is an optional reference to a Secret that holds the serialized
                               object manifest.
 
-                              Exactly one of inlineManifest or objectRef must be set.
+                              Exactly one of inlineManifest or secretRef must be set.
                             properties:
                               key:
                                 description: |-
@@ -2304,13 +2304,13 @@ spec:
                             description: |-
                               type is a required field which specifies the type of object to use.
 
-                              The allowed object types are "InlineManifest" and "ObjectReference".
+                              The allowed object types are "InlineManifest" and "SecretReference".
 
                               When set to "InlineManifest", object manifests are supplied inline, as valid Kubernetes resources with apiVersion, kind, and metadata fields.
-                              When set to "ObjectReference", objects are supplied as references to a Secret that holds the serialized object manifest.
+                              When set to "SecretReference", objects are supplied as references to a Secret that holds the serialized object manifest.
                             enum:
                             - InlineManifest
-                            - ObjectReference
+                            - SecretReference
                             type: string
                         required:
                         - type
@@ -2320,10 +2320,10 @@ spec:
                             and forbidden otherwise
                           rule: 'self.type == ''InlineManifest'' ?has(self.inlineManifest)
                             : !has(self.inlineManifest)'
-                        - message: objectRef is required when type is ObjectReference,
+                        - message: secretRef is required when type is SecretReference,
                             and forbidden otherwise
-                          rule: 'self.type == ''ObjectReference'' ?has(self.objectRef)
-                            : !has(self.objectRef)'
+                          rule: 'self.type == ''SecretReference'' ?has(self.secretRef)
+                            : !has(self.secretRef)'
                       maxItems: 50
                       type: array
                       x-kubernetes-list-type: atomic

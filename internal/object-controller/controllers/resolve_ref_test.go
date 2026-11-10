@@ -37,7 +37,7 @@ func newSchemeWithCoreV1(t *testing.T) *apimachineryruntime.Scheme {
 	return sch
 }
 
-func TestResolveObjectRef_PlainJSON(t *testing.T) {
+func TestResolveSecretRef_PlainJSON(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
@@ -63,7 +63,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 		},
 	}
 
-	cos := newRefTestCOS("ref-plain-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-plain-1", ocv1.SecretSourceRef{
 		Name:      "test-secret",
 		Namespace: "olmv1-system",
 		Key:       "my-key",
@@ -92,7 +92,7 @@ func TestResolveObjectRef_PlainJSON(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestResolveObjectRef_GzipCompressed(t *testing.T) {
+func TestResolveSecretRef_GzipCompressed(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
@@ -125,7 +125,7 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 		},
 	}
 
-	cos := newRefTestCOS("ref-gzip-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-gzip-1", ocv1.SecretSourceRef{
 		Name:      "test-secret-gz",
 		Namespace: "olmv1-system",
 		Key:       "my-key",
@@ -154,11 +154,11 @@ func TestResolveObjectRef_GzipCompressed(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestResolveObjectRef_SecretNotFound(t *testing.T) {
+func TestResolveSecretRef_SecretNotFound(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
-	cos := newRefTestCOS("ref-notfound-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-notfound-1", ocv1.SecretSourceRef{
 		Name:      "nonexistent-secret",
 		Namespace: "olmv1-system",
 		Key:       "my-key",
@@ -183,7 +183,7 @@ func TestResolveObjectRef_SecretNotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "resolving ref")
 }
 
-func TestResolveObjectRef_KeyNotFound(t *testing.T) {
+func TestResolveSecretRef_KeyNotFound(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
@@ -198,7 +198,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 		},
 	}
 
-	cos := newRefTestCOS("ref-nokey-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-nokey-1", ocv1.SecretSourceRef{
 		Name:      "test-secret-nokey",
 		Namespace: "olmv1-system",
 		Key:       "missing-key",
@@ -232,7 +232,7 @@ func TestResolveObjectRef_KeyNotFound(t *testing.T) {
 	assert.Contains(t, cond.Message, "key")
 }
 
-func TestResolveObjectRef_InvalidJSON(t *testing.T) {
+func TestResolveSecretRef_InvalidJSON(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	testScheme := newSchemeWithCoreV1(t)
 
@@ -247,7 +247,7 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 		},
 	}
 
-	cos := newRefTestCOS("ref-invalid-1", ocv1.ObjectSourceRef{
+	cos := newRefTestCOS("ref-invalid-1", ocv1.SecretSourceRef{
 		Name:      "test-secret-invalid",
 		Namespace: "olmv1-system",
 		Key:       "my-key",
@@ -281,7 +281,7 @@ func TestResolveObjectRef_InvalidJSON(t *testing.T) {
 	assert.Contains(t, cond.Message, "unmarshal")
 }
 
-func newRefTestCOS(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterObjectSet {
+func newRefTestCOS(name string, ref ocv1.SecretSourceRef) *ocv1.ClusterObjectSet {
 	cos := &ocv1.ClusterObjectSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -300,8 +300,8 @@ func newRefTestCOS(name string, ref ocv1.ObjectSourceRef) *ocv1.ClusterObjectSet
 					Name: "deploy",
 					Objects: []ocv1.ClusterObjectSetObject{
 						{
-							Type:      ocv1.ObjectTypeObjectReference,
-							ObjectRef: ref,
+							Type:      ocv1.ObjectTypeSecretReference,
+							SecretRef: ref,
 						},
 					},
 				},

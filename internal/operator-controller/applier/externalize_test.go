@@ -57,7 +57,7 @@ func TestReplaceInlineWithRefs(t *testing.T) {
 		)
 
 	pack := &PackResult{
-		Refs: map[[2]int]ocv1.ObjectSourceRef{
+		Refs: map[[2]int]ocv1.SecretSourceRef{
 			{0, 0}: {Name: "secret-1", Namespace: "olmv1-system", Key: "key-a"},
 			{0, 1}: {Name: "secret-1", Namespace: "olmv1-system", Key: "key-b"},
 		},
@@ -70,21 +70,21 @@ func TestReplaceInlineWithRefs(t *testing.T) {
 
 	// Object should be nil, Ref should be set
 	assert.Nil(t, rev.Spec.Phases[0].Objects[0].InlineManifest)
-	require.NotNil(t, rev.Spec.Phases[0].Objects[0].ObjectRef)
-	assert.Equal(t, "secret-1", *rev.Spec.Phases[0].Objects[0].ObjectRef.Name)
-	assert.Equal(t, "olmv1-system", *rev.Spec.Phases[0].Objects[0].ObjectRef.Namespace)
-	assert.Equal(t, "key-a", *rev.Spec.Phases[0].Objects[0].ObjectRef.Key)
+	require.NotNil(t, rev.Spec.Phases[0].Objects[0].SecretRef)
+	assert.Equal(t, "secret-1", *rev.Spec.Phases[0].Objects[0].SecretRef.Name)
+	assert.Equal(t, "olmv1-system", *rev.Spec.Phases[0].Objects[0].SecretRef.Namespace)
+	assert.Equal(t, "key-a", *rev.Spec.Phases[0].Objects[0].SecretRef.Key)
 
 	assert.Nil(t, rev.Spec.Phases[0].Objects[1].InlineManifest)
-	require.NotNil(t, rev.Spec.Phases[0].Objects[1].ObjectRef)
-	assert.Equal(t, "secret-1", *rev.Spec.Phases[0].Objects[1].ObjectRef.Name)
-	assert.Equal(t, "key-b", *rev.Spec.Phases[0].Objects[1].ObjectRef.Key)
+	require.NotNil(t, rev.Spec.Phases[0].Objects[1].SecretRef)
+	assert.Equal(t, "secret-1", *rev.Spec.Phases[0].Objects[1].SecretRef.Name)
+	assert.Equal(t, "key-b", *rev.Spec.Phases[0].Objects[1].SecretRef.Key)
 }
 
 func TestReplaceInlineWithRefs_NilSpec(t *testing.T) {
 	rev := ocv1ac.ClusterObjectSet("test-rev")
 	pack := &PackResult{
-		Refs: map[[2]int]ocv1.ObjectSourceRef{},
+		Refs: map[[2]int]ocv1.SecretSourceRef{},
 	}
 	// Should not panic
 	replaceInlineWithRefs(rev, pack)
