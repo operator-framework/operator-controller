@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectDeployment
 Feature: ClusterObjectDeployment revision history limit
 
   As an OLM user applying a ClusterObjectDeployment, I want archived (superseded)
@@ -7,7 +7,7 @@ Feature: ClusterObjectDeployment revision history limit
   available for inspection and rollback.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   Scenario: Archived revisions beyond the revisionHistoryLimit are garbage collected
     Given namespace "${TEST_NAMESPACE}" is available

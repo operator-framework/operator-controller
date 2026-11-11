@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectDeployment
 Feature: ClusterObjectDeployment group isolation and deletion
 
   As an OLM user running several ClusterObjectDeployments, I want each deployment
@@ -7,7 +7,7 @@ Feature: ClusterObjectDeployment group isolation and deletion
   another and leave nothing behind.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   # Two deployments allocate distinct groups and must not adopt each other's
   # revisions: each owns exactly its own revision (the owns step verifies the

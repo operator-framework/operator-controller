@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectDeployment
 Feature: ClusterObjectDeployment revision rollout
 
   As an OLM user applying a ClusterObjectDeployment, I want the controller to roll
@@ -7,7 +7,7 @@ Feature: ClusterObjectDeployment revision rollout
   and report availability on the Available condition.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   Scenario: ClusterObjectDeployment rolls out its initial revision
     Given namespace "${TEST_NAMESPACE}" is available

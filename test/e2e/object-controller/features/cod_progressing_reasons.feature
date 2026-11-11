@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectDeployment
 Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
 
   As an OLM user applying a ClusterObjectDeployment, I want the Progressing
@@ -9,7 +9,7 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
   directs me to inspect it for the specific cause.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   # A revision that cannot take ownership of its objects will not become Ready
   # without user action, so the deployment reports Progressing=False.
