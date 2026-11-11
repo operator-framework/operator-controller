@@ -55,24 +55,6 @@ type World struct {
 	LastApplyStderr      string
 }
 
-// GatherClusterExtensionObjects collects all resources related to the ClusterExtension container in
-// either their Helm release Secret or ClusterObjectSet depending on the applier being used
-// and saves them into the context.
-func (s *World) GatherClusterExtensionObjects() error {
-	objs, err := listExtensionResources(s.ClusterExtensionName)
-	if err != nil {
-		return fmt.Errorf("failed to load extension resources into context: %w", err)
-	}
-	s.ExtensionObjects = objs
-	return nil
-}
-
-// GetClusterExtensionObjects returns the ClusterExtension objects currently saved into the context.
-// Will always return nil until GatherClusterExtensionObjects is called
-func (s *World) GetClusterExtensionObjects() []client.Object {
-	return s.ExtensionObjects
-}
-
 type contextKey string
 
 const (

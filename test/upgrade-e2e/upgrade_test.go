@@ -9,6 +9,7 @@ import (
 	"github.com/cucumber/godog/colors"
 	"github.com/spf13/pflag"
 
+	operatorsteps "github.com/operator-framework/operator-controller/test/internal/e2e/operator-controller/steps"
 	"github.com/operator-framework/operator-controller/test/internal/e2e/steps"
 )
 
@@ -33,6 +34,7 @@ func TestMain(m *testing.M) {
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
 			sc.Before(steps.CreateScenarioContext)
 			steps.RegisterSteps(sc)
+			operatorsteps.RegisterSteps(sc)
 		},
 		Options: &opts,
 	}.Run()
