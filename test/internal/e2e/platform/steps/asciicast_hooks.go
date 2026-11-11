@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/cucumber/godog"
+
+	shared "github.com/operator-framework/operator-controller/test/internal/e2e/steps"
 )
 
 const demoTag = "@demo"
@@ -39,7 +41,7 @@ func startRecordingIfDemo(ctx context.Context, sc *godog.Scenario) (context.Cont
 		return ctx, nil
 	}
 	rec := NewAsciiCastRecorder(sc.Name, demoOutputDir)
-	logger.Info("Starting asciicast recording", "scenario", sc.Name, "output", rec.castPath)
+	shared.Log().Info("Starting asciicast recording", "scenario", sc.Name, "output", rec.castPath)
 	return WithRecorder(ctx, rec), nil
 }
 
@@ -69,14 +71,14 @@ func stopRecordingIfDemo(ctx context.Context, sc *godog.Scenario, err error) (co
 		return ctx, nil
 	}
 	if stopErr := rec.Stop(); stopErr != nil {
-		logger.Info("Failed to write asciicast file", "error", stopErr)
+		shared.Log().Info("Failed to write asciicast file", "error", stopErr)
 		if err == nil {
 			return ctx, stopErr
 		}
 	} else {
 		// Slugify scenario name the same way as the recorder
 		slug := strings.ToLower(strings.ReplaceAll(sc.Name, " ", "-"))
-		logger.Info("Asciicast recording saved", "file", demoOutputDir+"/"+slug+".cast")
+		shared.Log().Info("Asciicast recording saved", "file", demoOutputDir+"/"+slug+".cast")
 	}
 	return ctx, nil
 }

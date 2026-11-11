@@ -17,7 +17,6 @@ func TestMain(m *testing.M) {
 	}, func(sc *godog.ScenarioContext) {
 		steps.RegisterSteps(sc)
 		catalogsteps.RegisterSteps(sc)
-		steps.RegisterDemoSteps(sc)
 		catalogsteps.RegisterHooks(sc)
 		steps.RegisterHooks(sc)
 	}))

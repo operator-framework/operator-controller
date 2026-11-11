@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	shared "github.com/operator-framework/operator-controller/test/internal/e2e/steps"
 )
 
 type recorderContextKey struct{}
@@ -17,7 +19,7 @@ type recorderContextKey struct{}
 // intentionally use the same instance; callers must not override the command
 // recorder separately on the returned context.
 func WithRecorder(ctx context.Context, rec *AsciiCastRecorder) context.Context {
-	return context.WithValue(WithCommandRecorder(ctx, rec), recorderContextKey{}, rec)
+	return context.WithValue(shared.WithCommandRecorder(ctx, rec), recorderContextKey{}, rec)
 }
 
 func RecorderFromContext(ctx context.Context) *AsciiCastRecorder {
