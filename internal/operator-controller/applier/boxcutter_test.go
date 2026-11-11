@@ -1067,8 +1067,10 @@ func TestBoxcutterApply_RecreatesDeploymentAfterDeletion(t *testing.T) {
 		},
 		Spec: ocv1.ClusterObjectDeploymentSpec{Template: ocv1.ClusterObjectDeploymentTemplate{
 			Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
-				CollisionProtection: ocv1.CollisionProtectionPrevent,
-				Phases:              []ocv1.ClusterObjectSetPhase{{Name: "resources", Objects: []ocv1.ClusterObjectSetObject{}}},
+				ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+					CollisionProtection: ocv1.CollisionProtectionPrevent,
+					Phases:              []ocv1.ClusterObjectSetPhase{{Name: "resources", Objects: []ocv1.ClusterObjectSetObject{}}},
+				},
 			},
 		}},
 	}

@@ -663,12 +663,10 @@ func buildClusterObjectSet(cod *ocv1.ClusterObjectDeployment, revision int64, ha
 			Annotations: maps.Clone(cod.Spec.Template.Metadata.Annotations),
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
-			Group:               cod.Name,
-			Revision:            revision,
-			LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
-			Phases:              cod.Spec.Template.Spec.Phases,
-			ProgressionProbes:   cod.Spec.Template.Spec.ProgressionProbes,
-			CollisionProtection: cod.Spec.Template.Spec.CollisionProtection,
+			Group:                   cod.Name,
+			Revision:                revision,
+			LifecycleState:          ocv1.ClusterObjectSetLifecycleStateActive,
+			ClusterObjectSetContent: cod.Spec.Template.Spec.ClusterObjectSetContent,
 		},
 	}
 }

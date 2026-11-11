@@ -22,16 +22,18 @@ import (
 func testTemplate() ocv1.ClusterObjectDeploymentTemplate {
 	return ocv1.ClusterObjectDeploymentTemplate{
 		Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
-			CollisionProtection: ocv1.CollisionProtectionNone,
-			Phases: []ocv1.ClusterObjectSetPhase{
-				{
-					Name: "resources",
-					Objects: []ocv1.ClusterObjectSetObject{
-						{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: unstructured.Unstructured{Object: map[string]interface{}{
-							"apiVersion": "v1",
-							"kind":       "ConfigMap",
-							"metadata":   map[string]interface{}{"name": "cm", "namespace": "ns"},
-						}}},
+			ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+				CollisionProtection: ocv1.CollisionProtectionNone,
+				Phases: []ocv1.ClusterObjectSetPhase{
+					{
+						Name: "resources",
+						Objects: []ocv1.ClusterObjectSetObject{
+							{Type: ocv1.ObjectTypeInlineManifest, InlineManifest: unstructured.Unstructured{Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "ConfigMap",
+								"metadata":   map[string]interface{}{"name": "cm", "namespace": "ns"},
+							}}},
+						},
 					},
 				},
 			},

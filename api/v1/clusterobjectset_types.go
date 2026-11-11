@@ -46,8 +46,12 @@ const (
 )
 
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
+// The content fields (phases, progressionProbes, collisionProtection) are
+// immutable: once set they may only be changed by creating a new revision.
 // +kubebuilder:validation:XValidation:rule="!has(oldSelf.phases) || has(self.phases)",message="phases cannot be removed once set"
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.progressionProbes) || has(self.progressionProbes)",message="progressionProbes cannot be removed once set"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.phases) || self.phases == oldSelf.phases || oldSelf.phases.size() == 0",message="phases is immutable"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.progressionProbes) || !has(self.progressionProbes) && oldSelf.progressionProbes.size() == 0 || has(self.progressionProbes) && (self.progressionProbes == oldSelf.progressionProbes || oldSelf.progressionProbes.size() == 0)",message="progressionProbes is immutable"
+// +kubebuilder:validation:XValidation:rule="self.collisionProtection == oldSelf.collisionProtection",message="collisionProtection is immutable"
 type ClusterObjectSetSpec struct {
 	// group is a required, immutable identifier that links related revisions together.
 	// All revisions sharing the same group form an ordered sequence, regardless of owner references.
@@ -90,7 +94,17 @@ type ClusterObjectSetSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision,omitempty"`
 
-	// phases is a required, immutable list of phases that group objects to be applied together.
+	// ClusterObjectSetContent holds the immutable revision content shared with
+	// the ClusterObjectDeployment template. Immutability of these fields is
+	// enforced at the ClusterObjectSetSpec level, not here, so that the same
+	// structure can be embedded mutably in a ClusterObjectDeployment template.
+	ClusterObjectSetContent `json:",inline"`
+}
+
+// ClusterObjectSetContent holds the revision content shared between
+// ClusterObjectSet.spec and a ClusterObjectDeployment's template spec.
+type ClusterObjectSetContent struct {
+	// phases is a required list of phases that group objects to be applied together.
 	//
 	// Objects are organized into phases based on their Group-Kind. Common phases include:
 	//   - namespaces: Namespace objects
@@ -104,11 +118,8 @@ type ClusterObjectSetSpec struct {
 	// All objects in a phase are applied in no particular order.
 	// The revision progresses to the next phase only after all objects in the current phase pass their readiness probes.
 	//
-	// Once set, the phases field is immutable.
-	//
 	// Each phase in the list must have a unique name. The maximum number of phases is 20.
 	//
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=map
@@ -128,10 +139,6 @@ type ClusterObjectSetSpec struct {
 	//
 	// The maximum number of probes is 20.
 	//
-	// Once set, the progressionProbes field is immutable, as it is
-	// part of the immutable content of a revision.
-	//
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="progressionProbes is immutable"
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=20
 	// +listType=atomic
@@ -146,7 +153,6 @@ type ClusterObjectSetSpec struct {
 	// its own collisionProtection. The resolution order is: object > phase > spec.
 	//
 	// +required
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="collisionProtection is immutable"
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 

@@ -345,8 +345,10 @@ func newTestClusterObjectDeployment(name string) *ClusterObjectDeployment {
 		Spec: ClusterObjectDeploymentSpec{
 			Template: ClusterObjectDeploymentTemplate{
 				Spec: ClusterObjectDeploymentTemplateSpec{
-					CollisionProtection: CollisionProtectionPrevent,
-					Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{{Type: ObjectTypeInlineManifest, InlineManifest: configMap()}}}},
+					ClusterObjectSetContent: ClusterObjectSetContent{
+						CollisionProtection: CollisionProtectionPrevent,
+						Phases:              []ClusterObjectSetPhase{{Name: "deploy", Objects: []ClusterObjectSetObject{{Type: ObjectTypeInlineManifest, InlineManifest: configMap()}}}},
+					},
 				},
 			},
 		},

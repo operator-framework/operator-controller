@@ -40,18 +40,20 @@ func codFixture() *ocv1.ClusterObjectDeployment {
 			ProgressDeadlineMinutes: 15,
 			Template: ocv1.ClusterObjectDeploymentTemplate{
 				Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
-					CollisionProtection: ocv1.CollisionProtectionPrevent,
-					Phases: []ocv1.ClusterObjectSetPhase{{
-						Name: "resources",
-						Objects: []ocv1.ClusterObjectSetObject{{
-							Type: ocv1.ObjectTypeInlineManifest,
-							InlineManifest: unstructured.Unstructured{Object: map[string]interface{}{
-								"apiVersion": "v1",
-								"kind":       "ConfigMap",
-								"metadata":   map[string]interface{}{"name": "cm", "namespace": "ns"},
+					ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+						CollisionProtection: ocv1.CollisionProtectionPrevent,
+						Phases: []ocv1.ClusterObjectSetPhase{{
+							Name: "resources",
+							Objects: []ocv1.ClusterObjectSetObject{{
+								Type: ocv1.ObjectTypeInlineManifest,
+								InlineManifest: unstructured.Unstructured{Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata":   map[string]interface{}{"name": "cm", "namespace": "ns"},
+								}},
 							}},
 						}},
-					}},
+					},
 				},
 			},
 		},
@@ -599,10 +601,12 @@ func revisionCOS(revision int64, lifecycle ocv1.ClusterObjectSetLifecycleState) 
 			Labels: map[string]string{labels.ManagedByKey: labels.ManagedByObjectController},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
-			Group:               clusterObjectDeploymentName,
-			Revision:            revision,
-			CollisionProtection: ocv1.CollisionProtectionPrevent,
-			LifecycleState:      lifecycle,
+			Group:    clusterObjectDeploymentName,
+			Revision: revision,
+			ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+				CollisionProtection: ocv1.CollisionProtectionPrevent,
+			},
+			LifecycleState: lifecycle,
 		},
 	}
 	if lifecycle == ocv1.ClusterObjectSetLifecycleStateArchived {
@@ -908,11 +912,13 @@ func Test_ClusterObjectDeploymentReconciler_RevisionBounds(t *testing.T) {
 					},
 				},
 				Spec: ocv1.ClusterObjectSetSpec{
-					Group:               cod.Name,
-					Revision:            tc.latest,
-					LifecycleState:      tc.lifecycleState,
-					CollisionProtection: ocv1.CollisionProtectionPrevent,
-					Phases:              cod.Spec.Template.Spec.Phases,
+					Group:          cod.Name,
+					Revision:       tc.latest,
+					LifecycleState: tc.lifecycleState,
+					ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+						CollisionProtection: ocv1.CollisionProtectionPrevent,
+						Phases:              cod.Spec.Template.Spec.Phases,
+					},
 				},
 			}
 			if tc.changed {

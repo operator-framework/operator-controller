@@ -89,9 +89,6 @@ spec:
                 - IfNoController
                 - None
                 type: string
-                x-kubernetes-validations:
-                - message: collisionProtection is immutable
-                  rule: self == oldSelf
               group:
                 description: |-
                   group is a required, immutable identifier that links related revisions together.
@@ -132,7 +129,7 @@ spec:
                     self
               phases:
                 description: |-
-                  phases is a required, immutable list of phases that group objects to be applied together.
+                  phases is a required list of phases that group objects to be applied together.
 
                   Objects are organized into phases based on their Group-Kind. Common phases include:
                     - namespaces: Namespace objects
@@ -145,8 +142,6 @@ spec:
 
                   All objects in a phase are applied in no particular order.
                   The revision progresses to the next phase only after all objects in the current phase pass their readiness probes.
-
-                  Once set, the phases field is immutable.
 
                   Each phase in the list must have a unique name. The maximum number of phases is 20.
                 items:
@@ -327,9 +322,6 @@ spec:
                 x-kubernetes-list-map-keys:
                 - name
                 x-kubernetes-list-type: map
-                x-kubernetes-validations:
-                - message: phases is immutable
-                  rule: self == oldSelf || oldSelf.size() == 0
               progressionProbes:
                 description: |-
                   progressionProbes is an optional field which provides the ability to define custom readiness probes
@@ -343,9 +335,6 @@ spec:
                   a ConfigMap if that particular object does not pass the probe check.
 
                   The maximum number of probes is 20.
-
-                  Once set, the progressionProbes field is immutable, as it is
-                  part of the immutable content of a revision.
                 items:
                   description: ProgressionProbe provides a custom probe definition,
                     consisting of an object selection method and assertions.
@@ -596,9 +585,6 @@ spec:
                 minItems: 1
                 type: array
                 x-kubernetes-list-type: atomic
-                x-kubernetes-validations:
-                - message: progressionProbes is immutable
-                  rule: self == oldSelf || oldSelf.size() == 0
               revision:
                 description: |-
                   revision is a required, immutable sequence number identifying a specific
@@ -623,8 +609,16 @@ spec:
             x-kubernetes-validations:
             - message: phases cannot be removed once set
               rule: '!has(oldSelf.phases) || has(self.phases)'
-            - message: progressionProbes cannot be removed once set
-              rule: '!has(oldSelf.progressionProbes) || has(self.progressionProbes)'
+            - message: phases is immutable
+              rule: '!has(oldSelf.phases) || self.phases == oldSelf.phases || oldSelf.phases.size()
+                == 0'
+            - message: progressionProbes is immutable
+              rule: '!has(oldSelf.progressionProbes) || !has(self.progressionProbes)
+                && oldSelf.progressionProbes.size() == 0 || has(self.progressionProbes)
+                && (self.progressionProbes == oldSelf.progressionProbes || oldSelf.progressionProbes.size()
+                == 0)'
+            - message: collisionProtection is immutable
+              rule: self.collisionProtection == oldSelf.collisionProtection
           status:
             description: |-
               status is optional and defines the observed state of the ClusterObjectSet.

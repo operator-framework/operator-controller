@@ -118,8 +118,10 @@ func TestStandaloneController(t *testing.T) {
 				Spec: ocv1.ClusterObjectSetSpec{
 					Group:          name,
 					LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive, Revision: 1,
-					CollisionProtection: ocv1.CollisionProtectionPrevent,
-					Phases:              []ocv1.ClusterObjectSetPhase{{Name: "deploy", Objects: []ocv1.ClusterObjectSetObject{obj}}},
+					ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+						CollisionProtection: ocv1.CollisionProtectionPrevent,
+						Phases:              []ocv1.ClusterObjectSetPhase{{Name: "deploy", Objects: []ocv1.ClusterObjectSetObject{obj}}},
+					},
 				},
 			}
 			require.NoError(t, cl.Create(ctx, cos))

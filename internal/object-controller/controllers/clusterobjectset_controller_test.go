@@ -1553,18 +1553,20 @@ func newTestClusterObjectSet(t *testing.T, revisionName string, ext *ocv1.Cluste
 			Group:          ext.Name,
 			LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
 			Revision:       revNum,
-			Phases: []ocv1.ClusterObjectSetPhase{
-				{
-					Name: "everything",
-					Objects: []ocv1.ClusterObjectSetObject{
-						{
-							Type: ocv1.ObjectTypeInlineManifest,
-							InlineManifest: unstructured.Unstructured{
-								Object: map[string]interface{}{
-									"apiVersion": "v1",
-									"kind":       "ConfigMap",
-									"data": map[string]interface{}{
-										"foo": "bar",
+			ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+				Phases: []ocv1.ClusterObjectSetPhase{
+					{
+						Name: "everything",
+						Objects: []ocv1.ClusterObjectSetObject{
+							{
+								Type: ocv1.ObjectTypeInlineManifest,
+								InlineManifest: unstructured.Unstructured{
+									Object: map[string]interface{}{
+										"apiVersion": "v1",
+										"kind":       "ConfigMap",
+										"data": map[string]interface{}{
+											"foo": "bar",
+										},
 									},
 								},
 							},
