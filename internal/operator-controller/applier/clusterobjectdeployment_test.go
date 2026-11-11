@@ -2,6 +2,7 @@ package applier
 
 import (
 	"context"
+	"encoding/json"
 	"io/fs"
 	"testing"
 
@@ -94,60 +95,7 @@ func TestBuildClusterObjectDeployment(t *testing.T) {
 }
 
 func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
-	// Create a test bundle with proper metadata
-	testBundle := bundlefs.Builder().
-		WithPackageName("test-package").
-		WithCSV(bundlecsv.Builder().
-			WithName("test-csv").
-			WithAnnotations(map[string]string{
-				labels.BundleNameKey:    "test-bundle",
-				labels.PackageNameKey:   "test-package",
-				labels.BundleVersionKey: "1.0.0",
-			}).
-			Build()).
-		Build()
-
-	fakeProvider := &fakeManifestProvider{
-		objects: []client.Object{
-			&corev1.ConfigMap{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "v1",
-					Kind:       "ConfigMap",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cm",
-				},
-			},
-			&corev1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "v1",
-					Kind:       "Secret",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-secret",
-				},
-			},
-		},
-	}
-
-	gen := &SimpleRevisionGenerator{
-		Scheme:           k8scheme.Scheme,
-		ManifestProvider: fakeProvider,
-		SystemNamespace:  "test-system",
-	}
-
-	ext := &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-ext",
-		},
-	}
-
-	bundleAnnotations := map[string]string{
-		labels.BundleNameKey:      "test-bundle",
-		labels.PackageNameKey:     "test-package",
-		labels.BundleVersionKey:   "1.0.0",
-		labels.BundleReferenceKey: "test-catalog/test-package@sha256:abc123",
-	}
+	gen, testBundle, ext, bundleAnnotations := bundleDeploymentFixture()
 
 	cod, secrets, err := gen.GenerateClusterObjectDeployment(
 		context.Background(),
@@ -194,4 +142,130 @@ func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
 		assert.Contains(t, secret.Name, "test-ext-", "Secret name should be prefixed with extension name")
 		assert.Equal(t, "test-ext", secret.Labels[labels.OwnerNameKey])
 	}
+}
+
+func TestGenerateClusterObjectDeployment_PacksExpectedContent(t *testing.T) {
+	gen, testBundle, ext, revisionAnnotations := bundleDeploymentFixture()
+
+	cod, secrets, err := gen.GenerateClusterObjectDeployment(
+		t.Context(), testBundle, ext, map[string]string{"test-label": "test-value"}, revisionAnnotations,
+	)
+	require.NoError(t, err)
+
+	// Pin the normal path's packed bytes as well as its reference shape, so
+	// sharing packing with Helm generation cannot silently change its content.
+	expectedObjects := make([]*ocv1ac.ClusterObjectSetObjectApplyConfiguration, 0, 2)
+	for _, resource := range []struct{ kind, name string }{{"ConfigMap", "test-cm"}, {"Secret", "test-secret"}} {
+		expectedObjects = append(expectedObjects, ocv1ac.ClusterObjectSetObject().
+			WithType(ocv1.ObjectTypeInlineManifest).
+			WithInlineManifest(unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       resource.kind,
+				"metadata": map[string]interface{}{
+					"name":   resource.name,
+					"labels": map[string]interface{}{"test-label": "test-value"},
+					"annotations": map[string]interface{}{
+						labels.BundleVersionKey: "1.0.0",
+						labels.PackageNameKey:   "test-package",
+					},
+				},
+			}}))
+	}
+	expectedPhases := []ocv1ac.ClusterObjectSetPhaseApplyConfiguration{
+		*ocv1ac.ClusterObjectSetPhase().WithName("configuration").WithObjects(expectedObjects...),
+	}
+	assertPackedCODContent(t, cod, secrets, expectedPhases)
+}
+
+func bundleDeploymentFixture() (*SimpleRevisionGenerator, fs.FS, *ocv1.ClusterExtension, map[string]string) {
+	testBundle := bundlefs.Builder().
+		WithPackageName("test-package").
+		WithCSV(bundlecsv.Builder().
+			WithName("test-csv").
+			WithAnnotations(map[string]string{
+				labels.BundleNameKey:    "test-bundle",
+				labels.PackageNameKey:   "test-package",
+				labels.BundleVersionKey: "1.0.0",
+			}).
+			Build()).
+		Build()
+
+	fakeProvider := &fakeManifestProvider{
+		objects: []client.Object{
+			&corev1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "ConfigMap",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cm",
+				},
+			},
+			&corev1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "Secret",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-secret",
+				},
+			},
+		},
+	}
+	gen := &SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: fakeProvider,
+		SystemNamespace:  "test-system",
+	}
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-ext",
+		},
+	}
+	revisionAnnotations := map[string]string{
+		labels.BundleNameKey:      "test-bundle",
+		labels.PackageNameKey:     "test-package",
+		labels.BundleVersionKey:   "1.0.0",
+		labels.BundleReferenceKey: "test-catalog/test-package@sha256:abc123",
+	}
+	return gen, testBundle, ext, revisionAnnotations
+}
+
+// assertPackedCODContent resolves each reference by namespace, name and key and
+// checks the exact serialized content against independently expected inline objects.
+func assertPackedCODContent(
+	t *testing.T,
+	cod *ocv1ac.ClusterObjectDeploymentApplyConfiguration,
+	secrets []corev1.Secret,
+	expected []ocv1ac.ClusterObjectSetPhaseApplyConfiguration,
+) {
+	t.Helper()
+	require.Len(t, secrets, 1)
+	secret := secrets[0]
+	assert.Equal(t, "test-system", secret.Namespace)
+	assert.Equal(t, map[string]string{labels.OwnerNameKey: *cod.Name}, secret.Labels)
+	require.NotNil(t, secret.Immutable)
+	assert.True(t, *secret.Immutable)
+	assert.Equal(t, labels.SecretTypeObjectData, secret.Type)
+	assert.Empty(t, secret.OwnerReferences)
+	require.Len(t, cod.Spec.Template.Spec.Phases, len(expected))
+	objectCount := 0
+	for phaseIdx, phase := range cod.Spec.Template.Spec.Phases {
+		assert.Equal(t, expected[phaseIdx].Name, phase.Name)
+		require.Len(t, phase.Objects, len(expected[phaseIdx].Objects))
+		for objIdx, obj := range phase.Objects {
+			objectCount++
+			require.NotNil(t, obj.Type)
+			assert.Equal(t, ocv1.ObjectTypeSecretReference, *obj.Type)
+			assert.Nil(t, obj.InlineManifest)
+			require.NotNil(t, obj.SecretRef)
+			assert.Equal(t, secret.Name, *obj.SecretRef.Name)
+			assert.Equal(t, secret.Namespace, *obj.SecretRef.Namespace)
+			raw, err := json.Marshal(expected[phaseIdx].Objects[objIdx].InlineManifest.Object)
+			require.NoError(t, err)
+			assert.Equal(t, contentHash(raw), *obj.SecretRef.Key)
+			assert.Equal(t, raw, secret.Data[*obj.SecretRef.Key])
+		}
+	}
+	assert.Len(t, secret.Data, objectCount)
 }

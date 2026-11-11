@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"helm.sh/helm/v3/pkg/release"
 	corev1 "k8s.io/api/core/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -117,11 +118,35 @@ func (r *SimpleRevisionGenerator) GenerateClusterObjectDeployment(
 
 	// Create COD applyconfiguration (with inline objects initially)
 	cod := buildClusterObjectDeployment(objs, ext, codAnnotations, ocv1.CollisionProtectionPrevent)
+	return r.packClusterObjectDeployment(cod)
+}
 
+// GenerateClusterObjectDeploymentFromHelmRelease converts stored Helm content into
+// a ClusterObjectDeployment and packed Secrets, allowing adoption of the release's
+// objects. Ownership and migration orchestration are left to the caller.
+func (r *SimpleRevisionGenerator) GenerateClusterObjectDeploymentFromHelmRelease(
+	ctx context.Context,
+	helmRelease *release.Release,
+	ext *ocv1.ClusterExtension,
+	objectLabels map[string]string,
+) (*ocv1ac.ClusterObjectDeploymentApplyConfiguration, []corev1.Secret, error) {
+	objs, annotations, err := renderHelmReleaseContent(ctx, helmRelease, objectLabels)
+	if err != nil {
+		return nil, nil, err
+	}
+	cod := buildClusterObjectDeployment(objs, ext, annotations, ocv1.CollisionProtectionNone)
+	return r.packClusterObjectDeployment(cod)
+}
+
+// packClusterObjectDeployment packs a generated COD's inline objects into
+// immutable Secrets and replaces them with references to the packed content.
+func (r *SimpleRevisionGenerator) packClusterObjectDeployment(
+	cod *ocv1ac.ClusterObjectDeploymentApplyConfiguration,
+) (*ocv1ac.ClusterObjectDeploymentApplyConfiguration, []corev1.Secret, error) {
 	// Pack objects into Secrets
 	phases := extractPhasesForPacking(cod.Spec.Template.Spec.Phases)
 	packer := &SecretPacker{
-		OwnerName:       ext.Name,
+		OwnerName:       *cod.Name,
 		SystemNamespace: r.SystemNamespace,
 	}
 	packResult, err := packer.Pack(phases)
