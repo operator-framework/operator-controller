@@ -15,6 +15,8 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+
+	shared "github.com/operator-framework/operator-controller/test/internal/e2e/steps"
 )
 
 // ---------------------------------------------------------------------------
@@ -157,7 +159,7 @@ func kindGatewayIP() (string, error) {
 // the "default" namespace, which is the address client-go uses to reach the
 // API server from inside a pod (via the KUBERNETES_SERVICE_HOST env var).
 func kubernetesClusterIP() (string, error) {
-	ip, err := K8sClient(context.Background(), "get", "service", "kubernetes", "-n", "default",
+	ip, err := shared.K8sClient(context.Background(), "get", "service", "kubernetes", "-n", "default",
 		"-o", "jsonpath={.spec.clusterIP}")
 	if err != nil {
 		return "", fmt.Errorf("failed to get kubernetes service cluster IP: %w", err)
@@ -168,7 +170,7 @@ func kubernetesClusterIP() (string, error) {
 // getDeploymentContainerEnv returns the environment variables for the named
 // container in the given deployment, as a slice of "NAME=VALUE" strings.
 func getDeploymentContainerEnv(deploymentName, namespace, containerName string) ([]string, error) {
-	raw, err := K8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
+	raw, err := shared.K8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get deployment %s/%s: %w", namespace, deploymentName, err)
 	}
@@ -196,7 +198,7 @@ func getDeploymentContainerEnv(deploymentName, namespace, containerName string) 
 // the JSON Patch "add" operation, which creates the env field if absent.
 func setDeploymentEnvVars(deploymentName, namespace, containerName string, env []string) error {
 	// Fetch the deployment to find the container index.
-	raw, err := K8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
+	raw, err := shared.K8sClient(context.Background(), "get", "deployment", deploymentName, "-n", namespace, "-o", "json")
 	if err != nil {
 		return fmt.Errorf("failed to get deployment %s/%s: %w", namespace, deploymentName, err)
 	}
@@ -243,12 +245,12 @@ func setDeploymentEnvVars(deploymentName, namespace, containerName string, env [
 		return fmt.Errorf("failed to marshal patch: %w", err)
 	}
 
-	if _, err := K8sClient(context.Background(), "patch", "deployment", deploymentName, "-n", namespace,
+	if _, err := shared.K8sClient(context.Background(), "patch", "deployment", deploymentName, "-n", namespace,
 		"--type=json", fmt.Sprintf("--patch=%s", string(patchBytes))); err != nil {
 		return fmt.Errorf("failed to patch deployment %s/%s: %w", namespace, deploymentName, err)
 	}
 
-	if _, err := K8sClient(context.Background(), "rollout", "status", "deployment", deploymentName, "-n", namespace,
+	if _, err := shared.K8sClient(context.Background(), "rollout", "status", "deployment", deploymentName, "-n", namespace,
 		"--timeout=5m"); err != nil {
 		return fmt.Errorf("rollout of deployment %s/%s did not complete: %w", namespace, deploymentName, err)
 	}
@@ -284,12 +286,12 @@ func restoreDeployment(r deploymentRestore) error {
 // proxyURL and NO_PROXY to the Kubernetes API server cluster IP, then waits
 // for the rollout.  The original env is saved for cleanup.
 func configureDeploymentProxy(ctx context.Context, component, proxyURL string) error {
-	sc := Scenario(ctx)
+	sc := catalogScenario(ctx)
 
 	var deployName string
 	switch component {
 	case "operator-controller":
-		deployName = olmDeploymentName
+		deployName = "operator-controller-controller-manager"
 	case "catalogd":
 		deployName = "catalogd-controller-manager"
 	default:
@@ -304,13 +306,13 @@ func configureDeploymentProxy(ctx context.Context, component, proxyURL string) e
 	// namespace fields but have no containerName or originalEnv set.
 	alreadyTracked := false
 	for _, r := range sc.deploymentRestores {
-		if r.Name == deployName && r.Namespace == OLMNamespace && r.containerName != "" {
+		if r.Name == deployName && r.Namespace == shared.OLMNamespace && r.containerName != "" {
 			alreadyTracked = true
 			break
 		}
 	}
 
-	origEnv, err := getDeploymentContainerEnv(deployName, OLMNamespace, "manager")
+	origEnv, err := getDeploymentContainerEnv(deployName, shared.OLMNamespace, "manager")
 	if err != nil {
 		return err
 	}
@@ -318,7 +320,7 @@ func configureDeploymentProxy(ctx context.Context, component, proxyURL string) e
 	if !alreadyTracked {
 		sc.deploymentRestores = append(sc.deploymentRestores, deploymentRestore{
 			Name:          deployName,
-			Namespace:     OLMNamespace,
+			Namespace:     shared.OLMNamespace,
 			containerName: "manager",
 			originalEnv:   origEnv,
 		})
@@ -335,7 +337,7 @@ func configureDeploymentProxy(ctx context.Context, component, proxyURL string) e
 
 	newEnv := addOrReplaceEnvVar(origEnv, "HTTPS_PROXY", proxyURL)
 	newEnv = addOrReplaceEnvVar(newEnv, "NO_PROXY", k8sIP)
-	return setDeploymentEnvVars(deployName, OLMNamespace, "manager", newEnv)
+	return setDeploymentEnvVars(deployName, shared.OLMNamespace, "manager", newEnv)
 }
 
 // ---------------------------------------------------------------------------
@@ -353,7 +355,7 @@ func ConfigureDeploymentWithHTTPSProxy(ctx context.Context, component, proxyURL 
 // proxy reachable from the cluster via the container-runtime kind network
 // gateway, then patches the component deployment to route HTTPS through it.
 func StartRecordingProxyAndConfigureDeployment(ctx context.Context, component string) error {
-	sc := Scenario(ctx)
+	sc := catalogScenario(ctx)
 
 	p, err := newRecordingProxy()
 	if err != nil {
@@ -372,7 +374,7 @@ func StartRecordingProxyAndConfigureDeployment(ctx context.Context, component st
 	}
 
 	proxyURL := fmt.Sprintf("http://%s:%s", gatewayIP, port)
-	logger.Info("Recording proxy started", "url", proxyURL)
+	shared.Log().Info("Recording proxy started", "url", proxyURL)
 
 	return configureDeploymentProxy(ctx, component, proxyURL)
 }
@@ -386,15 +388,15 @@ func StartRecordingProxyAndConfigureDeployment(ctx context.Context, component st
 // CONNECT.  This is intentional — the step only verifies that operator-controller
 // respected HTTPS_PROXY and sent the request through the proxy.
 func RecordingProxyReceivedCONNECTForCatalogd(ctx context.Context) error {
-	sc := Scenario(ctx)
+	sc := catalogScenario(ctx)
 	if sc.proxy == nil {
 		return fmt.Errorf("no recording proxy was started in this scenario")
 	}
 
-	WaitFor(ctx, func() bool {
+	shared.WaitFor(ctx, func() bool {
 		for _, h := range sc.proxy.recordedHosts() {
 			if strings.Contains(h, "catalogd") {
-				logger.Info("Recording proxy confirmed CONNECT for catalogd", "host", h)
+				shared.Log().Info("Recording proxy confirmed CONNECT for catalogd", "host", h)
 				return true
 			}
 		}
