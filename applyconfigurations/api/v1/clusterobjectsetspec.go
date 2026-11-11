@@ -27,7 +27,7 @@ import (
 //
 // ClusterObjectSetSpec defines the desired state of ClusterObjectSet.
 // The content fields (phases, progressionProbes, collisionProtection) are
-// immutable: once set they may only be changed by creating a new revision.
+// immutable from creation and may only be changed by creating a new revision.
 type ClusterObjectSetSpecApplyConfiguration struct {
 	// group is a required, immutable identifier that links related revisions together.
 	// All revisions sharing the same group form an ordered sequence, regardless of owner references.

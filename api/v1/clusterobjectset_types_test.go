@@ -85,7 +85,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 			},
 			expectedError: "revision is immutable",
 		},
-		"phases are immutable once set": {
+		"phases are immutable": {
 			spec: ClusterObjectSetSpec{
 				Group:          "immutability-populated-phases",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
@@ -125,7 +125,7 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 			},
 			expectedError: "collisionProtection is immutable",
 		},
-		"progressionProbes may be initially unset": {
+		"progressionProbes cannot be added after creation": {
 			spec: ClusterObjectSetSpec{
 				Group:          "immutability-unset-probes",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,
@@ -138,9 +138,23 @@ func TestClusterObjectSetImmutability(t *testing.T) {
 			updateFunc: func(cos *ClusterObjectSet) {
 				cos.Spec.ProgressionProbes = []ProgressionProbe{validProbe()}
 			},
+			expectedError: "progressionProbes is immutable",
+		},
+		"progressionProbes cannot be removed": {
+			spec: probeSpec("immutability-removed-probes", validProbe()),
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.ProgressionProbes = nil
+			},
+			expectedError: "progressionProbes is immutable",
+		},
+		"unchanged progressionProbes permit lifecycle update": {
+			spec: probeSpec("immutability-unchanged-probes", validProbe()),
+			updateFunc: func(cos *ClusterObjectSet) {
+				cos.Spec.LifecycleState = ClusterObjectSetLifecycleStateArchived
+			},
 			allowed: true,
 		},
-		"progressionProbes are immutable once set": {
+		"progressionProbes are immutable": {
 			spec: ClusterObjectSetSpec{
 				Group:          "immutability-populated-probes",
 				LifecycleState: ClusterObjectSetLifecycleStateActive,

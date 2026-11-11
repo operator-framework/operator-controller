@@ -6,7 +6,7 @@ This document explains what ClusterObjectSets are, how they enable safe phased r
 
 A `ClusterObjectSet` is a cluster-scoped Kubernetes API that represents a versioned set of Kubernetes resources organized into ordered phases. It provides a declarative way to roll out a group of related resources sequentially, with built-in readiness checks between phases.
 
-The revision content — the `group` identifier, `revision` number, `collisionProtection` strategy, and `phases` (including all objects within them) — is immutable once set. This guarantees that the record of what was deployed at a given revision cannot change after creation. Other fields like `lifecycleState` can change over the object's lifecycle (e.g. transitioning from `Active` to `Archived`), and optional fields like `progressionProbes` can be configured independently.
+The revision content — the `group` identifier, `revision` number, `collisionProtection` strategy, `phases` (including all objects within them), and optional `progressionProbes` — is immutable from creation. This guarantees that the record of what was deployed at a given revision cannot change after creation. Progression probes cannot be added, changed, or removed after creation. Other fields like `lifecycleState` can change over the object's lifecycle (e.g. transitioning from `Active` to `Archived`).
 
 Each ClusterObjectSet has:
 

@@ -30,22 +30,13 @@ import (
 type ClusterObjectSetContentApplyConfiguration struct {
 	// phases is a required list of phases that group objects to be applied together.
 	//
-	// Objects are organized into phases based on their Group-Kind. Common phases include:
-	// - namespaces: Namespace objects
-	// - policies: ResourceQuota, LimitRange, NetworkPolicy objects
-	// - rbac: ServiceAccount, Role, RoleBinding, ClusterRole, ClusterRoleBinding objects
-	// - crds: CustomResourceDefinition objects
-	// - storage: PersistentVolume, PersistentVolumeClaim, StorageClass objects
-	// - deploy: Deployment, StatefulSet, DaemonSet, Service, ConfigMap, Secret objects
-	// - publish: Ingress, APIService, Route, Webhook objects
-	//
 	// All objects in a phase are applied in no particular order.
 	// The revision progresses to the next phase only after all objects in the current phase pass their readiness probes.
 	//
 	// Each phase in the list must have a unique name. The maximum number of phases is 20.
 	Phases []ClusterObjectSetPhaseApplyConfiguration `json:"phases,omitempty"`
 	// progressionProbes is an optional field which provides the ability to define custom readiness probes
-	// for objects defined within spec.phases. As documented in that field, most kubernetes-native objects
+	// for objects defined within phases. As documented in that field, most kubernetes-native objects
 	// within the phases already have some kind of readiness check built-in, but this field allows for checks
 	// which are tailored to the objects being rolled out - particularly custom resources.
 	//
@@ -59,10 +50,10 @@ type ClusterObjectSetContentApplyConfiguration struct {
 	// <opcon:experimental>
 	ProgressionProbes []ProgressionProbeApplyConfiguration `json:"progressionProbes,omitempty"`
 	// collisionProtection is a required field that specifies the default collision protection
-	// strategy for all objects in this revision. Individual phases or objects can override this value.
+	// strategy for all objects in this content. Individual phases or objects can override this value.
 	//
 	// This value is used as the default for any phase or object that does not explicitly specify
-	// its own collisionProtection. The resolution order is: object > phase > spec.
+	// its own collisionProtection. The resolution order is: object > phase > content.
 	CollisionProtection *apiv1.CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
