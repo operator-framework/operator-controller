@@ -153,10 +153,10 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
       metadata:
         name: ${NAME}
       spec:
+        progressDeadlineMinutes: 1
         template:
           spec:
             collisionProtection: Prevent
-            progressDeadlineMinutes: 1
             progressionProbes:
             - selector:
                 type: GroupKind
@@ -221,10 +221,10 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
       metadata:
         name: ${NAME}
       spec:
+        progressDeadlineMinutes: 1
         template:
           spec:
             collisionProtection: Prevent
-            progressDeadlineMinutes: 1
             phases:
             - name: resources
               objects:

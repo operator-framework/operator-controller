@@ -350,7 +350,7 @@ Feature: Install ClusterExtension
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents |
       | test    | 1.0.2   | alpha   |          | BadImage |
-    # The applier routes progressDeadlineMinutes through the ClusterObjectDeployment template; the
+    # The applier routes progressDeadlineMinutes onto the ClusterObjectDeployment spec; the
     # deployment enforces the rollout deadline itself, so relax its CRD minimum to accept the value of 1.
     # TODO: We should also permanently relax the ClusterExtension's field to allow a minimum of 1
     And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
@@ -387,7 +387,7 @@ Feature: Install ClusterExtension
     Given a catalog "test" with packages:
       | package | version | channel | replaces | contents |
       | test    | 1.0.3   | alpha   |          | BadImage |
-    # The applier routes progressDeadlineMinutes through the ClusterObjectDeployment template; the
+    # The applier routes progressDeadlineMinutes onto the ClusterObjectDeployment spec; the
     # deployment enforces the rollout deadline itself, so relax its CRD minimum to accept the value of 1.
     And min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
     When ClusterExtension is applied

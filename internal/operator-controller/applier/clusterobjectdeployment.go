@@ -33,10 +33,6 @@ func buildClusterObjectDeployment(
 		WithProgressionProbes(defaultProgressionProbes...).
 		WithCollisionProtection(collisionProtection)
 
-	if p := ext.Spec.ProgressDeadlineMinutes; p > 0 {
-		templateSpec.WithProgressDeadlineMinutes(p)
-	}
-
 	// Propagate the owner labels and the bundle-metadata annotations to each revision
 	// through the template metadata. The COD controller copies template.metadata onto every
 	// ClusterObjectSet it creates verbatim, without knowing any specific key, so OLM-specific
@@ -54,6 +50,10 @@ func buildClusterObjectDeployment(
 
 	spec := ocv1ac.ClusterObjectDeploymentSpec().
 		WithTemplate(template)
+
+	if p := ext.Spec.ProgressDeadlineMinutes; p > 0 {
+		spec.WithProgressDeadlineMinutes(p)
+	}
 
 	return ocv1ac.ClusterObjectDeployment(ext.Name).
 		WithLabels(ownerLabels).

@@ -256,13 +256,13 @@ func TestClusterObjectDeploymentTemplateSchema(t *testing.T) {
 		cod := newTestClusterObjectDeployment("cod-template-progress-deadline")
 		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cod)
 		require.NoError(t, err)
-		require.NoError(t, unstructured.SetNestedField(raw, int64(10), "spec", "template", "spec", "progressDeadlineMinutes"))
+		require.NoError(t, unstructured.SetNestedField(raw, int64(10), "spec", "progressDeadlineMinutes"))
 		obj := &unstructured.Unstructured{Object: raw}
 		require.NoError(t, c.Create(t.Context(), obj))
 		require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(obj), obj))
-		value, found, err := unstructured.NestedInt64(obj.Object, "spec", "template", "spec", "progressDeadlineMinutes")
+		value, found, err := unstructured.NestedInt64(obj.Object, "spec", "progressDeadlineMinutes")
 		require.NoError(t, err)
-		require.True(t, found, "template must expose progressDeadlineMinutes")
+		require.True(t, found, "spec must expose progressDeadlineMinutes")
 		require.Equal(t, int64(10), value)
 	})
 }
@@ -282,11 +282,11 @@ func TestClusterObjectDeploymentDeferredFieldsArePruned(t *testing.T) {
 	cod := newTestClusterObjectDeployment("cod-deferred-fields")
 	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cod)
 	require.NoError(t, err)
-	require.NoError(t, unstructured.SetNestedField(raw, int64(10), "spec", "progressDeadlineMinutes"))
+	require.NoError(t, unstructured.SetNestedField(raw, int64(10), "spec", "template", "spec", "group"))
 	obj := &unstructured.Unstructured{Object: raw}
 	require.NoError(t, c.Create(t.Context(), obj))
 	require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(obj), obj))
-	for _, path := range [][]string{{"spec", "progressDeadlineMinutes"}} {
+	for _, path := range [][]string{{"spec", "template", "spec", "group"}} {
 		_, found, err := unstructured.NestedFieldNoCopy(obj.Object, path...)
 		require.NoError(t, err)
 		require.False(t, found, "deployment must not expose %s", strings.Join(path, "."))

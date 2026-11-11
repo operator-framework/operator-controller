@@ -89,7 +89,7 @@ func TestBuildClusterObjectDeployment(t *testing.T) {
 	templateSpec := result.Spec.Template.Spec
 	assert.Len(t, templateSpec.Phases, 1)
 	assert.Equal(t, ocv1.CollisionProtectionPrevent, *templateSpec.CollisionProtection)
-	assert.Equal(t, int32(15), *templateSpec.ProgressDeadlineMinutes)
+	assert.Equal(t, int32(15), *result.Spec.ProgressDeadlineMinutes)
 	assert.NotEmpty(t, templateSpec.ProgressionProbes)
 }
 

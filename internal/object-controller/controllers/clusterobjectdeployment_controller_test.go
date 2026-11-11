@@ -37,10 +37,10 @@ func codFixture() *ocv1.ClusterObjectDeployment {
 	return &ocv1.ClusterObjectDeployment{
 		ObjectMeta: metav1.ObjectMeta{Name: clusterObjectDeploymentName, UID: "test-cod-uid"},
 		Spec: ocv1.ClusterObjectDeploymentSpec{
+			ProgressDeadlineMinutes: 15,
 			Template: ocv1.ClusterObjectDeploymentTemplate{
 				Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
-					CollisionProtection:     ocv1.CollisionProtectionPrevent,
-					ProgressDeadlineMinutes: 15,
+					CollisionProtection: ocv1.CollisionProtectionPrevent,
 					Phases: []ocv1.ClusterObjectSetPhase{{
 						Name: "resources",
 						Objects: []ocv1.ClusterObjectSetObject{{
@@ -547,6 +547,25 @@ func Test_ClusterObjectDeploymentReconciler_CreatesNewRevisionOnTemplateChange(t
 	cond := progressing(t, c)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionTrue, cond.Status)
+}
+
+func Test_ClusterObjectDeploymentReconciler_ProgressDeadlineChangeDoesNotCreateRevision(t *testing.T) {
+	c := newCODClient(t, codFixture())
+
+	_, err := reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	// Change only the progress deadline, which is rollout policy, not revision content.
+	cod := &ocv1.ClusterObjectDeployment{}
+	require.NoError(t, c.Get(t.Context(), types.NamespacedName{Name: clusterObjectDeploymentName}, cod))
+	cod.Spec.ProgressDeadlineMinutes = 60
+	require.NoError(t, c.Update(t.Context(), cod))
+
+	_, err = reconcileCOD(t, c)
+	require.NoError(t, err)
+
+	_, ok := getCOS(t, c, clusterObjectDeploymentName+"-2")
+	require.False(t, ok, "changing only the progress deadline must not create a new revision")
 }
 
 func Test_ClusterObjectDeploymentReconciler_CreatesNewRevisionWhenLatestArchived(t *testing.T) {

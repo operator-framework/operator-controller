@@ -9,6 +9,7 @@ metadata:
   name: cod-example
 spec:
   revisionHistoryLimit: 2
+  progressDeadlineMinutes: 10
   template:
     metadata:
       labels:
@@ -17,7 +18,6 @@ spec:
         example.com/description: Configuration managed by a standalone COD
     spec:
       collisionProtection: Prevent
-      progressDeadlineMinutes: 10
       phases:
       - name: configuration
         objects:
