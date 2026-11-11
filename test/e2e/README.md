@@ -65,7 +65,9 @@ Suites register additional component steps when existing features contain integr
 assertions: operator-controller uses object assertions, object-controller retains
 ClusterExtension integration coverage, and catalogd proxy tests use ClusterExtension
 steps. Platform registers ClusterExtension steps for demos. Feature contents,
-scenario names, tags, and assertions are unchanged.
+scenario names and assertions are preserved. Direct object-controller scenarios
+use `@ObjectController` with `@ClusterObjectSet` or `@ClusterObjectDeployment`;
+ClusterExtension integration scenarios retain `@BoxcutterRuntime`.
 
 `test/internal/e2e/steps` owns `World` and the `Scenario(ctx)` accessor, generic resource and
 condition helpers, catalog/registry prerequisites, RBAC templates, and cleanup.
@@ -317,6 +319,51 @@ Select `./test/e2e/<component>/...` with the same flags to run just one suite:
 ```bash
 go test -count=1 -v ./test/e2e/object-controller/... -args --godog.tags="~@Serial && ~@demo"
 ```
+
+### Run Standalone Object-Controller Scenarios
+
+Direct scenarios use `Given object-controller is available`. Discovery finds
+object-controller in its own namespace; readiness requires its Deployment and
+the ClusterObjectSet CRD. Scenarios tagged `@ClusterObjectDeployment` also
+require the ClusterObjectDeployment CRD. Permissions come from scenario tags,
+independently of feature filenames.
+
+Install only object-controller on a disposable cluster using the existing chart:
+
+```bash
+helm template olmv1 ./helm/olmv1 \
+  --set options.featureSet=experimental \
+  --set options.objectController.enabled=true \
+  --set options.operatorController.enabled=false \
+  --set options.catalogd.enabled=false | kubectl apply -f -
+```
+
+Run direct COS and COD scenarios separately, or select both with
+`@ObjectController` (equivalently `@ClusterObjectSet,@ClusterObjectDeployment`;
+Godog uses a comma for OR):
+
+```bash
+go test -count=1 -v ./test/e2e/object-controller/... -args \
+  --e2e.object-controller-only \
+  --godog.tags="@ClusterObjectSet && ~@Serial && ~@demo"
+go test -count=1 -v ./test/e2e/object-controller/... -args \
+  --e2e.object-controller-only \
+  --godog.tags="@ClusterObjectDeployment && ~@Serial && ~@demo"
+```
+
+Repeat each selector with `@Serial` and `--godog.concurrency=1` for any serial
+scenarios. The standalone flag rejects discovered operator-controller/catalogd
+Deployments and any installed ClusterExtension/ClusterCatalog CRDs. Missing
+object-controller or a required API fails readiness instead of skipping.
+
+The two ClusterExtension integration features and the revision-pruning scenario
+in `group.feature` stay in the object-controller suite, following the ownership
+design. They retain `@BoxcutterRuntime`, require the integrated installation, and
+are excluded by the direct COS/COD selectors. Aggregate standard runs skip direct
+object scenarios when object-controller is absent; experimental Boxcutter runs
+require it. Existing `@ProgressDeadline`, `@Serial`, and `@demo` filters still apply.
+The legacy `go test ./test/e2e/features_test.go` entry point accepts these same
+flags and feature paths for downstream Godog jobs.
 
 ### Run Standard and Experimental in Parallel
 

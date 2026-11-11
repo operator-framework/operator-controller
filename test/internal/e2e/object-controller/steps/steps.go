@@ -33,6 +33,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet with Namespace owner "([^"]*)" is applied$`, shared.ResourceWithNamespaceOwnerApplied)
 	sc.Step(`^(?i)ClusterObjectDeployment with Namespace owner "([^"]*)" is applied$`, shared.ResourceWithNamespaceOwnerApplied)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reconciliation is triggered$`, TriggerClusterObjectSetReconciliation)
+	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" keeps later phase resources absent for "([^"]+)":$`, ClusterObjectSetKeepsLaterPhaseResourcesAbsent)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" has observed phase "([^"]+)" with a non-empty digest$`, ClusterObjectSetHasObservedPhase)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is archived$`, ClusterObjectSetIsArchived)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" is eventually deleted$`, ClusterObjectSetIsEventuallyDeleted)
