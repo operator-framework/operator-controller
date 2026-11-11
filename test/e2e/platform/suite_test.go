@@ -16,6 +16,6 @@ func TestMain(m *testing.M) {
 	}, func(sc *godog.ScenarioContext) {
 		steps.RegisterSteps(sc)
 		steps.RegisterDemoSteps(sc)
-		steps.RegisterHooks(sc)
+		steps.RegisterHooks(sc, steps.RegisterAsciiCastHooks)
 	}))
 }

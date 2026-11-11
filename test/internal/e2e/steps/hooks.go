@@ -112,10 +112,13 @@ func init() {
 	flagSet.BoolVar(&devMode, "log.debug", false, "print debug log level")
 }
 
-func RegisterHooks(sc *godog.ScenarioContext) {
+// RegisterHooks installs shared lifecycle hooks, with optional suite hooks between setup and cleanup.
+func RegisterHooks(sc *godog.ScenarioContext, hooks ...func(*godog.ScenarioContext)) {
 	sc.Before(CheckFeatureTags)
 	sc.Before(CreateScenarioContext)
-	RegisterAsciiCastHooks(sc)
+	for _, register := range hooks {
+		register(sc)
+	}
 
 	sc.After(ScenarioCleanup)
 }

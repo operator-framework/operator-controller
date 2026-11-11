@@ -19,6 +19,9 @@ non-technical stakeholders.
 
 ## Project Structure
 
+Component step packages are introduced incrementally. The layout below shows
+their intended ownership after all component extractions land.
+
 ```
 test/
 ├── e2e/
@@ -33,8 +36,12 @@ test/
 └── internal/
     ├── e2e/
     │   ├── runner.go           # Godog options, scenario selection, summary wiring
-    │   ├── steps/              # All existing step definitions and hooks
+    │   ├── steps/              # Shared world, hooks, catalog, resource, RBAC, and condition helpers
     │   │   └── testdata/       # RBAC and resource templates
+    │   ├── operator-controller/steps/ # ClusterExtension lifecycle and integration assertions
+    │   ├── catalogd/steps/     # HA/proxy/TLS steps and restoration hooks
+    │   ├── object-controller/steps/ # ClusterObjectSet/Deployment assertions
+    │   ├── platform/steps/     # Demo steps and recording
     │   └── support-bundle.yaml # Shared diagnostics
     └── summary/                # Summary generation and embedded templates
 ```
@@ -43,7 +50,7 @@ test/
 
 ### 1. Test Runner (`operator-controller/suite_test.go`)
 
-The component entry point registers the full shared step set and hooks, then calls
+The component entry point registers shared steps, hooks, and its component steps, then calls
 `e2e.Run` from `test/internal/e2e` with its feature directory. The shared runner configures Godog options,
 scenario selection, and summary generation.
 
@@ -53,10 +60,22 @@ controller unit tests live under `internal/testutil`, which is accessible throug
 the repository.
 
 Features follow the ownership in the [per-component suite design](../../docs/designs/e2e-per-component.md).
-Each component has a thin entry point that still registers the full shared step set;
-step ownership is separated in the next stage. The newer `cos_*`, `cod_*`, and
-`group` features belong to object-controller. Feature contents and step behavior
-are unchanged, including ClusterExtension integration assertions in object features.
+The newer `cos_*`, `cod_*`, and `group` features belong to object-controller.
+Suites register additional component steps when existing features contain integration
+assertions: operator-controller uses object assertions, object-controller retains
+ClusterExtension integration coverage, and catalogd proxy tests use ClusterExtension
+steps. Platform registers ClusterExtension steps for demos. Feature contents,
+scenario names, tags, and assertions are unchanged.
+
+`test/internal/e2e/steps` owns `World` and the `Scenario(ctx)` accessor, generic resource and
+condition helpers, catalog/registry prerequisites, RBAC templates, and cleanup.
+`ListClusterObjectSetsInGroup` and `ResolveObjectRef` remain shared because
+both ClusterExtension and ClusterObjectSet assertions consume them.
+Catalogd owns deployment restoration and proxy state. Platform owns recording;
+shared helpers observe commands through an optional `CommandRecorder` interface.
+Pass extra lifecycle registration to `sharedsteps.RegisterHooks` to keep suite hooks
+between shared scenario setup and cleanup. The upgrade helpers remain shared because
+catalogd HA scenarios also consume component readiness and catalog reconciliation steps.
 
 ### 2. Feature Files (`operator-controller/features/*.feature`)
 
@@ -112,7 +131,7 @@ Feature: Install ClusterExtension
     And ClusterExtension is available
 ```
 
-### 3. Step Definitions (`test/internal/e2e/steps/steps.go`)
+### 3. Step Definitions (`test/internal/e2e/<component>/steps/steps.go`)
 
 Go functions that implement the steps defined in feature files. Each step is registered with a regex pattern that
 matches the Gherkin text.
@@ -121,9 +140,8 @@ matches the Gherkin text.
 
 ```go
 func RegisterSteps(sc *godog.ScenarioContext) {
-sc.Step(`^OLM is available$`, OLMisAvailable)
 sc.Step(`^bundle "([^"]+)" is installed in version "([^"]+)"$`, BundleInstalled)
-sc.Step(`^ClusterExtension is applied$`, ResourceIsApplied)
+sc.Step(`^ClusterExtension is applied$`, shared.ResourceIsApplied)
 // ... more steps
 }
 ```
@@ -132,7 +150,7 @@ sc.Step(`^ClusterExtension is applied$`, ResourceIsApplied)
 
 Status assertions must read metadata and status from the same API response and
 require the asserted condition's `observedGeneration` to equal `metadata.generation`.
-Use `waitForCondition` for condition checks. Bundle metadata uses the `Installed`
+Use `shared.WaitForCondition` for condition checks. Bundle metadata uses the `Installed`
 condition, and COS phase digests and object counts use the `Ready` condition to
 verify that the status reflects the current spec. Deployments instead expose
 `status.observedGeneration` at the resource level.
@@ -146,9 +164,9 @@ That step accepts any current-generation `Progressing` status or reason, whereas
 
 ```go
 func BundleInstalled(ctx context.Context, name, version string) error {
-    sc := scenarioCtx(ctx)
-    waitFor(ctx, func() bool {
-        v, err := k8sClient(ctx, "get", "clusterextension", sc.clusterExtensionName, "-o", "json")
+    sc := shared.Scenario(ctx)
+    shared.WaitFor(ctx, func() bool {
+        v, err := shared.K8sClient(ctx, "get", "clusterextension", sc.ClusterExtensionName, "-o", "json")
         if err != nil {
           return false
         }
@@ -156,8 +174,8 @@ func BundleInstalled(ctx context.Context, name, version string) error {
         if err := json.Unmarshal([]byte(v), &ext); err != nil {
             return false
         }
-        installed := currentCondition(ext.Generation, ext.Status.Conditions, ocv1.TypeInstalled)
-        return conditionMatches(installed, metav1.ConditionTrue, nil, nil) &&
+        installed := shared.CurrentCondition(ext.Generation, ext.Status.Conditions, ocv1.TypeInstalled)
+        return shared.ConditionMatches(installed, metav1.ConditionTrue, nil, nil) &&
             ext.Status.Install.Bundle.Name == name && ext.Status.Install.Bundle.Version == version
     })
     return nil
@@ -199,7 +217,7 @@ Feature: Your Feature Name
 
 ### 2. Implement Step Definitions
 
-Add step implementations in `test/internal/e2e/steps/steps.go`:
+Add component assertions in `test/internal/e2e/<component>/steps/`; add reusable prerequisites and helpers in `test/internal/e2e/steps/`:
 
 ```go
 func RegisterSteps(sc *godog.ScenarioContext) {
@@ -208,7 +226,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 }
 
 func YourStepFunction(ctx context.Context, param string) error {
-    sc := scenarioCtx(ctx)
+    sc := shared.Scenario(ctx)
     // Implementation
     return nil
 }
@@ -230,7 +248,7 @@ Use these variables in YAML templates:
 - `${NAME}`: Scenario-specific ClusterExtension name (e.g., `ce-123`)
 - `${COS_NAME}`: Scenario-specific ClusterObjectSet name (e.g., `cos-123`; for applying ClusterObjectSets directly)
 - `${TEST_NAMESPACE}`: Scenario-specific namespace (e.g., `ns-123`)
-- `${SCENARIO_ID}`: Unique scenario identifier used for resource name isolation
+- `${SCENARIO_ID}`: Feature-scoped scenario identifier used for resource isolation across concurrent Go suites
 - `${PACKAGE:<name>}`: Parameterized package name (e.g., `${PACKAGE:test}` expands to `test-<scenario-id>`)
 - `${CATALOG:<name>}`: Catalog resource name (e.g., `${CATALOG:test}` expands to `test-catalog-<scenario-id>`)
 
@@ -427,8 +445,12 @@ go test -count=1 ./test/e2e/operator-controller/... -args --log.debug --k8s.cli=
 
 Each scenario runs in its own namespace with unique resource names, ensuring complete isolation:
 
-- Namespace: `ns-{scenario-id}`
-- ClusterExtension: `ce-{scenario-id}`
+- Namespace: `ns-{feature-hash}-{godog-id}`
+- ClusterExtension: `ce-{feature-hash}-{godog-id}`
+
+Godog restarts numeric IDs in each process. The feature hash prevents collisions
+between concurrent component suites and stays stable when a feature moves. Feature
+and scenario annotations retain their existing values.
 
 ### 2. Test-Identifying Annotations
 
@@ -476,7 +498,7 @@ When ClusterExtension is applied
 All asynchronous operations use `waitFor` with consistent timeout (300s) and tick (1s):
 
 ```go
-waitFor(ctx, func() bool {
+shared.WaitFor(ctx, func() bool {
     // Check condition
     return conditionMet
 })
