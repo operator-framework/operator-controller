@@ -73,7 +73,7 @@ func TestCODDeadlineAwareRateLimiter(t *testing.T) {
 		{
 			name: "disabled deadline", elapsed: time.Hour, backoff: 15 * time.Minute, expectWait: 15 * time.Minute,
 			mutate: func(cod *ocv1.ClusterObjectDeployment, cos *ocv1.ClusterObjectSet) {
-				cod.Spec.Template.Spec.ProgressDeadlineMinutes = 0
+				cod.Spec.ProgressDeadlineMinutes = 0
 				cos.Labels[labels.TemplateHashKey] = templateHash(cod.Spec.Template)
 			},
 		},
@@ -269,7 +269,7 @@ func deadlineRateLimiterObjects(creation time.Time) (*ocv1.ClusterObjectDeployme
 		ObjectMeta: metav1.ObjectMeta{Name: "test-cod", UID: "test-cod-uid"},
 		Spec:       ocv1.ClusterObjectDeploymentSpec{Template: testTemplate()},
 	}
-	cod.Spec.Template.Spec.ProgressDeadlineMinutes = 10
+	cod.Spec.ProgressDeadlineMinutes = 10
 	cos := buildClusterObjectSet(cod, 1, templateHash(cod.Spec.Template))
 	cos.OwnerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(cod, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind))}
 	cos.CreationTimestamp = metav1.NewTime(creation)

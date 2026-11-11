@@ -117,9 +117,7 @@ func TestValidate(t *testing.T) {
 		"ClusterObjectDeployment: valid progress deadline = 1": {
 			args: args{
 				object: ClusterObjectDeploymentSpec{
-					Template: ClusterObjectDeploymentTemplate{
-						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 1},
-					},
+					ProgressDeadlineMinutes: 1,
 				},
 			},
 			want: want{valid: true},
@@ -127,9 +125,7 @@ func TestValidate(t *testing.T) {
 		"ClusterObjectDeployment: valid progress deadline = 10": {
 			args: args{
 				object: ClusterObjectDeploymentSpec{
-					Template: ClusterObjectDeploymentTemplate{
-						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 10},
-					},
+					ProgressDeadlineMinutes: 10,
 				},
 			},
 			want: want{valid: true},
@@ -137,9 +133,7 @@ func TestValidate(t *testing.T) {
 		"ClusterObjectDeployment: valid progress deadline = 720": {
 			args: args{
 				object: ClusterObjectDeploymentSpec{
-					Template: ClusterObjectDeploymentTemplate{
-						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 720},
-					},
+					ProgressDeadlineMinutes: 720,
 				},
 			},
 			want: want{valid: true},
@@ -147,9 +141,7 @@ func TestValidate(t *testing.T) {
 		"ClusterObjectDeployment: invalid progress deadline > 720": {
 			args: args{
 				object: ClusterObjectDeploymentSpec{
-					Template: ClusterObjectDeploymentTemplate{
-						Spec: ClusterObjectDeploymentTemplateSpec{ProgressDeadlineMinutes: 721},
-					},
+					ProgressDeadlineMinutes: 721,
 				},
 			},
 			want: want{valid: false, errContains: "spec.progressDeadlineMinutes"},

@@ -262,6 +262,9 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectDeploymentSpec
   map:
     fields:
+    - name: progressDeadlineMinutes
+      type:
+        scalar: numeric
     - name: revisionHistoryLimit
       type:
         scalar: numeric
@@ -316,9 +319,6 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - name
-    - name: progressDeadlineMinutes
-      type:
-        scalar: numeric
     - name: progressionProbes
       type:
         list:

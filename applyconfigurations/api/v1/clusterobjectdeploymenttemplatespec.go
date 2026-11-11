@@ -32,14 +32,6 @@ type ClusterObjectDeploymentTemplateSpecApplyConfiguration struct {
 	// Kubernetes object) or a secretRef (a reference to an immutable Secret holding
 	// a serialized manifest). Phase, object, and probe order participate in template identity.
 	Phases []ClusterObjectSetPhaseApplyConfiguration `json:"phases,omitempty"`
-	// progressDeadlineMinutes is the maximum number of minutes a revision may take
-	// to roll out, measured from the ClusterObjectSet's creation timestamp. Time
-	// spent waiting for the ClusterObjectSet to be created is not counted. The
-	// deadline covers all phases together; completing a phase does not reset it.
-	// Once a revision has completed, the deadline no longer applies, even if it
-	// later becomes unhealthy. When omitted, no deadline is enforced. The minimum
-	// period is 1 minute, and the maximum is 720 minutes (12 hours).
-	ProgressDeadlineMinutes *int32 `json:"progressDeadlineMinutes,omitempty"`
 	// progressionProbes supplies custom readiness probes for objects in every phase.
 	// The same selector and assertion semantics as ClusterObjectSet.spec.progressionProbes apply.
 	// When set, must contain 1 to 20 probes.
@@ -66,14 +58,6 @@ func (b *ClusterObjectDeploymentTemplateSpecApplyConfiguration) WithPhases(value
 		}
 		b.Phases = append(b.Phases, *values[i])
 	}
-	return b
-}
-
-// WithProgressDeadlineMinutes sets the ProgressDeadlineMinutes field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ProgressDeadlineMinutes field is set to the value of the last call.
-func (b *ClusterObjectDeploymentTemplateSpecApplyConfiguration) WithProgressDeadlineMinutes(value int32) *ClusterObjectDeploymentTemplateSpecApplyConfiguration {
-	b.ProgressDeadlineMinutes = &value
 	return b
 }
 

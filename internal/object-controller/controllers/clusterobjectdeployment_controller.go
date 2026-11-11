@@ -413,7 +413,7 @@ func durationUntilDeploymentDeadline(clk clock.Clock, cod *ocv1.ClusterObjectDep
 		cos.Spec.LifecycleState == ocv1.ClusterObjectSetLifecycleStateArchived || !cos.DeletionTimestamp.IsZero() {
 		return 0, false
 	}
-	pd := cod.Spec.Template.Spec.ProgressDeadlineMinutes
+	pd := cod.Spec.ProgressDeadlineMinutes
 	if pd <= 0 {
 		return 0, false
 	}

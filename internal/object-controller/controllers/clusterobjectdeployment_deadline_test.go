@@ -62,7 +62,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineCoversEntireRevision(t *testin
 	// Time before the COS exists is outside the revision's budget, even when
 	// creating it took longer than the configured deadline.
 	cod.CreationTimestamp = metav1.NewTime(creation.Add(-30 * time.Minute))
-	cod.Spec.Template.Spec.ProgressDeadlineMinutes = 10
+	cod.Spec.ProgressDeadlineMinutes = 10
 	phaseTemplate := cod.Spec.Template.Spec.Phases[0]
 	cod.Spec.Template.Spec.Phases = nil
 	for i := range 5 {
@@ -225,7 +225,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineWithoutCOSDeadlineCondition(t 
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cod := codFixture()
-			cod.Spec.Template.Spec.ProgressDeadlineMinutes = 10
+			cod.Spec.ProgressDeadlineMinutes = 10
 			c := newCODClient(t, cod)
 			_, err := reconcileCOD(t, c)
 			require.NoError(t, err)
@@ -267,7 +267,7 @@ func TestClusterObjectDeploymentReconcilerIgnoresCOSDeadlineCondition(t *testing
 		t.Run(fmt.Sprintf("deadline %d", deadline), func(t *testing.T) {
 			clk := clocktesting.NewFakeClock(time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC))
 			cod := codFixture()
-			cod.Spec.Template.Spec.ProgressDeadlineMinutes = deadline
+			cod.Spec.ProgressDeadlineMinutes = deadline
 			c := newDeadlineDeploymentClient(t, cod, clk)
 			_, err := reconcileDeadlineDeployment(t, c, clk)
 			require.NoError(t, err)
@@ -293,7 +293,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineSchedulingAndRecovery(t *testi
 	start := time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC)
 	clk := clocktesting.NewFakeClock(start)
 	cod := codFixture()
-	cod.Spec.Template.Spec.ProgressDeadlineMinutes = 10
+	cod.Spec.ProgressDeadlineMinutes = 10
 	c := newDeadlineDeploymentClient(t, cod, clk)
 	result, err := reconcileDeadlineDeployment(t, c, clk)
 	require.NoError(t, err)
@@ -354,7 +354,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineSchedulingAndRecovery(t *testi
 func TestClusterObjectDeploymentReconcilerDeadlineExcludesCreationRetries(t *testing.T) {
 	clk := clocktesting.NewFakeClock(time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC))
 	cod := codFixture()
-	cod.Spec.Template.Spec.ProgressDeadlineMinutes = 10
+	cod.Spec.ProgressDeadlineMinutes = 10
 	cod.CreationTimestamp = metav1.NewTime(clk.Now())
 	creationErr := errors.New("revision creation denied")
 	denied := true
@@ -383,7 +383,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineExcludesCreationRetries(t *tes
 func TestClusterObjectDeploymentReconcilerDeadlineRetainsAvailability(t *testing.T) {
 	clk := clocktesting.NewFakeClock(time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC))
 	cod := codFixture()
-	cod.Spec.Template.Spec.ProgressDeadlineMinutes = 10
+	cod.Spec.ProgressDeadlineMinutes = 10
 	c := newDeadlineDeploymentClient(t, cod, clk)
 	_, err := reconcileDeadlineDeployment(t, c, clk)
 	require.NoError(t, err)
