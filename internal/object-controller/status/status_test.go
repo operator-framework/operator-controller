@@ -1096,7 +1096,9 @@ func cosSpecWithPhaseObjects(phaseDefs ...struct {
 		phases[i] = ocv1.ClusterObjectSetPhase{Name: pd.name, Objects: objs}
 	}
 	return ocv1.ClusterObjectSetSpec{
-		Phases: phases,
+		ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+			Phases: phases,
+		},
 	}
 }
 
@@ -1113,7 +1115,9 @@ func cosWithPhaseObjects(phaseDefs ...struct {
 	}
 	return ocv1.ClusterObjectSet{
 		Spec: ocv1.ClusterObjectSetSpec{
-			Phases: phases,
+			ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+				Phases: phases,
+			},
 		},
 		Status: ocv1.ClusterObjectSetStatus{
 			ObservedPhases: observedPhases,

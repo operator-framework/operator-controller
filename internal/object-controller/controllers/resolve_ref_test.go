@@ -291,17 +291,19 @@ func newRefTestCOS(name string, ref ocv1.SecretSourceRef) *ocv1.ClusterObjectSet
 			},
 		},
 		Spec: ocv1.ClusterObjectSetSpec{
-			Group:               "ref-test",
-			LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
-			Revision:            1,
-			CollisionProtection: ocv1.CollisionProtectionPrevent,
-			Phases: []ocv1.ClusterObjectSetPhase{
-				{
-					Name: "deploy",
-					Objects: []ocv1.ClusterObjectSetObject{
-						{
-							Type:      ocv1.ObjectTypeSecretReference,
-							SecretRef: ref,
+			Group:          "ref-test",
+			LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+			Revision:       1,
+			ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+				CollisionProtection: ocv1.CollisionProtectionPrevent,
+				Phases: []ocv1.ClusterObjectSetPhase{
+					{
+						Name: "deploy",
+						Objects: []ocv1.ClusterObjectSetObject{
+							{
+								Type:      ocv1.ObjectTypeSecretReference,
+								SecretRef: ref,
+							},
 						},
 					},
 				},

@@ -33,8 +33,10 @@ func TestBoxcutterRevisionStatesGetter_GroupIndex(t *testing.T) {
 		Spec: ocv1.ClusterObjectDeploymentSpec{
 			Template: ocv1.ClusterObjectDeploymentTemplate{
 				Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
-					CollisionProtection: ocv1.CollisionProtectionPrevent,
-					Phases:              []ocv1.ClusterObjectSetPhase{{Name: "deploy", Objects: []ocv1.ClusterObjectSetObject{}}},
+					ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+						CollisionProtection: ocv1.CollisionProtectionPrevent,
+						Phases:              []ocv1.ClusterObjectSetPhase{{Name: "deploy", Objects: []ocv1.ClusterObjectSetObject{}}},
+					},
 				},
 			},
 		},
@@ -62,12 +64,14 @@ func TestBoxcutterRevisionStatesGetter_GroupIndex(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: cosDef.name},
 			Spec: ocv1.ClusterObjectSetSpec{
 				Group: cosDef.group, Revision: cosDef.revision,
-				LifecycleState:      ocv1.ClusterObjectSetLifecycleStateActive,
-				CollisionProtection: ocv1.CollisionProtectionPrevent,
-				Phases: []ocv1.ClusterObjectSetPhase{
-					{
-						Name:    "test-phase",
-						Objects: []ocv1.ClusterObjectSetObject{},
+				LifecycleState: ocv1.ClusterObjectSetLifecycleStateActive,
+				ClusterObjectSetContent: ocv1.ClusterObjectSetContent{
+					CollisionProtection: ocv1.CollisionProtectionPrevent,
+					Phases: []ocv1.ClusterObjectSetPhase{
+						{
+							Name:    "test-phase",
+							Objects: []ocv1.ClusterObjectSetObject{},
+						},
 					},
 				},
 			},

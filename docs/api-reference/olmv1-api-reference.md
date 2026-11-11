@@ -512,9 +512,28 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `phases` _[ClusterObjectSetPhase](#clusterobjectsetphase) array_ | phases is an ordered list of 1 to 20 uniquely named phases. Each phase contains<br />at most 50 objects, each expressed either as an inlineManifest (an embedded<br />Kubernetes object) or a secretRef (a reference to an immutable Secret holding<br />a serialized manifest). Phase, object, and probe order participate in template identity. |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
-| `progressionProbes` _[ProgressionProbe](#progressionprobe) array_ | progressionProbes supplies custom readiness probes for objects in every phase.<br />The same selector and assertion semantics as ClusterObjectSet.spec.progressionProbes apply.<br />When set, must contain 1 to 20 probes. |  | MaxItems: 20 <br />MinItems: 1 <br />Optional: \{\} <br /> |
-| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is the required default collision protection strategy for all objects<br />in the revision. Individual phases or objects may override this value.<br />The resolution order is: object > phase > spec. |  | Enum: [Prevent IfNoController None] <br />Required: \{\} <br /> |
+| `phases` _[ClusterObjectSetPhase](#clusterobjectsetphase) array_ | phases is a required list of phases that group objects to be applied together.<br />All objects in a phase are applied in no particular order.<br />The revision progresses to the next phase only after all objects in the current phase pass their readiness probes.<br />Each phase in the list must have a unique name. The maximum number of phases is 20. |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
+| `progressionProbes` _[ProgressionProbe](#progressionprobe) array_ | progressionProbes is an optional field which provides the ability to define custom readiness probes<br />for objects defined within phases. As documented in that field, most kubernetes-native objects<br />within the phases already have some kind of readiness check built-in, but this field allows for checks<br />which are tailored to the objects being rolled out - particularly custom resources.<br />Probes defined within the progressionProbes list will apply to every phase in the revision. However, the probes will only<br />execute against phase objects which are a match for the provided selector type. For instance, a probe using a GroupKind selector<br />for ConfigMaps will automatically be considered to have passed for any non-ConfigMap object, but will halt any phase containing<br />a ConfigMap if that particular object does not pass the probe check.<br />The maximum number of probes is 20.<br />**Experimental channel:**  |  | MaxItems: 20 <br />MinItems: 1 <br />Optional: \{\} <br /> |
+| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is a required field that specifies the default collision protection<br />strategy for all objects in this content. Individual phases or objects can override this value.<br />This value is used as the default for any phase or object that does not explicitly specify<br />its own collisionProtection. The resolution order is: object > phase > content. |  | Enum: [Prevent IfNoController None] <br />Required: \{\} <br /> |
+
+
+#### ClusterObjectSetContent
+
+
+
+ClusterObjectSetContent holds the revision content shared between
+ClusterObjectSet.spec and a ClusterObjectDeployment's template spec.
+
+
+
+_Appears in:_
+- [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `phases` _[ClusterObjectSetPhase](#clusterobjectsetphase) array_ | phases is a required list of phases that group objects to be applied together.<br />All objects in a phase are applied in no particular order.<br />The revision progresses to the next phase only after all objects in the current phase pass their readiness probes.<br />Each phase in the list must have a unique name. The maximum number of phases is 20. |  | MaxItems: 20 <br />MinItems: 1 <br />Required: \{\} <br /> |
+| `progressionProbes` _[ProgressionProbe](#progressionprobe) array_ | progressionProbes is an optional field which provides the ability to define custom readiness probes<br />for objects defined within phases. As documented in that field, most kubernetes-native objects<br />within the phases already have some kind of readiness check built-in, but this field allows for checks<br />which are tailored to the objects being rolled out - particularly custom resources.<br />Probes defined within the progressionProbes list will apply to every phase in the revision. However, the probes will only<br />execute against phase objects which are a match for the provided selector type. For instance, a probe using a GroupKind selector<br />for ConfigMaps will automatically be considered to have passed for any non-ConfigMap object, but will halt any phase containing<br />a ConfigMap if that particular object does not pass the probe check.<br />The maximum number of probes is 20.<br />**Experimental channel:**  |  | MaxItems: 20 <br />MinItems: 1 <br />Optional: \{\} <br /> |
+| `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection is a required field that specifies the default collision protection<br />strategy for all objects in this content. Individual phases or objects can override this value.<br />This value is used as the default for any phase or object that does not explicitly specify<br />its own collisionProtection. The resolution order is: object > phase > content. |  | Enum: [Prevent IfNoController None] <br />Required: \{\} <br /> |
 
 
 
@@ -552,6 +571,7 @@ complete only after all objects pass their status probes.
 
 _Appears in:_
 - [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+- [ClusterObjectSetContent](#clusterobjectsetcontent)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -571,6 +591,7 @@ _Validation:_
 
 _Appears in:_
 - [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+- [ClusterObjectSetContent](#clusterobjectsetcontent)
 - [ClusterObjectSetObject](#clusterobjectsetobject)
 - [ClusterObjectSetPhase](#clusterobjectsetphase)
 
@@ -738,6 +759,7 @@ ProgressionProbe provides a custom probe definition, consisting of an object sel
 
 _Appears in:_
 - [ClusterObjectDeploymentTemplateSpec](#clusterobjectdeploymenttemplatespec)
+- [ClusterObjectSetContent](#clusterobjectsetcontent)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |

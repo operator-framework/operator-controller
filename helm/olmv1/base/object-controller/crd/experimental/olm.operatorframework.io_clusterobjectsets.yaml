@@ -80,18 +80,15 @@ spec:
               collisionProtection:
                 description: |-
                   collisionProtection is a required field that specifies the default collision protection
-                  strategy for all objects in this revision. Individual phases or objects can override this value.
+                  strategy for all objects in this content. Individual phases or objects can override this value.
 
                   This value is used as the default for any phase or object that does not explicitly specify
-                  its own collisionProtection. The resolution order is: object > phase > spec.
+                  its own collisionProtection. The resolution order is: object > phase > content.
                 enum:
                 - Prevent
                 - IfNoController
                 - None
                 type: string
-                x-kubernetes-validations:
-                - message: collisionProtection is immutable
-                  rule: self == oldSelf
               group:
                 description: |-
                   group is a required, immutable identifier that links related revisions together.
@@ -132,21 +129,10 @@ spec:
                     self
               phases:
                 description: |-
-                  phases is a required, immutable list of phases that group objects to be applied together.
-
-                  Objects are organized into phases based on their Group-Kind. Common phases include:
-                    - namespaces: Namespace objects
-                    - policies: ResourceQuota, LimitRange, NetworkPolicy objects
-                    - rbac: ServiceAccount, Role, RoleBinding, ClusterRole, ClusterRoleBinding objects
-                    - crds: CustomResourceDefinition objects
-                    - storage: PersistentVolume, PersistentVolumeClaim, StorageClass objects
-                    - deploy: Deployment, StatefulSet, DaemonSet, Service, ConfigMap, Secret objects
-                    - publish: Ingress, APIService, Route, Webhook objects
+                  phases is a required list of phases that group objects to be applied together.
 
                   All objects in a phase are applied in no particular order.
                   The revision progresses to the next phase only after all objects in the current phase pass their readiness probes.
-
-                  Once set, the phases field is immutable.
 
                   Each phase in the list must have a unique name. The maximum number of phases is 20.
                 items:
@@ -327,13 +313,10 @@ spec:
                 x-kubernetes-list-map-keys:
                 - name
                 x-kubernetes-list-type: map
-                x-kubernetes-validations:
-                - message: phases is immutable
-                  rule: self == oldSelf || oldSelf.size() == 0
               progressionProbes:
                 description: |-
                   progressionProbes is an optional field which provides the ability to define custom readiness probes
-                  for objects defined within spec.phases. As documented in that field, most kubernetes-native objects
+                  for objects defined within phases. As documented in that field, most kubernetes-native objects
                   within the phases already have some kind of readiness check built-in, but this field allows for checks
                   which are tailored to the objects being rolled out - particularly custom resources.
 
@@ -343,9 +326,6 @@ spec:
                   a ConfigMap if that particular object does not pass the probe check.
 
                   The maximum number of probes is 20.
-
-                  Once set, the progressionProbes field is immutable, as it is
-                  part of the immutable content of a revision.
                 items:
                   description: ProgressionProbe provides a custom probe definition,
                     consisting of an object selection method and assertions.
@@ -596,9 +576,6 @@ spec:
                 minItems: 1
                 type: array
                 x-kubernetes-list-type: atomic
-                x-kubernetes-validations:
-                - message: progressionProbes is immutable
-                  rule: self == oldSelf || oldSelf.size() == 0
               revision:
                 description: |-
                   revision is a required, immutable sequence number identifying a specific
@@ -621,10 +598,13 @@ spec:
             - revision
             type: object
             x-kubernetes-validations:
-            - message: phases cannot be removed once set
-              rule: '!has(oldSelf.phases) || has(self.phases)'
-            - message: progressionProbes cannot be removed once set
-              rule: '!has(oldSelf.progressionProbes) || has(self.progressionProbes)'
+            - message: phases is immutable
+              rule: self.phases == oldSelf.phases
+            - message: progressionProbes is immutable
+              rule: has(self.progressionProbes) == has(oldSelf.progressionProbes)
+                && (!has(self.progressionProbes) || self.progressionProbes == oldSelf.progressionProbes)
+            - message: collisionProtection is immutable
+              rule: self.collisionProtection == oldSelf.collisionProtection
           status:
             description: |-
               status is optional and defines the observed state of the ClusterObjectSet.
