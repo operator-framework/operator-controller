@@ -1,4 +1,3 @@
-@BoxcutterRuntime
 Feature: Track ClusterObjectSet revisions by group
 
   As a ClusterObjectSet user, I want to group successive revisions so that a new
@@ -9,10 +8,10 @@ Feature: Track ClusterObjectSet revisions by group
   should leave other groups' revisions untouched.
 
   Background:
-    Given OLM is available
-    And an image registry is available
+    Given object-controller is available
     And namespace "${TEST_NAMESPACE}" is available
 
+  @ObjectController @ClusterObjectSet
   Scenario Outline: Group handoff preserves objects when <revision-ownership>
     Both ClusterObjectSets have the same group. Their controller owner references
     point to different Namespaces, or one or both ClusterObjectSets have no owner
@@ -99,6 +98,7 @@ Feature: Track ClusterObjectSet revisions by group
       | an ownerless revision is followed by an owned revision |                      | ${TEST_NAMESPACE}       |
       | both revisions have no controller owner                |                      |                         |
 
+  @ObjectController @ClusterObjectSet
   Scenario: Different groups collide even with the same controller owner
     Given ClusterObjectSet with Namespace owner "${TEST_NAMESPACE}" is applied
       """
@@ -167,8 +167,11 @@ Feature: Track ClusterObjectSet revisions by group
         lifecycleState: Active
       """
 
+  @BoxcutterRuntime
   Scenario: Revision pruning is isolated by group
-    Given a catalog "test" with packages:
+    Given OLM is available
+    And an image registry is available
+    And a catalog "test" with packages:
       | package | version | channel | replaces | contents                   |
       | test    | 1.0.0   | beta    |          | CRD, Deployment, ConfigMap |
       | test    | 1.0.1   | beta    | 1.0.0    | CRD, Deployment, ConfigMap |

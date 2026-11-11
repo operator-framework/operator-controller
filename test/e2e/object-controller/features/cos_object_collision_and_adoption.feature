@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectSet
 Feature: ClusterObjectSet object collision and adoption
 
   As an OLM user applying a ClusterObjectSet directly, I want the revision's
@@ -7,7 +7,7 @@ Feature: ClusterObjectSet object collision and adoption
   choose how aggressively a revision takes ownership of pre-existing objects.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   # ---------------------------------------------------------------------------
   # Collisions: the revision refuses to take ownership (Ready=False/ObjectCollision)

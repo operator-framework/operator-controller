@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectSet
 Feature: ClusterObjectSet static preflight validation
 
   As an OLM user applying a ClusterObjectSet directly, I want the revision to be
@@ -7,7 +7,7 @@ Feature: ClusterObjectSet static preflight validation
   instead of being silently accepted.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   Scenario: ClusterObjectSet reports PreconditionsNotMet when the same object appears in multiple phases
     Given namespace "${TEST_NAMESPACE}" is available
