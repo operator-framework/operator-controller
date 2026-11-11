@@ -1,5 +1,12 @@
 # ClusterObjectDeployment contract
 
+> **Historical proposal:** The deadline semantics below describe an earlier design,
+> not the current implementation. COD now enforces a total rollout budget from COS
+> creation, excludes time waiting for creation, and recalculates that budget when
+> the deadline changes—even after timeout. COS no longer exposes a deadline field.
+> See [Progress deadlines and recovery](../../draft/concepts/clusterobjectdeployment.md#progress-deadlines-and-recovery)
+> for the current behavior.
+
 ClusterObjectDeployment (COD) is a mutable orchestration resource that creates
 ClusterObjectSet (COS) snapshots and observes their rollout. This proposal defines
 the template, revision lifecycle, and status contract for COD and COS.

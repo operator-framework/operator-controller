@@ -92,7 +92,7 @@ Change the ConfigMap message to B:
 
 ```sh
 kubectl patch clusterobjectdeployment cod-example --type=json \
-  -p='[{"op":"replace","path":"/spec/template/spec/phases/0/objects/0/object/data/message","value":"Hello from revision B"}]'
+  -p='[{"op":"replace","path":"/spec/template/spec/phases/0/objects/0/inlineManifest/data/message","value":"Hello from revision B"}]'
 kubectl wait --for=create clusterobjectset/cod-example-2 --timeout=180s
 kubectl wait --for=condition=Ready clusterobjectset/cod-example-2 --timeout=180s
 kubectl -n cod-example get configmap cod-example-settings \
@@ -119,44 +119,22 @@ The message returns to `Hello from revision A` through revision 3. Restoring an
 earlier template creates a new, higher revision; an archived revision cannot
 become Active again. Reapplying an unchanged template keeps the current revision.
 
-### Which edits create revisions?
-
-| Edit | Result |
-| --- | --- |
-| Objects, references, phase/object order, probes, or collision protection in `spec.template.spec` | A new revision |
-| Labels or annotations in `spec.template.metadata` | A new revision |
-| `spec.template.spec.progressDeadlineMinutes` | A new revision, because the deadline is part of the template |
-| Root COD labels or annotations | The current revision is retained |
-| `spec.revisionHistoryLimit` | Retention changes; the current revision is retained |
-
-Template labels and annotations are placed on each generated COS. Set metadata
-for a managed object in that object's manifest. The controller assigns COS group,
-revision, lifecycle state, ownership, and the reserved
-`olm.operatorframework.io/template-hash` label.
+Changes to `spec.template`, including its labels and annotations, create a new
+revision. Changes to rollout policy, such as `spec.progressDeadlineMinutes` or
+`spec.revisionHistoryLimit`, do not. See
+[Which edits create revisions?](../concepts/clusterobjectdeployment.md#which-edits-create-revisions)
+for the complete rules.
 
 ## Read status and diagnose failures
 
 The COD exposes `Available` and `Progressing`. A child COS exposes `Ready` with
 the details of its resource reconciliation.
 
-| COD condition | Status | Reason | Meaning |
-| --- | --- | --- | --- |
-| `Available` | `True` | `Available` | At least one active, non-deleting COS is Ready |
-| `Available` | `False` | `NoActiveRevision` | No active, non-deleting COS exists yet |
-| `Available` | `False` | `Unavailable` | Active revisions exist, but none are Ready |
-| `Progressing` | `True` | `NewClusterObjectSetProgressing` | Waiting to create the desired revision, or rolling out while the COS reports `Pending` or `ObjectsNotReady` |
-| `Progressing` | `True` | `RevisionPreconditionsNotMet` | The desired revision's preconditions are unmet, such as a mutable referenced Secret; reconciliation keeps retrying |
-| `Progressing` | `False` | `NewClusterObjectSetProgressed` | The desired revision completed rollout at least once |
-| `Progressing` | `False` | `ProgressDeadlineExceeded` | An incomplete, still-retrying revision exceeded its rollout budget |
-| `Progressing` | `False` | `InvalidSpecification` | Template labels or annotations are invalid; correct them to allow creation |
-| `Progressing` | `False` | `RevisionObjectCollision` | The desired revision's objects are owned by another controller or already exist; resolve the conflicting ownership |
-| `Progressing` | `False` | `RevisionInvalidSpecification` | The desired revision's objects are invalid; correct the COD template |
-
-For revision-specific reasons, the COD's condition message names the latest
-active COS. Inspect that COS's `Ready` condition for the specific cause.
-`RevisionInvalidSpecification` concerns the revision's objects, while
-`InvalidSpecification` concerns the COD's `spec.template.metadata` and prevents
-creation of a new revision.
+For revision-specific failures, the COD's condition message names the COS to
+inspect. See [COD status conditions](../concepts/clusterobjectdeployment.md#status-conditions)
+for the available reasons and
+[Revision ownership](../concepts/clusterobjectdeployment.md#revision-ownership)
+for conflicts that prevent a new rollout.
 
 Inspect the parent, the current child, and the controller logs:
 
@@ -179,30 +157,21 @@ and let reconciliation retry. Change the COD template when the desired object
 content needs to change. See [COS status conditions](../concepts/clusterobjectsets.md#status-conditions)
 for the child reasons.
 
-### Deadlines and recovery
+### Adjust the rollout deadline
 
-`spec.template.spec.progressDeadlineMinutes` supplies one budget for the whole
-revision. The sample uses 10 minutes, the minimum; the maximum is 720 minutes.
-Omit the field to disable deadline enforcement.
+The sample configures a ten-minute rollout budget with
+`spec.progressDeadlineMinutes`. To change that budget without creating another
+revision, patch the COD directly:
 
-Timing starts at COS creation. Failed or delayed creation attempts consume no
-budget. Completing phases, polling, retries, and controller restarts preserve the
-same deadline. A five-phase revision with a ten-minute deadline has ten minutes
-total. Each new revision receives a fresh budget.
+```sh
+kubectl patch clusterobjectdeployment cod-example --type=merge \
+  -p='{"spec":{"progressDeadlineMinutes":20}}'
+```
 
-The COD schedules its own expiry check even when the COS emits no further events.
-The deadline still applies while preconditions are unmet: after expiry, the COD
-reports `Progressing=False/ProgressDeadlineExceeded` while the COS retains its
-readiness failure. `RevisionObjectCollision` and `RevisionInvalidSpecification`
-require user action and take precedence over `ProgressDeadlineExceeded`, even
-after expiry. The legacy deadline field remains available on directly created
-COSs; COD enforces its budget independently.
-
-Reconciliation continues after expiry. Completion of the entire revision records
-`COS.status.completedAt` and recovers the COD to
-`Progressing=False/NewClusterObjectSetProgressed`. Completing only some phases
-does not clear an expired deadline. Once completion is recorded, later health regressions
-can affect availability but never restart that revision's rollout timer.
+The new budget is measured from the current COS's original creation timestamp,
+not from the time of the edit. See
+[Progress deadlines and recovery](../concepts/clusterobjectdeployment.md#progress-deadlines-and-recovery)
+for timing, timeout precedence, and recovery behavior.
 
 ## Inspect history and referenced content
 
@@ -211,26 +180,27 @@ objects that were removed from the desired content. COD prunes excess archived
 history after teardown completes. Active revisions are excluded from the limit.
 
 The sample retains two archived revisions with `spec.revisionHistoryLimit: 2`.
-The default is 5, the supported range is 0–50, and 0 retains no archived revisions.
-After A → B → A, revisions 1 and 2 can remain as archived history while revision 3
-is Active:
+See [Revision history and deletion](../concepts/clusterobjectdeployment.md#revision-history-and-deletion)
+for retention rules. After A → B → A, revisions 1 and 2 can remain as archived
+history while revision 3 is Active:
 
 ```sh
 kubectl get clusterobjectsets --field-selector spec.group=cod-example \
   -o custom-columns=NAME:.metadata.name,REVISION:.spec.revision,STATE:.spec.lifecycleState
 ```
 
-For larger content, each template object can use the existing COS `ref` mechanism
+For larger content, each template object can use the COS `secretRef` mechanism
 to read a JSON manifest from an immutable Secret. Create the referenced Secret
 before applying the COD; it must remain available for every retained revision
 that references it. Changing the intended content requires a new Secret reference
 in the template. See [Object storage](../concepts/clusterobjectsets.md#object-storage-inline-vs-references).
 Standalone callers manage the lifetime of these content Secrets.
 
-ClusterExtension integration is separate work tracked by
-[OPRUN-4744](https://redhat.atlassian.net/browse/OPRUN-4744). The current
-ClusterExtension path still creates COSs directly; this standalone workflow uses
-object-controller without bundle resolution or catalog components.
+With `BoxcutterRuntime` enabled, operator-controller manages CODs for
+ClusterExtensions. This standalone workflow uses object-controller without bundle
+resolution or catalog components. See
+[Relationship with ClusterExtension](../concepts/clusterobjectdeployment.md#relationship-with-clusterextension)
+for the integration.
 
 For all fields, see the [COD API reference](../../api-reference/olmv1-api-reference.md#clusterobjectdeployment).
 

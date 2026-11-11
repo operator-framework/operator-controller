@@ -19,8 +19,10 @@ Each ClusterObjectSet has:
 
 ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, when `BoxcutterRuntime` is enabled, operator-controller creates and updates a ClusterObjectDeployment (COD) for each ClusterExtension. The COD controller creates the immutable ClusterObjectSet revisions that deploy and upgrade the extension.
 
-For a standalone walkthrough that manages mutable desired content through COS
-revisions, see [Manage standalone ClusterObjectDeployments](../tutorials/manage-clusterobjectdeployments.md).
+For deployment-level revision management and rollout policy, see
+[ClusterObjectDeployments](clusterobjectdeployment.md). For a standalone walkthrough
+that manages mutable desired content through COS revisions, see
+[Manage standalone ClusterObjectDeployments](../tutorials/manage-clusterobjectdeployments.md).
 
 The `group` value must be 1–52 characters long, start with a lowercase letter,
 contain only lowercase letters, digits or hyphens, and end with a letter or digit.
@@ -247,80 +249,12 @@ Indicates whether all objects in the revision have been successfully rolled out 
 
 On a revision's first reconciliation the `Ready` condition is initialized to `Unknown`/`Pending`, so it is always present. A transient internal error (e.g. an API read failure) leaves the `Ready` condition unchanged and is retried with backoff; it is not reported as a distinct reason (while the revision is still `Pending`, it stays `Unknown`/`Pending`).
 
-### Progress deadline
-
-The progress deadline is a ClusterObjectDeployment (COD) concept: the time allowed
-for the deployment to progress to its desired new revision. Configure it through
-`spec.template.spec.progressDeadlineMinutes`. The COD enforces this budget itself;
-the ClusterObjectSets it creates do not carry a deadline. Time spent waiting for
-the ClusterObjectSet to be created is not counted, and each new revision receives
-its own budget, measured from the revision's creation timestamp until its first
-successful rollout (recorded in `status.completedAt`). Completing a phase does not
-reset the timer.
-
-If the desired revision is still incomplete when that budget expires, the COD
-reports `Progressing=False` with reason `ProgressDeadlineExceeded`. A five-phase
-revision with a ten-minute deadline has ten minutes total, even if four phases
-have completed. The COD schedules a deadline check even if the COS emits no
-further events.
-
-The COS's `Ready` condition continues to report readiness failures, such as
-`ObjectsNotReady`, `PreconditionsNotMet`, or `InvalidSpecification`. The COD checks
-elapsed time independently of the COS's readiness condition.
-
-Omitting the field disables the deadline. Reconciliation continues after a
-timeout, so a revision can still complete later. Once `status.completedAt` is
-recorded, the COD reports `Progressing=False` with reason
-`NewClusterObjectSetProgressed`. Later health regressions do not restart deadline
-timing. The COD can remain `Available=True` if an older active revision is still
-ready.
-
-### ClusterObjectDeployment Progressing
-
-A ClusterObjectDeployment (COD) reports rollout progress and ownership conflicts
-on its `Progressing` condition. While a rollout is incomplete, it also reflects
-*why* its head active revision is not yet `Ready`, so you can tell a rollout that
-is merely in progress from one that is stalled on something you must fix.
-For revision failures, inspect the named ClusterObjectSet for the specific cause.
-
-| Status | Reason | Meaning | What to do |
-| --- | --- | --- | --- |
-| True | `NewClusterObjectSetProgressing` | The head revision is rolling out (`Pending`/`ObjectsNotReady`) | Wait |
-| True | `RevisionPreconditionsNotMet` | The head revision's precondition is not yet met (e.g. a mutable/invalid referenced Secret, or RBAC/dependency CRDs not yet propagated); it keeps retrying | Satisfy the precondition (grant RBAC, install the dependency, fix the Secret); it recovers automatically |
-| False | `RevisionObjectCollision` | The head revision's objects are owned by another controller or already exist; it will not roll out without intervention | Resolve ownership of the conflicting objects |
-| False | `RevisionInvalidSpecification` | The head revision's own objects are invalid | Correct the template so the rendered objects are valid |
-| False | `ProgressDeadlineExceeded` | A still-retrying revision exceeded its deadline (see [Progress deadline](#progress-deadline)) | See above |
-| False | `InvalidSpecification` | The deployment's own `spec.template.metadata` is invalid, so no revision is created | Fix the template labels/annotations |
-| False | `OwnerConflict` | The highest active, non-deleting revision in the deployment's group is controlled by another controller; no new revision is created | Resolve the revision's controller ownership, or archive or delete the conflicting revision |
-| False | `NewClusterObjectSetProgressed` | The head revision completed its rollout | None |
-
-`OwnerConflict` concerns ownership of the ClusterObjectSet itself, while
-`RevisionObjectCollision` concerns ownership of objects within a revision.
-`OwnerConflict` takes precedence even if an owned revision has completed or
-exceeded its progress deadline. Availability still depends only on owned active
-revisions; a previous ready revision can keep the COD `Available=True` during the
-conflict.
-
-For a ClusterExtension, `OwnerConflict` maps to `Progressing=True` with reason
-`Retrying`, preserving the deployment's message about the conflicting revision
-and its controller. A first install reports `Installed=False` with reason
-`Failed`. During an upgrade, the previously installed bundle and its `Installed=True`
-condition are preserved until the new rollout completes, with `observedGeneration`
-updated to acknowledge the current spec. Reconciliation resumes automatically when
-the ownership conflict clears.
-
-`RevisionObjectCollision` and `RevisionInvalidSpecification` are *hard stalls*:
-they will not resolve on their own, so they report `Progressing=False` and take
-precedence over `ProgressDeadlineExceeded` (the actionable cause is more useful
-than "the clock ran out"). `RevisionPreconditionsNotMet` keeps retrying, so it
-stays `Progressing=True` and the progress deadline still governs it. Note that
-`RevisionInvalidSpecification` (the revision's rendered objects) is distinct from
-the deployment's own `InvalidSpecification` (invalid `spec.template.metadata`,
-reported before any revision is created).
-
 ### Completion (`status.completedAt`)
 
 The first time a revision becomes ready, the controller stamps `status.completedAt` with the current time. This timestamp is set once and never changes, marking that this revision successfully rolled out at least once — it persists even if the revision later becomes not ready. The ClusterExtension controller uses it to determine the installed revision.
+
+For deployment-level rollout policy and conditions, see
+[ClusterObjectDeployments](clusterobjectdeployment.md#status-conditions).
 
 ## How operator-controller uses ClusterObjectSets
 
