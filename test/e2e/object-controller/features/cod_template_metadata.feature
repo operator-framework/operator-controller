@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectDeployment
 Feature: ClusterObjectDeployment template metadata propagation
 
   As an OLM user applying a ClusterObjectDeployment, I want the labels and
@@ -7,7 +7,7 @@ Feature: ClusterObjectDeployment template metadata propagation
   reported on the deployment rather than silently stalling the rollout.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   Scenario: Template metadata is propagated to the revision
     Given namespace "${TEST_NAMESPACE}" is available

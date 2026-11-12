@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectDeployment
 Feature: ClusterObjectDeployment multi-revision handoff
 
   As an OLM user applying a ClusterObjectDeployment, I want a blocked successor
@@ -8,7 +8,7 @@ Feature: ClusterObjectDeployment multi-revision handoff
   that rollouts are safe and leave no orphaned content behind.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   # While the successor revision cannot take ownership of its objects it never
   # becomes Ready, so both revisions remain and the deployment reports the hard
