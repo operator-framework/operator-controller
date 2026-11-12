@@ -33,6 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/component-base/featuregate"
 	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/yaml"
@@ -46,9 +47,21 @@ import (
 )
 
 const (
-	olmDeploymentName      = "operator-controller-controller-manager"
-	catalogdDeploymentName = "catalogd-controller-manager"
-	defaultTimeout         = 5 * time.Minute
+	// OperatorControllerComponent identifies the ClusterExtension controller.
+	OperatorControllerComponent = "operator-controller"
+	// CatalogdComponent identifies the catalog controller.
+	CatalogdComponent = "catalogd"
+	// ObjectControllerComponent identifies the COS/COD controller.
+	ObjectControllerComponent = "object-controller"
+	// ObjectControllerFeature selects scenarios requiring object-controller.
+	ObjectControllerFeature featuregate.Feature = "ObjectController"
+	// OperatorControllerDeploymentName is the ClusterExtension controller Deployment.
+	OperatorControllerDeploymentName = "operator-controller-controller-manager"
+	// CatalogdDeploymentName is the catalog controller Deployment.
+	CatalogdDeploymentName = "catalogd-controller-manager"
+	// ObjectControllerDeploymentName is the independently deployable controller.
+	ObjectControllerDeploymentName = "object-controller-controller-manager"
+	defaultTimeout                 = 5 * time.Minute
 	// Tick is the polling interval used by wait helpers.
 	Tick = 1 * time.Second
 )
@@ -308,7 +321,7 @@ func ImageRegistryIsAvailable() error {
 // OLMisAvailable waits for the OLM operator-controller deployment to become available. Polls with timeout.
 func OLMisAvailable(ctx context.Context) error {
 	require.Eventually(godog.T(ctx), func() bool {
-		v, err := K8sClient(ctx, "get", "deployment", "-n", OLMNamespace, olmDeploymentName, "-o", "json")
+		v, err := K8sClient(ctx, "get", "deployment", "-n", OLMNamespace, OperatorControllerDeploymentName, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -915,10 +928,11 @@ func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount st
 }
 
 // ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace creates a ServiceAccount and applies standard RBAC permissions.
-// The RBAC template is selected based on the service account and BoxcutterRuntime feature gate: <service-account>-<helm|boxcutter>-rbac-template.yaml
+// Direct object-controller scenarios select Boxcutter RBAC by tag; integrated
+// scenarios use the BoxcutterRuntime gate, independently of feature filenames.
 func ServiceAccountWithNeededPermissionsIsAvailableInTestNamespace(ctx context.Context, serviceAccount string) error {
 	kernel := "helm"
-	if enabled, found := FeatureGates[features.BoxcutterRuntime]; found && enabled {
+	if FeatureGates[features.BoxcutterRuntime] || Scenario(ctx).Tags.Has("@"+string(ObjectControllerFeature)) {
 		kernel = "boxcutter"
 	}
 	rbacTemplate := fmt.Sprintf("%s-%s-rbac-template.yaml", serviceAccount, kernel)
@@ -1474,6 +1488,9 @@ func GetResource(kind string, name string, namespace string) (*unstructured.Unst
 
 // ResolveSecretRef fetches an object from a Secret ref using kubectl.
 func ResolveSecretRef(ref ocv1.SecretSourceRef) (*unstructured.Unstructured, error) {
+	if ref.Namespace == "" {
+		ref.Namespace = OLMNamespace
+	}
 	out, err := K8sClient(context.Background(), "get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("getting Secret %s/%s: %w", ref.Namespace, ref.Name, err)

@@ -290,10 +290,10 @@ func configureDeploymentProxy(ctx context.Context, component, proxyURL string) e
 
 	var deployName string
 	switch component {
-	case "operator-controller":
-		deployName = "operator-controller-controller-manager"
-	case "catalogd":
-		deployName = "catalogd-controller-manager"
+	case shared.OperatorControllerComponent:
+		deployName = shared.OperatorControllerDeploymentName
+	case shared.CatalogdComponent:
+		deployName = shared.CatalogdDeploymentName
 	default:
 		return fmt.Errorf("unknown component %q", component)
 	}

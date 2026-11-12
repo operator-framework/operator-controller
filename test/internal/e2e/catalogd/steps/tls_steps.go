@@ -147,10 +147,10 @@ func MetricsEndpointAcceptsConnectionUsingCurve(ctx context.Context, component, 
 // the actual Kubernetes Deployment name.
 func componentDeploymentName(component string) (string, error) {
 	switch component {
-	case "operator-controller":
-		return "operator-controller-controller-manager", nil
-	case "catalogd":
-		return "catalogd-controller-manager", nil
+	case shared.OperatorControllerComponent:
+		return shared.OperatorControllerDeploymentName, nil
+	case shared.CatalogdComponent:
+		return shared.CatalogdDeploymentName, nil
 	default:
 		return "", fmt.Errorf("unknown component %q: expected operator-controller or catalogd", component)
 	}

@@ -21,6 +21,7 @@ import (
 
 // RegisterSteps registers ClusterObjectSet and ClusterObjectDeployment assertions.
 func RegisterSteps(sc *godog.ScenarioContext) {
+	sc.Step(`^object-controller is available$`, ObjectControllerIsAvailable)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" lifecycle is set to "([^"]+)"$`, ClusterObjectSetLifecycleUpdate)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectSetReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterObjectSetReportsConditionWithMsg)
@@ -52,6 +53,44 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" referred secrets have type "([^"]+)"$`, ClusterObjectSetReferredSecretsHaveType)
 	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" owns (\d+) ClusterObjectSets?$`, ClusterObjectDeploymentOwnsClusterObjectSets)
 	sc.Step(`^(?i)ClusterObjectDeployment "([^"]+)" is owned by ClusterExtension "([^"]+)"$`, ClusterObjectDeploymentIsOwnedByClusterExtension)
+}
+
+// ObjectControllerIsAvailable checks the controller and the APIs selected by the
+// scenario. COS scenarios do not require COD, ClusterExtension, or ClusterCatalog.
+func ObjectControllerIsAvailable(ctx context.Context) error {
+	namespace := shared.ComponentNamespaces[shared.ObjectControllerComponent]
+	if namespace == "" {
+		return fmt.Errorf("object-controller is not installed: Deployment %q was not discovered", shared.ObjectControllerDeploymentName)
+	}
+	if shared.ObjectControllerOnly() {
+		if shared.ComponentNamespaces[shared.OperatorControllerComponent] != "" || shared.ComponentNamespaces[shared.CatalogdComponent] != "" {
+			return fmt.Errorf("standalone object-controller tests require operator-controller and catalogd to be absent")
+		}
+		out, err := shared.K8sClient(ctx, "get", "crd", "clusterextensions.olm.operatorframework.io", "clustercatalogs.olm.operatorframework.io", "--ignore-not-found", "-o", "name")
+		if err != nil {
+			return fmt.Errorf("checking standalone API isolation: %w", err)
+		}
+		if strings.TrimSpace(out) != "" {
+			return fmt.Errorf("standalone object-controller tests require ClusterExtension and ClusterCatalog APIs to be absent; found: %s", strings.TrimSpace(out))
+		}
+	}
+	apis := []string{"clusterobjectsets.olm.operatorframework.io"}
+	if shared.Scenario(ctx).Tags.Has("@ClusterObjectDeployment") {
+		apis = append(apis, "clusterobjectdeployments.olm.operatorframework.io")
+	}
+	for _, api := range apis {
+		if _, err := shared.K8sClient(ctx, "wait", "--for=create", "crd/"+api, "--timeout="+shared.Timeout.String()); err != nil {
+			return fmt.Errorf("required object-controller API %s was not created: %w", api, err)
+		}
+		if _, err := shared.K8sClient(ctx, "wait", "--for=condition=Established", "crd/"+api, "--timeout="+shared.Timeout.String()); err != nil {
+			return fmt.Errorf("required object-controller API %s is unavailable: %w", api, err)
+		}
+	}
+	if _, err := shared.K8sClient(ctx, "rollout", "status", "deployment/"+shared.ObjectControllerDeploymentName,
+		"-n", namespace, "--timeout="+shared.Timeout.String()); err != nil {
+		return fmt.Errorf("object-controller is unavailable: %w", err)
+	}
+	return nil
 }
 
 type referredSecretRef struct {
