@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectSet
 Feature: ClusterObjectSet preflight dry-run validation
 
   As an OLM user applying a ClusterObjectSet directly, I want the revision to be
@@ -8,7 +8,7 @@ Feature: ClusterObjectSet preflight dry-run validation
   require re-creating the revision.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   Scenario: ClusterObjectSet reports PreconditionsNotMet when an object targets a non-existent namespace
     When ClusterObjectSet is applied

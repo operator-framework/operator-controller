@@ -1,4 +1,4 @@
-@BoxcutterRuntime
+@ObjectController @ClusterObjectSet
 Feature: Validate ClusterObjectSet revision identity
 
   A ClusterObjectSet's name must be <group>-<revision>, with the revision in
@@ -6,7 +6,7 @@ Feature: Validate ClusterObjectSet revision identity
   prevent duplicate revision numbers within a group, regardless of ownership.
 
   Background:
-    Given OLM is available
+    Given object-controller is available
 
   Scenario Outline: Reject a ClusterObjectSet name with <mismatch>
     When resource apply fails with error msg containing "metadata.name must be <spec.group>-<spec.revision>"
