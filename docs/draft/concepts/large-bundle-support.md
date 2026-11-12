@@ -1,5 +1,43 @@
 # Design: Large Bundle Support
 
+!!! warning "Historical proposal — not the current API contract"
+
+    The proposal below is preserved to explain the alternatives considered. Its
+    API fields, Secret ownership and naming, creation sequence, and cache behavior
+    describe an earlier design and must not be used as current implementation or
+    installation guidance. The Secret-chain alternative was not implemented.
+
+## Current implementation
+
+The experimental runtime uses per-object references with `type: SecretReference`
+and `secretRef`, or inline content with `type: InlineManifest` and
+`inlineManifest`. See [Object storage](clusterobjectsets.md#object-storage-inline-vs-references)
+for current field names and semantics.
+
+For ClusterExtension-managed content, operator-controller:
+
+1. Renders the desired content into a ClusterObjectDeployment (COD) template.
+2. Packs object manifests into immutable, content-addressed Secrets named
+   `<extensionName>-<16 hex chars>`. Names depend on packed content, not a COS
+   revision number, so unchanged packed content can be shared across revisions.
+3. Creates these Secrets with controller owner references to the ClusterExtension
+   before applying the COD. It does not wait for a COS UID or patch COS ownership
+   onto the Secrets.
+4. Applies the COD; object-controller creates its immutable COS revisions and reads
+   their referenced Secrets directly from the API server in the declared namespaces,
+   without caching unrelated Secrets.
+
+Pruning archived COS history does not delete these ClusterExtension-owned Secrets.
+They are garbage collected when the ClusterExtension is deleted. Standalone COD
+and COS callers manage their own referenced Secret lifetime and must retain content
+needed by any retained revision. See
+[Referenced Secret lifetime](clusterobjectsets.md#referenced-secret-lifetime) and
+[the standalone tutorial](../tutorials/manage-clusterobjectdeployments.md#inspect-history-and-referenced-content).
+
+## Historical design and alternatives
+
+Everything below this heading is historical proposal text, including the examples.
+
 ## Need
 
 ClusterObjectSet (COS) objects embed full Kubernetes manifests inline in

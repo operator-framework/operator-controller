@@ -15,7 +15,7 @@ Each ClusterObjectSet has:
 - A **lifecycle state** — either `Active` (being reconciled) or `Archived` (inactive); transitions from Active to Archived but not back
 - A list of **phases** — immutable, ordered groups of Kubernetes objects that are applied sequentially
 - A **collision protection** strategy — immutable, controlling how pre-existing objects are handled
-- **Status conditions** — reporting rollout progress, availability, and success
+- A **Ready condition** — reporting resource reconciliation, with first rollout completion recorded separately in `status.completedAt`
 
 ClusterObjectSets can be used by any controller or system that needs to manage the rollout of a set of Kubernetes resources in a controlled, phased manner. Within OLM, when `BoxcutterRuntime` is enabled, operator-controller creates and updates a ClusterObjectDeployment (COD) for each ClusterExtension. The COD controller creates the immutable ClusterObjectSet revisions that deploy and upgrade the extension.
 
@@ -142,7 +142,7 @@ Phase names follow the DNS label standard ([RFC 1123](https://tools.ietf.org/htm
 
 ### Phase ordering in operator-controller
 
-When operator-controller creates a ClusterObjectSet for a ClusterExtension, it automatically assigns objects to phases based on their GroupKind:
+When operator-controller renders a ClusterObjectDeployment template for a ClusterExtension, it automatically assigns objects to phases based on their GroupKind. The COD controller copies those phases into each COS revision:
 
 | Order | Phase | Resource Kinds |
 | --- | --- | --- |
@@ -163,7 +163,7 @@ When operator-controller creates a ClusterObjectSet for a ClusterExtension, it a
 Any resource kind not listed above defaults to the `deploy` phase.
 
 !!! note
-    This phase ordering is specific to how operator-controller creates ClusterObjectSets. The API itself does not enforce any particular phase ordering — phases are applied in the order they appear in the `spec.phases` list.
+    This phase ordering is specific to how operator-controller renders COD templates. The APIs do not enforce any particular phase ordering — phases are applied in the order they appear in the template's `spec.phases` list.
 
 ## Readiness probes
 
@@ -211,13 +211,13 @@ The available strategies are:
 
 ## Object storage: inline vs. references
 
-Each object in a phase can be stored in one of two ways (exactly one must be set):
+Each object in a phase must set `type` and its corresponding content field. Exactly one of `inlineManifest` or `secretRef` must be set:
 
-`object`
+`type: InlineManifest` with `inlineManifest`
 :   The full Kubernetes manifest is embedded inline in the ClusterObjectSet. Simple and self-contained, but contributes to the overall size of the ClusterObjectSet resource in etcd.
 
-`ref`
-:   A reference to a Secret that holds the serialized object manifest. The `ref` specifies the Secret name, namespace, and data key containing either a JSON-encoded manifest or gzip-compressed JSON bytes. This allows ClusterObjectSets to manage bundles that would otherwise exceed etcd's 1.5 MiB object size limit.
+`type: SecretReference` with `secretRef`
+:   A reference to an immutable Secret that holds the serialized object manifest. The `secretRef` specifies the Secret name, namespace, and data key containing either a JSON-encoded manifest or gzip-compressed JSON bytes. This allows ClusterObjectSets to manage bundles that would otherwise exceed etcd's 1.5 MiB object size limit. Object-controller reads referenced Secrets directly from the API server in their declared namespaces.
 
 When operator-controller renders ClusterObjectDeployment templates for ClusterExtensions, it automatically externalizes objects into immutable Secrets:
 
@@ -225,7 +225,24 @@ When operator-controller renders ClusterObjectDeployment templates for ClusterEx
 - Objects larger than 900 KiB are gzip-compressed before storage (ref resolution auto-detects and transparently decompresses gzip-compressed values so consumers see the original JSON manifest)
 - Content-addressable naming (based on SHA-256 hashes of the data) ensures that Secret names and data keys are deterministic, making creation idempotent and safe to retry
 
-For a detailed design discussion, see [Large Bundle Support](large-bundle-support.md).
+### Referenced Secret lifetime
+
+For ClusterExtension-managed deployments, operator-controller creates the referenced
+Secrets before applying the COD. Each Secret is owned by the ClusterExtension,
+not by the COD or an individual COS. Secret names use the extension name and a
+content hash, so unchanged packed content can be reused across revisions.
+Pruning archived COS revisions does not delete these Secrets; they are garbage
+collected when the owning ClusterExtension is deleted.
+
+Standalone COD and COS callers manage the lifetime of their referenced Secrets.
+Keep each Secret available for every retained revision that references it. Do not
+assign a shared Secret exclusively to one COS if deleting that COS would remove
+content still needed by other revisions. A content change requires a new Secret
+reference, not an in-place edit to an immutable Secret.
+
+For historical design alternatives, see [Large Bundle Support](large-bundle-support.md).
+The current behavior is described here and in the
+[standalone COD tutorial](../tutorials/manage-clusterobjectdeployments.md#inspect-history-and-referenced-content).
 
 ## Status conditions
 
@@ -312,7 +329,7 @@ metadata:
 
 ### Inline objects
 
-This example shows a ClusterObjectSet with objects embedded directly in the spec. This is the simplest approach and works well when the total size of all objects stays within etcd's 1.5 MiB limit.
+This example shows a ClusterObjectSet with objects embedded directly in the spec. This is the simplest approach and works well when the total size of all objects stays within etcd's 1.5 MiB limit. The first phase creates the `my-app-system` namespace before the namespaced resources in later phases. Replace the illustrative controller image with one available to your cluster.
 
 ```yaml
 apiVersion: olm.operatorframework.io/v1
@@ -325,9 +342,18 @@ spec:
   lifecycleState: Active
   collisionProtection: Prevent
   phases:
+  - name: namespaces
+    objects:
+    - type: InlineManifest
+      inlineManifest:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: my-app-system
   - name: crds
     objects:
-    - object:
+    - type: InlineManifest
+      inlineManifest:
         apiVersion: apiextensions.k8s.io/v1
         kind: CustomResourceDefinition
         metadata:
@@ -350,13 +376,15 @@ spec:
                     type: object
   - name: rbac
     objects:
-    - object:
+    - type: InlineManifest
+      inlineManifest:
         apiVersion: v1
         kind: ServiceAccount
         metadata:
           name: my-app-controller
           namespace: my-app-system
-    - object:
+    - type: InlineManifest
+      inlineManifest:
         apiVersion: rbac.authorization.k8s.io/v1
         kind: ClusterRole
         metadata:
@@ -367,7 +395,8 @@ spec:
           verbs: ["get", "list", "watch", "create", "update", "delete"]
   - name: deploy
     objects:
-    - object:
+    - type: InlineManifest
+      inlineManifest:
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -391,15 +420,27 @@ spec:
 
 ### Secret references
 
-This example shows a ClusterObjectSet that references objects stored in Secrets. This is how operator-controller creates ClusterObjectSets, and is necessary when managing bundles with large resources like CRDs with extensive schemas.
+This example shows a ClusterObjectSet that references objects stored in Secrets.
+Operator-controller uses the same reference mechanism in COD templates, which the
+COD controller copies into COS revisions. It is necessary when managing bundles
+with large resources like CRDs with extensive schemas.
 
-Object manifests are stored in immutable Secrets. Secret names are content-addressable, computed as `<revisionName>-<16 hex chars>` where the suffix is the first 8 bytes of a SHA-256 digest over the Secret's sorted keys and values. Each data key is a 43-character base64url-encoded (no padding) SHA-256 hash of the stored object bytes.
+For ClusterExtension-managed content, Secret names are content-addressable,
+computed as `<extensionName>-<16 hex chars>` where the suffix is the first 8 bytes
+of a SHA-256 digest over the Secret's sorted keys and values. Each data key is a
+43-character base64url-encoded (no padding) SHA-256 hash of the stored object bytes.
+
+The following Secrets and hashes are illustrative placeholders, not a runnable
+manifest. Standalone callers may choose their own Secret names. These examples
+omit owner references; a standalone producer is responsible for their cleanup.
+Operator-controller instead sets a controller owner reference to the
+ClusterExtension, as described in [Referenced Secret lifetime](#referenced-secret-lifetime).
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: my-app-1-3a7f1b9c0e2d4f68
+  name: my-app-3a7f1b9c0e2d4f68
   namespace: olmv1-system
 immutable: true
 data:
@@ -410,7 +451,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: my-app-1-8b2e4a6c1d3f5097
+  name: my-app-8b2e4a6c1d3f5097
   namespace: olmv1-system
 immutable: true
 data:
@@ -435,24 +476,28 @@ spec:
   phases:
   - name: crds
     objects:
-    - ref:
-        name: my-app-1-3a7f1b9c0e2d4f68
+    - type: SecretReference
+      secretRef:
+        name: my-app-3a7f1b9c0e2d4f68
         namespace: olmv1-system
         key: "K8sTl2xQa0vNpR7mW4dYcJfHbE9gUiAoZX1sDj6wFCy"
   - name: rbac
     objects:
-    - ref:
-        name: my-app-1-8b2e4a6c1d3f5097
+    - type: SecretReference
+      secretRef:
+        name: my-app-8b2e4a6c1d3f5097
         namespace: olmv1-system
         key: "Pm5tRqLwXv8sCj3kFdNhYe7bUiA0oZG1x2W9acDfHJy"
-    - ref:
-        name: my-app-1-8b2e4a6c1d3f5097
+    - type: SecretReference
+      secretRef:
+        name: my-app-8b2e4a6c1d3f5097
         namespace: olmv1-system
         key: "Vn4mTsLwXp8rCk3jFdNhYe7bUiA0oZG1x2W9acDfHQy"
   - name: deploy
     objects:
-    - ref:
-        name: my-app-1-8b2e4a6c1d3f5097
+    - type: SecretReference
+      secretRef:
+        name: my-app-8b2e4a6c1d3f5097
         namespace: olmv1-system
         key: "Bq9nRtLxYw2sDk4lGePhZf8cVjB1pUiA0oZH3x5WaCdy"
 ```

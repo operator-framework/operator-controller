@@ -19,7 +19,13 @@ OLM v1 consists of the following components:
 
 * operator-controller
 * catalogd
-* object-controller (experimental): manages `ClusterObjectSet` resources independently of `ClusterExtension`
+* object-controller (experimental): reconciles mutable `ClusterObjectDeployment` templates and immutable `ClusterObjectSet` revisions, independently of `ClusterExtension` and `ClusterCatalog`
+
+Standard installations use operator-controller and catalogd. With the experimental
+`BoxcutterRuntime` enabled, operator-controller resolves and renders bundles into
+ClusterObjectDeployments; object-controller creates their revisions and reconciles
+the managed resources in phases. Object-controller can also be deployed standalone.
+See the [architecture](docs/project/olmv1_architecture.md) for component responsibilities.
 
 For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](docs/project/olmv1_design_decisions.md).
 

@@ -1,12 +1,50 @@
 # Protecting OLMv1 API Access
 
-By default, only cluster administrators have permission to read, create, modify, or delete `ClusterExtension` and `ClusterObjectSet` resources. No other users or groups have any access to these APIs unless explicitly granted by a cluster administrator.
+By default, only cluster administrators have permission to read, create, modify, or delete `ClusterExtension` resources and, when the experimental APIs are installed, `ClusterObjectDeployment` (COD) and `ClusterObjectSet` (COS) resources. No other users or groups have any access to these APIs unless explicitly granted by a cluster administrator.
 
-Because the operator-controller runs with `cluster-admin` privileges, any user granted write access to the `ClusterExtension` API is effectively being delegated cluster-admin trust. Cluster administrators are generally discouraged from delegating this access to non-admin users. If delegation is necessary, the controls described below can help limit the scope of what delegated users can do.
+Because operator-controller runs with `cluster-admin` privileges, any user granted write access to the `ClusterExtension` API is effectively being delegated cluster-admin trust. Cluster administrators are generally discouraged from delegating this access to non-admin users. If delegation is necessary, the controls described below can help limit the scope of what delegated users can do.
+
+!!! warning "Direct access to experimental rollout APIs"
+
+    The experimental object-controller also runs with `cluster-admin` privileges
+    by default and can apply arbitrary Kubernetes resources from COD templates or
+    COS revisions. Write access to either API delegates that trust directly; it is
+    not limited to installing catalog content or namespaced objects.
+
+    Admission policies that match only `ClusterExtension` do not constrain direct
+    COD or COS submissions. Catalog and package allowlists, installation namespace
+    restrictions, and ClusterExtension preflight settings do not protect this path.
+    Do not grant lower-level API write access to users whose installations are
+    intended to be constrained through ClusterExtension policies.
 
 ## RBAC
 
-If you must delegate `ClusterExtension` access to non-admin users, start by assigning narrowly scoped roles:
+If you must delegate `ClusterExtension` access to non-admin users, start by assigning narrowly scoped roles. The installer role below grants writes only to ClusterExtensions; operator-controller and object-controller use their own service accounts to manage the underlying CODs and COSs. Users do not need write access to those APIs to request an extension installation.
+
+The viewer role below includes read-only access to CODs and COSs for diagnosing
+experimental rollouts. Remove those resources from the viewer role if that
+visibility is unnecessary.
+
+!!! warning "Avoid sensitive information in COD/COS"
+
+    Shipping credentials, tokens, private keys, or other sensitive values through
+    COD templates or COS revision content is not recommended. These APIs are
+    rollout mechanisms, not a secret-distribution channel.
+
+    Inline manifests can include `kind: Secret`. Users with `get`, `list`, or
+    `watch` access to a COD or COS can read those embedded Secret values even
+    without permission to read Kubernetes Secrets. Base64 encoding is not
+    encryption, and immutable COS revisions can retain old values after the COD
+    template is updated.
+
+    Keep sensitive values in separately managed Kubernetes Secrets with
+    appropriately restricted access, and have workloads reference those Secrets
+    rather than embedding their values in rollout content. The object-storage
+    `secretRef` mechanism externalizes manifests; it is not a recommendation to
+    distribute sensitive information through COD/COS.
+
+    Grant the viewer role below only to users trusted to read all inline content
+    stored in the CODs and COSs it exposes.
 
 ### ClusterRole
 ```yaml
@@ -19,6 +57,7 @@ rules:
       - olm.operatorframework.io
     resources:
       - clusterextensions
+      - clusterobjectdeployments
       - clusterobjectsets
     verbs:
       - get
@@ -34,7 +73,6 @@ rules:
       - olm.operatorframework.io
     resources:
       - clusterextensions
-      - clusterobjectsets
     verbs:
       - create
       - update
