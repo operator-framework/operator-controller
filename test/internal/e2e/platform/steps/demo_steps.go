@@ -20,6 +20,8 @@ import (
 )
 
 func RegisterDemoSteps(sc *godog.ScenarioContext) {
+	sc.Step(`^(?i)resource "([^"]+)"(?: matching field selector "([^"]+)")? is displayed with columns "([^"]+)"$`, ResourceDisplayedWithColumns)
+	sc.Step(`^(?i)resource "([^"]+)" is controlled by ClusterObjectSet "([^"]+)"$`, ResourceControlledByClusterObjectSet)
 	sc.Step(`^(?i)catalog "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, CatalogReportsConditionWithoutReason)
 	sc.Step(`^(?i)catalog "([^"]+)" contains some packages$`, CatalogContainsSomePackages)
 	sc.Step(`^(?i)package "([^"]+)" in catalog "([^"]+)" has some channels defined$`, PackageHasSomeChannels)

@@ -7,17 +7,15 @@ on:
     paths:
       - 'api/*'
       - 'config/*'
-      - 'test/e2e/platform/features/demos.feature'
-      - 'test/internal/e2e/platform/steps/demo_steps.go'
-      - 'test/internal/e2e/platform/steps/asciicast_*.go'
+      - 'test/e2e/platform/features/*demos.feature'
+      - 'test/internal/e2e/platform/steps/*.go'
       - '.github/workflows/update-demos.yaml'
   pull_request:
     paths:
       - 'api/*'
       - 'config/*'
-      - 'test/e2e/platform/features/demos.feature'
-      - 'test/internal/e2e/platform/steps/demo_steps.go'
-      - 'test/internal/e2e/platform/steps/asciicast_*.go'
+      - 'test/e2e/platform/features/*demos.feature'
+      - 'test/internal/e2e/platform/steps/*.go'
       - '.github/workflows/update-demos.yaml'
 
 jobs:
