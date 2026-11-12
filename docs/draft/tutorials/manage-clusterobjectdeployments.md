@@ -14,6 +14,23 @@ flowchart LR
     COS --> CM[ConfigMap]
 ```
 
+## Demo: revisions and ownership
+
+This recording follows A → B → A, showing the new COS revision and ConfigMap
+owner at each update, the unchanged ConfigMap UID, archived history, and cascading
+cleanup when the COD is deleted.
+
+```asciinema-player
+{
+  "file": "../../../demos/cod-revisions-and-ownership.cast"
+}
+```
+
+The demo uses direct COD resources in the experimental E2E environment, which
+also runs operator-controller and catalogd. It does not create a ClusterExtension
+or use a catalog. The installation instructions below show how to run only
+object-controller.
+
 ## Prerequisites
 
 - A Kubernetes test cluster where you can install CRDs and cluster-scoped RBAC.
