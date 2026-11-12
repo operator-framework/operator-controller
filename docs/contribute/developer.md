@@ -16,7 +16,23 @@ First, you need to install the CRDs and the operator-controller into a new [KIND
 make run
 ```
 
-This will build a local container image of the operator-controller, create a new KIND cluster and then deploy onto that cluster. This will also deploy the catalogd and cert-manager dependencies.
+This builds the controller images, creates a KIND cluster, and deploys OLMv1 with
+cert-manager using the standard configuration.
+
+To develop with the experimental configuration instead, use:
+
+```sh
+make run-experimental
+```
+
+The experimental configuration enables a collection of features, not just the
+object-controller runtime. See the chart's
+[standard defaults](https://github.com/operator-framework/operator-controller/blob/main/helm/olmv1/values.yaml)
+and [experimental overrides](https://github.com/operator-framework/operator-controller/blob/main/helm/experimental.yaml)
+for the current settings rather than relying on a separate feature list here.
+For controller responsibilities, see [OLMv1 architecture](../project/olmv1_architecture.md).
+For standalone object-controller development, see
+[Manage standalone ClusterObjectDeployments](../draft/tutorials/manage-clusterobjectdeployments.md).
 
 ### To Install Any Given Release
 
@@ -31,23 +47,82 @@ curl -L -s https://github.com/operator-framework/operator-controller/releases/la
 ```
 
 ### Manual Step-by-Step Installation
-1. Install Instances of Custom Resources:
+
+Run these commands from the repository root against a test cluster with
+cert-manager installed and ready. The chart defaults to Linux control-plane nodes;
+customize `deployments.templateSpec.nodeSelector` if the target cluster does not
+have schedulable nodes with that label. The cluster must be able to pull the images
+from your registry.
+
+The chart's `namespaces.certManager.name` must match cert-manager's **cluster
+resource namespace** (its `--cluster-resource-namespace` setting), which is not
+necessarily the namespace of its controller Deployment. The chart defaults to
+`cert-manager` and creates its CA Certificate and Secret there. If cert-manager
+uses another cluster resource namespace, set `CERT_MANAGER_NAMESPACE` in step 2
+accordingly; otherwise the ClusterIssuer cannot find the CA Secret and controller
+certificates will not be issued.
+
+1. Build and push the standard controller images. Use a registry namespace you can
+   push to, and choose a new tag when rebuilding.
+
+    `make docker-build` builds Linux binaries for the build host's `GOARCH` and
+    does not select a container target platform. Use a build host and container
+    builder whose architecture matches the cluster nodes that will run the
+    controllers (for example, `amd64` or `arm64`). If they differ, run this
+    workflow on a matching build host; overriding `GOARCH` alone is not enough.
 
     ```sh
-    kubectl apply -f config/samples/
+    export IMAGE_REGISTRY='<your-registry>/<your-namespace>'
+    export IMAGE_TAG='dev-1'
+    export CONTAINER_RUNTIME='docker' # Use podman on Podman-only hosts.
+    export OPCON_IMAGE_REPO="${OPCON_IMAGE_REPO:-$IMAGE_REGISTRY/operator-controller}"
+    export CATD_IMAGE_REPO="${CATD_IMAGE_REPO:-$IMAGE_REGISTRY/catalogd}"
+    make docker-build CONTAINER_RUNTIME="$CONTAINER_RUNTIME" IMAGE_REGISTRY="$IMAGE_REGISTRY" IMAGE_TAG="$IMAGE_TAG"
+    "$CONTAINER_RUNTIME" push "$OPCON_IMAGE_REPO:$IMAGE_TAG"
+    "$CONTAINER_RUNTIME" push "$CATD_IMAGE_REPO:$IMAGE_TAG"
     ```
 
-2. Build and push your image to the location specified by `IMG`:
+    Use the same container runtime for building and pushing so both commands use
+    the same local image store. Export any repository overrides in your shell
+    before running these steps; passing them only as `make` arguments does not
+    make them available to the push and Helm commands.
+
+    `make docker-build` also builds object-controller. If your configuration enables
+    that component, push its image with the same runtime and configure
+    `options.objectController.deployment.image` in addition to the other images.
+    Its build repository can be overridden by exporting `OBJECT_CONTROLLER_IMAGE_REPO`.
+
+2. Render and apply the standard chart using your images, then wait for the
+   controllers to be ready:
 
     ```sh
-    make docker-build docker-push IMG=<some-registry>/operator-controller:tag
+    export CERT_MANAGER_NAMESPACE='cert-manager' # Match cert-manager's cluster resource namespace.
+    go tool helm template olmv1 helm/olmv1 \
+      --values helm/cert-manager.yaml \
+      --set-string namespaces.certManager.name="$CERT_MANAGER_NAMESPACE" \
+      --set-string options.operatorController.deployment.image="$OPCON_IMAGE_REPO:$IMAGE_TAG" \
+      --set-string options.catalogd.deployment.image="$CATD_IMAGE_REPO:$IMAGE_TAG" \
+      > /tmp/olmv1-standard.yaml
+    kubectl apply -f /tmp/olmv1-standard.yaml
+    kubectl -n olmv1-system rollout status deployment/catalogd-controller-manager --timeout=180s
+    kubectl -n olmv1-system rollout status deployment/operator-controller-controller-manager --timeout=180s
     ```
 
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+3. Select the samples appropriate to the installed APIs:
 
     ```sh
-    make deploy IMG=<some-registry>/operator-controller:tag
+    kubectl apply -f config/samples/catalogd_operatorcatalog.yaml
+    kubectl wait --for=condition=Serving clustercatalog/operatorhubio --timeout=180s
+    kubectl apply -f config/samples/olm_v1_clusterextension.yaml
     ```
+
+    Do not apply the entire `config/samples/` directory. The COD sample requires
+    the experimental COD/COS CRDs and a running object-controller, neither of
+    which is part of the standard installation above. Follow the
+    [standalone tutorial](../draft/tutorials/manage-clusterobjectdeployments.md)
+    to install that controller and exercise the COD sample. See the
+    [sample guidance](https://github.com/operator-framework/operator-controller/blob/main/config/README.md)
+    for prerequisites and cleanup.
 
 ### Modifying the API definitions
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:

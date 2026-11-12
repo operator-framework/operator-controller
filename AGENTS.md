@@ -8,14 +8,26 @@ repository. It covers the WHAT, WHY, and HOW of contributing to this codebase.
 ## Architecture Overview
 
 operator-controller is the central component of Operator Lifecycle Manager (OLM) v1, extending Kubernetes with APIs to
-install and manage cluster extensions. The project follows a microservices architecture with two main binaries:
+install and manage cluster extensions. Standard installations run operator-controller and catalogd;
+the experimental runtime adds an independently deployable object-controller binary:
 
-**operator-controller** 
- - manages `ClusterExtension` and `ClusterObjectSet` CRDs
+**operator-controller**
+ - reconciles `ClusterExtension` resources
  - resolves bundles from configured source
  - unpacks bundles and renders manifests from them
- - applies manifests with phase-based rollouts
+ - applies rendered content through Helm in standard installations
+ - with `BoxcutterRuntime`, creates content Secrets owned by the ClusterExtension, applies a
+   `ClusterObjectDeployment`, and observes its rollout status
  - monitors extension lifecycle
+
+**object-controller (experimental)**
+ - reconciles `ClusterObjectDeployment` (COD) and `ClusterObjectSet` (COS) resources
+ - creates immutable COS revisions from mutable COD templates, enforces deadlines, and prunes archived history
+ - applies revision content in phases and handles readiness, ownership handoff, archival, and teardown
+ - runs in its own Deployment with its own service account and leader-election lease
+ - can run without ClusterExtension or ClusterCatalog APIs or controllers
+ - reads immutable referenced Secrets directly in their declared namespaces; standalone callers manage their lifetime
+ - does not delete ClusterExtension-owned content Secrets when pruning COS history
 
 **catalogd**
  - manages user-defined `ClusterCatalog` resources to make references catalog metadata available to the cluster.
@@ -194,9 +206,11 @@ make generate-mocks
 ├── api/v1/                          # API definitions (CRD types)
 ├── cmd/                             # Main entry points
 │   ├── operator-controller/         # Operator controller binary
+│   ├── object-controller/           # Experimental COD/COS controller binary
 │   └── catalogd/                    # Catalogd binary
 ├── internal/                        # Private implementation
 │   ├── operator-controller/         # Operator controller internals
+│   ├── object-controller/           # COD/COS reconciliation and status
 │   ├── catalogd/                    # Catalogd internals
 │   └── shared/                      # Shared utilities
 ├── helm/                            # Helm charts
@@ -213,7 +227,7 @@ make generate-mocks
 │   └── regression/                  # Regression tests
 ├── docs/                            # Documentation (mkdocs)
 ├── hack/                            # Scripts and tools
-├── config/samples                   # Example manifests for ClusterCatalog and ClusterExtension
+├── config/samples                   # ClusterCatalog, ClusterExtension, and experimental COD examples
 ├── manifests/                       # Generated manifests
 ├── .github/workflows/               # CI/CD workflows
 ├── OWNERS                           # Defines approver and reviewer groups
@@ -233,7 +247,8 @@ make generate-mocks
 
 - **Primary CRDs:**
   - `ClusterExtension` - declares desired extension installations
-  - `ClusterObjectSet` - revision management (experimental)
+  - `ClusterObjectDeployment` - mutable desired content, rollout policy, and revision management (experimental)
+  - `ClusterObjectSet` - immutable revision content and phased resource reconciliation (experimental)
   - `ClusterCatalog` - catalog source definitions
 - **API domain:** `olm.operatorframework.io`
   - This is the API group of our user-facing CRDs
@@ -244,7 +259,7 @@ make generate-mocks
 
 Two manifest variants exist:
 - **Standard:** Production-ready features
-- **Experimental:** Features under development/testing (includes `ClusterObjectSet` API)
+- **Experimental:** Features under development/testing (includes `ClusterObjectDeployment` and `ClusterObjectSet` APIs)
 
 Experimental APIs may change incompatibly between releases. We do not provide migration support for
 experimental API changes.
@@ -408,11 +423,16 @@ ScalarField string `json:"scalarField,omitempty"`
 ### Key Components to Understand
 
 **operator-controller:**
-- `ClusterExtension` controller - manages extension installations
-- `ClusterObjectSet` controller - manages revision lifecycle
+- `ClusterExtension` controller - manages extension installations; with `BoxcutterRuntime`, owns a COD with the same name
 - Resolver - bundle version selection
 - Applier - applies manifests to cluster
 - Content Manager - manages extension content
+
+**object-controller (experimental):**
+- `ClusterObjectDeployment` controller - creates and owns COS revisions, reports rollout status, enforces deadlines, and prunes history
+- `ClusterObjectSet` controller - applies immutable content in phases, tracks readiness/completion, and handles ownership handoff and teardown
+- Integrated ownership: ClusterExtension → COD → COS → managed objects; content Secrets are owned directly by ClusterExtension
+- Direct COD/COS write access delegates privileged resource deployment and is not constrained by ClusterExtension-only admission policies
 
 **catalogd:**
 - Catalog controllers - manage catalog unpacking
