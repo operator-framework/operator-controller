@@ -484,9 +484,13 @@ func (c *ClusterObjectSetReconciler) ensureFinalizer(
 	if err != nil {
 		return fmt.Errorf("marshalling patch to remove finalizer: %w", err)
 	}
-	if err := c.Client.Patch(ctx, obj, client.RawPatch(types.MergePatchType, patchJSON)); err != nil {
+	// Patch a copy so the response does not discard status computed earlier in
+	// this reconciliation. Keep the new resource version for the status update.
+	patched := obj.DeepCopyObject().(client.Object)
+	if err := c.Client.Patch(ctx, patched, client.RawPatch(types.MergePatchType, patchJSON)); err != nil {
 		return fmt.Errorf("adding finalizer: %w", err)
 	}
+	obj.SetResourceVersion(patched.GetResourceVersion())
 	return nil
 }
 
