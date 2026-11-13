@@ -22,6 +22,8 @@ import (
 // RegisterSteps registers ClusterObjectSet and ClusterObjectDeployment assertions.
 func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^object-controller is available$`, ObjectControllerIsAvailable)
+	sc.Step(`^ClusterObjectSet "([^"]+)" has a completion timestamp$`, ClusterObjectSetHasCompletion)
+	sc.Step(`^ClusterObjectSet "([^"]+)" completed before the deadline of ClusterObjectDeployment "([^"]+)"$`, ClusterObjectSetCompletedBeforeDeadline)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" lifecycle is set to "([^"]+)"$`, ClusterObjectSetLifecycleUpdate)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterObjectSetReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterObjectSet "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterObjectSetReportsConditionWithMsg)
