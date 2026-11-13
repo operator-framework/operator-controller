@@ -76,12 +76,30 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	helmRelease *release.Release, ext *ocv1.ClusterExtension,
 	objectLabels map[string]string,
 ) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
+	objs, revisionAnnotations, err := renderHelmReleaseContent(ctx, helmRelease, objectLabels)
+	if err != nil {
+		return nil, err
+	}
+	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
+	rev.WithName(fmt.Sprintf("%s-1", ext.Name))
+	rev.Spec.WithRevision(1)
+	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionNone) // allow to adopt objects from previous release
+	return rev, nil
+}
+
+// renderHelmReleaseContent converts stored Helm manifests and bundle metadata
+// into sanitized inline objects and revision annotations.
+func renderHelmReleaseContent(
+	ctx context.Context,
+	helmRelease *release.Release,
+	objectLabels map[string]string,
+) ([]ocv1ac.ClusterObjectSetObjectApplyConfiguration, map[string]string, error) {
 	docs := splitManifestDocuments(helmRelease.Manifest)
 	objs := make([]ocv1ac.ClusterObjectSetObjectApplyConfiguration, 0, len(docs))
 	for _, doc := range docs {
 		obj := unstructured.Unstructured{}
 		if err := yaml.Unmarshal([]byte(doc), &obj); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		obj.SetLabels(mergeStringMaps(obj.GetLabels(), objectLabels))
 
@@ -118,11 +136,7 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	if v, ok := helmRelease.Labels[labels.BundleReleaseKey]; ok {
 		revisionAnnotations[labels.BundleReleaseKey] = v
 	}
-	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
-	rev.WithName(fmt.Sprintf("%s-1", ext.Name))
-	rev.Spec.WithRevision(1)
-	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionNone) // allow to adopt objects from previous release
-	return rev, nil
+	return objs, revisionAnnotations, nil
 }
 
 // renderObjects converts plain client.Objects to ClusterObjectSetObjectApplyConfigurations
