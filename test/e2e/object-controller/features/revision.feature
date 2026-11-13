@@ -339,6 +339,7 @@ Feature: Install ClusterObjectSet
     And resource "configmap/test-configmap-3" is installed
     And ClusterObjectSet "${COS_NAME}" reports Ready as True with Reason AllObjectsReady
 
+  @COSObjectLifecycle
   Scenario: User can install a ClusterObjectSet with objects stored in Secrets
     Given namespace "${TEST_NAMESPACE}" is available
     When resource is applied
