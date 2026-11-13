@@ -138,7 +138,10 @@ func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Clie
 		controllers.RetrieveRevisionStates(d.RevisionStatesGetter),
 	}
 	if r := d.Resolver; r != nil {
-		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.ResolveBundle(r, cl))
+		reconciler.Resolvers = controllers.Resolvers{
+			ocv1.SourceTypeCatalog: &controllers.CatalogSource{Resolver: r, Client: cl},
+		}
+		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.ResolveBundle(reconciler.Resolvers))
 	}
 	if i := d.ImagePuller; i != nil {
 		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.UnpackBundle(i, d.ImageCache))
