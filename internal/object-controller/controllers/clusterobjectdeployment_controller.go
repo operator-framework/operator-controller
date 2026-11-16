@@ -97,7 +97,11 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 		return ctrl.Result{}, err
 	}
 
-	owned, adoptionErr := c.adoptOrphans(ctx, cod, revisions)
+	// Adoption and archival update the group view in place, so owned revisions are
+	// derived from it afterwards.
+	adoptionErr := c.adoptOrphans(ctx, cod, revisions)
+	archiveErr := c.archivePreviousRevisions(ctx, cod, revisions)
+	owned := controlledRevisions(cod, revisions)
 
 	// Garbage collection is best-effort housekeeping and must not block rollout or
 	// status reconciliation: a persistently failing prune (e.g. a delete denied by
@@ -105,7 +109,9 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 	// updated template and leave status stale even with a healthy active revision.
 	// Preserve the error, continue reconciling, and return it joined with the
 	// rollout outcome so the failure is still surfaced and retried.
-	gcErr := c.garbageCollectArchivedRevisions(ctx, cod, owned)
+	// Treat archival and pruning errors as independent housekeeping failures;
+	// carry both through every rollout early return below.
+	gcErr := errors.Join(archiveErr, c.garbageCollectArchivedRevisions(ctx, cod, owned))
 	setAvailable(cod, owned)
 
 	// Group membership determines revision ordering, while controller ownership
@@ -149,25 +155,19 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 	return result, errors.Join(gcErr, rolloutErr)
 }
 
-// adoptOrphans returns the deployment's owned revisions, adopting non-deleting,
-// ownerless revisions that carry the object-controller managed-by label. Successful
-// adoptions also update the group slice before conflict detection. Other group members
-// are left untouched: an ownerless revision missing the managed-by label (surfaced on the
+// adoptOrphans adopts non-deleting, ownerless revisions that carry the object-controller
+// managed-by label, updating successfully adopted revisions in place in the group slice
+// before conflict detection. Other group members are left untouched: an ownerless revision missing the managed-by label (surfaced on the
 // Progressing condition as UnmanagedRevision when it leads the group), and a revision
 // still referencing an older UID of this deployment (e.g. a restored revision), which is
 // left to garbage collection rather than racing it by rewriting its owner reference —
 // when such a revision leads the group, reconcile simply holds off creating a competing
 // revision until GC removes it.
-func (c *ClusterObjectDeploymentReconciler) adoptOrphans(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) ([]ocv1.ClusterObjectSet, error) {
-	owned := make([]ocv1.ClusterObjectSet, 0, len(revisions))
+func (c *ClusterObjectDeploymentReconciler) adoptOrphans(ctx context.Context, cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) error {
 	var errs []error
 	for i := range revisions {
 		rev := &revisions[i]
-		if hasForeignController(cod, rev) {
-			continue
-		}
-		if metav1.IsControlledBy(rev, cod) {
-			owned = append(owned, *rev)
+		if hasForeignController(cod, rev) || metav1.IsControlledBy(rev, cod) {
 			continue
 		}
 		if !rev.DeletionTimestamp.IsZero() {
@@ -198,9 +198,20 @@ func (c *ClusterObjectDeploymentReconciler) adoptOrphans(ctx context.Context, co
 			continue
 		}
 		*rev = *adopted
-		owned = append(owned, *rev)
 	}
-	return owned, errors.Join(errs...)
+	return errors.Join(errs...)
+}
+
+// controlledRevisions returns the group members controlled by the deployment,
+// including revisions adopted during this reconciliation and deleting revisions.
+func controlledRevisions(cod *ocv1.ClusterObjectDeployment, revisions []ocv1.ClusterObjectSet) []ocv1.ClusterObjectSet {
+	owned := make([]ocv1.ClusterObjectSet, 0, len(revisions))
+	for i := range revisions {
+		if isControlledByDeployment(cod, &revisions[i]) {
+			owned = append(owned, revisions[i])
+		}
+	}
+	return owned
 }
 
 // isUnmanagedRevision reports whether an ownerless, non-foreign group member cannot be
@@ -215,6 +226,13 @@ func isUnmanagedRevision(cod *ocv1.ClusterObjectDeployment, cos *ocv1.ClusterObj
 		return false
 	}
 	return cos.Labels[labels.ManagedByKey] != labels.ManagedByObjectController
+}
+
+// isControlledByDeployment reports whether cos's controller reference identifies cod.
+// metav1.IsControlledBy compares only the UID, so a reference that names another
+// controller kind or name while carrying cod's UID is rejected as foreign here.
+func isControlledByDeployment(cod *ocv1.ClusterObjectDeployment, cos *ocv1.ClusterObjectSet) bool {
+	return !hasForeignController(cod, cos) && metav1.IsControlledBy(cos, cod)
 }
 
 // hasForeignController distinguishes another controller from an adoptable orphan

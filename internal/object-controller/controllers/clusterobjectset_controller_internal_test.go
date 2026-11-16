@@ -115,57 +115,6 @@ func Test_ClusterObjectSetReconciler_listSiblingRevisions(t *testing.T) {
 	}
 }
 
-func Test_ClusterObjectSetReconciler_listPreviousRevisions(t *testing.T) {
-	testScheme := runtime.NewScheme()
-	require.NoError(t, ocv1.AddToScheme(testScheme))
-
-	for _, tc := range []struct {
-		name         string
-		existingObjs func() []client.Object
-		currentRev   string
-		expectedRevs []string
-	}{
-		{
-			name: "should return only lower-revision active siblings",
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtensionInternal()
-				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
-				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
-				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
-				return []client.Object{ext, rev1, rev2, rev3}
-			},
-			currentRev:   "rev-2",
-			expectedRevs: []string{"rev-1"},
-		},
-		{
-			name: "should exclude higher-revision siblings",
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtensionInternal()
-				rev1 := newTestClusterObjectSetInternal(t, "rev-1")
-				rev2 := newTestClusterObjectSetInternal(t, "rev-2")
-				rev3 := newTestClusterObjectSetInternal(t, "rev-3")
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
-				return []client.Object{ext, rev1, rev2, rev3}
-			},
-			currentRev:   "rev-1",
-			expectedRevs: []string{},
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			result := callRevisionLister(t, testScheme, tc.existingObjs(), tc.currentRev,
-				func(r *ClusterObjectSetReconciler, ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
-					return r.listPreviousRevisions(ctx, cos)
-				})
-			require.ElementsMatch(t, tc.expectedRevs, result)
-		})
-	}
-}
-
 func Test_ClusterObjectSetReconciler_OwnerChangesPreserveRevisionChain(t *testing.T) {
 	scheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(scheme))
@@ -213,10 +162,6 @@ func Test_ClusterObjectSetReconciler_OwnerChangesPreserveRevisionChain(t *testin
 			require.NoError(t, err)
 			require.Len(t, siblings, 1)
 			require.Equal(t, previous.Name, siblings[0].Name)
-			predecessors, err := r.listPreviousRevisions(t.Context(), current)
-			require.NoError(t, err)
-			require.Len(t, predecessors, 1)
-			require.Equal(t, previous.Name, predecessors[0].Name)
 		})
 	}
 }
