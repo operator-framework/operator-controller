@@ -32,17 +32,24 @@ Feature: Operator upgrade verification
             version: 1.0.0
       """
     And ClusterExtension is available
+
+  # The installer and upgrader run once per suite. Run this scenario first so
+  # the extension was installed by the source OLM, before the target is deployed.
+  Scenario: ClusterExtension remains functional after OLM upgrade
+    Given the installed extension resources are remembered
     And OLM is upgraded
     And catalogd is ready to reconcile resources
     And operator-controller is ready to reconcile resources
+    And ClusterExtension is reconciled
+    And the Helm migration is complete for a standard-to-experimental upgrade
+    When ClusterExtension version is updated to "1.0.1"
+    Then ClusterExtension is rolled out
+    And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"
 
   Scenario: ClusterCatalog continues unpacking after OLM upgrade
+    Given OLM is upgraded
+    And catalogd is ready to reconcile resources
+    And operator-controller is ready to reconcile resources
     When catalog "test" is reconciled
     Then catalog "test" reports Progressing as True with Reason Succeeded
     And catalog "test" reports Serving as True with Reason Available
-
-  Scenario: ClusterExtension remains functional after OLM upgrade
-    Given ClusterExtension is reconciled
-    When ClusterExtension version is updated to "1.0.1"
-    Then ClusterExtension is available
-    And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"

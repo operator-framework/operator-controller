@@ -49,6 +49,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, NamedClusterExtensionReportsCondition)
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, NamedClusterExtensionReportsConditionWithMessageFragment)
 	sc.Step(`^(?i)ClusterExtension is reconciled$`, shared.ClusterExtensionIsReconciled)
+	sc.Step(`^(?i)the installed extension resources are remembered$`, RememberInstalledExtensionResources)
+	sc.Step(`^(?i)the Helm migration is complete for a standard-to-experimental upgrade$`, HelmMigrationIsCompleteAfterUpgrade)
 }
 
 // BundleInstalled waits for the ClusterExtension to report the specified bundle name and version as installed. Polls with timeout.
