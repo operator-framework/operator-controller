@@ -106,7 +106,7 @@ type ClusterExtensionReconciler struct {
 }
 
 type StorageMigrator interface {
-	Migrate(context.Context, *ocv1.ClusterExtension, map[string]string) error
+	Migrate(context.Context, *ocv1.ClusterExtension, map[string]string) (*ocv1.ClusterObjectDeployment, error)
 }
 
 type Applier interface {

@@ -14,8 +14,7 @@ import (
 )
 
 // buildClusterObjectDeployment constructs a ClusterObjectDeployment applyconfiguration
-// from rendered content. It mirrors the structure of buildClusterObjectSet but produces
-// a COD with a template instead of directly setting COS-specific fields.
+// from rendered content. The deployment controller creates revisions from its template.
 func buildClusterObjectDeployment(
 	objects []ocv1ac.ClusterObjectSetObjectApplyConfiguration,
 	ext *ocv1.ClusterExtension,

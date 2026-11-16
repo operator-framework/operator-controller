@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -109,8 +110,14 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 			labels.OwnerNameKey: ext.GetName(),
 		}
 
-		if err := m.Migrate(ctx, ext, objLbls); err != nil {
+		cod, err := m.Migrate(ctx, ext, objLbls)
+		if err != nil {
 			return nil, fmt.Errorf("migrating storage: %w", err)
+		}
+		if cod != nil {
+			// Owned-COD watches wake the extension; this bounds waits for cache
+			// visibility and missed events without changing rollout deadlines.
+			return &ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 		return nil, nil
 	}

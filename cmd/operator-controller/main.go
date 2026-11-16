@@ -679,7 +679,6 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		Scheme:             c.mgr.GetScheme(),
 		ActionClientGetter: acg,
 		RevisionGenerator:  rg,
-		FieldOwner:         fieldOwner,
 	}
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),

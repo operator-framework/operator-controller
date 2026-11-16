@@ -21,39 +21,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
-func TestGenerateRevisionFromHelmRelease_PreservesCOS(t *testing.T) {
-	helmRelease, ext, objectLabels := helmReleaseGenerationFixture(t)
-	input := struct {
-		release      *release.Release
-		extension    *ocv1.ClusterExtension
-		objectLabels map[string]string
-	}{
-		release:      helmRelease,
-		extension:    ext,
-		objectLabels: objectLabels,
-	}
-	// Pin the legacy COS contract, including inline content and omission of
-	// COD-specific defaults such as the extension's progress deadline.
-	want := ocv1ac.ClusterObjectSet("test-ext-1").
-		WithLabels(map[string]string{labels.OwnerKindKey: ocv1.ClusterExtensionKind, labels.OwnerNameKey: ext.Name}).
-		WithAnnotations(expectedHelmBundleAnnotations()).
-		WithSpec(ocv1ac.ClusterObjectSetSpec().
-			WithGroup(ext.Name).
-			WithRevision(1).
-			WithLifecycleState(ocv1.ClusterObjectSetLifecycleStateActive).
-			WithCollisionProtection(ocv1.CollisionProtectionNone).
-			WithProgressionProbes(defaultProgressionProbes...).
-			WithPhases(expectedHelmPhases(t)...))
-
-	// When the legacy generator converts the stored release.
-	gen := &SimpleRevisionGenerator{}
-	revision, err := gen.GenerateRevisionFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
-
-	// Then it preserves the inline COS contract and its original defaults.
-	require.NoError(t, err)
-	assert.Equal(t, want, revision)
-}
-
 func TestGenerateClusterObjectDeploymentFromHelmRelease_Metadata(t *testing.T) {
 	// Given stored Helm bundle metadata and the labels used for managed resources.
 	helmRelease, ext, objectLabels := helmReleaseGenerationFixture(t)
@@ -233,9 +200,7 @@ func TestHelmReleaseGeneration_BundleReleaseMetadata(t *testing.T) {
 			maps.Copy(helmRelease.Labels, tc.input.releaseLabels)
 			gen := &SimpleRevisionGenerator{SystemNamespace: tc.input.systemNamespace}
 
-			// When both generators convert the stored release.
-			revision, err := gen.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
-			require.ErrorIs(t, err, tc.want.err)
+			// When the generator creates the COD and its packed content.
 			cod, secrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
 			require.ErrorIs(t, err, tc.want.err)
 			objects, err := objectsFromSecrets(secrets)
@@ -248,13 +213,7 @@ func TestHelmReleaseGeneration_BundleReleaseMetadata(t *testing.T) {
 				assert.Equal(t, tc.want.present, present)
 				assert.Equal(t, tc.want.value, value)
 			}
-			assertRelease(revision.Annotations)
 			assertRelease(cod.Spec.Template.Metadata.Annotations)
-			for _, phase := range revision.Spec.Phases {
-				for _, obj := range phase.Objects {
-					assertRelease(obj.InlineManifest.GetAnnotations())
-				}
-			}
 			for _, obj := range objects {
 				assertRelease(obj.GetAnnotations())
 			}
@@ -352,88 +311,45 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_ManifestOrderDoesNotChan
 }
 
 func TestHelmReleaseGeneration_DoesNotMutateInputs(t *testing.T) {
+	// Given independent snapshots of the Helm record, CE, and object labels.
 	helmRelease, ext, objectLabels := helmReleaseGenerationFixture(t)
 	helmRelease.Labels[labels.BundleReleaseKey] = ""
-	type input struct {
-		legacy          bool
+	input := struct {
 		release         *release.Release
 		extension       *ocv1.ClusterExtension
 		objectLabels    map[string]string
 		systemNamespace string
+	}{
+		release:         helmRelease,
+		extension:       ext,
+		objectLabels:    objectLabels,
+		systemNamespace: "test-system",
 	}
-	type expected struct {
+	want := struct {
 		release      release.Release
 		extension    *ocv1.ClusterExtension
 		objectLabels map[string]string
 		err          error
-	}
-	testCases := []struct {
-		name  string
-		input input
-		want  expected
 	}{
-		{
-			name: "COS",
-			input: input{
-				legacy:          true,
-				release:         helmRelease,
-				extension:       ext,
-				objectLabels:    objectLabels,
-				systemNamespace: "test-system",
-			},
-			want: expected{
-				release:      *helmRelease,
-				extension:    ext.DeepCopy(),
-				objectLabels: maps.Clone(objectLabels),
-				err:          nil,
-			},
-		},
-		{
-			name: "COD",
-			input: input{
-				legacy:          false,
-				release:         helmRelease,
-				extension:       ext,
-				objectLabels:    objectLabels,
-				systemNamespace: "test-system",
-			},
-			want: expected{
-				release:      *helmRelease,
-				extension:    ext.DeepCopy(),
-				objectLabels: maps.Clone(objectLabels),
-				err:          nil,
-			},
-		},
+		release:      *helmRelease,
+		extension:    ext.DeepCopy(),
+		objectLabels: maps.Clone(objectLabels),
+		err:          nil,
 	}
+	want.release.Labels = maps.Clone(helmRelease.Labels)
+	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Given independent caller-owned inputs for this generator.
-			helmRelease := *tc.input.release
-			helmRelease.Labels = maps.Clone(tc.input.release.Labels)
-			ext := tc.input.extension.DeepCopy()
-			objectLabels := maps.Clone(tc.input.objectLabels)
-			gen := &SimpleRevisionGenerator{SystemNamespace: tc.input.systemNamespace}
+	// When generation reads those inputs.
+	_, _, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
+	require.ErrorIs(t, err, want.err)
 
-			// When generation reads the release, extension, and labels.
-			var err error
-			if tc.input.legacy {
-				_, err = gen.GenerateRevisionFromHelmRelease(t.Context(), &helmRelease, ext, objectLabels)
-			} else {
-				_, _, err = gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), &helmRelease, ext, objectLabels)
-			}
-
-			// Then all caller-owned inputs retain their declared values.
-			require.ErrorIs(t, err, tc.want.err)
-			assert.Equal(t, tc.want.release, helmRelease)
-			assert.Equal(t, tc.want.extension, ext)
-			assert.Equal(t, tc.want.objectLabels, objectLabels)
-		})
-	}
+	// Then all caller-owned inputs retain their original values.
+	assert.Equal(t, want.release, *input.release)
+	assert.Equal(t, want.extension, input.extension)
+	assert.Equal(t, want.objectLabels, input.objectLabels)
 }
 
 func TestHelmReleaseGenerationMalformedManifest(t *testing.T) {
-	// Given a Helm manifest with a malformed second document.
 	input := struct {
 		release         *release.Release
 		extension       *ocv1.ClusterExtension
@@ -445,31 +361,24 @@ func TestHelmReleaseGenerationMalformedManifest(t *testing.T) {
 		objectLabels:    nil,
 		systemNamespace: "test-system",
 	}
-	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
-	// Preserve exact error parity with the existing COS conversion path.
-	revision, legacyErr := gen.GenerateRevisionFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
-	require.Error(t, legacyErr)
 	want := struct {
-		revision   *ocv1ac.ClusterObjectSetApplyConfiguration
-		errMessage string
 		hasError   bool
 		deployment *ocv1ac.ClusterObjectDeploymentApplyConfiguration
 		secrets    []corev1.Secret
 	}{
-		revision:   nil,
-		errMessage: legacyErr.Error(),
 		hasError:   true,
 		deployment: nil,
 		secrets:    nil,
 	}
+
+	// Given a Helm manifest with a malformed second document.
+	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
 
 	// When generation encounters the invalid document.
 	cod, secrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
 
 	// Then it reports an error without returning a partial deployment or content.
 	require.Equal(t, want.hasError, err != nil, "%v", err)
-	require.EqualError(t, err, want.errMessage)
-	assert.Equal(t, want.revision, revision)
 	assert.Equal(t, want.deployment, cod)
 	assert.Equal(t, want.secrets, secrets)
 }

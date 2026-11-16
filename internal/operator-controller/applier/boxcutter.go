@@ -39,47 +39,24 @@ import (
 // revisions.
 const contentHashAnnotation = "olm.operatorframework.io/content-hash"
 
-// RevisionGenerator renders bundle content into the revision-bearing artifacts
-// the applier applies: a ClusterObjectDeployment (the primary path) or, for the
-// Helm-based migration path, a ClusterObjectSet revision directly.
-//
-// TODO: reconsider this name (e.g. ClusterObjectDeploymentGenerator) once the
-// Helm-based ClusterExtension -> boxcutter-based ClusterExtension migration work
-// removes or relocates GenerateRevisionFromHelmRelease, so this interface no
-// longer also produces a ClusterObjectSet.
+// RevisionGenerator renders bundle or stored Helm content into a deployment and its content Secrets.
 type RevisionGenerator interface {
 	GenerateClusterObjectDeployment(
 		ctx context.Context,
 		bundleFS fs.FS, ext *ocv1.ClusterExtension,
 		objectLabels, revisionAnnotations map[string]string,
 	) (*ocv1ac.ClusterObjectDeploymentApplyConfiguration, []corev1.Secret, error)
-	GenerateRevisionFromHelmRelease(
+	GenerateClusterObjectDeploymentFromHelmRelease(
 		ctx context.Context,
 		helmRelease *release.Release, ext *ocv1.ClusterExtension,
 		objectLabels map[string]string,
-	) (*ocv1ac.ClusterObjectSetApplyConfiguration, error)
+	) (*ocv1ac.ClusterObjectDeploymentApplyConfiguration, []corev1.Secret, error)
 }
 
 type SimpleRevisionGenerator struct {
 	Scheme           *runtime.Scheme
 	ManifestProvider ManifestProvider
 	SystemNamespace  string
-}
-
-func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
-	ctx context.Context,
-	helmRelease *release.Release, ext *ocv1.ClusterExtension,
-	objectLabels map[string]string,
-) (*ocv1ac.ClusterObjectSetApplyConfiguration, error) {
-	objs, revisionAnnotations, err := renderHelmReleaseContent(ctx, helmRelease, objectLabels)
-	if err != nil {
-		return nil, err
-	}
-	rev := r.buildClusterObjectSet(objs, ext, revisionAnnotations)
-	rev.WithName(fmt.Sprintf("%s-1", ext.Name))
-	rev.Spec.WithRevision(1)
-	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionNone) // allow to adopt objects from previous release
-	return rev, nil
 }
 
 // renderHelmReleaseContent converts stored Helm manifests and bundle metadata
@@ -216,34 +193,6 @@ func sanitizedUnstructured(ctx context.Context, unstr *unstructured.Unstructured
 	obj["metadata"] = metadataSanitized
 }
 
-func (r *SimpleRevisionGenerator) buildClusterObjectSet(
-	objects []ocv1ac.ClusterObjectSetObjectApplyConfiguration,
-	ext *ocv1.ClusterExtension,
-	annotations map[string]string,
-) *ocv1ac.ClusterObjectSetApplyConfiguration {
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-
-	phases := PhaseSort(objects)
-
-	spec := ocv1ac.ClusterObjectSetSpec().
-		WithGroup(ext.Name).
-		WithLifecycleState(ocv1.ClusterObjectSetLifecycleStateActive).
-		WithPhases(phases...).
-		WithProgressionProbes(defaultProgressionProbes...)
-
-	return ocv1ac.ClusterObjectSet("").
-		WithAnnotations(annotations).
-		WithLabels(map[string]string{
-			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
-			labels.OwnerNameKey: ext.Name,
-		}).
-		WithSpec(spec)
-}
-
-// TODO(COD): Replace direct COS creation, revision discovery and retention with
-// ClusterObjectDeployment reconciliation.
 type Boxcutter struct {
 	Client            client.Client
 	Scheme            *runtime.Scheme
