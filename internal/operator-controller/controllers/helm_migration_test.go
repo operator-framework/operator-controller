@@ -25,25 +25,52 @@ import (
 )
 
 func TestMigrateStorageGatesFollowingSteps(t *testing.T) {
-	for _, tc := range []struct {
-		name               string
-		stage              string
-		wantFollowingSteps int
-		wantRequeueAfter   time.Duration
-		wantErr            error
+	type input struct {
+		deploymentConditions []metav1.Condition
+		stage                string
+	}
+	type expected struct {
+		followingSteps int
+		requeueAfter   time.Duration
+		err            error
+	}
+
+	testCases := []struct {
+		name  string
+		input input
+		want  expected
 	}{
 		{
-			name: "wait for adoption", stage: labels.HelmMigrationAdopting,
-			wantFollowingSteps: 0, wantRequeueAfter: 10 * time.Second, wantErr: nil,
+			name: "wait for adoption",
+			input: input{
+				deploymentConditions: nil,
+				stage:                labels.HelmMigrationAdopting,
+			},
+			want: expected{
+				followingSteps: 0,
+				requeueAfter:   10 * time.Second,
+				err:            nil,
+			},
 		},
 		{
-			name: "wait for protection", stage: labels.HelmMigrationProtecting,
-			wantFollowingSteps: 0, wantRequeueAfter: 10 * time.Second, wantErr: nil,
+			name: "wait for protection",
+			input: input{
+				deploymentConditions: nil,
+				stage:                labels.HelmMigrationProtecting,
+			},
+			want: expected{
+				followingSteps: 0,
+				requeueAfter:   10 * time.Second,
+				err:            nil,
+			},
 		},
-	} {
+	}
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given a pending migration and a subsequent ordinary reconciliation step.
-			ext, cod := migrationStatusFixture(tc.stage)
+			ext, cod := migrationStatusFixture(tc.input.stage)
+			cod.Status.Conditions = tc.input.deploymentConditions
 			scheme := runtime.NewScheme()
 			require.NoError(t, ocv1.AddToScheme(scheme))
 			stored := fake.NewClientBuilder().WithScheme(scheme).WithObjects(cod).Build()
@@ -68,20 +95,45 @@ func TestMigrateStorageGatesFollowingSteps(t *testing.T) {
 			result, err := steps.Reconcile(t.Context(), ext)
 
 			// Then normal resolution, unpacking, and application remain gated until retry.
-			require.ErrorIs(t, err, tc.wantErr)
-			require.Equal(t, tc.wantFollowingSteps, followingSteps)
-			require.Equal(t, tc.wantRequeueAfter, result.RequeueAfter)
+			require.ErrorIs(t, err, tc.want.err)
+			require.Equal(t, tc.want.followingSteps, followingSteps)
+			require.Equal(t, tc.want.requeueAfter, result.RequeueAfter)
 		})
 	}
 }
 
 func TestMigrateStorageReportsMigrationError(t *testing.T) {
+	input := struct {
+		stage               string
+		extensionGeneration int64
+		lookupErr           error
+	}{
+		stage:               labels.HelmMigrationAdopting,
+		extensionGeneration: 5,
+		lookupErr:           errors.New("API unavailable"),
+	}
+	want := struct {
+		err         error
+		result      *ctrl.Result
+		progressing metav1.Condition
+	}{
+		err:    input.lookupErr,
+		result: nil,
+		progressing: metav1.Condition{
+			Type:               ocv1.TypeProgressing,
+			Status:             metav1.ConditionTrue,
+			Reason:             ocv1.ReasonRetrying,
+			Message:            "migrating storage: getting migration deployment: API unavailable",
+			ObservedGeneration: 5,
+		},
+	}
+
 	// Given an API error while reading the migration deployment.
-	ext, cod := migrationStatusFixture(labels.HelmMigrationAdopting)
-	lookupFailure := errors.New("API unavailable")
+	ext, cod := migrationStatusFixture(input.stage)
+	ext.Generation = input.extensionGeneration
 	mockCtrl := gomock.NewController(t)
 	api := mockctrlclient.NewMockClient(mockCtrl)
-	api.EXPECT().Get(gomock.Any(), client.ObjectKeyFromObject(cod), gomock.Any()).Return(lookupFailure)
+	api.EXPECT().Get(gomock.Any(), client.ObjectKeyFromObject(cod), gomock.Any()).Return(input.lookupErr)
 	m := &applier.BoxcutterStorageMigrator{
 		Client:             api,
 		ActionClientGetter: mockhelmclient.NewMockActionClientGetter(mockCtrl),
@@ -92,31 +144,56 @@ func TestMigrateStorageReportsMigrationError(t *testing.T) {
 	result, err := MigrateStorage(m)(t.Context(), &reconcileState{}, ext)
 
 	// Then the original error reaches the caller and the CE reports why it is retrying.
-	require.ErrorIs(t, err, lookupFailure)
-	require.Nil(t, result)
-	progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+	require.ErrorIs(t, err, want.err)
+	require.Equal(t, want.result, result)
+	progress := apimeta.FindStatusCondition(ext.Status.Conditions, want.progressing.Type)
 	require.NotNil(t, progress)
-	require.Equal(t, metav1.ConditionTrue, progress.Status)
-	require.Equal(t, ocv1.ReasonRetrying, progress.Reason)
-	require.Equal(t, ext.Generation, progress.ObservedGeneration)
-	require.Equal(t, "migrating storage: getting migration deployment: API unavailable", progress.Message)
+	require.Equal(t, want.progressing.Status, progress.Status)
+	require.Equal(t, want.progressing.Reason, progress.Reason)
+	require.Equal(t, want.progressing.ObservedGeneration, progress.ObservedGeneration)
+	require.Equal(t, want.progressing.Message, progress.Message)
 }
 
 func TestMigrationStatusUpdateFailureResumesPersistedDeployment(t *testing.T) {
+	input := struct {
+		stage           string
+		statusUpdateErr error
+	}{
+		stage:           labels.HelmMigrationProtecting,
+		statusUpdateErr: errors.New("status unavailable"),
+	}
+
 	// Given a stored protecting COD and a CE status write that fails once.
-	ext, cod := migrationStatusFixture(labels.HelmMigrationProtecting)
+	ext, cod := migrationStatusFixture(input.stage)
+	want := struct {
+		firstErrContains string
+		retryErr         error
+		requeueAfter     time.Duration
+		bundleName       string
+		stage            string
+		deploymentSpec   ocv1.ClusterObjectDeploymentSpec
+		attempts         int
+	}{
+		firstErrContains: "status unavailable",
+		retryErr:         nil,
+		requeueAfter:     10 * time.Second,
+		bundleName:       "stored.v1.0.0",
+		stage:            labels.HelmMigrationProtecting,
+		deploymentSpec:   *cod.Spec.DeepCopy(),
+		attempts:         2,
+	}
 	scheme := runtime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(scheme))
 	stored := fake.NewClientBuilder().WithScheme(scheme).
 		WithStatusSubresource(ext, cod).WithObjects(ext, cod).Build()
 	mockCtrl := gomock.NewController(t)
 	api := mockctrlclient.NewMockClient(mockCtrl)
-	api.EXPECT().Get(gomock.Any(), client.ObjectKeyFromObject(ext), gomock.AssignableToTypeOf(ext)).DoAndReturn(stored.Get).Times(2)
-	api.EXPECT().Get(gomock.Any(), client.ObjectKeyFromObject(cod), gomock.AssignableToTypeOf(cod)).DoAndReturn(stored.Get).Times(2)
+	api.EXPECT().Get(gomock.Any(), client.ObjectKeyFromObject(ext), gomock.AssignableToTypeOf(ext)).DoAndReturn(stored.Get).Times(want.attempts)
+	api.EXPECT().Get(gomock.Any(), client.ObjectKeyFromObject(cod), gomock.AssignableToTypeOf(cod)).DoAndReturn(stored.Get).Times(want.attempts)
 	status := mockctrlclient.NewMockStatusWriter(mockCtrl)
-	api.EXPECT().Status().Return(status).Times(2)
+	api.EXPECT().Status().Return(status).Times(want.attempts)
 	gomock.InOrder(
-		status.EXPECT().Update(gomock.Any(), gomock.AssignableToTypeOf(ext)).Return(errors.New("status unavailable")),
+		status.EXPECT().Update(gomock.Any(), gomock.AssignableToTypeOf(ext)).Return(input.statusUpdateErr),
 		status.EXPECT().Update(gomock.Any(), gomock.AssignableToTypeOf(ext)).DoAndReturn(stored.Status().Update),
 	)
 	m := &applier.BoxcutterStorageMigrator{
@@ -130,7 +207,7 @@ func TestMigrationStatusUpdateFailureResumesPersistedDeployment(t *testing.T) {
 	_, err := r.Reconcile(t.Context(), ctrl.Request{NamespacedName: client.ObjectKeyFromObject(ext)})
 
 	// Then the write failure reaches the caller.
-	require.ErrorContains(t, err, "status unavailable")
+	require.ErrorContains(t, err, want.firstErrContains)
 
 	// Given reconstructed dependencies, only CE/COD reads and the CE status retry are allowed.
 	restarted := &applier.BoxcutterStorageMigrator{
@@ -144,146 +221,297 @@ func TestMigrationStatusUpdateFailureResumesPersistedDeployment(t *testing.T) {
 	result, err := r.Reconcile(t.Context(), ctrl.Request{NamespacedName: client.ObjectKeyFromObject(ext)})
 
 	// Then it reports the stored identity and stage without Helm, generation, or COD writes.
-	require.NoError(t, err)
-	require.Equal(t, 10*time.Second, result.RequeueAfter)
+	require.ErrorIs(t, err, want.retryErr)
+	require.Equal(t, want.requeueAfter, result.RequeueAfter)
 	actual := &ocv1.ClusterExtension{}
 	require.NoError(t, stored.Get(t.Context(), client.ObjectKeyFromObject(ext), actual))
 	require.NotNil(t, actual.Status.Install)
-	require.Equal(t, "stored.v1.0.0", actual.Status.Install.Bundle.Name)
+	require.Equal(t, want.bundleName, actual.Status.Install.Bundle.Name)
 	persisted := &ocv1.ClusterObjectDeployment{}
 	require.NoError(t, stored.Get(t.Context(), client.ObjectKeyFromObject(cod), persisted))
-	require.Equal(t, cod.Spec, persisted.Spec)
-	require.Equal(t, labels.HelmMigrationProtecting, persisted.Annotations[labels.HelmMigrationKey])
+	require.Equal(t, want.deploymentSpec, persisted.Spec)
+	require.Equal(t, want.stage, persisted.Annotations[labels.HelmMigrationKey])
 }
 
 func TestMigrationStatusPreservesHelmIdentityWithoutReadiness(t *testing.T) {
-	for _, tc := range []struct {
-		name                string
-		previousInstall     *ocv1.ClusterExtensionInstallStatus
-		wantBundle          ocv1.BundleMetadata
-		wantInstalledStatus metav1.ConditionStatus
-		wantInstalledImage  string
-		wantAvailable       *metav1.Condition
+	storedBundleAnnotations := map[string]string{
+		labels.BundleNameKey:      "stored.v1.0.0",
+		labels.BundleVersionKey:   "1.0.0",
+		labels.BundleReferenceKey: "image:stored",
+		labels.BundleReleaseKey:   "",
+	}
+
+	type input struct {
+		deploymentConditions []metav1.Condition
+		stage                string
+		bundleAnnotations    map[string]string
+		previousInstall      *ocv1.ClusterExtensionInstallStatus
+	}
+	type expected struct {
+		bundle          ocv1.BundleMetadata
+		installedStatus metav1.ConditionStatus
+		installedImage  string
+		available       *metav1.Condition
+	}
+
+	testCases := []struct {
+		name  string
+		input input
+		want  expected
 	}{
 		{
-			name: "initialize identity from Helm", previousInstall: nil,
-			wantBundle:          ocv1.BundleMetadata{Name: "stored.v1.0.0", Version: "1.0.0", Release: ptr.To("")},
-			wantInstalledStatus: metav1.ConditionTrue, wantInstalledImage: "image:stored", wantAvailable: nil,
+			name: "initialize identity from Helm",
+			input: input{
+				deploymentConditions: nil,
+				stage:                labels.HelmMigrationAdopting,
+				bundleAnnotations:    storedBundleAnnotations,
+				previousInstall:      nil,
+			},
+			want: expected{
+				bundle:          ocv1.BundleMetadata{Name: "stored.v1.0.0", Version: "1.0.0", Release: ptr.To("")},
+				installedStatus: metav1.ConditionTrue,
+				installedImage:  "image:stored",
+				available:       nil,
+			},
 		},
 		{
 			name: "retain previously installed identity",
-			previousInstall: &ocv1.ClusterExtensionInstallStatus{
-				Bundle: ocv1.BundleMetadata{Name: "stored.v1.0.0", Version: "1.0.0", Release: ptr.To("")},
+			input: input{
+				deploymentConditions: nil,
+				stage:                labels.HelmMigrationAdopting,
+				bundleAnnotations:    storedBundleAnnotations,
+				previousInstall: &ocv1.ClusterExtensionInstallStatus{
+					Bundle: ocv1.BundleMetadata{Name: "stored.v1.0.0", Version: "1.0.0", Release: ptr.To("")},
+				},
 			},
-			wantBundle:          ocv1.BundleMetadata{Name: "stored.v1.0.0", Version: "1.0.0", Release: ptr.To("")},
-			wantInstalledStatus: metav1.ConditionTrue, wantInstalledImage: "image:stored", wantAvailable: nil,
+			want: expected{
+				bundle:          ocv1.BundleMetadata{Name: "stored.v1.0.0", Version: "1.0.0", Release: ptr.To("")},
+				installedStatus: metav1.ConditionTrue,
+				installedImage:  "image:stored",
+				available:       nil,
+			},
 		},
-	} {
+	}
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given the stored Helm identity, with no COD readiness observation.
-			ext, cod := migrationStatusFixture(labels.HelmMigrationAdopting)
-			ext.Status.Install = tc.previousInstall.DeepCopy()
+			ext, cod := migrationStatusFixture(tc.input.stage)
+			cod.Status.Conditions = tc.input.deploymentConditions
+			cod.Spec.Template.Metadata.Annotations = tc.input.bundleAnnotations
+			ext.Status.Install = tc.input.previousInstall.DeepCopy()
 
 			// When migration status is reflected onto the CE; this function performs no I/O.
 			setMigrationStatus(ext, cod)
 
 			// Then installation provenance is retained without inventing availability.
 			require.NotNil(t, ext.Status.Install)
-			require.Equal(t, tc.wantBundle, ext.Status.Install.Bundle)
+			require.Equal(t, tc.want.bundle, ext.Status.Install.Bundle)
 			installed := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
 			require.NotNil(t, installed)
-			require.Equal(t, tc.wantInstalledStatus, installed.Status)
-			require.Contains(t, installed.Message, tc.wantInstalledImage)
-			require.Equal(t, tc.wantAvailable, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeAvailable))
+			require.Equal(t, tc.want.installedStatus, installed.Status)
+			require.Contains(t, installed.Message, tc.want.installedImage)
+			require.Equal(t, tc.want.available, apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeAvailable))
 		})
 	}
 }
 
 func TestMigrationStatusReportsRealAvailability(t *testing.T) {
-	for _, tc := range []struct {
-		name                   string
-		available              metav1.ConditionStatus
-		wantAvailable          metav1.ConditionStatus
-		wantAvailableReason    string
-		wantAvailableMessage   string
-		wantObservedGeneration int64
-		wantProgressReason     string
+	type input struct {
+		migrationStage      string
+		extensionGeneration int64
+		available           metav1.Condition
+	}
+	type expected struct {
+		available         metav1.Condition
+		progressingReason string
+	}
+
+	testCases := []struct {
+		name  string
+		input input
+		want  expected
 	}{
 		{
-			name: "healthy resources", available: metav1.ConditionTrue,
-			wantAvailable: metav1.ConditionTrue, wantAvailableReason: ocv1.ReasonProbesSucceeded,
-			wantAvailableMessage:   "Objects are available and pass all probes.",
-			wantObservedGeneration: 5, wantProgressReason: ocv1.ReasonRollingOut,
+			name: "healthy resources",
+			input: input{
+				migrationStage:      labels.HelmMigrationProtecting,
+				extensionGeneration: 5,
+				available: metav1.Condition{
+					Type:    ocv1.ClusterObjectDeploymentTypeAvailable,
+					Status:  metav1.ConditionTrue,
+					Reason:  "ObservedHealth",
+					Message: "live probes",
+				},
+			},
+			want: expected{
+				available: metav1.Condition{
+					Type:               ocv1.TypeAvailable,
+					Status:             metav1.ConditionTrue,
+					Reason:             ocv1.ReasonProbesSucceeded,
+					Message:            "Objects are available and pass all probes.",
+					ObservedGeneration: 5,
+				},
+				progressingReason: ocv1.ReasonRollingOut,
+			},
 		},
 		{
-			name: "unhealthy resources", available: metav1.ConditionFalse,
-			wantAvailable: metav1.ConditionFalse, wantAvailableReason: "ObservedHealth",
-			wantAvailableMessage:   "live probes",
-			wantObservedGeneration: 5, wantProgressReason: ocv1.ReasonRollingOut,
+			name: "unhealthy resources",
+			input: input{
+				migrationStage:      labels.HelmMigrationProtecting,
+				extensionGeneration: 5,
+				available: metav1.Condition{
+					Type:    ocv1.ClusterObjectDeploymentTypeAvailable,
+					Status:  metav1.ConditionFalse,
+					Reason:  "ObservedHealth",
+					Message: "live probes",
+				},
+			},
+			want: expected{
+				available: metav1.Condition{
+					Type:               ocv1.TypeAvailable,
+					Status:             metav1.ConditionFalse,
+					Reason:             "ObservedHealth",
+					Message:            "live probes",
+					ObservedGeneration: 5,
+				},
+				progressingReason: ocv1.ReasonRollingOut,
+			},
 		},
-	} {
+	}
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Given actual health reported by the COD during protection.
-			ext, cod := migrationStatusFixture(labels.HelmMigrationProtecting)
-			cod.Status.Conditions = []metav1.Condition{{
-				Type: ocv1.ClusterObjectDeploymentTypeAvailable, Status: tc.available,
-				Reason: "ObservedHealth", Message: "live probes",
-			}}
+			// Given the migration stage, CE generation, and COD health declared above.
+			ext, cod := migrationStatusFixture(tc.input.migrationStage)
+			ext.Generation = tc.input.extensionGeneration
+			cod.Status.Conditions = []metav1.Condition{tc.input.available}
 
 			// When migration status is reflected onto the CE.
 			setMigrationStatus(ext, cod)
 
-			// Then the CE reports observed health and continues to report migration progress.
-			available := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeAvailable)
+			// Then availability and migration progress match the expected results.
+			available := apimeta.FindStatusCondition(ext.Status.Conditions, tc.want.available.Type)
 			require.NotNil(t, available)
-			require.Equal(t, tc.wantAvailable, available.Status)
-			require.Equal(t, tc.wantAvailableReason, available.Reason)
-			require.Equal(t, tc.wantAvailableMessage, available.Message)
-			require.Equal(t, tc.wantObservedGeneration, available.ObservedGeneration)
+			require.Equal(t, tc.want.available.Status, available.Status)
+			require.Equal(t, tc.want.available.Reason, available.Reason)
+			require.Equal(t, tc.want.available.Message, available.Message)
+			require.Equal(t, tc.want.available.ObservedGeneration, available.ObservedGeneration)
 			progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
 			require.NotNil(t, progress)
-			require.Equal(t, tc.wantProgressReason, progress.Reason)
+			require.Equal(t, tc.want.progressingReason, progress.Reason)
 		})
 	}
 }
 
 func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
-	for _, tc := range []struct {
-		name                   string
-		codReason              string
-		wantReason             string
-		wantStatus             metav1.ConditionStatus
-		wantObservedGeneration int64
-		wantMessage            string
+	type input struct {
+		stage                string
+		extensionGeneration  int64
+		deploymentGeneration int64
+		progressing          metav1.Condition
+	}
+	type expected struct {
+		reason             string
+		status             metav1.ConditionStatus
+		observedGeneration int64
+		message            string
+	}
+
+	testCases := []struct {
+		name  string
+		input input
+		want  expected
 	}{
 		{
-			name: "collision", codReason: ocv1.ClusterObjectDeploymentReasonRevisionObjectCollision,
-			wantReason: ocv1.ReasonRetrying, wantStatus: metav1.ConditionTrue,
-			wantObservedGeneration: 5, wantMessage: "Helm migration Protecting: blocking detail",
+			name: "collision",
+			input: input{
+				stage:                labels.HelmMigrationProtecting,
+				extensionGeneration:  5,
+				deploymentGeneration: 2,
+				progressing: metav1.Condition{
+					Type:   ocv1.ClusterObjectDeploymentTypeProgressing,
+					Status: metav1.ConditionFalse,
+					Reason: ocv1.ClusterObjectDeploymentReasonRevisionObjectCollision, Message: "blocking detail",
+					ObservedGeneration: 2,
+				},
+			},
+			want: expected{
+				reason:             ocv1.ReasonRetrying,
+				status:             metav1.ConditionTrue,
+				observedGeneration: 5,
+				message:            "Helm migration Protecting: blocking detail",
+			},
 		},
 		{
-			name: "precondition", codReason: ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet,
-			wantReason: ocv1.ReasonRetrying, wantStatus: metav1.ConditionTrue,
-			wantObservedGeneration: 5, wantMessage: "Helm migration Protecting: blocking detail",
+			name: "precondition",
+			input: input{
+				stage:                labels.HelmMigrationProtecting,
+				extensionGeneration:  5,
+				deploymentGeneration: 2,
+				progressing: metav1.Condition{
+					Type:   ocv1.ClusterObjectDeploymentTypeProgressing,
+					Status: metav1.ConditionFalse,
+					Reason: ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet, Message: "blocking detail",
+					ObservedGeneration: 2,
+				},
+			},
+			want: expected{
+				reason:             ocv1.ReasonRetrying,
+				status:             metav1.ConditionTrue,
+				observedGeneration: 5,
+				message:            "Helm migration Protecting: blocking detail",
+			},
 		},
 		{
-			name: "deadline", codReason: ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded,
-			wantReason: ocv1.ReasonProgressDeadlineExceeded, wantStatus: metav1.ConditionFalse,
-			wantObservedGeneration: 5, wantMessage: "Helm migration Protecting: blocking detail",
+			name: "deadline",
+			input: input{
+				stage:                labels.HelmMigrationProtecting,
+				extensionGeneration:  5,
+				deploymentGeneration: 2,
+				progressing: metav1.Condition{
+					Type:   ocv1.ClusterObjectDeploymentTypeProgressing,
+					Status: metav1.ConditionFalse,
+					Reason: ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded, Message: "blocking detail",
+					ObservedGeneration: 2,
+				},
+			},
+			want: expected{
+				reason:             ocv1.ReasonProgressDeadlineExceeded,
+				status:             metav1.ConditionFalse,
+				observedGeneration: 5,
+				message:            "Helm migration Protecting: blocking detail",
+			},
 		},
 		{
-			name: "invalid", codReason: ocv1.ClusterObjectDeploymentReasonInvalidSpecification,
-			wantReason: ocv1.ReasonBlocked, wantStatus: metav1.ConditionFalse,
-			wantObservedGeneration: 5, wantMessage: "Helm migration Protecting: blocking detail",
+			name: "invalid",
+			input: input{
+				stage:                labels.HelmMigrationProtecting,
+				extensionGeneration:  5,
+				deploymentGeneration: 2,
+				progressing: metav1.Condition{
+					Type:   ocv1.ClusterObjectDeploymentTypeProgressing,
+					Status: metav1.ConditionFalse,
+					Reason: ocv1.ClusterObjectDeploymentReasonInvalidSpecification, Message: "blocking detail",
+					ObservedGeneration: 2,
+				},
+			},
+			want: expected{
+				reason:             ocv1.ReasonBlocked,
+				status:             metav1.ConditionFalse,
+				observedGeneration: 5,
+				message:            "Helm migration Protecting: blocking detail",
+			},
 		},
-	} {
+	}
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given a failure observed at the COD's current generation.
-			ext, cod := migrationStatusFixture(labels.HelmMigrationProtecting)
-			cod.Status.Conditions = []metav1.Condition{{
-				Type: ocv1.ClusterObjectDeploymentTypeProgressing, Status: metav1.ConditionFalse,
-				Reason: tc.codReason, Message: "blocking detail", ObservedGeneration: cod.Generation,
-			}}
+			ext, cod := migrationStatusFixture(tc.input.stage)
+			ext.Generation = tc.input.extensionGeneration
+			cod.Generation = tc.input.deploymentGeneration
+			cod.Status.Conditions = []metav1.Condition{tc.input.progressing}
 
 			// When migration status is reflected onto the CE.
 			setMigrationStatus(ext, cod)
@@ -291,37 +519,76 @@ func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 			// Then the CE exposes the appropriate retry or terminal reason and blocking detail.
 			progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
 			require.NotNil(t, progress)
-			require.Equal(t, tc.wantReason, progress.Reason)
-			require.Equal(t, tc.wantStatus, progress.Status)
-			require.Equal(t, tc.wantObservedGeneration, progress.ObservedGeneration)
-			require.Equal(t, tc.wantMessage, progress.Message)
+			require.Equal(t, tc.want.reason, progress.Reason)
+			require.Equal(t, tc.want.status, progress.Status)
+			require.Equal(t, tc.want.observedGeneration, progress.ObservedGeneration)
+			require.Equal(t, tc.want.message, progress.Message)
 		})
 	}
 }
 
 func TestMigrationStatusIgnoresStaleProgress(t *testing.T) {
-	for _, tc := range []struct {
-		name       string
-		codReason  string
-		wantReason string
-		wantStatus metav1.ConditionStatus
+	type input struct {
+		stage                string
+		extensionGeneration  int64
+		deploymentGeneration int64
+		progressing          metav1.Condition
+	}
+	type expected struct {
+		reason string
+		status metav1.ConditionStatus
+	}
+
+	testCases := []struct {
+		name  string
+		input input
+		want  expected
 	}{
 		{
-			name: "old completion", codReason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed,
-			wantReason: ocv1.ReasonRollingOut, wantStatus: metav1.ConditionTrue,
+			name: "old completion",
+			input: input{
+				stage:                labels.HelmMigrationProtecting,
+				extensionGeneration:  5,
+				deploymentGeneration: 2,
+				progressing: metav1.Condition{
+					Type:               ocv1.ClusterObjectDeploymentTypeProgressing,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed,
+					ObservedGeneration: 1,
+				},
+			},
+			want: expected{
+				reason: ocv1.ReasonRollingOut,
+				status: metav1.ConditionTrue,
+			},
 		},
 		{
-			name: "old deadline failure", codReason: ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded,
-			wantReason: ocv1.ReasonRollingOut, wantStatus: metav1.ConditionTrue,
+			name: "old deadline failure",
+			input: input{
+				stage:                labels.HelmMigrationProtecting,
+				extensionGeneration:  5,
+				deploymentGeneration: 2,
+				progressing: metav1.Condition{
+					Type:               ocv1.ClusterObjectDeploymentTypeProgressing,
+					Status:             metav1.ConditionFalse,
+					Reason:             ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded,
+					ObservedGeneration: 1,
+				},
+			},
+			want: expected{
+				reason: ocv1.ReasonRollingOut,
+				status: metav1.ConditionTrue,
+			},
 		},
-	} {
+	}
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given progress observed before the current COD generation.
-			ext, cod := migrationStatusFixture(labels.HelmMigrationProtecting)
-			cod.Status.Conditions = []metav1.Condition{{
-				Type: ocv1.ClusterObjectDeploymentTypeProgressing, Status: metav1.ConditionFalse,
-				Reason: tc.codReason, ObservedGeneration: cod.Generation - 1,
-			}}
+			ext, cod := migrationStatusFixture(tc.input.stage)
+			ext.Generation = tc.input.extensionGeneration
+			cod.Generation = tc.input.deploymentGeneration
+			cod.Status.Conditions = []metav1.Condition{tc.input.progressing}
 
 			// When migration status is reflected onto the CE.
 			setMigrationStatus(ext, cod)
@@ -329,19 +596,39 @@ func TestMigrationStatusIgnoresStaleProgress(t *testing.T) {
 			// Then stale completion or failure does not replace the current rollout progress.
 			progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
 			require.NotNil(t, progress)
-			require.Equal(t, tc.wantReason, progress.Reason)
-			require.Equal(t, tc.wantStatus, progress.Status)
+			require.Equal(t, tc.want.reason, progress.Reason)
+			require.Equal(t, tc.want.status, progress.Status)
 		})
 	}
 }
 
 func TestMigrationTransitionReportsProgressInsteadOfSuccess(t *testing.T) {
+	input := struct {
+		stage                string
+		deploymentGeneration int64
+		progressing          metav1.Condition
+	}{
+		stage:                labels.HelmMigrationProtecting,
+		deploymentGeneration: 2,
+		progressing: metav1.Condition{
+			Type:               ocv1.ClusterObjectDeploymentTypeProgressing,
+			Status:             metav1.ConditionFalse,
+			Reason:             ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed,
+			ObservedGeneration: 2,
+		},
+	}
+	want := struct {
+		status metav1.ConditionStatus
+		reason string
+	}{
+		status: metav1.ConditionTrue,
+		reason: ocv1.ReasonRollingOut,
+	}
+
 	// Given protection has just started but the COD still reports adoption completion.
-	ext, cod := migrationStatusFixture(labels.HelmMigrationProtecting)
-	cod.Status.Conditions = []metav1.Condition{{
-		Type: ocv1.ClusterObjectDeploymentTypeProgressing, Status: metav1.ConditionFalse,
-		Reason: ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed, ObservedGeneration: cod.Generation,
-	}}
+	ext, cod := migrationStatusFixture(input.stage)
+	cod.Generation = input.deploymentGeneration
+	cod.Status.Conditions = []metav1.Condition{input.progressing}
 
 	// When migration status is reflected before the COD controller observes the new stage.
 	setMigrationStatus(ext, cod)
@@ -349,8 +636,8 @@ func TestMigrationTransitionReportsProgressInsteadOfSuccess(t *testing.T) {
 	// Then the CE reports ongoing migration rather than overall success between stages.
 	progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
 	require.NotNil(t, progress)
-	require.Equal(t, ocv1.ReasonRollingOut, progress.Reason)
-	require.Equal(t, metav1.ConditionTrue, progress.Status)
+	require.Equal(t, want.reason, progress.Reason)
+	require.Equal(t, want.status, progress.Status)
 }
 
 // migrationStatusFixture returns fresh, unstored CE/COD data for bundle 1.0.0.

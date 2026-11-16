@@ -39,81 +39,161 @@ func TestHelmMigrationAPIAdoptsLiveResource(t *testing.T) {
 	// Given a live Helm-managed ConfigMap and a stored Adopting deployment.
 	api := mockctrlclient.NewMockClient(gomock.NewController(t))
 	e := newHelmMigrationEnv(t, api)
+	input := struct {
+		extension    *ocv1.ClusterExtension
+		resource     *corev1.ConfigMap
+		revisionName string
+	}{
+		extension:    e.ext,
+		resource:     e.resource,
+		revisionName: e.ext.Name + "-1",
+	}
+	want := struct {
+		deploymentOwnedByExtension bool
+		revisionOwnedByDeployment  bool
+		resourceOwnedByRevision    bool
+		resourceUID                types.UID
+		fieldManager               string
+	}{
+		deploymentOwnedByExtension: true,
+		revisionOwnedByDeployment:  true,
+		resourceOwnedByRevision:    true,
+		resourceUID:                input.resource.UID,
+		fieldManager:               "cos-group/" + input.extension.Name,
+	}
 
 	// When the production controllers complete the adopting revision; migration writes are forbidden.
-	cos := e.rollout(t, e.ext.Name+"-1")
+	cos := e.rollout(t, input.revisionName)
 
 	// Then the original resource survives under CE -> COD -> COS ownership and SSA management.
 	cod := &ocv1.ClusterObjectDeployment{}
-	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(e.ext), cod))
-	require.True(t, metav1.IsControlledBy(cod, e.ext))
-	require.True(t, metav1.IsControlledBy(cos, cod))
+	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(input.extension), cod))
+	require.Equal(t, want.deploymentOwnedByExtension, metav1.IsControlledBy(cod, input.extension))
+	require.Equal(t, want.revisionOwnedByDeployment, metav1.IsControlledBy(cos, cod))
 	resource := &corev1.ConfigMap{}
-	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(e.resource), resource))
-	require.Equal(t, e.resource.UID, resource.UID)
-	require.True(t, metav1.IsControlledBy(resource, cos))
+	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(input.resource), resource))
+	require.Equal(t, want.resourceUID, resource.UID)
+	require.Equal(t, want.resourceOwnedByRevision, metav1.IsControlledBy(resource, cos))
 	var managers []string
 	for _, mf := range resource.ManagedFields {
 		if mf.Operation == metav1.ManagedFieldsOperationApply {
 			managers = append(managers, mf.Manager)
 		}
 	}
-	require.Contains(t, managers, "cos-group/"+e.ext.Name)
+	require.Contains(t, managers, want.fieldManager)
 }
 
 func TestHelmMigrationAPIProtectsSiblingHandoff(t *testing.T) {
 	// Given the initial adopting deployment; allow only the two migration transition patches.
 	api := mockctrlclient.NewMockClient(gomock.NewController(t))
 	e := newHelmMigrationEnv(t, api)
+	deployment := &ocv1.ClusterObjectDeployment{}
+	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(e.ext), deployment))
+	input := struct {
+		extension      *ocv1.ClusterExtension
+		resource       *corev1.ConfigMap
+		storedTemplate *ocv1.ClusterObjectDeploymentTemplate
+	}{
+		extension:      e.ext,
+		resource:       e.resource,
+		storedTemplate: deployment.Spec.Template.DeepCopy(),
+	}
+	want := struct {
+		adoptingProtection               ocv1.CollisionProtection
+		protectingProtection             ocv1.CollisionProtection
+		template                         *ocv1.ClusterObjectDeploymentTemplate
+		resourceUID                      types.UID
+		resourceOwnedByProtectedRevision bool
+		markerPresent                    bool
+		transitionPatches                int
+	}{
+		adoptingProtection:               ocv1.CollisionProtectionNone,
+		protectingProtection:             ocv1.CollisionProtectionPrevent,
+		template:                         input.storedTemplate,
+		resourceUID:                      input.resource.UID,
+		resourceOwnedByProtectedRevision: true,
+		markerPresent:                    false,
+		transitionPatches:                2,
+	}
 	api.EXPECT().Patch(gomock.Any(), gomock.AssignableToTypeOf(&ocv1.ClusterObjectDeployment{}), gomock.Any()).
-		DoAndReturn(e.cached.Patch).Times(2)
+		DoAndReturn(e.cached.Patch).Times(want.transitionPatches)
 
 	// When adoption hands off to the protected sibling and migration finishes.
 	adopting, protecting := e.protect(t)
 
 	// Then the content is identical and the same resource belongs to the protected revision.
-	require.Equal(t, ocv1.CollisionProtectionNone, adopting.Spec.CollisionProtection)
-	require.Equal(t, ocv1.CollisionProtectionPrevent, protecting.Spec.CollisionProtection)
-	require.Equal(t, adopting.Spec.Phases, protecting.Spec.Phases)
-	require.Equal(t, adopting.Annotations, protecting.Annotations)
-	require.Equal(t, adopting.Spec.ProgressionProbes, protecting.Spec.ProgressionProbes)
+	require.Equal(t, want.adoptingProtection, adopting.Spec.CollisionProtection)
+	require.Equal(t, want.protectingProtection, protecting.Spec.CollisionProtection)
+	require.Equal(t, want.template.Spec.Phases, adopting.Spec.Phases)
+	require.Equal(t, want.template.Spec.Phases, protecting.Spec.Phases)
+	require.Equal(t, want.template.Metadata.Annotations, adopting.Annotations)
+	require.Equal(t, want.template.Metadata.Annotations, protecting.Annotations)
+	require.Equal(t, want.template.Spec.ProgressionProbes, adopting.Spec.ProgressionProbes)
+	require.Equal(t, want.template.Spec.ProgressionProbes, protecting.Spec.ProgressionProbes)
 	resource := &corev1.ConfigMap{}
-	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(e.resource), resource))
-	require.Equal(t, e.resource.UID, resource.UID)
-	require.True(t, metav1.IsControlledBy(resource, protecting))
+	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(input.resource), resource))
+	require.Equal(t, want.resourceUID, resource.UID)
+	require.Equal(t, want.resourceOwnedByProtectedRevision, metav1.IsControlledBy(resource, protecting))
 	cod := &ocv1.ClusterObjectDeployment{}
-	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(e.ext), cod))
-	require.NotContains(t, cod.Annotations, labels.HelmMigrationKey)
+	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(input.extension), cod))
+	_, markerPresent := cod.Annotations[labels.HelmMigrationKey]
+	require.Equal(t, want.markerPresent, markerPresent)
 }
 
 func TestHelmMigrationAPIArchivalPreservesProtectedResource(t *testing.T) {
 	// Given completed migration with the resource owned by the protected sibling.
 	api := mockctrlclient.NewMockClient(gomock.NewController(t))
 	e := newHelmMigrationEnv(t, api)
+	want := struct {
+		transitionPatches                int
+		lifecycleState                   ocv1.ClusterObjectSetLifecycleState
+		readyReason                      string
+		resourceUID                      types.UID
+		resourceOwnedByProtectedRevision bool
+	}{
+		transitionPatches:                2,
+		lifecycleState:                   ocv1.ClusterObjectSetLifecycleStateArchived,
+		readyReason:                      ocv1.ClusterObjectSetReasonArchived,
+		resourceUID:                      e.resource.UID,
+		resourceOwnedByProtectedRevision: true,
+	}
 	api.EXPECT().Patch(gomock.Any(), gomock.AssignableToTypeOf(&ocv1.ClusterObjectDeployment{}), gomock.Any()).
-		DoAndReturn(e.cached.Patch).Times(2)
+		DoAndReturn(e.cached.Patch).Times(want.transitionPatches)
 	adopting, protecting := e.protect(t)
+	input := struct {
+		archivedRevision  *ocv1.ClusterObjectSet
+		protectedRevision *ocv1.ClusterObjectSet
+		resource          *corev1.ConfigMap
+		timeout           time.Duration
+		pollInterval      time.Duration
+	}{
+		archivedRevision:  adopting,
+		protectedRevision: protecting,
+		resource:          e.resource,
+		timeout:           5 * time.Second,
+		pollInterval:      25 * time.Millisecond,
+	}
 
 	// When the production COS controller reconciles the old adopting revision.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := e.cos.Reconcile(e.ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: adopting.Name}})
+		_, err := e.cos.Reconcile(e.ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: input.archivedRevision.Name}})
 		assert.NoError(collect, err)
 		actual := &ocv1.ClusterObjectSet{}
-		if !assert.NoError(collect, e.live.Get(e.ctx, client.ObjectKeyFromObject(adopting), actual)) {
+		if !assert.NoError(collect, e.live.Get(e.ctx, client.ObjectKeyFromObject(input.archivedRevision), actual)) {
 			return
 		}
-		assert.Equal(collect, ocv1.ClusterObjectSetLifecycleStateArchived, actual.Spec.LifecycleState)
+		assert.Equal(collect, want.lifecycleState, actual.Spec.LifecycleState)
 		ready := apimeta.FindStatusCondition(actual.Status.Conditions, ocv1.ClusterObjectSetTypeReady)
 		if assert.NotNil(collect, ready) {
-			assert.Equal(collect, ocv1.ClusterObjectSetReasonArchived, ready.Reason)
+			assert.Equal(collect, want.readyReason, ready.Reason)
 		}
-	}, 5*time.Second, 25*time.Millisecond)
+	}, input.timeout, input.pollInterval)
 
 	// Then archival has completed without deleting or taking ownership from the protected resource.
 	resource := &corev1.ConfigMap{}
-	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(e.resource), resource))
-	require.Equal(t, e.resource.UID, resource.UID)
-	require.True(t, metav1.IsControlledBy(resource, protecting))
+	require.NoError(t, e.live.Get(e.ctx, client.ObjectKeyFromObject(input.resource), resource))
+	require.Equal(t, want.resourceUID, resource.UID)
+	require.Equal(t, want.resourceOwnedByProtectedRevision, metav1.IsControlledBy(resource, input.protectedRevision))
 }
 
 type helmMigrationEnv struct {
