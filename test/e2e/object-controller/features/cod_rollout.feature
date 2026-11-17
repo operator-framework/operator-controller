@@ -104,6 +104,124 @@ Feature: ClusterObjectDeployment revision rollout
     And ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason NewClusterObjectSetProgressed
     And ClusterObjectDeployment "${NAME}" reports Available as True with Reason Available
 
+  Scenario: Reordering template phases through server-side apply creates a new revision
+    Given namespace "${TEST_NAMESPACE}" is available
+    When resource is server-side applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectDeployment
+      metadata:
+        name: ${NAME}
+      spec:
+        template:
+          spec:
+            collisionProtection: Prevent
+            phases:
+            - name: configuration
+              objects:
+              - type: InlineManifest
+                inlineManifest:
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: configuration
+                    namespace: ${TEST_NAMESPACE}
+            - name: deploy
+              objects:
+              - type: InlineManifest
+                inlineManifest:
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: deploy
+                    namespace: ${TEST_NAMESPACE}
+      """
+    Then ClusterObjectSet "${NAME}-1" reports Ready as True with Reason AllObjectsReady
+    When resource is server-side applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectDeployment
+      metadata:
+        name: ${NAME}
+      spec:
+        template:
+          spec:
+            collisionProtection: Prevent
+            phases:
+            - name: deploy
+              objects:
+              - type: InlineManifest
+                inlineManifest:
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: deploy
+                    namespace: ${TEST_NAMESPACE}
+            - name: configuration
+              objects:
+              - type: InlineManifest
+                inlineManifest:
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: configuration
+                    namespace: ${TEST_NAMESPACE}
+      """
+    Then ClusterObjectSet "${NAME}-2" reports Ready as True with Reason AllObjectsReady
+    And ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason NewClusterObjectSetProgressed
+    And ClusterObjectDeployment "${NAME}" owns 2 ClusterObjectSets
+    And resource "clusterobjectset/${NAME}-2" matches
+      """
+      spec:
+        revision: 2
+        collisionProtection: Prevent
+        phases:
+        - name: deploy
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: deploy
+                namespace: ${TEST_NAMESPACE}
+        - name: configuration
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: configuration
+                namespace: ${TEST_NAMESPACE}
+      """
+    And ClusterObjectSet "${NAME}-1" is archived
+    And resource "clusterobjectset/${NAME}-1" matches
+      """
+      spec:
+        revision: 1
+        collisionProtection: Prevent
+        phases:
+        - name: configuration
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: configuration
+                namespace: ${TEST_NAMESPACE}
+        - name: deploy
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: deploy
+                namespace: ${TEST_NAMESPACE}
+      """
+
   # Reapplying byte-identical content leaves the template hash unchanged, so the
   # controller must not cut a second revision.
   Scenario: Reapplying an unchanged template creates no new revision
