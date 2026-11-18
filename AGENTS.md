@@ -243,6 +243,16 @@ make generate-mocks
 - **Generated files:** `zz_generated.*.go`
 - **CRDs:** `{group}.{domain}_{resources}.yaml`
 
+### Test Structure
+
+- Write table-driven tests where each case fully declares its own fixture, injected behavior, and
+  expectations as fields (e.g. `revisions`, `onArchive func(...)`, `wantErr`).
+- Do not branch on the case name inside `t.Run` (e.g. `if failure == "x"` or `switch mutation`) to
+  set up fixtures, inject faults, or select assertions. This mixes setup and assertions across cases
+  and makes each case hard to read in isolation.
+- Avoid a hidden shared base fixture that cases patch by index; make each case's starting state
+  visible in the case itself.
+
 ### Core APIs
 
 - **Primary CRDs:**
