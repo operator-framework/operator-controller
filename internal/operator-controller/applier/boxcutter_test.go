@@ -893,7 +893,7 @@ func TestBoxcutterApply_Adoption(t *testing.T) {
 			APIVersion: apiVersion, Kind: kind, Name: name, UID: uid, Controller: ptr.To(true),
 		}
 	}
-	const missingLabelError = "has no controller and does not have the required apps.kubernetes.io/managed-by=operator-controller label"
+	const missingLabelError = "has no controller and does not have the required app.kubernetes.io/managed-by=operator-controller label"
 	type testCase struct {
 		name       string
 		codLabels  map[string]string

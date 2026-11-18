@@ -280,7 +280,7 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
       """
     Then ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason UnmanagedRevision and Message includes:
       """
-      ClusterObjectSet "${NAME}-1" (revision 1) is not labeled apps.kubernetes.io/managed-by=object-controller
+      ClusterObjectSet "${NAME}-1" (revision 1) is not labeled app.kubernetes.io/managed-by=object-controller
       """
     # No higher revision is created while the unmanaged revision leads the group: the
     # deployment stays blocked and ${NAME}-2 is never cut.
@@ -295,7 +295,7 @@ Feature: ClusterObjectDeployment impeded-rollout Progressing reasons
       metadata:
         name: ${NAME}-1
         labels:
-          apps.kubernetes.io/managed-by: object-controller
+          app.kubernetes.io/managed-by: object-controller
       spec:
         group: ${NAME}
         revision: 1
