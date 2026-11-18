@@ -130,7 +130,7 @@ determine which revisions a COD manages. Sharing a group does not by itself make
 a COS owned by the deployment.
 
 The controller can adopt an ownerless, non-deleting group member only when it
-carries the `apps.kubernetes.io/managed-by=object-controller` label. It does not
+carries the `app.kubernetes.io/managed-by=object-controller` label. It does not
 replace another controller's owner reference. A stale reference to an older UID
 of the same deployment is left for Kubernetes garbage collection rather than
 rewritten.

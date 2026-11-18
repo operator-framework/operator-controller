@@ -90,7 +90,7 @@ Feature: ClusterExtension only adopts a ClusterObjectDeployment that belongs to 
       """
     Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
-      ClusterObjectDeployment "${NAME}" has no controller and does not have the required apps.kubernetes.io/managed-by=operator-controller label
+      ClusterObjectDeployment "${NAME}" has no controller and does not have the required app.kubernetes.io/managed-by=operator-controller label
       """
     When resource is applied
       """
@@ -99,7 +99,7 @@ Feature: ClusterExtension only adopts a ClusterObjectDeployment that belongs to 
       metadata:
         name: ${NAME}
         labels:
-          apps.kubernetes.io/managed-by: operator-controller
+          app.kubernetes.io/managed-by: operator-controller
       spec:
         template:
           spec:

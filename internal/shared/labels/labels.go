@@ -11,7 +11,7 @@ const (
 
 	// ManagedByKey is the well-known Kubernetes label recording the controller that
 	// manages a resource.
-	ManagedByKey = "apps.kubernetes.io/managed-by"
+	ManagedByKey = "app.kubernetes.io/managed-by"
 
 	// ManagedByOperatorController identifies resources managed by operator-controller.
 	ManagedByOperatorController = "operator-controller"
