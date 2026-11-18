@@ -111,16 +111,17 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 			labels.OwnerNameKey: ext.GetName(),
 		}
 
-		cod, err := m.Migrate(ctx, ext, objLbls)
+		pending, err := m.Migrate(ctx, ext, objLbls)
 		if err != nil {
 			err = fmt.Errorf("migrating storage: %w", err)
 			setStatusProgressing(ext, err)
 			return nil, err
 		}
-		if cod != nil {
-			setMigrationStatus(ext, cod)
-			// Owned-COD watches wake the extension; this bounds waits for cache
-			// visibility and missed events without changing rollout deadlines.
+		if pending != nil {
+			if pending.Deployment != nil {
+				setMigrationStatus(ext, pending.Deployment)
+			}
+			// Staged deployments do not trigger the controller-owner watch until claimed.
 			return &ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 		return nil, nil
@@ -147,7 +148,14 @@ func setMigrationStatus(ext *ocv1.ClusterExtension, cod *ocv1.ClusterObjectDeplo
 	}
 	prog := progressingConditionFromClusterObjectDeployment(progressing)
 	prog.ObservedGeneration = ext.Generation
-	prog.Message = fmt.Sprintf("Helm migration %s: %s", cod.Annotations[labels.HelmMigrationKey], prog.Message)
+	stage := "Adopting"
+	if cod.Spec.Template.Spec.CollisionProtection == ocv1.CollisionProtectionPrevent {
+		stage = "Protecting"
+	}
+	if cod.Labels[labels.ManagedByKey] == labels.ManagedByOperatorController {
+		stage = "Claiming"
+	}
+	prog.Message = fmt.Sprintf("Helm migration %s: %s", stage, prog.Message)
 	apimeta.SetStatusCondition(&ext.Status.Conditions, prog)
 }
 

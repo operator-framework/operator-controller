@@ -166,7 +166,7 @@ func TestHelmMigrationSkipsExistingInstallation(t *testing.T) {
 		objects []client.Object
 	}
 	type expected struct {
-		pending *ocv1.ClusterObjectDeployment
+		pending *applier.PendingMigration
 		err     error
 	}
 
@@ -232,7 +232,7 @@ func TestHelmMigrationSkipsManagedNamespace(t *testing.T) {
 		namespace string
 	}{namespace: ""}
 	want := struct {
-		pending         *ocv1.ClusterObjectDeployment
+		pending         *applier.PendingMigration
 		err             error
 		deploymentReads int
 	}{pending: nil, err: nil, deploymentReads: 1}
@@ -267,7 +267,7 @@ func TestHelmMigrationSkipsMissingDeployedRelease(t *testing.T) {
 	}
 	type expected struct {
 		historyLookup bool
-		pending       *ocv1.ClusterObjectDeployment
+		pending       *applier.PendingMigration
 		err           error
 	}
 
@@ -368,9 +368,10 @@ func TestHelmMigrationCreatesDeploymentOwnershipChain(t *testing.T) {
 		pending                    bool
 		err                        error
 		deploymentOwnedByExtension bool
+		deploymentOwnerCount       int
+		deploymentOwnerUID         types.UID
 		contentOwnedByExtension    bool
 		managedBy                  string
-		stage                      string
 		protection                 ocv1.CollisionProtection
 		secretCount                int
 		immutable                  *bool
@@ -378,10 +379,11 @@ func TestHelmMigrationCreatesDeploymentOwnershipChain(t *testing.T) {
 	}{
 		pending:                    true,
 		err:                        nil,
-		deploymentOwnedByExtension: true,
+		deploymentOwnedByExtension: false,
+		deploymentOwnerCount:       1,
+		deploymentOwnerUID:         input.extension.UID,
 		contentOwnedByExtension:    true,
-		managedBy:                  labels.ManagedByOperatorController,
-		stage:                      labels.HelmMigrationAdopting,
+		managedBy:                  "",
 		protection:                 ocv1.CollisionProtectionNone,
 		secretCount:                1,
 		immutable:                  ptr.To(true),
@@ -415,14 +417,16 @@ func TestHelmMigrationCreatesDeploymentOwnershipChain(t *testing.T) {
 	}
 
 	// When migration starts.
-	cod, err := m.Migrate(t.Context(), ext, input.objectLabels)
+	pending, err := m.Migrate(t.Context(), ext, input.objectLabels)
 
-	// Then the CE owns the adopting COD and immutable content; only COD creates revisions.
+	// Then the CE is a non-controller owner of the staged COD and controls its content Secrets.
 	require.ErrorIs(t, err, want.err)
-	require.Equal(t, want.pending, cod != nil)
+	require.Equal(t, want.pending, pending != nil)
+	cod := pending.Deployment
 	require.Equal(t, want.deploymentOwnedByExtension, metav1.IsControlledBy(cod, ext))
+	require.Len(t, cod.OwnerReferences, want.deploymentOwnerCount)
+	require.Equal(t, want.deploymentOwnerUID, cod.OwnerReferences[0].UID)
 	require.Equal(t, want.managedBy, cod.Labels[labels.ManagedByKey])
-	require.Equal(t, want.stage, cod.Annotations[labels.HelmMigrationKey])
 	require.Equal(t, want.protection, cod.Spec.Template.Spec.CollisionProtection)
 	secrets := &corev1.SecretList{}
 	require.NoError(t, stored.List(t.Context(), secrets))
@@ -441,7 +445,6 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 		generation  int64
 		progressing metav1.Condition
 		available   metav1.Condition
-		stage       string
 		protection  ocv1.CollisionProtection
 	}
 	type expected struct {
@@ -458,7 +461,6 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 		{
 			name: "adopting is pending",
 			input: input{
-				stage:      labels.HelmMigrationAdopting,
 				protection: ocv1.CollisionProtectionNone,
 				generation: 2,
 				progressing: metav1.Condition{
@@ -483,7 +485,6 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 		{
 			name: "protecting is pending",
 			input: input{
-				stage:      labels.HelmMigrationProtecting,
 				protection: ocv1.CollisionProtectionPrevent,
 				generation: 2,
 				progressing: metav1.Condition{
@@ -508,7 +509,6 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 		{
 			name: "stale adoption completion",
 			input: input{
-				stage:      labels.HelmMigrationAdopting,
 				protection: ocv1.CollisionProtectionNone,
 				generation: 2,
 				progressing: metav1.Condition{
@@ -533,7 +533,6 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 		{
 			name: "stale protected completion",
 			input: input{
-				stage:      labels.HelmMigrationProtecting,
 				protection: ocv1.CollisionProtectionPrevent,
 				generation: 2,
 				progressing: metav1.Condition{
@@ -558,7 +557,6 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 		{
 			name: "deadline failure remains pending",
 			input: input{
-				stage:      labels.HelmMigrationProtecting,
 				protection: ocv1.CollisionProtectionPrevent,
 				generation: 2,
 				progressing: metav1.Condition{
@@ -583,7 +581,6 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 		{
 			name: "success reason with wrong status",
 			input: input{
-				stage:      labels.HelmMigrationAdopting,
 				protection: ocv1.CollisionProtectionNone,
 				generation: 2,
 				progressing: metav1.Condition{
@@ -613,7 +610,6 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 			stored := migrationClient(t, interceptor.Funcs{})
 			cod := startMigration(t, stored)
 			cod.Generation = tc.input.generation
-			cod.Annotations[labels.HelmMigrationKey] = tc.input.stage
 			cod.Spec.Template.Spec.CollisionProtection = tc.input.protection
 			require.NoError(t, stored.Update(t.Context(), cod))
 			cod.Status.Conditions = []metav1.Condition{tc.input.progressing, tc.input.available}
@@ -635,7 +631,7 @@ func TestHelmMigrationWaitsForCurrentCompletion(t *testing.T) {
 			require.ErrorIs(t, err, tc.want.err)
 			require.Equal(t, tc.want.pending, pending != nil)
 			if tc.want.unchanged {
-				require.Equal(t, before, pending)
+				require.Equal(t, before, pending.Deployment)
 			}
 		})
 	}
@@ -657,13 +653,11 @@ func TestHelmMigrationProtectsFrozenTemplate(t *testing.T) {
 	cod := startMigration(t, stored)
 	completeMigrationRollout(t, stored, cod)
 	want := struct {
-		stage      string
 		spec       *ocv1.ClusterObjectDeploymentSpec
 		pending    bool
 		err        error
 		patchCalls int
 	}{
-		stage:      labels.HelmMigrationProtecting,
 		spec:       cod.Spec.DeepCopy(),
 		pending:    true,
 		err:        nil,
@@ -688,21 +682,20 @@ func TestHelmMigrationProtectsFrozenTemplate(t *testing.T) {
 	// Then only protection changes; content, probes, metadata, and deadline stay frozen.
 	require.ErrorIs(t, err, want.err)
 	require.Equal(t, want.pending, pending != nil)
-	require.Equal(t, want.stage, pending.Annotations[labels.HelmMigrationKey])
-	require.Equal(t, *want.spec, pending.Spec)
+	require.Equal(t, *want.spec, pending.Deployment.Spec)
 	actual := &ocv1.ClusterObjectDeployment{}
 	require.NoError(t, stored.Get(t.Context(), client.ObjectKeyFromObject(cod), actual))
-	require.Equal(t, pending, actual)
+	require.Equal(t, pending.Deployment, actual)
 }
 
-func TestHelmMigrationRemovesMarkerAfterProtectedCompletion(t *testing.T) {
+func TestHelmMigrationClaimsDeploymentAfterProtectedCompletion(t *testing.T) {
 	input := struct {
-		stage           string
+		extension       *ocv1.ClusterExtension
 		protection      ocv1.CollisionProtection
 		annotationKey   string
 		annotationValue string
 	}{
-		stage:           labels.HelmMigrationProtecting,
+		extension:       migrationExtension(),
 		protection:      ocv1.CollisionProtectionPrevent,
 		annotationKey:   "unrelated",
 		annotationValue: "preserved",
@@ -711,22 +704,23 @@ func TestHelmMigrationRemovesMarkerAfterProtectedCompletion(t *testing.T) {
 	// Given a protected rollout that completed successfully.
 	stored := migrationClient(t, interceptor.Funcs{})
 	cod := startMigration(t, stored)
-	cod.Annotations[labels.HelmMigrationKey] = input.stage
-	cod.Annotations[input.annotationKey] = input.annotationValue
+	cod.Annotations = map[string]string{input.annotationKey: input.annotationValue}
 	cod.Spec.Template.Spec.CollisionProtection = input.protection
 	require.NoError(t, stored.Update(t.Context(), cod))
 	completeMigrationRollout(t, stored, cod)
 	want := struct {
-		pending         *ocv1.ClusterObjectDeployment
+		pending         bool
 		err             error
-		markerPresent   bool
+		managedBy       string
+		controllerUID   types.UID
 		annotationValue string
 		spec            ocv1.ClusterObjectDeploymentSpec
 		patchCalls      int
 	}{
-		pending:         nil,
+		pending:         true,
 		err:             nil,
-		markerPresent:   false,
+		managedBy:       labels.ManagedByOperatorController,
+		controllerUID:   input.extension.UID,
 		annotationValue: "preserved",
 		spec:            *cod.Spec.DeepCopy(),
 		patchCalls:      1,
@@ -737,20 +731,23 @@ func TestHelmMigrationRemovesMarkerAfterProtectedCompletion(t *testing.T) {
 	api.EXPECT().Patch(gomock.Any(), gomock.AssignableToTypeOf(cod), gomock.Any()).DoAndReturn(stored.Patch).Times(want.patchCalls)
 	m := &applier.BoxcutterStorageMigrator{
 		Client:             api,
+		Scheme:             codTestScheme(t),
 		ActionClientGetter: mockhelmclient.NewMockActionClientGetter(ctrl),
 		RevisionGenerator:  mockapplier.NewMockRevisionGenerator(ctrl),
 	}
 
-	// When migration finishes, allowing only one COD patch.
-	pending, err := m.Migrate(t.Context(), migrationExtension(), nil)
+	// When the migrator claims the protected deployment in one patch.
+	pending, err := m.Migrate(t.Context(), input.extension, nil)
 
-	// Then the marker is removed without changing the template or unrelated annotations.
+	// Then the same write persists both the managed-by label and controller reference.
 	require.ErrorIs(t, err, want.err)
-	require.Equal(t, want.pending, pending)
+	require.Equal(t, want.pending, pending != nil)
 	actual := &ocv1.ClusterObjectDeployment{}
 	require.NoError(t, stored.Get(t.Context(), client.ObjectKeyFromObject(cod), actual))
-	_, markerPresent := actual.Annotations[labels.HelmMigrationKey]
-	require.Equal(t, want.markerPresent, markerPresent)
+	require.Equal(t, want.managedBy, actual.Labels[labels.ManagedByKey])
+	owner := metav1.GetControllerOf(actual)
+	require.NotNil(t, owner)
+	require.Equal(t, want.controllerUID, owner.UID)
 	require.Equal(t, want.annotationValue, actual.Annotations[input.annotationKey])
 	require.Equal(t, want.spec, actual.Spec)
 }
@@ -772,7 +769,6 @@ func TestHelmMigrationRetriesInterruptedCreation(t *testing.T) {
 		retrySecretCalls     int
 		retryDeploymentCalls int
 		retryErr             error
-		stage                string
 		secretCount          int
 		deploymentCount      int
 	}
@@ -799,7 +795,6 @@ func TestHelmMigrationRetriesInterruptedCreation(t *testing.T) {
 				retrySecretCalls:     1,
 				retryDeploymentCalls: 1,
 				retryErr:             nil,
-				stage:                labels.HelmMigrationAdopting,
 				secretCount:          1,
 				deploymentCount:      1,
 			},
@@ -821,7 +816,6 @@ func TestHelmMigrationRetriesInterruptedCreation(t *testing.T) {
 				retrySecretCalls:     1,
 				retryDeploymentCalls: 1,
 				retryErr:             nil,
-				stage:                labels.HelmMigrationAdopting,
 				secretCount:          1,
 				deploymentCount:      1,
 			},
@@ -843,7 +837,6 @@ func TestHelmMigrationRetriesInterruptedCreation(t *testing.T) {
 				retrySecretCalls:     1,
 				retryDeploymentCalls: 1,
 				retryErr:             nil,
-				stage:                labels.HelmMigrationAdopting,
 				secretCount:          1,
 				deploymentCount:      1,
 			},
@@ -865,7 +858,6 @@ func TestHelmMigrationRetriesInterruptedCreation(t *testing.T) {
 				retrySecretCalls:     0,
 				retryDeploymentCalls: 0,
 				retryErr:             nil,
-				stage:                labels.HelmMigrationAdopting,
 				secretCount:          1,
 				deploymentCount:      1,
 			},
@@ -934,7 +926,8 @@ func TestHelmMigrationRetriesInterruptedCreation(t *testing.T) {
 				retryAPI.EXPECT().Create(gomock.Any(), gomock.AssignableToTypeOf(&ocv1.ClusterObjectDeployment{})).DoAndReturn(stored.Create).Times(tc.want.retryDeploymentCalls),
 			)
 			retry := &applier.BoxcutterStorageMigrator{
-				Client: retryAPI, Scheme: scheme,
+				Client:             retryAPI,
+				Scheme:             scheme,
 				ActionClientGetter: retryHelm,
 				RevisionGenerator:  retryGenerator,
 			}
@@ -945,7 +938,6 @@ func TestHelmMigrationRetriesInterruptedCreation(t *testing.T) {
 			// Then a single adopting COD and a single content Secret remain.
 			require.ErrorIs(t, err, tc.want.retryErr)
 			require.Equal(t, tc.want.retryPending, pending != nil)
-			require.Equal(t, tc.want.stage, pending.Annotations[labels.HelmMigrationKey])
 			secrets := &corev1.SecretList{}
 			require.NoError(t, stored.List(t.Context(), secrets))
 			require.Len(t, secrets.Items, tc.want.secretCount)
@@ -961,13 +953,13 @@ func TestHelmMigrationRetriesLostTransitionResponse(t *testing.T) {
 	type input struct {
 		generation         int64
 		patchErr           error
-		stage              string
+		labeled            bool
 		protection         ocv1.CollisionProtection
 		simulateGeneration bool
 	}
 	type expected struct {
 		firstErr     error
-		storedStage  string
+		managedBy    string
 		protection   ocv1.CollisionProtection
 		retryPending bool
 		retryErr     error
@@ -983,30 +975,44 @@ func TestHelmMigrationRetriesLostTransitionResponse(t *testing.T) {
 			input: input{
 				generation:         1,
 				patchErr:           responseLost,
-				stage:              labels.HelmMigrationAdopting,
 				protection:         ocv1.CollisionProtectionNone,
 				simulateGeneration: true,
 			},
 			want: expected{
 				firstErr:     responseLost,
-				storedStage:  labels.HelmMigrationProtecting,
+				managedBy:    "",
 				protection:   ocv1.CollisionProtectionPrevent,
 				retryPending: true,
 				retryErr:     nil,
 			},
 		},
 		{
-			name: "marker-removal response lost",
+			name: "controller claim response lost",
 			input: input{
-				generation:         1,
-				patchErr:           responseLost,
-				stage:              labels.HelmMigrationProtecting,
-				protection:         ocv1.CollisionProtectionPrevent,
-				simulateGeneration: false,
+				generation: 1,
+				patchErr:   responseLost,
+				protection: ocv1.CollisionProtectionPrevent,
 			},
 			want: expected{
 				firstErr:     responseLost,
-				storedStage:  "",
+				managedBy:    labels.ManagedByOperatorController,
+				protection:   ocv1.CollisionProtectionPrevent,
+				retryPending: false,
+				retryErr:     nil,
+			},
+		},
+		{
+			name: "controller claim response lost on previously labeled deployment",
+			input: input{
+				generation:         1,
+				patchErr:           responseLost,
+				protection:         ocv1.CollisionProtectionPrevent,
+				simulateGeneration: false,
+				labeled:            true,
+			},
+			want: expected{
+				firstErr:     responseLost,
+				managedBy:    labels.ManagedByOperatorController,
 				protection:   ocv1.CollisionProtectionPrevent,
 				retryPending: false,
 				retryErr:     nil,
@@ -1020,7 +1026,9 @@ func TestHelmMigrationRetriesLostTransitionResponse(t *testing.T) {
 			stored := migrationClient(t, interceptor.Funcs{})
 			cod := startMigration(t, stored)
 			cod.Generation = tc.input.generation
-			cod.Annotations[labels.HelmMigrationKey] = tc.input.stage
+			if tc.input.labeled {
+				cod.Labels[labels.ManagedByKey] = labels.ManagedByOperatorController
+			}
 			cod.Spec.Template.Spec.CollisionProtection = tc.input.protection
 			require.NoError(t, stored.Update(t.Context(), cod))
 			completeMigrationRollout(t, stored, cod)
@@ -1034,6 +1042,7 @@ func TestHelmMigrationRetriesLostTransitionResponse(t *testing.T) {
 				})
 			m := &applier.BoxcutterStorageMigrator{
 				Client:             api,
+				Scheme:             codTestScheme(t),
 				ActionClientGetter: mockhelmclient.NewMockActionClientGetter(ctrl),
 				RevisionGenerator:  mockapplier.NewMockRevisionGenerator(ctrl),
 			}
@@ -1045,7 +1054,7 @@ func TestHelmMigrationRetriesLostTransitionResponse(t *testing.T) {
 			require.ErrorIs(t, err, tc.want.firstErr)
 			actual := &ocv1.ClusterObjectDeployment{}
 			require.NoError(t, stored.Get(t.Context(), client.ObjectKeyFromObject(cod), actual))
-			require.Equal(t, tc.want.storedStage, actual.Annotations[labels.HelmMigrationKey])
+			require.Equal(t, tc.want.managedBy, actual.Labels[labels.ManagedByKey])
 			require.Equal(t, tc.want.protection, actual.Spec.Template.Spec.CollisionProtection)
 
 			// Given a restart, simulate the API generation bump for a changed template.
@@ -1068,7 +1077,7 @@ func TestHelmMigrationRetriesLostTransitionResponse(t *testing.T) {
 			require.ErrorIs(t, err, tc.want.retryErr)
 			require.Equal(t, tc.want.retryPending, pending != nil)
 			if tc.want.retryPending {
-				require.Equal(t, actual, pending)
+				require.Equal(t, actual, pending.Deployment)
 			}
 		})
 	}
@@ -1084,14 +1093,12 @@ func TestHelmMigrationTransitionUsesOptimisticLock(t *testing.T) {
 	}
 	want := struct {
 		conflict        bool
-		pending         *ocv1.ClusterObjectDeployment
-		stage           string
+		pending         *applier.PendingMigration
 		protection      ocv1.CollisionProtection
 		annotationValue string
 	}{
 		conflict:        true,
 		pending:         nil,
-		stage:           labels.HelmMigrationAdopting,
 		protection:      ocv1.CollisionProtectionNone,
 		annotationValue: "change",
 	}
@@ -1107,7 +1114,7 @@ func TestHelmMigrationTransitionUsesOptimisticLock(t *testing.T) {
 		DoAndReturn(func(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 			concurrent := &ocv1.ClusterObjectDeployment{}
 			require.NoError(t, stored.Get(ctx, client.ObjectKeyFromObject(obj), concurrent))
-			concurrent.Annotations[input.annotationKey] = input.annotationValue
+			concurrent.Annotations = map[string]string{input.annotationKey: input.annotationValue}
 			require.NoError(t, stored.Update(ctx, concurrent))
 			return stored.Patch(ctx, obj, patch, opts...)
 		})
@@ -1125,174 +1132,53 @@ func TestHelmMigrationTransitionUsesOptimisticLock(t *testing.T) {
 	require.Equal(t, want.pending, pending)
 	actual := &ocv1.ClusterObjectDeployment{}
 	require.NoError(t, stored.Get(t.Context(), client.ObjectKeyFromObject(cod), actual))
-	require.Equal(t, want.stage, actual.Annotations[labels.HelmMigrationKey])
 	require.Equal(t, want.protection, actual.Spec.Template.Spec.CollisionProtection)
 	require.Equal(t, want.annotationValue, actual.Annotations[input.annotationKey])
 }
 
 func TestHelmMigrationRejectsInvalidPersistedState(t *testing.T) {
-	type input struct {
-		ownerUID   string
-		ownerless  bool
+	ext := migrationExtension()
+	cases := []struct {
+		name       string
+		ownerUID   types.UID
+		controller *metav1.OwnerReference
 		deleting   bool
-		stage      string
+		label      string
 		protection ocv1.CollisionProtection
-	}
-	type expected struct {
-		err     string
-		pending *ocv1.ClusterObjectDeployment
-	}
-
-	testCases := []struct {
-		name  string
-		input input
-		want  expected
+		wantErr    string
 	}{
 		{
-			name: "foreign current owner",
-			input: input{
-				ownerUID:   "foreign",
-				ownerless:  false,
-				deleting:   false,
-				stage:      labels.HelmMigrationAdopting,
-				protection: ocv1.CollisionProtectionNone,
-			},
-			want: expected{
-				err:     "controlled by ClusterExtension UID",
-				pending: nil,
-			},
+			name: "another controller owns staged COD", ownerUID: ext.UID,
+			controller: metav1.NewControllerRef(&metav1.ObjectMeta{Name: "other", UID: "other"}, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind)),
+			wantErr:    "no longer staged",
 		},
-		{
-			name: "recreated extension owner",
-			input: input{
-				ownerUID:   "old-extension-uid",
-				ownerless:  false,
-				deleting:   false,
-				stage:      labels.HelmMigrationAdopting,
-				protection: ocv1.CollisionProtectionNone,
-			},
-			want: expected{
-				err:     "controlled by ClusterExtension UID",
-				pending: nil,
-			},
-		},
-		{
-			name: "ownerless",
-			input: input{
-				ownerUID:   "",
-				ownerless:  true,
-				deleting:   false,
-				stage:      labels.HelmMigrationAdopting,
-				protection: ocv1.CollisionProtectionNone,
-			},
-			want: expected{
-				err:     "controlled by ClusterExtension UID",
-				pending: nil,
-			},
-		},
-		{
-			name: "deleting",
-			input: input{
-				ownerUID:   "extension-uid",
-				ownerless:  false,
-				deleting:   true,
-				stage:      labels.HelmMigrationAdopting,
-				protection: ocv1.CollisionProtectionNone,
-			},
-			want: expected{
-				err:     "must be non-deleting",
-				pending: nil,
-			},
-		},
-		{
-			name: "unknown stage",
-			input: input{
-				ownerUID:   "extension-uid",
-				ownerless:  false,
-				deleting:   false,
-				stage:      "Unknown",
-				protection: ocv1.CollisionProtectionNone,
-			},
-			want: expected{
-				err:     "inconsistent stage",
-				pending: nil,
-			},
-		},
-		{
-			name: "empty stage",
-			input: input{
-				ownerUID:   "extension-uid",
-				ownerless:  false,
-				deleting:   false,
-				stage:      "",
-				protection: ocv1.CollisionProtectionNone,
-			},
-			want: expected{
-				err:     "inconsistent stage",
-				pending: nil,
-			},
-		},
-		{
-			name: "adopting with protection",
-			input: input{
-				ownerUID:   "extension-uid",
-				ownerless:  false,
-				deleting:   false,
-				stage:      labels.HelmMigrationAdopting,
-				protection: ocv1.CollisionProtectionPrevent,
-			},
-			want: expected{
-				err:     "inconsistent stage",
-				pending: nil,
-			},
-		},
-		{
-			name: "protecting without protection",
-			input: input{
-				ownerUID:   "extension-uid",
-				ownerless:  false,
-				deleting:   false,
-				stage:      labels.HelmMigrationProtecting,
-				protection: ocv1.CollisionProtectionNone,
-			},
-			want: expected{
-				err:     "inconsistent stage",
-				pending: nil,
-			},
-		},
+		{name: "recreated CE", ownerUID: "old-uid", wantErr: "no longer staged"},
+		{name: "deleting COD", ownerUID: ext.UID, deleting: true, wantErr: "is deleting"},
+		{name: "foreign managed-by label", ownerUID: ext.UID, label: "other", protection: ocv1.CollisionProtectionPrevent, wantErr: "unexpected collision protection"},
+		{name: "premature adoption label", ownerUID: ext.UID, label: labels.ManagedByOperatorController, protection: ocv1.CollisionProtectionNone, wantErr: "unexpected collision protection"},
+		{name: "unexpected protection", ownerUID: ext.UID, protection: ocv1.CollisionProtectionIfNoController, wantErr: "unexpected collision protection"},
 	}
-
-	for _, tc := range testCases {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Given a persisted COD with the ownership or stage mismatch declared above.
-			seed := migrationClient(t, interceptor.Funcs{})
-			cod := startMigration(t, seed)
-			cod.OwnerReferences[0].UID = types.UID(tc.input.ownerUID)
-			if tc.input.ownerless {
-				cod.OwnerReferences = nil
+			cod := startMigration(t, migrationClient(t, interceptor.Funcs{}))
+			cod.OwnerReferences[0].UID = tc.ownerUID
+			if tc.controller != nil {
+				cod.OwnerReferences = append(cod.OwnerReferences, *tc.controller)
 			}
-			if tc.input.deleting {
+			if tc.deleting {
 				cod.DeletionTimestamp = ptr.To(metav1.Now())
 				cod.Finalizers = []string{"retain"}
 			}
-			cod.Annotations[labels.HelmMigrationKey] = tc.input.stage
-			cod.Spec.Template.Spec.CollisionProtection = tc.input.protection
-			stored := migrationClient(t, interceptor.Funcs{}, cod)
-			ctrl := gomock.NewController(t)
-			api := mockctrlclient.NewMockClient(ctrl)
-			api.EXPECT().Get(gomock.Any(), client.ObjectKeyFromObject(cod), gomock.Any()).DoAndReturn(stored.Get)
-			m := &applier.BoxcutterStorageMigrator{
-				Client:             api,
-				ActionClientGetter: mockhelmclient.NewMockActionClientGetter(ctrl),
-				RevisionGenerator:  mockapplier.NewMockRevisionGenerator(ctrl),
+			if tc.label != "" {
+				cod.Labels[labels.ManagedByKey] = tc.label
 			}
-
-			// When migration resumes; no Helm, generation, or mutation is allowed.
-			pending, err := m.Migrate(t.Context(), migrationExtension(), nil)
-
-			// Then the mismatch is reported before returning a usable migration deployment.
-			require.ErrorContains(t, err, tc.want.err)
-			require.Equal(t, tc.want.pending, pending)
+			cod.Spec.Template.Spec.CollisionProtection = tc.protection
+			stored := migrationClient(t, interceptor.Funcs{}, cod)
+			api := mockctrlclient.NewMockClient(gomock.NewController(t))
+			api.EXPECT().Get(gomock.Any(), client.ObjectKeyFromObject(cod), gomock.Any()).DoAndReturn(stored.Get)
+			m := &applier.BoxcutterStorageMigrator{Client: api}
+			_, err := m.Migrate(t.Context(), ext, nil)
+			require.ErrorContains(t, err, tc.wantErr)
 		})
 	}
 }
@@ -1307,7 +1193,7 @@ func TestHelmMigrationValidatesExistingContent(t *testing.T) {
 	}
 	type expected struct {
 		err             string
-		pending         *ocv1.ClusterObjectDeployment
+		pending         *applier.PendingMigration
 		deploymentCount int
 	}
 
@@ -1470,7 +1356,7 @@ func TestHelmMigrationNeverOverwritesConcurrentDeployment(t *testing.T) {
 		deploymentReads              int
 	}{
 		alreadyExists:                true,
-		retryErrContains:             "controlled by ClusterExtension UID",
+		retryErrContains:             "no longer staged for ClusterExtension UID",
 		preserveConcurrentDeployment: true,
 		deploymentReads:              2,
 	}
@@ -1503,7 +1389,8 @@ func TestHelmMigrationNeverOverwritesConcurrentDeployment(t *testing.T) {
 		api.EXPECT().Create(gomock.Any(), gomock.AssignableToTypeOf(&ocv1.ClusterObjectDeployment{})).DoAndReturn(stored.Create),
 	)
 	m := &applier.BoxcutterStorageMigrator{
-		Client: api, Scheme: scheme,
+		Client:             api,
+		Scheme:             scheme,
 		ActionClientGetter: helm,
 		RevisionGenerator:  generator,
 	}
@@ -1582,10 +1469,10 @@ func startMigration(t *testing.T, c client.Client) *ocv1.ClusterObjectDeployment
 		ActionClientGetter: helm,
 		RevisionGenerator:  generator,
 	}
-	cod, err := m.Migrate(t.Context(), ext, nil)
+	pending, err := m.Migrate(t.Context(), ext, nil)
 	require.NoError(t, err)
-	require.NotNil(t, cod)
-	return cod
+	require.NotNil(t, pending)
+	return pending.Deployment
 }
 
 // completeMigrationRollout simulates the COD controller reporting successful

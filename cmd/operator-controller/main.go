@@ -566,8 +566,7 @@ func newCacheOptions(systemNamespace string, boxcutterRuntime bool) crcache.Opti
 	options.ByObject[&ocv1.ClusterObjectDeployment{}] = crcache.ByObject{
 		// Keep all CODs visible to name-based reads in Boxcutter.checkAdoptable.
 		// Filtering by managed-by would hide unlabeled CODs, allowing force apply
-		// to bypass the adoption guard. The transform strips spec and status
-		// from CODs not managed by operator-controller.
+		// to bypass the adoption guard. Keep rollout data for managed and staged CODs.
 		Label:     k8slabels.Everything(),
 		Transform: transformClusterObjectDeployment,
 	}
@@ -581,7 +580,7 @@ func newCacheOptions(systemNamespace string, boxcutterRuntime bool) crcache.Opti
 
 func transformClusterObjectDeployment(obj any) (any, error) {
 	if cod, ok := obj.(*ocv1.ClusterObjectDeployment); ok {
-		if cod.Labels[labels.ManagedByKey] != labels.ManagedByOperatorController {
+		if cod.Labels[labels.ManagedByKey] != labels.ManagedByOperatorController && applier.HelmMigrationOwner(cod) == nil {
 			cod.Spec = ocv1.ClusterObjectDeploymentSpec{}
 			cod.Status = ocv1.ClusterObjectDeploymentStatus{}
 		}

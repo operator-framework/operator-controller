@@ -27,7 +27,7 @@ import (
 func TestMigrateStorageGatesFollowingSteps(t *testing.T) {
 	type input struct {
 		deploymentConditions []metav1.Condition
-		stage                string
+		protection           ocv1.CollisionProtection
 	}
 	type expected struct {
 		followingSteps int
@@ -44,7 +44,7 @@ func TestMigrateStorageGatesFollowingSteps(t *testing.T) {
 			name: "wait for adoption",
 			input: input{
 				deploymentConditions: nil,
-				stage:                labels.HelmMigrationAdopting,
+				protection:           ocv1.CollisionProtectionNone,
 			},
 			want: expected{
 				followingSteps: 0,
@@ -56,7 +56,7 @@ func TestMigrateStorageGatesFollowingSteps(t *testing.T) {
 			name: "wait for protection",
 			input: input{
 				deploymentConditions: nil,
-				stage:                labels.HelmMigrationProtecting,
+				protection:           ocv1.CollisionProtectionPrevent,
 			},
 			want: expected{
 				followingSteps: 0,
@@ -69,7 +69,7 @@ func TestMigrateStorageGatesFollowingSteps(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given a pending migration and a subsequent ordinary reconciliation step.
-			ext, cod := migrationStatusFixture(tc.input.stage)
+			ext, cod := migrationStatusFixture(tc.input.protection)
 			cod.Status.Conditions = tc.input.deploymentConditions
 			scheme := runtime.NewScheme()
 			require.NoError(t, ocv1.AddToScheme(scheme))
@@ -102,13 +102,50 @@ func TestMigrateStorageGatesFollowingSteps(t *testing.T) {
 	}
 }
 
+func TestMigrateStorageWaitsWhenRevisionAppearsBeforeItsDeployment(t *testing.T) {
+	ext, cod := migrationStatusFixture(ocv1.CollisionProtectionNone)
+	ext.Spec.Namespace = "installed"
+	ext.Status.Install = &ocv1.ClusterExtensionInstallStatus{Bundle: ocv1.BundleMetadata{Name: "installed.v1"}}
+	revision := &ocv1.ClusterObjectSet{
+		ObjectMeta: metav1.ObjectMeta{Name: cod.Name + "-1", OwnerReferences: []metav1.OwnerReference{
+			*metav1.NewControllerRef(cod, ocv1.GroupVersion.WithKind(ocv1.ClusterObjectDeploymentKind)),
+		}},
+		Spec: ocv1.ClusterObjectSetSpec{Group: cod.Name, Revision: 1},
+	}
+
+	wantStatus := ext.Status.DeepCopy()
+	wantRequeue := 10 * time.Second
+	wantFollowingSteps := 0
+
+	scheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(scheme))
+	reader := fake.NewClientBuilder().WithScheme(scheme).WithObjects(revision).
+		WithIndex(&ocv1.ClusterObjectSet{}, ".spec.group", func(obj client.Object) []string {
+			return []string{obj.(*ocv1.ClusterObjectSet).Spec.Group}
+		}).Build()
+	followingSteps := 0
+	steps := ReconcileSteps{
+		MigrateStorage(&applier.BoxcutterStorageMigrator{Client: reader}),
+		func(context.Context, *reconcileState, *ocv1.ClusterExtension) (*ctrl.Result, error) {
+			followingSteps++
+			return nil, nil
+		},
+	}
+
+	result, err := steps.Reconcile(t.Context(), ext)
+	require.NoError(t, err)
+	require.Equal(t, wantFollowingSteps, followingSteps)
+	require.Equal(t, wantRequeue, result.RequeueAfter)
+	require.Equal(t, *wantStatus, ext.Status)
+}
+
 func TestMigrateStorageReportsMigrationError(t *testing.T) {
 	input := struct {
-		stage               string
+		protection          ocv1.CollisionProtection
 		extensionGeneration int64
 		lookupErr           error
 	}{
-		stage:               labels.HelmMigrationAdopting,
+		protection:          ocv1.CollisionProtectionNone,
 		extensionGeneration: 5,
 		lookupErr:           errors.New("API unavailable"),
 	}
@@ -129,7 +166,7 @@ func TestMigrateStorageReportsMigrationError(t *testing.T) {
 	}
 
 	// Given an API error while reading the migration deployment.
-	ext, cod := migrationStatusFixture(input.stage)
+	ext, cod := migrationStatusFixture(input.protection)
 	ext.Generation = input.extensionGeneration
 	mockCtrl := gomock.NewController(t)
 	api := mockctrlclient.NewMockClient(mockCtrl)
@@ -156,21 +193,21 @@ func TestMigrateStorageReportsMigrationError(t *testing.T) {
 
 func TestMigrationStatusUpdateFailureResumesPersistedDeployment(t *testing.T) {
 	input := struct {
-		stage           string
+		protection      ocv1.CollisionProtection
 		statusUpdateErr error
 	}{
-		stage:           labels.HelmMigrationProtecting,
+		protection:      ocv1.CollisionProtectionPrevent,
 		statusUpdateErr: errors.New("status unavailable"),
 	}
 
 	// Given a stored protecting COD and a CE status write that fails once.
-	ext, cod := migrationStatusFixture(input.stage)
+	ext, cod := migrationStatusFixture(input.protection)
 	want := struct {
 		firstErrContains string
 		retryErr         error
 		requeueAfter     time.Duration
 		bundleName       string
-		stage            string
+		protection       ocv1.CollisionProtection
 		deploymentSpec   ocv1.ClusterObjectDeploymentSpec
 		attempts         int
 	}{
@@ -178,7 +215,7 @@ func TestMigrationStatusUpdateFailureResumesPersistedDeployment(t *testing.T) {
 		retryErr:         nil,
 		requeueAfter:     10 * time.Second,
 		bundleName:       "stored.v1.0.0",
-		stage:            labels.HelmMigrationProtecting,
+		protection:       ocv1.CollisionProtectionPrevent,
 		deploymentSpec:   *cod.Spec.DeepCopy(),
 		attempts:         2,
 	}
@@ -220,7 +257,7 @@ func TestMigrationStatusUpdateFailureResumesPersistedDeployment(t *testing.T) {
 	// When the controller retries after reconstruction.
 	result, err := r.Reconcile(t.Context(), ctrl.Request{NamespacedName: client.ObjectKeyFromObject(ext)})
 
-	// Then it reports the stored identity and stage without Helm, generation, or COD writes.
+	// Then it reports the stored identity and protection without Helm, generation, or COD writes.
 	require.ErrorIs(t, err, want.retryErr)
 	require.Equal(t, want.requeueAfter, result.RequeueAfter)
 	actual := &ocv1.ClusterExtension{}
@@ -230,7 +267,7 @@ func TestMigrationStatusUpdateFailureResumesPersistedDeployment(t *testing.T) {
 	persisted := &ocv1.ClusterObjectDeployment{}
 	require.NoError(t, stored.Get(t.Context(), client.ObjectKeyFromObject(cod), persisted))
 	require.Equal(t, want.deploymentSpec, persisted.Spec)
-	require.Equal(t, want.stage, persisted.Annotations[labels.HelmMigrationKey])
+	require.Equal(t, want.protection, persisted.Spec.Template.Spec.CollisionProtection)
 }
 
 func TestMigrationStatusPreservesHelmIdentityWithoutReadiness(t *testing.T) {
@@ -243,7 +280,7 @@ func TestMigrationStatusPreservesHelmIdentityWithoutReadiness(t *testing.T) {
 
 	type input struct {
 		deploymentConditions []metav1.Condition
-		stage                string
+		protection           ocv1.CollisionProtection
 		bundleAnnotations    map[string]string
 		previousInstall      *ocv1.ClusterExtensionInstallStatus
 	}
@@ -263,7 +300,7 @@ func TestMigrationStatusPreservesHelmIdentityWithoutReadiness(t *testing.T) {
 			name: "initialize identity from Helm",
 			input: input{
 				deploymentConditions: nil,
-				stage:                labels.HelmMigrationAdopting,
+				protection:           ocv1.CollisionProtectionNone,
 				bundleAnnotations:    storedBundleAnnotations,
 				previousInstall:      nil,
 			},
@@ -278,7 +315,7 @@ func TestMigrationStatusPreservesHelmIdentityWithoutReadiness(t *testing.T) {
 			name: "retain previously installed identity",
 			input: input{
 				deploymentConditions: nil,
-				stage:                labels.HelmMigrationAdopting,
+				protection:           ocv1.CollisionProtectionNone,
 				bundleAnnotations:    storedBundleAnnotations,
 				previousInstall: &ocv1.ClusterExtensionInstallStatus{
 					Bundle: ocv1.BundleMetadata{Name: "stored.v1.0.0", Version: "1.0.0", Release: ptr.To("")},
@@ -296,7 +333,7 @@ func TestMigrationStatusPreservesHelmIdentityWithoutReadiness(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given the stored Helm identity, with no COD readiness observation.
-			ext, cod := migrationStatusFixture(tc.input.stage)
+			ext, cod := migrationStatusFixture(tc.input.protection)
 			cod.Status.Conditions = tc.input.deploymentConditions
 			cod.Spec.Template.Metadata.Annotations = tc.input.bundleAnnotations
 			ext.Status.Install = tc.input.previousInstall.DeepCopy()
@@ -318,7 +355,7 @@ func TestMigrationStatusPreservesHelmIdentityWithoutReadiness(t *testing.T) {
 
 func TestMigrationStatusReportsRealAvailability(t *testing.T) {
 	type input struct {
-		migrationStage      string
+		protection          ocv1.CollisionProtection
 		extensionGeneration int64
 		available           metav1.Condition
 	}
@@ -335,7 +372,7 @@ func TestMigrationStatusReportsRealAvailability(t *testing.T) {
 		{
 			name: "healthy resources",
 			input: input{
-				migrationStage:      labels.HelmMigrationProtecting,
+				protection:          ocv1.CollisionProtectionPrevent,
 				extensionGeneration: 5,
 				available: metav1.Condition{
 					Type:    ocv1.ClusterObjectDeploymentTypeAvailable,
@@ -358,7 +395,7 @@ func TestMigrationStatusReportsRealAvailability(t *testing.T) {
 		{
 			name: "unhealthy resources",
 			input: input{
-				migrationStage:      labels.HelmMigrationProtecting,
+				protection:          ocv1.CollisionProtectionPrevent,
 				extensionGeneration: 5,
 				available: metav1.Condition{
 					Type:    ocv1.ClusterObjectDeploymentTypeAvailable,
@@ -382,8 +419,8 @@ func TestMigrationStatusReportsRealAvailability(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Given the migration stage, CE generation, and COD health declared above.
-			ext, cod := migrationStatusFixture(tc.input.migrationStage)
+			// Given the migration protection, CE generation, and COD health declared above.
+			ext, cod := migrationStatusFixture(tc.input.protection)
 			ext.Generation = tc.input.extensionGeneration
 			cod.Status.Conditions = []metav1.Condition{tc.input.available}
 
@@ -406,7 +443,7 @@ func TestMigrationStatusReportsRealAvailability(t *testing.T) {
 
 func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 	type input struct {
-		stage                string
+		protection           ocv1.CollisionProtection
 		extensionGeneration  int64
 		deploymentGeneration int64
 		progressing          metav1.Condition
@@ -426,7 +463,7 @@ func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 		{
 			name: "collision",
 			input: input{
-				stage:                labels.HelmMigrationProtecting,
+				protection:           ocv1.CollisionProtectionPrevent,
 				extensionGeneration:  5,
 				deploymentGeneration: 2,
 				progressing: metav1.Condition{
@@ -446,7 +483,7 @@ func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 		{
 			name: "precondition",
 			input: input{
-				stage:                labels.HelmMigrationProtecting,
+				protection:           ocv1.CollisionProtectionPrevent,
 				extensionGeneration:  5,
 				deploymentGeneration: 2,
 				progressing: metav1.Condition{
@@ -466,7 +503,7 @@ func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 		{
 			name: "deadline",
 			input: input{
-				stage:                labels.HelmMigrationProtecting,
+				protection:           ocv1.CollisionProtectionPrevent,
 				extensionGeneration:  5,
 				deploymentGeneration: 2,
 				progressing: metav1.Condition{
@@ -486,7 +523,7 @@ func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 		{
 			name: "invalid",
 			input: input{
-				stage:                labels.HelmMigrationProtecting,
+				protection:           ocv1.CollisionProtectionPrevent,
 				extensionGeneration:  5,
 				deploymentGeneration: 2,
 				progressing: metav1.Condition{
@@ -508,7 +545,7 @@ func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given a failure observed at the COD's current generation.
-			ext, cod := migrationStatusFixture(tc.input.stage)
+			ext, cod := migrationStatusFixture(tc.input.protection)
 			ext.Generation = tc.input.extensionGeneration
 			cod.Generation = tc.input.deploymentGeneration
 			cod.Status.Conditions = []metav1.Condition{tc.input.progressing}
@@ -529,7 +566,7 @@ func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 
 func TestMigrationStatusIgnoresStaleProgress(t *testing.T) {
 	type input struct {
-		stage                string
+		protection           ocv1.CollisionProtection
 		extensionGeneration  int64
 		deploymentGeneration int64
 		progressing          metav1.Condition
@@ -547,7 +584,7 @@ func TestMigrationStatusIgnoresStaleProgress(t *testing.T) {
 		{
 			name: "old completion",
 			input: input{
-				stage:                labels.HelmMigrationProtecting,
+				protection:           ocv1.CollisionProtectionPrevent,
 				extensionGeneration:  5,
 				deploymentGeneration: 2,
 				progressing: metav1.Condition{
@@ -565,7 +602,7 @@ func TestMigrationStatusIgnoresStaleProgress(t *testing.T) {
 		{
 			name: "old deadline failure",
 			input: input{
-				stage:                labels.HelmMigrationProtecting,
+				protection:           ocv1.CollisionProtectionPrevent,
 				extensionGeneration:  5,
 				deploymentGeneration: 2,
 				progressing: metav1.Condition{
@@ -585,7 +622,7 @@ func TestMigrationStatusIgnoresStaleProgress(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given progress observed before the current COD generation.
-			ext, cod := migrationStatusFixture(tc.input.stage)
+			ext, cod := migrationStatusFixture(tc.input.protection)
 			ext.Generation = tc.input.extensionGeneration
 			cod.Generation = tc.input.deploymentGeneration
 			cod.Status.Conditions = []metav1.Condition{tc.input.progressing}
@@ -604,11 +641,11 @@ func TestMigrationStatusIgnoresStaleProgress(t *testing.T) {
 
 func TestMigrationTransitionReportsProgressInsteadOfSuccess(t *testing.T) {
 	input := struct {
-		stage                string
+		protection           ocv1.CollisionProtection
 		deploymentGeneration int64
 		progressing          metav1.Condition
 	}{
-		stage:                labels.HelmMigrationProtecting,
+		protection:           ocv1.CollisionProtectionPrevent,
 		deploymentGeneration: 2,
 		progressing: metav1.Condition{
 			Type:               ocv1.ClusterObjectDeploymentTypeProgressing,
@@ -626,11 +663,11 @@ func TestMigrationTransitionReportsProgressInsteadOfSuccess(t *testing.T) {
 	}
 
 	// Given protection has just started but the COD still reports adoption completion.
-	ext, cod := migrationStatusFixture(input.stage)
+	ext, cod := migrationStatusFixture(input.protection)
 	cod.Generation = input.deploymentGeneration
 	cod.Status.Conditions = []metav1.Condition{input.progressing}
 
-	// When migration status is reflected before the COD controller observes the new stage.
+	// When migration status is reflected before the COD controller observes the new protection.
 	setMigrationStatus(ext, cod)
 
 	// Then the CE reports ongoing migration rather than overall success between stages.
@@ -641,26 +678,21 @@ func TestMigrationTransitionReportsProgressInsteadOfSuccess(t *testing.T) {
 }
 
 // migrationStatusFixture returns fresh, unstored CE/COD data for bundle 1.0.0.
-// The CE is generation 5 and owns a generation-2 COD. stage sets the migration
-// marker and matching collision protection; no rollout conditions are supplied.
-func migrationStatusFixture(stage string) (*ocv1.ClusterExtension, *ocv1.ClusterObjectDeployment) {
+// The generation-2 COD is staged for the CE and has no rollout conditions.
+func migrationStatusFixture(protection ocv1.CollisionProtection) (*ocv1.ClusterExtension, *ocv1.ClusterObjectDeployment) {
 	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "migration", UID: "current-extension", Generation: 5}}
 	cod := &ocv1.ClusterObjectDeployment{
 		ObjectMeta: metav1.ObjectMeta{Name: ext.Name, UID: "deployment", Generation: 2,
-			Annotations:     map[string]string{labels.HelmMigrationKey: stage},
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(ext, ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionKind))},
+			OwnerReferences: []metav1.OwnerReference{{Kind: ocv1.ClusterExtensionKind, APIVersion: ocv1.GroupVersion.String(), Name: ext.Name, UID: ext.UID}},
 		},
 		Spec: ocv1.ClusterObjectDeploymentSpec{Template: ocv1.ClusterObjectDeploymentTemplate{
 			Metadata: ocv1.ClusterObjectDeploymentTemplateMetadata{Annotations: map[string]string{
 				labels.BundleNameKey: "stored.v1.0.0", labels.BundleVersionKey: "1.0.0", labels.BundleReferenceKey: "image:stored", labels.BundleReleaseKey: "",
 			}},
 			Spec: ocv1.ClusterObjectDeploymentTemplateSpec{
-				ClusterObjectSetContent: ocv1.ClusterObjectSetContent{CollisionProtection: ocv1.CollisionProtectionNone},
+				ClusterObjectSetContent: ocv1.ClusterObjectSetContent{CollisionProtection: protection},
 			},
 		}},
-	}
-	if stage == labels.HelmMigrationProtecting {
-		cod.Spec.Template.Spec.CollisionProtection = ocv1.CollisionProtectionPrevent
 	}
 	return ext, cod
 }

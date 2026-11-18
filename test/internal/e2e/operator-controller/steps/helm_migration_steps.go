@@ -60,7 +60,7 @@ func HelmMigrationIsCompleteAfterUpgrade(ctx context.Context) error {
 		if json.Unmarshal([]byte(out), &cod) != nil || !deploymentutil.RolloutComplete(&cod) {
 			return false
 		}
-		if _, marked := cod.Annotations[labels.HelmMigrationKey]; marked {
+		if cod.Labels[labels.ManagedByKey] != labels.ManagedByOperatorController || cod.Spec.Template.Spec.CollisionProtection != ocv1.CollisionProtectionPrevent {
 			return false
 		}
 		ext, err := shared.GetResource("clusterextension", sc.ClusterExtensionName, "")

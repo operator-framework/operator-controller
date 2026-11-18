@@ -33,18 +33,30 @@ type BoxcutterStorageMigrator struct {
 	Scheme             *runtime.Scheme
 }
 
-// Migrate returns a deployment while migration is pending; nil means skipped or
+// PendingMigration holds the staged deployment, when visible, for CE status reporting.
+type PendingMigration struct {
+	Deployment *ocv1.ClusterObjectDeployment
+}
+
+// Migrate returns a pending result while migration is in progress; nil means skipped or
 // complete. Once created, its template and immutable Secrets are the only inputs
 // to migration. Retries and restarts never require Helm, a catalog or a registry.
-func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterObjectDeployment, error) {
+func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*PendingMigration, error) {
 	if !ext.DeletionTimestamp.IsZero() {
 		return nil, nil
 	}
 	cod := &ocv1.ClusterObjectDeployment{}
 	switch err := m.Client.Get(ctx, client.ObjectKey{Name: ext.Name}, cod); {
 	case err == nil:
-		if _, marked := cod.Annotations[labels.HelmMigrationKey]; !marked {
+		if metav1.IsControlledBy(cod, ext) {
 			return nil, nil
+		}
+		owner := HelmMigrationOwner(cod)
+		if owner == nil {
+			return nil, nil
+		}
+		if metav1.GetControllerOf(cod) != nil || owner.UID != ext.UID {
+			return nil, fmt.Errorf("migration deployment %q is no longer staged for ClusterExtension UID %q", cod.Name, ext.UID)
 		}
 		return m.advance(ctx, ext, cod)
 	case !apierrors.IsNotFound(err):
@@ -58,6 +70,13 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 	existing, err := revisions.ListForGroup(ctx, m.Client, ext.Name)
 	if err != nil {
 		return nil, fmt.Errorf("listing ClusterObjectSets before migration: %w", err)
+	}
+	// Informers for revisions and deployments can observe the same rollout in different orders.
+	for i := range existing {
+		owner := metav1.GetControllerOf(&existing[i])
+		if owner != nil && owner.APIVersion == ocv1.GroupVersion.String() && owner.Kind == ocv1.ClusterObjectDeploymentKind && owner.Name == ext.Name {
+			return &PendingMigration{}, nil
+		}
 	}
 	if len(existing) != 0 {
 		// Existing experimental layouts do not authorize reconstructing a deployment.
@@ -91,13 +110,10 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 	if err := json.Unmarshal(data, cod); err != nil {
 		return nil, err
 	}
-	if err := controllerutil.SetControllerReference(ext, cod, m.Scheme); err != nil {
+	if err := controllerutil.SetOwnerReference(ext, cod, m.Scheme); err != nil {
 		return nil, err
 	}
-	if cod.Annotations == nil {
-		cod.Annotations = map[string]string{}
-	}
-	cod.Annotations[labels.HelmMigrationKey] = labels.HelmMigrationAdopting
+	delete(cod.Labels, labels.ManagedByKey)
 	for i := range secrets {
 		if err := m.storeContent(ctx, ext, &secrets[i]); err != nil {
 			return nil, err
@@ -108,36 +124,52 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 	if err := m.Client.Create(ctx, cod); err != nil {
 		return nil, fmt.Errorf("creating migration deployment: %w", err)
 	}
-	return cod, nil
+	return &PendingMigration{Deployment: cod}, nil
 }
 
-func (m *BoxcutterStorageMigrator) advance(ctx context.Context, ext *ocv1.ClusterExtension, cod *ocv1.ClusterObjectDeployment) (*ocv1.ClusterObjectDeployment, error) {
-	if !metav1.IsControlledBy(cod, ext) || !cod.DeletionTimestamp.IsZero() {
-		return nil, fmt.Errorf("migration deployment %q must be non-deleting and controlled by ClusterExtension UID %q", cod.Name, ext.UID)
+// HelmMigrationOwner returns the non-controller reference to the same-name staging CE.
+func HelmMigrationOwner(cod *ocv1.ClusterObjectDeployment) *metav1.OwnerReference {
+	for i := range cod.OwnerReferences {
+		owner := &cod.OwnerReferences[i]
+		if owner.APIVersion == ocv1.GroupVersion.String() && owner.Kind == ocv1.ClusterExtensionKind && owner.Name == cod.Name &&
+			(owner.Controller == nil || !*owner.Controller) {
+			return owner
+		}
 	}
-	stage := cod.Annotations[labels.HelmMigrationKey]
+	return nil
+}
+
+func (m *BoxcutterStorageMigrator) advance(ctx context.Context, ext *ocv1.ClusterExtension, cod *ocv1.ClusterObjectDeployment) (*PendingMigration, error) {
+	if !cod.DeletionTimestamp.IsZero() {
+		return nil, fmt.Errorf("migration deployment %q is deleting", cod.Name)
+	}
+
 	protection := cod.Spec.Template.Spec.CollisionProtection
-	if (stage != labels.HelmMigrationAdopting || protection != ocv1.CollisionProtectionNone) &&
-		(stage != labels.HelmMigrationProtecting || protection != ocv1.CollisionProtectionPrevent) {
-		return nil, fmt.Errorf("migration deployment %q has inconsistent stage %q and collision protection %q", cod.Name, stage, protection)
+	managedBy, labeled := cod.Labels[labels.ManagedByKey]
+	if (protection != ocv1.CollisionProtectionNone && protection != ocv1.CollisionProtectionPrevent) ||
+		(labeled && (managedBy != labels.ManagedByOperatorController || protection != ocv1.CollisionProtectionPrevent)) {
+		return nil, fmt.Errorf("migration deployment %q has unexpected collision protection %q or managed-by label %q", cod.Name, protection, managedBy)
 	}
 	if !deploymentutil.RolloutComplete(cod) {
-		return cod, nil
+		return &PendingMigration{Deployment: cod}, nil
 	}
+
 	before := cod.DeepCopy()
-	if stage == labels.HelmMigrationAdopting {
+	if protection == ocv1.CollisionProtectionNone {
 		cod.Spec.Template.Spec.CollisionProtection = ocv1.CollisionProtectionPrevent
-		cod.Annotations[labels.HelmMigrationKey] = labels.HelmMigrationProtecting
 	} else {
-		delete(cod.Annotations, labels.HelmMigrationKey)
+		if cod.Labels == nil {
+			cod.Labels = map[string]string{}
+		}
+		cod.Labels[labels.ManagedByKey] = labels.ManagedByOperatorController
+		if err := controllerutil.SetControllerReference(ext, cod, m.Scheme); err != nil {
+			return nil, err
+		}
 	}
 	if err := m.Client.Patch(ctx, cod, client.MergeFromWithOptions(before, client.MergeFromWithOptimisticLock{})); err != nil {
-		return nil, fmt.Errorf("advancing %s migration: %w", stage, err)
+		return nil, fmt.Errorf("advancing Helm migration: %w", err)
 	}
-	if stage == labels.HelmMigrationProtecting {
-		return nil, nil
-	}
-	return cod, nil
+	return &PendingMigration{Deployment: cod}, nil
 }
 
 func (m *BoxcutterStorageMigrator) storeContent(ctx context.Context, ext *ocv1.ClusterExtension, secret *corev1.Secret) error {

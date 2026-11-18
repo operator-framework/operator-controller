@@ -68,13 +68,6 @@ const (
 	// with a specific revision.
 	RevisionNameKey = "olm.operatorframework.io/revision-name"
 
-	// HelmMigrationKey records the persisted migration stage on a deployment's
-	// top-level metadata, outside its revision template.
-	HelmMigrationKey = "olm.operatorframework.io/helm-migration"
-
-	HelmMigrationAdopting   = "Adopting"
-	HelmMigrationProtecting = "Protecting"
-
 	// OLMPropertiesKey is the annotation key used to store bundle OLM properties
 	// (from metadata/properties.yaml) as a JSON array of property.Property objects.
 	// It is propagated from bundle metadata to ClusterObjectDeployments and their
