@@ -73,6 +73,10 @@ func Test_Renderer_Success(t *testing.T) {
 		PackageName: "my-package",
 		CSV: csv.Builder().
 			WithName("test-bundle").
+			WithAnnotations(map[string]string{
+				render.AnnotationSuggestedNamespaceTemplate: `{malformed`,
+				render.AnnotationSuggestedNamespace:         "Invalid_NS",
+			}).
 			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		Others: []unstructured.Unstructured{
 			*ToUnstructuredT(t, &corev1.Service{

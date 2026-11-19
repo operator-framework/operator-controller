@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -173,107 +174,135 @@ func Test_BundleRenderer_DefaultTargetNamespaces(t *testing.T) {
 
 func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 	for _, tc := range []struct {
-		name             string
-		installNamespace string
-		csv              v1alpha1.ClusterServiceVersion
-		opts             []render.Option
-		err              error
+		name string
+		csv  v1alpha1.ClusterServiceVersion
+		opts []render.Option
+		err  error
 	}{
 		{
-			name:             "accepts empty targetNamespaces (because it is ignored)",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			name: "rejects empty self-managed install namespace",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace(""),
+			},
+			err: errors.New("invalid option(s): invalid self-managed install namespace: namespace name is empty"),
+		}, {
+			name: "rejects invalid self-managed install namespace",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("Invalid_NS"),
+			},
+			err: errors.New(`invalid option(s): invalid self-managed install namespace: namespace name "Invalid_NS" is not a valid DNS1123 label`),
+		}, {
+			name: "rejects overlong self-managed install namespace",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace(strings.Repeat("a", 64)),
+			},
+			err: fmt.Errorf("invalid option(s): invalid self-managed install namespace: namespace name %q exceeds 63 characters", strings.Repeat("a", 64)),
+		},
+		{
+			name: "accepts empty targetNamespaces (because it is ignored)",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces(),
 			},
 		}, {
-			name:             "rejects nil unique name generator",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			name: "rejects nil unique name generator",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithUniqueNameGenerator(nil),
 			},
 			err: errors.New("invalid option(s): unique name generator must be specified"),
 		}, {
-			name:             "rejects all namespace install if AllNamespaces install mode is not supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
+			name: "rejects all namespace install if AllNamespaces install mode is not supported",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces(corev1.NamespaceAll),
 			},
 			err: errors.New("invalid option(s): invalid target namespaces []: supported install modes [SingleNamespace] do not support targeting all namespaces"),
 		}, {
-			name:             "rejects own namespace install if only AllNamespace install mode is supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			name: "rejects own namespace install if only AllNamespace install mode is supported",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces("install-namespace"),
 			},
 			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [AllNamespaces] do not support targeting own namespace"),
 		}, {
-			name:             "rejects install out of own namespace if only OwnNamespace install mode is supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
+			name: "rejects install out of own namespace if only OwnNamespace install mode is supported",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces("not-install-namespace"),
 			},
 			err: errors.New("invalid option(s): invalid target namespaces [not-install-namespace]: supported install modes [OwnNamespace] do not support target namespaces [not-install-namespace]"),
 		}, {
-			name:             "rejects multi-namespace install if MultiNamespace install mode is not supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			name: "rejects multi-namespace install if MultiNamespace install mode is not supported",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces("ns1", "ns2", "ns3"),
 			},
 			err: errors.New("invalid option(s): invalid target namespaces [ns1 ns2 ns3]: supported install modes [AllNamespaces] do not support target namespaces [ns1 ns2 ns3]"),
 		}, {
-			name:             "rejects if bundle supports no install modes",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().Build(),
+			name: "rejects if bundle supports no install modes",
+			csv:  csv.Builder().Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces("some-namespace"),
 			},
 			err: errors.New("invalid option(s): invalid target namespaces [some-namespace]: supported install modes [] do not support target namespaces [some-namespace]"),
 		}, {
-			name:             "accepts all namespace render if AllNamespaces install mode is supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			name: "accepts all namespace render if AllNamespaces install mode is supported",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces(""),
 			},
 		}, {
-			name:             "accepts install namespace render if SingleNamespace install mode is supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
+			name: "rejects own namespace render if only SingleNamespace install mode is supported",
+			csv: csv.Builder().
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).
+				WithAnnotations(map[string]string{render.AnnotationSuggestedNamespace: "install-namespace"}).
+				Build(),
 			opts: []render.Option{
-				render.WithTargetNamespaces("some-namespace"),
+				render.WithTargetNamespaces("install-namespace"),
 			},
+			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [SingleNamespace] do not support targeting own namespace"),
 		}, {
-			name:             "accepts all install namespace render if OwnNamespace install mode is supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
+			name: "accepts all install namespace render if OwnNamespace install mode is supported",
+			csv: csv.Builder().
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).
+				WithAnnotations(map[string]string{render.AnnotationSuggestedNamespace: "install-namespace"}).
+				Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("install-namespace"),
 			},
 		}, {
-			name:             "accepts single namespace render if SingleNamespace install mode is supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
+			name: "accepts single namespace render if SingleNamespace install mode is supported",
+			csv: csv.Builder().
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).
+				WithAnnotations(map[string]string{render.AnnotationSuggestedNamespace: "install-namespace"}).
+				Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("some-namespace"),
 			},
 		}, {
-			name:             "accepts multi namespace render if MultiNamespace install mode is supported",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build(),
+			name: "accepts multi namespace render if MultiNamespace install mode is supported",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces("n1", "n2", "n3"),
 			},
 		}, {
-			name:             "reject multi namespace render if OwnNamespace install mode is not supported and target namespaces include install namespace",
-			installNamespace: "install-namespace",
-			csv:              csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build(),
+			name: "reject multi namespace render if OwnNamespace install mode is not supported and target namespaces include install namespace",
+			csv:  csv.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build(),
 			opts: []render.Option{
+				render.WithSelfManagedInstallNamespace("install-namespace"),
 				render.WithTargetNamespaces("n1", "n2", "n3", "install-namespace"),
 			},
 			err: errors.New("invalid option(s): invalid target namespaces [n1 n2 n3 install-namespace]: supported install modes [MultiNamespace] do not support targeting own namespace"),
@@ -283,7 +312,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 			renderer := render.BundleRenderer{}
 			_, err := renderer.Render(
 				bundle.RegistryV1{CSV: tc.csv},
-				append([]render.Option{render.WithSelfManagedInstallNamespace(tc.installNamespace)}, tc.opts...)...,
+				tc.opts...,
 			)
 			if tc.err == nil {
 				require.NoError(t, err)

@@ -11,7 +11,7 @@ Bundle authors can specify their preferred namespace configuration through CSV a
 
 ### `operatorframework.io/suggested-namespace-template`
 
-Full namespace template with metadata. Use this when your operator needs specific labels or annotations on its namespace (e.g., PSA labels).
+Full YAML or JSON namespace template. Use this when your operator needs specific labels or annotations on its namespace (e.g., PSA labels). All decoded Namespace fields are preserved, with `apiVersion: v1` and `kind: Namespace` enforced.
 
 ```yaml
 apiVersion: operators.coreos.com/v1alpha1
@@ -45,11 +45,13 @@ annotations:
 
 ### No annotation
 
-If neither annotation is present, operator-controller uses `<packageName>-system` as the namespace name.
+If neither annotation is present, operator-controller derives the namespace name from `<packageName>-system`, normalizing and hashing invalid or overlong package names.
 
 ## Priority
 
 If both annotations are present, `suggested-namespace-template` takes priority.
+
+A present template is authoritative: malformed templates, missing or empty `metadata.name`, and invalid namespace names cause an error rather than falling back. A present but empty or invalid `suggested-namespace` also causes an error.
 
 ## Guidelines
 

@@ -32,6 +32,7 @@ type bundleProperty struct {
 }
 
 type bundleConfig struct {
+	packageName             string
 	hasCRD                  bool
 	hasDeployment           bool
 	hasConfigMap            bool
@@ -123,8 +124,10 @@ func WithCSVAnnotation(key, value string) BundleOption {
 // WithNSTemplate adds a suggested namespace template annotation to the CSV with the specified PSA level
 // and a custom label to verify template application independently of cluster PSA controllers.
 func WithNSTemplate(psaLevel string) BundleOption {
-	template := fmt.Sprintf(`{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"e2e.olm.operatorframework.io/template":"applied","pod-security.kubernetes.io/enforce":"%s","pod-security.kubernetes.io/audit":"%s","pod-security.kubernetes.io/warn":"%s"}}}`, psaLevel, psaLevel, psaLevel)
-	return WithCSVAnnotation("operatorframework.io/suggested-namespace-template", template)
+	return func(c *bundleConfig) {
+		template := fmt.Sprintf(`{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"%s-system","labels":{"e2e.olm.operatorframework.io/template":"applied","pod-security.kubernetes.io/enforce":"%s","pod-security.kubernetes.io/audit":"%s","pod-security.kubernetes.io/warn":"%s"}}}`, c.packageName, psaLevel, psaLevel, psaLevel)
+		WithCSVAnnotation("operatorframework.io/suggested-namespace-template", template)(c)
+	}
 }
 
 // BadImage produces a bundle with CRD and deployment but uses "wrong/image" as
@@ -140,7 +143,7 @@ func BadImage() BundleOption {
 // buildBundle generates the manifest files for a single bundle using the existing
 // CSV builder and bundle FS builder. All resource names embed scenarioID for uniqueness.
 func buildBundle(scenarioID, packageName, version string, opts []BundleOption) (bundleSpec, error) {
-	cfg := &bundleConfig{}
+	cfg := &bundleConfig{packageName: packageName}
 	for _, o := range opts {
 		o(cfg)
 	}

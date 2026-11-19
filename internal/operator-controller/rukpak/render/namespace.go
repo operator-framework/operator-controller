@@ -1,21 +1,21 @@
 package render
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
 
 const (
-	// AnnotationSuggestedNamespaceTemplate is a CSV annotation carrying a JSON
-	// Namespace template whose metadata seeds the system-managed namespace.
+	// AnnotationSuggestedNamespaceTemplate is a CSV annotation carrying a YAML or JSON
+	// Namespace template. When present, it is authoritative and the full object is emitted.
 	AnnotationSuggestedNamespaceTemplate = "operatorframework.io/suggested-namespace-template"
 	// AnnotationSuggestedNamespace is a CSV annotation carrying the preferred
 	// namespace name for the operator.
@@ -24,13 +24,13 @@ const (
 
 var dns1123LabelRegexp = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 
-// resolveSystemManagedNamespace derives the name of the namespace OLM should
+// resolveSystemManagedNamespace derives the namespace OLM should
 // create and manage for a bundle, using the precedence:
 //
-//	suggested-namespace-template name → suggested-namespace → <packageName>-system
+//	suggested-namespace-template, suggested-namespace, normalized <packageName>-system
 //
-// It returns the resolved name and the parsed template (if any) so the caller can
-// seed labels/annotations (e.g. PSA) on the emitted Namespace object.
+// Present annotations are authoritative, even if empty or invalid. It returns the
+// resolved name and complete Namespace object, with core/v1 Namespace type metadata.
 func resolveSystemManagedNamespace(rv1 *bundle.RegistryV1) (string, *corev1.Namespace, error) {
 	csvAnnotations := rv1.CSV.GetAnnotations()
 
@@ -39,34 +39,36 @@ func resolveSystemManagedNamespace(rv1 *bundle.RegistryV1) (string, *corev1.Name
 		return "", nil, err
 	}
 
-	var name string
-	switch {
-	case template != nil && template.Name != "":
-		name = template.Name
-	case csvAnnotations[AnnotationSuggestedNamespace] != "":
-		name = csvAnnotations[AnnotationSuggestedNamespace]
-	default:
-		// The auto-derived default must always be a valid namespace, even for package names
-		// with disallowed characters (e.g. dots) or names that are too long.
-		name = defaultInstallNamespace(rv1.PackageName)
+	// Only if there was no error and a nil template should we fall back to check for the suggested-namespace annotation
+	if template == nil {
+		name, exists := csvAnnotations[AnnotationSuggestedNamespace]
+		if !exists {
+			// If the suggested-namespace annotation ALSO does not exist, fallback again to a default namespace
+			// with a name derived from the package name of the bundle
+			name = defaultInstallNamespace(rv1.PackageName)
+		}
+		template = buildNamespaceObject(name, nil, nil)
 	}
 
-	if err := validateNamespaceName(name); err != nil {
-		return "", nil, err
+	// Check that the template included valid type metadata and a valid name.
+	if template.APIVersion != "v1" || template.Kind != "Namespace" {
+		return "", nil, fmt.Errorf(`invalid template apiVersion and kind %s/%s, expected v1/Namespace`, template.APIVersion, template.Kind)
 	}
-
-	return name, template, nil
+	if err := validateNamespaceName(template.Name); err != nil {
+		return "", nil, fmt.Errorf("invalid install namespace name %q: %w", template.Name, err)
+	}
+	return template.Name, template, nil
 }
 
 func parseNamespaceTemplate(csvAnnotations map[string]string) (*corev1.Namespace, error) {
 	templateJSON, exists := csvAnnotations[AnnotationSuggestedNamespaceTemplate]
-	if !exists || templateJSON == "" {
+	if !exists {
 		return nil, nil
 	}
 
 	var ns corev1.Namespace
-	if err := json.Unmarshal([]byte(templateJSON), &ns); err != nil {
-		return nil, fmt.Errorf("failed to parse namespace template: %w", err)
+	if err := yaml.Unmarshal([]byte(templateJSON), &ns); err != nil {
+		return nil, fmt.Errorf("failed to parse CSV namespace template annotation %q: %w", AnnotationSuggestedNamespaceTemplate, err)
 	}
 
 	return &ns, nil
@@ -76,13 +78,13 @@ const maxNamespaceNameLength = 63
 
 func validateNamespaceName(name string) error {
 	if name == "" {
-		return fmt.Errorf("resolved namespace name is empty")
+		return fmt.Errorf("namespace name is empty")
 	}
 	if len(name) > maxNamespaceNameLength {
-		return fmt.Errorf("resolved namespace name %q exceeds %d characters", name, maxNamespaceNameLength)
+		return fmt.Errorf("namespace name %q exceeds %d characters", name, maxNamespaceNameLength)
 	}
 	if !dns1123LabelRegexp.MatchString(name) {
-		return fmt.Errorf("resolved namespace name %q is not a valid DNS1123 label", name)
+		return fmt.Errorf("namespace name %q is not a valid DNS1123 label", name)
 	}
 	return nil
 }
@@ -142,9 +144,9 @@ func sanitizeDNS1123Label(s string) string {
 	return strings.Trim(b.String(), "-")
 }
 
-// BuildNamespaceObject returns the Namespace object to include in the rendered set,
+// buildNamespaceObject returns the Namespace object to include in the rendered set,
 // seeding the given labels and annotations.
-func BuildNamespaceObject(name string, labels, annotations map[string]string) *corev1.Namespace {
+func buildNamespaceObject(name string, labels, annotations map[string]string) *corev1.Namespace {
 	return &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Namespace",
