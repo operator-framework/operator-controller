@@ -32,5 +32,5 @@ requests==2.34.2
 six==1.17.0
 soupsieve==4.0
 urllib3==2.8.0
-watchdog==7.0.0
+watchdog==7.1.0
 mkdocs-asciinema-player==1.2.0
