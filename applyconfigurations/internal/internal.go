@@ -425,6 +425,59 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - name
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSlice
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSliceSpec
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSliceEncoding
+  scalar: string
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSliceEntry
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: content
+      type:
+        scalar: string
+    - name: encoding
+      type:
+        namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSliceEncoding
+    - name: kind
+      type:
+        scalar: string
+    - name: name
+      type:
+        scalar: string
+    - name: namespace
+      type:
+        scalar: string
+      default: ""
+- name: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSliceSpec
+  map:
+    fields:
+    - name: objects
+      type:
+        list:
+          elementType:
+            namedType: com.github.operator-framework.operator-controller.api.v1.ClusterObjectSliceEntry
+          elementRelationship: associative
+          keys:
+          - apiVersion
+          - kind
+          - name
+          - namespace
 - name: com.github.operator-framework.operator-controller.api.v1.CollisionProtection
   scalar: string
 - name: com.github.operator-framework.operator-controller.api.v1.ConditionEqualProbe

@@ -84,6 +84,12 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1.ClusterObjectSetSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ClusterObjectSetStatus"):
 		return &apiv1.ClusterObjectSetStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectSlice"):
+		return &apiv1.ClusterObjectSliceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectSliceEntry"):
+		return &apiv1.ClusterObjectSliceEntryApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClusterObjectSliceSpec"):
+		return &apiv1.ClusterObjectSliceSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ConditionEqualProbe"):
 		return &apiv1.ConditionEqualProbeApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("CRDUpgradeSafetyPreflightConfig"):
