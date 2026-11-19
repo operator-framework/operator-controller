@@ -138,6 +138,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is (?:eventually not found|not found|not installed)$`, ResourceEventuallyNotFound)
 	sc.Step(`^(?i)resource "([^"]+)" exists$`, ResourceAvailable)
 	sc.Step(`^(?i)resource is applied$`, ResourceIsApplied)
+	sc.Step(`^(?i)resource is server-side applied$`, ResourceIsServerSideApplied)
 	sc.Step(`^(?i)namespace is applied$`, ResourceIsApplied)
 	sc.Step(`^(?i)deployment "([^"]+)" reports as (not ready|ready)$`, MarkDeploymentReadiness)
 
@@ -548,6 +549,15 @@ func ResourceApplyDoesNotEmitWarning(ctx context.Context) error {
 // ResourceIsApplied applies the provided YAML resource to the cluster and in case of ClusterExtension or ClusterObjectSet it captures
 // its name in the test context so that it can be referred to in later steps with ${NAME} or ${COS_NAME}, respectively
 func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error {
+	return resourceIsApplied(ctx, yamlTemplate)
+}
+
+// ResourceIsServerSideApplied applies the provided YAML using server-side apply.
+func ResourceIsServerSideApplied(ctx context.Context, yamlTemplate *godog.DocString) error {
+	return resourceIsApplied(ctx, yamlTemplate, "--server-side", "--field-manager=e2e-test")
+}
+
+func resourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString, applyOptions ...string) error {
 	sc := Scenario(ctx)
 	yamlContent := SubstituteScenarioVars(yamlTemplate.Content, sc)
 	res, err := ToUnstructured(yamlContent)
@@ -559,7 +569,8 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 	if err != nil {
 		return fmt.Errorf("failed to marshal resource yaml: %w", err)
 	}
-	out, stdErr, err := K8sCLIWithInput(ctx, string(annotatedYAML), "apply", "-f", "-")
+	args := append([]string{"apply", "-f", "-"}, applyOptions...)
+	out, stdErr, err := K8sCLIWithInput(ctx, string(annotatedYAML), args...)
 	if err != nil {
 		return fmt.Errorf("failed to apply resource %v; err: %w; stderr: %s", out, err, stdErr)
 	}

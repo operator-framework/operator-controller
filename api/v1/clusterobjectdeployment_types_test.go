@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -160,6 +161,51 @@ func TestClusterObjectDeploymentTemplateIsMutable(t *testing.T) {
 	// Optional fields can also be removed after being set.
 	cod.Spec.Template.Spec.ProgressionProbes = nil
 	require.NoError(t, c.Update(t.Context(), cod))
+}
+
+func TestClusterObjectDeploymentAtomicPhaseOwnership(t *testing.T) {
+	c := newClient(t)
+	desired := newTestClusterObjectDeployment("cod-phase-ownership")
+	codPhases(2)(desired)
+	t.Cleanup(func() {
+		require.NoError(t, client.IgnoreNotFound(c.Delete(context.Background(), &ClusterObjectDeployment{
+			ObjectMeta: metav1.ObjectMeta{Name: desired.Name},
+		})))
+	})
+	applyConfiguration := func(cod *ClusterObjectDeployment) runtime.ApplyConfiguration {
+		t.Helper()
+		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cod)
+		require.NoError(t, err)
+		return client.ApplyConfigurationFromUnstructured(&unstructured.Unstructured{Object: raw})
+	}
+	require.NoError(t, c.Apply(t.Context(), applyConfiguration(desired), client.FieldOwner("clusterextension-controller")))
+
+	// A second writer adding a distinct phase still conflicts on the atomic list.
+	customized := desired.DeepCopy()
+	customized.Spec.Template.Spec.Phases = append(customized.Spec.Template.Spec.Phases, ClusterObjectSetPhase{
+		Name: "platform-policy",
+		Objects: []ClusterObjectSetObject{{
+			Type: ObjectTypeInlineManifest,
+			InlineManifest: unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "networking.k8s.io/v1", "kind": "NetworkPolicy",
+				"metadata": map[string]any{"name": "monitoring-policy", "namespace": "default"},
+				"spec":     map[string]any{"podSelector": map[string]any{}},
+			}},
+		}},
+	})
+	err := c.Apply(t.Context(), applyConfiguration(customized), client.FieldOwner("platform-policy-controller"))
+	require.True(t, apierrors.IsConflict(err), "%v", err)
+	require.ErrorContains(t, err, ".spec.template.spec.phases")
+
+	// Forced ownership can install the customization, but the CE writer's next
+	// forced apply restores its whole generated list and removes the added phase.
+	require.NoError(t, c.Apply(t.Context(), applyConfiguration(customized), client.FieldOwner("platform-policy-controller"), client.ForceOwnership))
+	stored := getTestClusterObjectDeployment(t, c, desired.Name)
+	require.Equal(t, customized.Spec.Template.Spec.Phases, stored.Spec.Template.Spec.Phases)
+
+	require.NoError(t, c.Apply(t.Context(), applyConfiguration(desired), client.FieldOwner("clusterextension-controller"), client.ForceOwnership))
+	stored = getTestClusterObjectDeployment(t, c, desired.Name)
+	require.Equal(t, desired.Spec.Template.Spec.Phases, stored.Spec.Template.Spec.Phases)
 }
 
 func TestClusterObjectDeploymentUpdateValidation(t *testing.T) {
