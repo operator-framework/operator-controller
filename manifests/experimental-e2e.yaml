@@ -3000,6 +3000,165 @@ spec:
     subresources:
       status: {}
 ---
+# Source: olmv1/templates/crds/customresourcedefinition-clusterobjectslices.olm.operatorframework.io.yml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.23.0
+    olm.operatorframework.io/generator: experimental
+  name: clusterobjectslices.olm.operatorframework.io
+spec:
+  group: olm.operatorframework.io
+  names:
+    kind: ClusterObjectSlice
+    listKind: ClusterObjectSliceList
+    plural: clusterobjectslices
+    shortNames:
+    - cosl
+    singular: clusterobjectslice
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          ClusterObjectSlice stores immutable, encoded Kubernetes manifests independently
+          of rollout intent. It is an experimental, cluster-scoped API. Creating a slice
+          stores content only; it does not apply objects or report rollout readiness.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the required, immutable content of the slice.
+            properties:
+              objects:
+                description: |-
+                  objects is a required list of 1 to 256 stored manifests. Each entry must
+                  have a unique combination of apiVersion, kind, name, and namespace.
+                  List order has no rollout meaning. Create a new slice to change content.
+                items:
+                  description: |-
+                    ClusterObjectSliceEntry stores a manifest with an explicit target identity.
+                    Admission validates the envelope, not the encoded manifest. Publishers must
+                    ensure that the decoded manifest agrees with the declared identity.
+                  properties:
+                    apiVersion:
+                      description: |-
+                        apiVersion is the required API version of the stored object, for example
+                        "v1" or "apps/v1". It must be 1 to 317 characters, with an optional
+                        lowercase DNS group followed by "/" and a lowercase API version.
+                      maxLength: 317
+                      minLength: 1
+                      type: string
+                      x-kubernetes-validations:
+                      - message: apiVersion must be a version or group/version
+                        rule: self.matches('^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?[a-z]([-a-z0-9]*[a-z0-9])?$')
+                    content:
+                      description: |-
+                        content is the required manifest payload, base64-encoded in JSON and YAML.
+                        Its base64 representation must contain 1 to 1048576 characters. The limit
+                        does not bound expanded gzip content or the total serialized slice size.
+                        Admission does not parse JSON, decompress gzip, or verify that the payload
+                        matches apiVersion, kind, name, and namespace.
+                      format: byte
+                      maxLength: 1048576
+                      minLength: 1
+                      type: string
+                    encoding:
+                      description: |-
+                        encoding is the required representation of content. "JSON" means one
+                        JSON-serialized Kubernetes object; "GzipJSON" means gzip-compressed JSON.
+                        Base64 wire encoding applies to both representations.
+                      enum:
+                      - JSON
+                      - GzipJSON
+                      type: string
+                    kind:
+                      description: |-
+                        kind is the required kind of the stored object, for example "ConfigMap".
+                        It must be 1 to 63 characters, start with a letter, end with an
+                        alphanumeric character, and contain only letters, digits, or hyphens.
+                      maxLength: 63
+                      minLength: 1
+                      type: string
+                      x-kubernetes-validations:
+                      - message: kind must start with a letter and contain only letters,
+                          digits, or hyphens, ending with an alphanumeric character
+                        rule: self.matches('^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$')
+                    name:
+                      description: |-
+                        name is the required metadata.name of the stored object. It must be
+                        1 to 253 characters, cannot be "." or "..", and cannot contain "/" or "%".
+                        Resource-specific naming constraints are checked when the object is applied.
+                      maxLength: 253
+                      minLength: 1
+                      type: string
+                      x-kubernetes-validations:
+                      - message: name must not be '.', '..', or contain '/' or '%'
+                        rule: self != "." && self != ".." && !self.contains("/") &&
+                          !self.contains("%")
+                    namespace:
+                      default: ""
+                      description: |-
+                        namespace is the metadata.namespace of the stored object. When omitted,
+                        it defaults to the empty string for a cluster-scoped object. Nonempty
+                        values must be lowercase DNS labels of at most 63 characters.
+                        Namespaced objects must declare their namespace explicitly.
+                      maxLength: 63
+                      type: string
+                      x-kubernetes-validations:
+                      - message: namespace must be empty or a valid lowercase DNS
+                          label
+                        rule: self == "" || !format.dns1123Label().validate(self).hasValue()
+                  required:
+                  - apiVersion
+                  - content
+                  - encoding
+                  - kind
+                  - name
+                  type: object
+                maxItems: 256
+                minItems: 1
+                type: array
+                x-kubernetes-list-map-keys:
+                - apiVersion
+                - kind
+                - name
+                - namespace
+                x-kubernetes-list-type: map
+            required:
+            - objects
+            type: object
+            x-kubernetes-validations:
+            - message: spec is immutable
+              rule: self == oldSelf
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources: {}
+---
 # Source: olmv1/templates/rbac/clusterrole-catalogd-manager-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
