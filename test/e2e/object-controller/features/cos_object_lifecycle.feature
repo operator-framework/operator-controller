@@ -68,7 +68,14 @@ Feature: Standalone ClusterObjectSet object lifecycle
                 value: unchanged
       """
     Then ClusterObjectSet "${NAME}-2" reports Ready as True with Reason AllObjectsReady
-    And ClusterObjectSet "${NAME}-1" is archived
+    And resource "clusterobjectset/${NAME}-1" matches
+      """
+      spec:
+        lifecycleState: Active
+      """
+    And resource "configmap/removed" is installed
+    When ClusterObjectSet "${NAME}-1" lifecycle is set to "Archived"
+    Then ClusterObjectSet "${NAME}-1" is archived
     And resource "configmap/removed" is eventually not found
     And resource "configmap/retained" keeps its UID
     And resource "configmap/retained" matches

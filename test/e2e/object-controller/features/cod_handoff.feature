@@ -168,3 +168,92 @@ Feature: ClusterObjectDeployment multi-revision handoff
       """
     Then ClusterObjectSet "${NAME}-2" reports Ready as True with Reason AllObjectsReady
     And resource "configmap/cod-drop-cm" is eventually not found
+
+  Scenario: Completion does not archive a foreign-owned same-group predecessor
+    Given namespace "${TEST_NAMESPACE}" is available
+    When ClusterObjectSet with Namespace owner "${TEST_NAMESPACE}" is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${NAME}-1
+      spec:
+        group: ${NAME}
+        revision: 1
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cod-foreign-cm
+                namespace: ${TEST_NAMESPACE}
+              data:
+                k: foreign
+      """
+    Then ClusterObjectSet "${NAME}-1" reports Ready as True with Reason AllObjectsReady
+    # Create an adoptable head so the foreign predecessor does not
+    # block COD revision creation as the highest active group member.
+    When ClusterObjectSet is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectSet
+      metadata:
+        name: ${NAME}-2
+        labels:
+          apps.kubernetes.io/managed-by: object-controller
+      spec:
+        group: ${NAME}
+        revision: 2
+        lifecycleState: Active
+        collisionProtection: Prevent
+        phases:
+        - name: resources
+          objects:
+          - type: InlineManifest
+            inlineManifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cod-intermediate-cm
+                namespace: ${TEST_NAMESPACE}
+              data:
+                k: intermediate
+      """
+    And resource is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterObjectDeployment
+      metadata:
+        name: ${NAME}
+      spec:
+        template:
+          spec:
+            collisionProtection: Prevent
+            phases:
+            - name: resources
+              objects:
+              - type: InlineManifest
+                inlineManifest:
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: cod-owned-cm
+                    namespace: ${TEST_NAMESPACE}
+                  data:
+                    k: owned
+      """
+    Then ClusterObjectSet "${NAME}-3" reports Ready as True with Reason AllObjectsReady
+    # COD must have observed completion, not merely created the successor.
+    And ClusterObjectDeployment "${NAME}" reports Progressing as False with Reason NewClusterObjectSetProgressed
+    And ClusterObjectSet "${NAME}-2" is archived
+    And resource "clusterobjectset/${NAME}-1" matches
+      """
+      spec:
+        lifecycleState: Active
+      """
+    And resource "configmap/cod-foreign-cm" is installed
