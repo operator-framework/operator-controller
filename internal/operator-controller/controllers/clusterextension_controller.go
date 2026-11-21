@@ -49,6 +49,7 @@ import (
 	"github.com/operator-framework/operator-registry/v2/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
@@ -106,7 +107,7 @@ type ClusterExtensionReconciler struct {
 }
 
 type StorageMigrator interface {
-	Migrate(context.Context, *ocv1.ClusterExtension, map[string]string) error
+	Migrate(context.Context, *ocv1.ClusterExtension, map[string]string) (*applier.PendingMigration, error)
 }
 
 type Applier interface {

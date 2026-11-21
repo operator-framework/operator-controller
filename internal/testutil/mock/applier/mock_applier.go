@@ -193,19 +193,20 @@ func (mr *MockRevisionGeneratorMockRecorder) GenerateClusterObjectDeployment(ctx
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateClusterObjectDeployment", reflect.TypeOf((*MockRevisionGenerator)(nil).GenerateClusterObjectDeployment), ctx, bundleFS, ext, objectLabels, revisionAnnotations)
 }
 
-// GenerateRevisionFromHelmRelease mocks base method.
-func (m *MockRevisionGenerator) GenerateRevisionFromHelmRelease(ctx context.Context, helmRelease *release.Release, ext *v1.ClusterExtension, objectLabels map[string]string) (*v10.ClusterObjectSetApplyConfiguration, error) {
+// GenerateClusterObjectDeploymentFromHelmRelease mocks base method.
+func (m *MockRevisionGenerator) GenerateClusterObjectDeploymentFromHelmRelease(ctx context.Context, helmRelease *release.Release, ext *v1.ClusterExtension, objectLabels map[string]string) (*v10.ClusterObjectDeploymentApplyConfiguration, []v11.Secret, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateRevisionFromHelmRelease", ctx, helmRelease, ext, objectLabels)
-	ret0, _ := ret[0].(*v10.ClusterObjectSetApplyConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GenerateClusterObjectDeploymentFromHelmRelease", ctx, helmRelease, ext, objectLabels)
+	ret0, _ := ret[0].(*v10.ClusterObjectDeploymentApplyConfiguration)
+	ret1, _ := ret[1].([]v11.Secret)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// GenerateRevisionFromHelmRelease indicates an expected call of GenerateRevisionFromHelmRelease.
-func (mr *MockRevisionGeneratorMockRecorder) GenerateRevisionFromHelmRelease(ctx, helmRelease, ext, objectLabels any) *gomock.Call {
+// GenerateClusterObjectDeploymentFromHelmRelease indicates an expected call of GenerateClusterObjectDeploymentFromHelmRelease.
+func (mr *MockRevisionGeneratorMockRecorder) GenerateClusterObjectDeploymentFromHelmRelease(ctx, helmRelease, ext, objectLabels any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateRevisionFromHelmRelease", reflect.TypeOf((*MockRevisionGenerator)(nil).GenerateRevisionFromHelmRelease), ctx, helmRelease, ext, objectLabels)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateClusterObjectDeploymentFromHelmRelease", reflect.TypeOf((*MockRevisionGenerator)(nil).GenerateClusterObjectDeploymentFromHelmRelease), ctx, helmRelease, ext, objectLabels)
 }
 
 // MockManifestProvider is a mock of ManifestProvider interface.

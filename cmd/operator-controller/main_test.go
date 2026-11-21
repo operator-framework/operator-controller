@@ -19,15 +19,24 @@ func TestClusterObjectDeploymentCache(t *testing.T) {
 	adoptionLabels := map[string]string{
 		labels.ManagedByKey: labels.ManagedByOperatorController,
 	}
+	wantAnnotations := map[string]string{"olm.operatorframework.io/content-hash": "keep-me"}
 	type testCase struct {
-		name       string
-		codLabels  map[string]string
-		controller *metav1.OwnerReference
-		retain     bool
+		name            string
+		codLabels       map[string]string
+		owner           *metav1.OwnerReference
+		wantRolloutData bool
 	}
 	tests := []testCase{
-		{name: "unlabelled ownerless deployment stays visible"},
-		{name: "managed-by label alone retains rollout data", codLabels: adoptionLabels, retain: true},
+		{name: "unlabelled ownerless deployment stays visible", wantRolloutData: false},
+		{
+			name: "migration staging reference retains rollout data",
+			owner: &metav1.OwnerReference{
+				APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
+				Name: "test-ext", UID: "test-uid",
+			},
+			wantRolloutData: true,
+		},
+		{name: "managed-by label alone retains rollout data", codLabels: adoptionLabels, wantRolloutData: true},
 		{
 			name: "mismatched owner labels do not prevent retaining rollout data",
 			codLabels: map[string]string{
@@ -35,7 +44,7 @@ func TestClusterObjectDeploymentCache(t *testing.T) {
 				labels.OwnerKindKey: "Namespace",
 				labels.OwnerNameKey: "other-ext",
 			},
-			retain: true,
+			wantRolloutData: true,
 		},
 		{
 			name: "owner labels alone do not retain rollout data",
@@ -43,33 +52,37 @@ func TestClusterObjectDeploymentCache(t *testing.T) {
 				labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 				labels.OwnerNameKey: "test-ext",
 			},
+			wantRolloutData: false,
 		},
 		{
-			name:      "different managed-by value does not retain rollout data",
-			codLabels: map[string]string{labels.ManagedByKey: "object-controller"},
+			name:            "different managed-by value does not retain rollout data",
+			codLabels:       map[string]string{labels.ManagedByKey: "object-controller"},
+			wantRolloutData: false,
 		},
 		{
 			name: "matching controller without managed-by label does not retain rollout data",
-			controller: &metav1.OwnerReference{
+			owner: &metav1.OwnerReference{
 				APIVersion: ocv1.GroupVersion.String(), Kind: ocv1.ClusterExtensionKind,
 				Name: "test-ext", UID: "test-uid", Controller: ptr.To(true),
 			},
+			wantRolloutData: false,
 		},
 		{
 			name: "foreign controller metadata stays visible",
-			controller: &metav1.OwnerReference{
+			owner: &metav1.OwnerReference{
 				APIVersion: "v1", Kind: "Namespace", Name: "test-ext",
 				UID: "foreign-uid", Controller: ptr.To(true),
 			},
+			wantRolloutData: false,
 		},
 		{
 			name:      "managed-by label retains rollout data regardless of controller",
 			codLabels: adoptionLabels,
-			controller: &metav1.OwnerReference{
+			owner: &metav1.OwnerReference{
 				APIVersion: "v1", Kind: "Namespace", Name: "test-ext",
 				UID: "foreign-uid", Controller: ptr.To(true),
 			},
-			retain: true,
+			wantRolloutData: true,
 		},
 	}
 	options := newCacheOptions("olmv1-system", true)
@@ -89,8 +102,8 @@ func TestClusterObjectDeploymentCache(t *testing.T) {
 					Type: ocv1.ClusterObjectDeploymentTypeAvailable, Status: metav1.ConditionTrue,
 				}}},
 			}
-			if tc.controller != nil {
-				cod.OwnerReferences = []metav1.OwnerReference{*tc.controller}
+			if tc.owner != nil {
+				cod.OwnerReferences = []metav1.OwnerReference{*tc.owner}
 			}
 			before := cod.DeepCopy()
 			for obj, config := range options.ByObject {
@@ -108,8 +121,8 @@ func TestClusterObjectDeploymentCache(t *testing.T) {
 				assert.Equal(t, before.OwnerReferences, actual.OwnerReferences)
 				assert.Equal(t, before.Name, actual.Name)
 				assert.Equal(t, before.UID, actual.UID)
-				assert.Equal(t, map[string]string{"olm.operatorframework.io/content-hash": "keep-me"}, actual.Annotations)
-				if tc.retain {
+				assert.Equal(t, wantAnnotations, actual.Annotations)
+				if tc.wantRolloutData {
 					assert.Equal(t, before.Spec, actual.Spec)
 					assert.Equal(t, before.Status, actual.Status)
 				} else {
