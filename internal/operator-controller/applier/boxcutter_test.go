@@ -282,8 +282,8 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			})
 
 		var updatedObj client.Object
-		mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+		mockStatusWriter.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
 				updatedObj = obj
 				return nil
 			})
@@ -376,8 +376,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 
 		existingRev := ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:       "test-revision",
-				Generation: 2,
+				Name: "test-revision", Generation: 2, ResourceVersion: "1",
 				Labels: map[string]string{
 					labels.MigratedFromHelmKey: "true",
 				},
@@ -403,8 +402,8 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			})
 
 		var updatedObj client.Object
-		mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+		mockStatusWriter.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
 				updatedObj = obj
 				return nil
 			})
@@ -449,8 +448,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		// This simulates a revision whose completedAt should be set during migration.
 		existingRev := ocv1.ClusterObjectSet{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:       "test-revision",
-				Generation: 2,
+				Name: "test-revision", Generation: 2, ResourceVersion: "1",
 				Labels: map[string]string{
 					labels.MigratedFromHelmKey: "true",
 				},
@@ -476,8 +474,8 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			})
 
 		var updatedObj client.Object
-		mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+		mockStatusWriter.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
 				updatedObj = obj
 				return nil
 			})
@@ -545,7 +543,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 				return nil
 			})
 
-		// Status() and Update() should NOT be called for non-migrated revisions.
+		// Status() and Patch() should NOT be called for non-migrated revisions.
 		// gomock will fail if any unexpected calls are made.
 
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
@@ -630,8 +628,8 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			})
 
 		var updatedObj client.Object
-		mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+		mockStatusWriter.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
 				updatedObj = obj
 				return nil
 			})

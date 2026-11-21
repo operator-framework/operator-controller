@@ -593,18 +593,16 @@ func transformClusterObjectDeployment(obj any) (any, error) {
 
 func transformClusterObjectSet(obj any) (any, error) {
 	if cos, ok := obj.(*ocv1.ClusterObjectSet); ok {
-		if _, hasOwnerName := cos.Labels[labels.OwnerNameKey]; !hasOwnerName {
-			cos.Spec = ocv1.ClusterObjectSetSpec{
-				// Keep group, revision, and lifecycleState, which are used to determine
-				// if the latest active revision of a group is foreign to the CE.
-				Group:          cos.Spec.Group,
-				Revision:       cos.Spec.Revision,
-				LifecycleState: cos.Spec.LifecycleState,
-			}
-			cos.Status = ocv1.ClusterObjectSetStatus{
-				CompletedAt: cos.Status.CompletedAt,
-				Conditions:  cos.Status.Conditions,
-			}
+		// Retain only the fields needed for revision discovery, status reporting,
+		// and storage migration, regardless of labels.
+		cos.Spec = ocv1.ClusterObjectSetSpec{
+			Group:          cos.Spec.Group,
+			Revision:       cos.Spec.Revision,
+			LifecycleState: cos.Spec.LifecycleState,
+		}
+		cos.Status = ocv1.ClusterObjectSetStatus{
+			CompletedAt: cos.Status.CompletedAt,
+			Conditions:  cos.Status.Conditions,
 		}
 	}
 	// A per-object transform replaces DefaultTransform rather than composing

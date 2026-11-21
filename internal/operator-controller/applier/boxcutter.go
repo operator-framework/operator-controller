@@ -421,9 +421,12 @@ func (m *BoxcutterStorageMigrator) ensureRevisionStatus(ctx context.Context, nam
 	// represents a working installation. Record completedAt so the ClusterExtension
 	// controller treats it as installed. The original ready time is not recoverable,
 	// so we use the migration time.
+	base := rev.DeepCopy()
 	rev.Status.CompletedAt = metav1.Now()
 
-	if err := m.Client.Status().Update(ctx, rev); err != nil {
+	// Cached revisions omit detailed status. Patch only completedAt so those
+	// fields remain intact, and retry on a later reconciliation if the read is stale.
+	if err := m.Client.Status().Patch(ctx, rev, client.MergeFromWithOptions(base, client.MergeFromWithOptimisticLock{})); err != nil {
 		return fmt.Errorf("updating migrated revision status: %w", err)
 	}
 
