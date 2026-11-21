@@ -350,7 +350,7 @@ func run(ctx context.Context) error {
 		},
 	}
 
-	var localStorage storage.Instance
+	var localStorage *storage.LocalDirV1
 	metrics.Registry.MustRegister(catalogdmetrics.RequestDurationMetric)
 
 	storeDir := filepath.Join(cfg.cacheDir, storageDir)
@@ -385,6 +385,23 @@ func run(ctx context.Context) error {
 		metasMode,
 		graphqlMode,
 	)
+
+	// Leadership detection: mgr.Elected() is a channel that closes once this pod
+	// wins the leader lease.  When leader election is disabled (standalone mode),
+	// we leave IsLeader nil so the handler defaults to leader behavior (404 for
+	// missing catalogs).  This avoids a startup window where mgr.Elected() is not
+	// yet closed and the handler would incorrectly return 503.
+	if cfg.enableLeaderElection {
+		elected := mgr.Elected()
+		localStorage.IsLeader = func() bool {
+			select {
+			case <-elected:
+				return true
+			default:
+				return false
+			}
+		}
+	}
 
 	// Config for the catalogd web server
 	catalogServerConfig := serverutil.CatalogServerConfig{
