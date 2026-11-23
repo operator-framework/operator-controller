@@ -4,14 +4,14 @@ Feature: Operator upgrade verification
   pre-existing ClusterCatalogs and ClusterExtensions continue to function
   and can be updated.
 
-  Background:
+  Scenario: Pre-existing catalog and extension survive OLM upgrade and extension update
     Given the latest stable OLM release is installed
     And an image registry is available
     And a catalog "test" with packages:
       | package | version | channel | replaces | contents                   |
       | test    | 1.0.0   | beta    |          | CRD, Deployment, ConfigMap |
       | test    | 1.0.1   | beta    | 1.0.0    | CRD, Deployment, ConfigMap |
-    And ServiceAccount "olm-sa" with permissions to install extensions is available in "${TEST_NAMESPACE}" namespace
+    And namespace "${TEST_NAMESPACE}" is available
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -20,8 +20,6 @@ Feature: Operator upgrade verification
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -32,17 +30,29 @@ Feature: Operator upgrade verification
             version: 1.0.0
       """
     And ClusterExtension is available
-    And OLM is upgraded
+    And ClusterExtension is rolled out
+    And bundle "${PACKAGE:test}.1.0.0" is installed in version "1.0.0"
+    And resource "clusterextension/${NAME}" UID is remembered
+    And Helm-backed extension resource identities are remembered
+    When OLM is upgraded
     And catalogd is ready to reconcile resources
     And operator-controller is ready to reconcile resources
 
-  Scenario: ClusterCatalog continues unpacking after OLM upgrade
-    When catalog "test" is reconciled
+    And catalog "test" is reconciled
     Then catalog "test" reports Progressing as True with Reason Succeeded
     And catalog "test" reports Serving as True with Reason Available
 
-  Scenario: ClusterExtension remains functional after OLM upgrade
-    Given ClusterExtension is reconciled
+    And pre-existing ClusterExtension storage has transitioned after OLM upgrade
+    And ClusterExtension is available
+    And ClusterExtension is rolled out
+    And bundle "${PACKAGE:test}.1.0.0" is installed in version "1.0.0"
+    And resource "clusterextension/${NAME}" keeps its UID
+    And extension resources keep their pre-upgrade identities
     When ClusterExtension version is updated to "1.0.1"
     Then ClusterExtension is available
+    And ClusterExtension is rolled out
     And bundle "${PACKAGE:test}.1.0.1" is installed in version "1.0.1"
+    And deployment "test-operator-${SCENARIO_ID}" rollout is complete
+    And updated ClusterExtension storage is healthy
+    And resource "clusterextension/${NAME}" keeps its UID
+    And retained extension resources keep their pre-upgrade identities

@@ -48,6 +48,11 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" owns (\d+) ClusterObjectSets?$`, ClusterExtensionOwnsClusterObjectSets)
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, NamedClusterExtensionReportsCondition)
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, NamedClusterExtensionReportsConditionWithMessageFragment)
+	sc.Step(`^(?i)Helm-backed extension resource identities are remembered$`, RememberHelmExtensionIdentities)
+	sc.Step(`^(?i)pre-existing ClusterExtension storage has transitioned after OLM upgrade$`, PreExistingExtensionStorageTransitioned)
+	sc.Step(`^(?i)updated ClusterExtension storage is healthy$`, UpdatedExtensionStorageIsHealthy)
+	sc.Step(`^(?i)extension resources keep their pre-upgrade identities$`, ExtensionKeepsPreUpgradeIdentities)
+	sc.Step(`^(?i)retained extension resources keep their pre-upgrade identities$`, RetainedExtensionKeepsPreUpgradeIdentities)
 	sc.Step(`^(?i)ClusterExtension is reconciled$`, shared.ClusterExtensionIsReconciled)
 }
 
@@ -383,11 +388,18 @@ func helmReleaseFromSecret(secret *corev1.Secret) (*release.Release, error) {
 		return nil, err
 	}
 
-	var rel release.Release
-	if err = json.Unmarshal(releaseJsonBytes, &rel); err != nil {
+	// The chunked storage driver wraps release.Release because Helm excludes
+	// Labels from its JSON representation. Restore those labels explicitly so
+	// storage assertions can verify the persisted bundle metadata.
+	var wrapped struct {
+		release.Release
+		Labels map[string]string `json:"labels"`
+	}
+	if err = json.Unmarshal(releaseJsonBytes, &wrapped); err != nil {
 		return nil, err
 	}
-	return &rel, nil
+	wrapped.Release.Labels = wrapped.Labels
+	return &wrapped.Release, nil
 }
 
 // helmReleaseSecretForExtension returns the Helm release secret for the extension with name extName
@@ -398,16 +410,12 @@ func helmReleaseSecretForExtension(extName string) (*corev1.Secret, error) {
 	if err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(out) == "" {
-		return nil, err
-	}
-
 	var secretList corev1.SecretList
 	if err = json.Unmarshal([]byte(out), &secretList); err != nil {
 		return nil, err
 	}
 	if len(secretList.Items) != 1 {
-		return nil, err
+		return nil, fmt.Errorf("expected one deployed Helm release Secret for %q, found %d", extName, len(secretList.Items))
 	}
 	return &secretList.Items[0], nil
 }
