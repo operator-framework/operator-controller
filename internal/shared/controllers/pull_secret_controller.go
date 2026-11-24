@@ -167,7 +167,7 @@ func newNamespacedPredicate(key types.NamespacedName) predicate.Predicate {
 
 // Golang representation of the docker configuration - either dockerconfigjson or dockercfg formats.
 // This allows us to merge the two formats together, regardless of type, and dump it out as a
-// dockerconfigjson for use my contaners/images
+// dockerconfigjson for use by containers/images
 type dockerConfigJSON struct {
 	Auths dockerCfg `json:"auths"`
 }

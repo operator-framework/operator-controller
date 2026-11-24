@@ -22,4 +22,4 @@ OLM v1 verifies these criteria at install time and will surface violations in th
 
     OLM v1 does not support the `OperatorConditions` API introduced in legacy OLM.
 
-    Currently, there is no testing to validate against this constraint. If an extension uses the `OperatorConditions` API, the extension does not install correctly. Most extensions that rely on this API fail at start time, but some might fail during reconcilation.
+    Currently, there is no testing to validate against this constraint. If an extension uses the `OperatorConditions` API, the extension does not install correctly. Most extensions that rely on this API fail at start time, but some might fail during reconciliation.

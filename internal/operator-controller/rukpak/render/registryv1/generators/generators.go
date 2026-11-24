@@ -137,7 +137,7 @@ func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 
 // BundleCSVPermissionsGenerator generates the Roles and RoleBindings based on bundle's cluster service version
 // permission spec. If the bundle is being installed in AllNamespaces mode (opts.TargetNamespaces = [”])
-// no resources will be generated as these permissions will be promoted to ClusterRole/Bunding(s)
+// no resources will be generated as these permissions will be promoted to ClusterRole/Binding(s)
 func BundleCSVPermissionsGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 	if rv1 == nil {
 		return nil, fmt.Errorf("bundle cannot be nil")

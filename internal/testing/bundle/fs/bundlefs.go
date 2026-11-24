@@ -94,7 +94,7 @@ func (b *bundleFSBuilder) WithBundleResource(resourceName string, resource clien
 	return b
 }
 
-// WithCSV is an optiona for NewBundleFS used to add the yaml representation of csv to the
+// WithCSV is an option for NewBundleFS used to add the yaml representation of csv to the
 // path manifests/csv.yaml on the bundle filesystem
 func (b *bundleFSBuilder) WithCSV(csv v1alpha1.ClusterServiceVersion) BundleFSBuilder {
 	if b.resources == nil {

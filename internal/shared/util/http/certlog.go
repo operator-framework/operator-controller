@@ -152,7 +152,7 @@ func logPem(data []byte, filename, path, action string, log logr.Logger) {
 		if path != "" {
 			args = append(args, "directory", path)
 		}
-		// Find an appopriate certificate identifier
+		// Find an appropriate certificate identifier
 		args = append(args, "file", filename)
 		if s := crt.Subject.String(); s != "" {
 			args = append(args, "subject", s)

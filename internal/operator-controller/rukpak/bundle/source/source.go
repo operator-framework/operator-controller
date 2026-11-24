@@ -137,7 +137,7 @@ func (f fsBundleSource) GetBundle() (bundle.RegistryV1, error) {
 	return reg, nil
 }
 
-// copyMetadataPropertiesToCSV copies properties from `metadata/propeties.yaml` (in the filesystem fsys) into
+// copyMetadataPropertiesToCSV copies properties from `metadata/properties.yaml` (in the filesystem fsys) into
 // the CSV's `.metadata.annotations['olm.properties']` value, preserving any properties that are already
 // present in the annotations.
 func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS) error {
