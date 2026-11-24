@@ -275,7 +275,7 @@ func TestClusterObjectDeploymentReconcilerIgnoresCOSDeadlineCondition(t *testing
 			require.True(t, found)
 			cos.Status.Conditions = []metav1.Condition{{
 				Type: ocv1.ClusterObjectSetTypeReady, Status: metav1.ConditionFalse,
-				Reason: ocv1.ReasonProgressDeadlineExceeded,
+				Reason: ocv1.ClusterExtensionReasonProgressDeadlineExceeded,
 			}}
 			require.NoError(t, c.Status().Update(t.Context(), cos))
 
@@ -337,7 +337,7 @@ func TestClusterObjectDeploymentReconcilerDeadlineSchedulingAndRecovery(t *testi
 
 	// The historical completion latch wins even over a stale COS deadline reason.
 	cos.Status.CompletedAt = metav1.NewTime(clk.Now())
-	cos.Status.Conditions[0].Reason = ocv1.ReasonProgressDeadlineExceeded
+	cos.Status.Conditions[0].Reason = ocv1.ClusterExtensionReasonProgressDeadlineExceeded
 	require.NoError(t, c.Status().Update(t.Context(), cos))
 	result, err = reconcileDeadlineDeployment(t, c, clk)
 	require.NoError(t, err)

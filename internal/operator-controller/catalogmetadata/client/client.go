@@ -151,7 +151,7 @@ func validateCatalog(catalog *ocv1.ClusterCatalog) error {
 
 	// if the catalog is not being served, report an error. This ensures that our
 	// reconciles are deterministic and wait for all desired catalogs to be ready.
-	if !meta.IsStatusConditionPresentAndEqual(catalog.Status.Conditions, ocv1.TypeServing, metav1.ConditionTrue) {
+	if !meta.IsStatusConditionPresentAndEqual(catalog.Status.Conditions, ocv1.ClusterCatalogTypeServing, metav1.ConditionTrue) {
 		return fmt.Errorf("catalog %q is not being served", catalog.Name)
 	}
 

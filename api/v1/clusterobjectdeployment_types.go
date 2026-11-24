@@ -31,7 +31,7 @@ const (
 	// Progressing condition reasons.
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressed  = "NewClusterObjectSetProgressed"
 	ClusterObjectDeploymentReasonNewClusterObjectSetProgressing = "NewClusterObjectSetProgressing"
-	ClusterObjectDeploymentReasonProgressDeadlineExceeded       = ReasonProgressDeadlineExceeded
+	ClusterObjectDeploymentReasonProgressDeadlineExceeded       = "ProgressDeadlineExceeded"
 	ClusterObjectDeploymentReasonInvalidSpecification           = "InvalidSpecification"
 	ClusterObjectDeploymentReasonRevisionPreconditionsNotMet    = "RevisionPreconditionsNotMet"
 	ClusterObjectDeploymentReasonRevisionObjectCollision        = "RevisionObjectCollision"

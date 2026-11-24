@@ -185,7 +185,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 //nolint:unparam // reason parameter is designed to be flexible, even if current callers use the same value
 func ensureFailureConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.ConditionReason, message string) {
 	for _, condType := range conditionsets.ConditionTypes {
-		if isDeprecationCondition(condType) || condType == ocv1.TypeAvailable {
+		if isDeprecationCondition(condType) || condType == ocv1.ClusterExtensionTypeAvailable {
 			continue
 		}
 		cond := apimeta.FindStatusCondition(ext.Status.Conditions, condType)
@@ -231,35 +231,35 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string
 	if !hasCatalogData {
 		// When catalog is unavailable, set all to Unknown.
 		// BundleDeprecated uses Absent only when no bundle installed.
-		bundleReason := ocv1.ReasonAbsent
+		bundleReason := ocv1.ClusterExtensionReasonAbsent
 		bundleMessage := "no bundle installed yet"
 		if installedBundleName != "" {
-			bundleReason = ocv1.ReasonDeprecationStatusUnknown
+			bundleReason = ocv1.ClusterExtensionReasonDeprecationStatusUnknown
 			bundleMessage = "deprecation status unknown: catalog data unavailable"
 		}
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeDeprecated,
+			Type:               ocv1.ClusterExtensionTypeDeprecated,
 			Status:             metav1.ConditionUnknown,
-			Reason:             ocv1.ReasonDeprecationStatusUnknown,
+			Reason:             ocv1.ClusterExtensionReasonDeprecationStatusUnknown,
 			Message:            "deprecation status unknown: catalog data unavailable",
 			ObservedGeneration: ext.GetGeneration(),
 		})
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypePackageDeprecated,
+			Type:               ocv1.ClusterExtensionTypePackageDeprecated,
 			Status:             metav1.ConditionUnknown,
-			Reason:             ocv1.ReasonDeprecationStatusUnknown,
+			Reason:             ocv1.ClusterExtensionReasonDeprecationStatusUnknown,
 			Message:            "deprecation status unknown: catalog data unavailable",
 			ObservedGeneration: ext.GetGeneration(),
 		})
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeChannelDeprecated,
+			Type:               ocv1.ClusterExtensionTypeChannelDeprecated,
 			Status:             metav1.ConditionUnknown,
-			Reason:             ocv1.ReasonDeprecationStatusUnknown,
+			Reason:             ocv1.ClusterExtensionReasonDeprecationStatusUnknown,
 			Message:            "deprecation status unknown: catalog data unavailable",
 			ObservedGeneration: ext.GetGeneration(),
 		})
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeBundleDeprecated,
+			Type:               ocv1.ClusterExtensionTypeBundleDeprecated,
 			Status:             metav1.ConditionUnknown,
 			Reason:             bundleReason,
 			Message:            bundleMessage,
@@ -272,17 +272,17 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string
 	messages := slices.Concat(packageMessages, channelMessages, bundleMessages)
 	if len(messages) > 0 {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeDeprecated,
+			Type:               ocv1.ClusterExtensionTypeDeprecated,
 			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonDeprecated,
+			Reason:             ocv1.ClusterExtensionReasonDeprecated,
 			Message:            strings.Join(messages, "\n"),
 			ObservedGeneration: ext.GetGeneration(),
 		})
 	} else {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeDeprecated,
+			Type:               ocv1.ClusterExtensionTypeDeprecated,
 			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ReasonNotDeprecated,
+			Reason:             ocv1.ClusterExtensionReasonNotDeprecated,
 			Message:            "not deprecated",
 			ObservedGeneration: ext.GetGeneration(),
 		})
@@ -290,17 +290,17 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string
 
 	if len(packageMessages) > 0 {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypePackageDeprecated,
+			Type:               ocv1.ClusterExtensionTypePackageDeprecated,
 			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonDeprecated,
+			Reason:             ocv1.ClusterExtensionReasonDeprecated,
 			Message:            strings.Join(packageMessages, "\n"),
 			ObservedGeneration: ext.GetGeneration(),
 		})
 	} else {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypePackageDeprecated,
+			Type:               ocv1.ClusterExtensionTypePackageDeprecated,
 			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ReasonNotDeprecated,
+			Reason:             ocv1.ClusterExtensionReasonNotDeprecated,
 			Message:            "package not deprecated",
 			ObservedGeneration: ext.GetGeneration(),
 		})
@@ -308,17 +308,17 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string
 
 	if len(channelMessages) > 0 {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeChannelDeprecated,
+			Type:               ocv1.ClusterExtensionTypeChannelDeprecated,
 			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonDeprecated,
+			Reason:             ocv1.ClusterExtensionReasonDeprecated,
 			Message:            strings.Join(channelMessages, "\n"),
 			ObservedGeneration: ext.GetGeneration(),
 		})
 	} else {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeChannelDeprecated,
+			Type:               ocv1.ClusterExtensionTypeChannelDeprecated,
 			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ReasonNotDeprecated,
+			Reason:             ocv1.ClusterExtensionReasonNotDeprecated,
 			Message:            "channel not deprecated",
 			ObservedGeneration: ext.GetGeneration(),
 		})
@@ -327,25 +327,25 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string
 	// BundleDeprecated: Unknown when no bundle installed, True when deprecated, False when not
 	if info.BundleStatus == metav1.ConditionUnknown {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeBundleDeprecated,
+			Type:               ocv1.ClusterExtensionTypeBundleDeprecated,
 			Status:             metav1.ConditionUnknown,
-			Reason:             ocv1.ReasonAbsent,
+			Reason:             ocv1.ClusterExtensionReasonAbsent,
 			Message:            "no bundle installed yet",
 			ObservedGeneration: ext.GetGeneration(),
 		})
 	} else if len(bundleMessages) > 0 {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeBundleDeprecated,
+			Type:               ocv1.ClusterExtensionTypeBundleDeprecated,
 			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonDeprecated,
+			Reason:             ocv1.ClusterExtensionReasonDeprecated,
 			Message:            strings.Join(bundleMessages, "\n"),
 			ObservedGeneration: ext.GetGeneration(),
 		})
 	} else {
 		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeBundleDeprecated,
+			Type:               ocv1.ClusterExtensionTypeBundleDeprecated,
 			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ReasonNotDeprecated,
+			Reason:             ocv1.ClusterExtensionReasonNotDeprecated,
 			Message:            "bundle not deprecated",
 			ObservedGeneration: ext.GetGeneration(),
 		})
@@ -356,7 +356,7 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string
 // conditions we manage separately.
 func isDeprecationCondition(condType string) bool {
 	switch condType {
-	case ocv1.TypeDeprecated, ocv1.TypePackageDeprecated, ocv1.TypeChannelDeprecated, ocv1.TypeBundleDeprecated:
+	case ocv1.ClusterExtensionTypeDeprecated, ocv1.ClusterExtensionTypePackageDeprecated, ocv1.ClusterExtensionTypeChannelDeprecated, ocv1.ClusterExtensionTypeBundleDeprecated:
 		return true
 	default:
 		return false

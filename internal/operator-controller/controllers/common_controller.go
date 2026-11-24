@@ -92,7 +92,7 @@ func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 // so the latest revision is the LAST element in the array.
 func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	if len(rollingRevisions) == 0 {
-		return ocv1.ReasonFailed
+		return ocv1.ClusterExtensionReasonFailed
 	}
 	// Latest revision is the last element (sorted ascending by Spec.Revision).
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
@@ -103,20 +103,20 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 	if readyCond != nil && (readyCond.Reason == ocv1.ClusterObjectSetReasonObjectCollision ||
 		readyCond.Reason == ocv1.ClusterObjectSetReasonPreconditionsNotMet ||
 		readyCond.Reason == ocv1.ClusterObjectSetReasonInvalidSpecification) {
-		return ocv1.ReasonFailed
+		return ocv1.ClusterExtensionReasonFailed
 	}
 
 	// No error detected in latest revision - it's progressing healthily (RollingOut) or no conditions set
 	// Use Absent for neutral "not installed yet" state
-	return ocv1.ReasonAbsent
+	return ocv1.ClusterExtensionReasonAbsent
 }
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
 func setInstalledStatusConditionSuccess(ext *ocv1.ClusterExtension, message string) {
 	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1.TypeInstalled,
+		Type:               ocv1.ClusterExtensionTypeInstalled,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1.ReasonSucceeded,
+		Reason:             ocv1.ClusterExtensionReasonSucceeded,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
@@ -125,7 +125,7 @@ func setInstalledStatusConditionSuccess(ext *ocv1.ClusterExtension, message stri
 // setInstalledStatusConditionFailed sets the installed status condition to failed.
 func setInstalledStatusConditionFalse(ext *ocv1.ClusterExtension, reason string, message string) {
 	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1.TypeInstalled,
+		Type:               ocv1.ClusterExtensionTypeInstalled,
 		Status:             metav1.ConditionFalse,
 		Reason:             reason,
 		Message:            message,
@@ -136,9 +136,9 @@ func setInstalledStatusConditionFalse(ext *ocv1.ClusterExtension, reason string,
 // setInstalledStatusConditionUnknown sets the installed status condition to unknown.
 func setInstalledStatusConditionUnknown(ext *ocv1.ClusterExtension, message string) {
 	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1.TypeInstalled,
+		Type:               ocv1.ClusterExtensionTypeInstalled,
 		Status:             metav1.ConditionUnknown,
-		Reason:             ocv1.ReasonFailed,
+		Reason:             ocv1.ClusterExtensionReasonFailed,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
@@ -150,15 +150,15 @@ func setInstallStatus(ext *ocv1.ClusterExtension, installStatus *ocv1.ClusterExt
 
 func setStatusProgressing(ext *ocv1.ClusterExtension, err error) {
 	progressingCond := metav1.Condition{
-		Type:               ocv1.TypeProgressing,
+		Type:               ocv1.ClusterExtensionTypeProgressing,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1.ReasonSucceeded,
+		Reason:             ocv1.ClusterExtensionReasonSucceeded,
 		Message:            "Desired state reached",
 		ObservedGeneration: ext.GetGeneration(),
 	}
 
 	if err != nil {
-		progressingCond.Reason = ocv1.ReasonRetrying
+		progressingCond.Reason = ocv1.ClusterExtensionReasonRetrying
 		// Unwrap TerminalError to avoid "terminal error:" prefix in message
 		progressingCond.Message = errorutil.SanitizeNetworkError(errorutil.UnwrapTerminal(err))
 	}
@@ -171,7 +171,7 @@ func setStatusProgressing(ext *ocv1.ClusterExtension, err error) {
 		if reason, ok := errorutil.ExtractTerminalReason(err); ok {
 			progressingCond.Reason = reason
 		} else {
-			progressingCond.Reason = ocv1.ReasonBlocked
+			progressingCond.Reason = ocv1.ClusterExtensionReasonBlocked
 		}
 	}
 

@@ -30,10 +30,10 @@ func setAvailableFromClusterObjectDeployment(ext *ocv1.ClusterExtension, cod *oc
 		return
 	}
 	a := *available
-	a.Type = ocv1.TypeAvailable
+	a.Type = ocv1.ClusterExtensionTypeAvailable
 	a.ObservedGeneration = ext.GetGeneration()
 	if a.Status == metav1.ConditionTrue {
-		a.Reason = ocv1.ReasonProbesSucceeded
+		a.Reason = ocv1.ClusterExtensionReasonProbesSucceeded
 		a.Message = availableTrueMessage
 	}
 	apimeta.SetStatusCondition(&ext.Status.Conditions, a)
@@ -54,9 +54,9 @@ func setProgressingFromClusterObjectDeployment(ext *ocv1.ClusterExtension, cod *
 // False, so the status is recomputed per reason rather than copied from the deployment. A nil deployment
 // condition (e.g. a freshly created deployment that has not reconciled) is treated as rolling out.
 func progressingConditionFromClusterObjectDeployment(codProgressing *metav1.Condition) metav1.Condition {
-	prog := metav1.Condition{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue}
+	prog := metav1.Condition{Type: ocv1.ClusterExtensionTypeProgressing, Status: metav1.ConditionTrue}
 	if codProgressing == nil {
-		prog.Reason = ocv1.ReasonRollingOut
+		prog.Reason = ocv1.ClusterExtensionReasonRollingOut
 		prog.Message = "Revision is rolling out."
 		return prog
 	}
@@ -65,26 +65,26 @@ func progressingConditionFromClusterObjectDeployment(codProgressing *metav1.Cond
 	case ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed:
 		// The deployment reports a completed rollout as Progressing=False; the ClusterExtension keeps
 		// Progressing=True/Succeeded to signal "reconciled, desired state reached".
-		prog.Reason = ocv1.ReasonSucceeded
+		prog.Reason = ocv1.ClusterExtensionReasonSucceeded
 		prog.Message = "Desired state reached"
 	case ocv1.ClusterObjectDeploymentReasonRevisionObjectCollision,
 		ocv1.ClusterObjectDeploymentReasonRevisionPreconditionsNotMet,
 		ocv1.ClusterObjectDeploymentReasonOwnerConflict:
 		// A foreign controller owns a revision or one of its objects, or a precondition is unmet.
 		// Reconciliation resumes automatically once the obstruction is resolved, so keep retrying.
-		prog.Reason = ocv1.ReasonRetrying
+		prog.Reason = ocv1.ClusterExtensionReasonRetrying
 	case ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded:
 		prog.Status = metav1.ConditionFalse
-		prog.Reason = ocv1.ReasonProgressDeadlineExceeded
+		prog.Reason = ocv1.ClusterExtensionReasonProgressDeadlineExceeded
 	case ocv1.ClusterObjectDeploymentReasonInvalidSpecification,
 		ocv1.ClusterObjectDeploymentReasonRevisionInvalidSpecification:
 		// An invalid deployment template or revision spec needs a spec change to proceed; it does not
 		// retry on its own, so report it as terminal.
 		prog.Status = metav1.ConditionFalse
-		prog.Reason = ocv1.ReasonBlocked
+		prog.Reason = ocv1.ClusterExtensionReasonBlocked
 	default:
 		// NewClusterObjectSetProgressing and any future rolling reason.
-		prog.Reason = ocv1.ReasonRollingOut
+		prog.Reason = ocv1.ClusterExtensionReasonRollingOut
 	}
 	return prog
 }
@@ -118,7 +118,7 @@ func setInstalledFromClusterObjectDeployment(ext *ocv1.ClusterExtension, cod *oc
 	}
 	// A bundle from a prior completion stays installed while a new rollout is in flight.
 	// Acknowledge the current spec without changing its installed bundle or condition details.
-	if installed := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled); installed != nil {
+	if installed := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeInstalled); installed != nil {
 		installed.ObservedGeneration = ext.GetGeneration()
 	}
 }
@@ -162,8 +162,8 @@ func installFailureReasonFromClusterObjectDeployment(cod *ocv1.ClusterObjectDepl
 			ocv1.ClusterObjectDeploymentReasonRevisionInvalidSpecification,
 			ocv1.ClusterObjectDeploymentReasonInvalidSpecification,
 			ocv1.ClusterObjectDeploymentReasonProgressDeadlineExceeded:
-			return ocv1.ReasonFailed
+			return ocv1.ClusterExtensionReasonFailed
 		}
 	}
-	return ocv1.ReasonAbsent
+	return ocv1.ClusterExtensionReasonAbsent
 }

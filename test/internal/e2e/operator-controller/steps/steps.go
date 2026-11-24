@@ -64,7 +64,7 @@ func BundleInstalled(ctx context.Context, name, version string) error {
 		if err := json.Unmarshal([]byte(v), &ext); err != nil {
 			return false
 		}
-		installed := shared.CurrentCondition(ext.Generation, ext.Status.Conditions, ocv1.TypeInstalled)
+		installed := shared.CurrentCondition(ext.Generation, ext.Status.Conditions, ocv1.ClusterExtensionTypeInstalled)
 		return shared.ConditionMatches(installed, metav1.ConditionTrue, nil, nil) &&
 			ext.Status.Install.Bundle.Name == name && ext.Status.Install.Bundle.Version == version
 	})
@@ -74,7 +74,7 @@ func BundleInstalled(ctx context.Context, name, version string) error {
 // ClusterExtensionIsAvailable waits for the ClusterExtension's Installed condition to be True. Polls with timeout.
 func ClusterExtensionIsAvailable(ctx context.Context) error {
 	sc := shared.Scenario(ctx)
-	if err := waitForExtensionCondition(ctx, ocv1.TypeInstalled, metav1.ConditionTrue, nil, nil); err != nil {
+	if err := waitForExtensionCondition(ctx, ocv1.ClusterExtensionTypeInstalled, metav1.ConditionTrue, nil, nil); err != nil {
 		return err
 	}
 
@@ -102,7 +102,7 @@ func ClusterExtensionIsRemoved(ctx context.Context) error {
 // for the current generation, then gathers its constituent resources into the scenario context. Polls with timeout.
 func ClusterExtensionIsRolledOut(ctx context.Context) error {
 	sc := shared.Scenario(ctx)
-	if err := waitForExtensionCondition(ctx, ocv1.TypeProgressing, metav1.ConditionTrue, ptr.To(ocv1.ReasonSucceeded), nil); err != nil {
+	if err := waitForExtensionCondition(ctx, ocv1.ClusterExtensionTypeProgressing, metav1.ConditionTrue, ptr.To(ocv1.ClusterExtensionReasonSucceeded), nil); err != nil {
 		return err
 	}
 
@@ -156,7 +156,7 @@ func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
 		if err != nil {
 			return false
 		}
-		return shared.CurrentCondition(resource.Metadata.Generation, resource.Status.Conditions, ocv1.TypeProgressing) != nil
+		return shared.CurrentCondition(resource.Metadata.Generation, resource.Status.Conditions, ocv1.ClusterExtensionTypeProgressing) != nil
 	})
 	return nil
 }
