@@ -70,4 +70,4 @@ field is used in the experimental CRD when feature gates are enabled.
 * End Tag: `</opcon:util:excludeFromCRD>`
 
 Descriptive text that is excluded from the CRD description. This is similar to the use of `---`, except
-the three hypens excludes *all* following text.
+the three hyphens excludes *all* following text.

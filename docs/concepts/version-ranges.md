@@ -37,7 +37,7 @@ version: ">=3.0, <3.6"
 #### Wildcards in comparisons
 
 You can use the `x`, `X`, and `*` characters as wildcard characters in all comparison operations.
-If you use a wildcard character with the `=` operator, you define a patch level comparision.
+If you use a wildcard character with the `=` operator, you define a patch level comparison.
 This is equivalent to making a tilde range comparison.
 
 *Example comparisons with wildcard characters*
