@@ -30,9 +30,9 @@ func TestSetStatusProgressing(t *testing.T) {
 			err:              nil,
 			clusterExtension: &ocv1.ClusterExtension{},
 			expected: metav1.Condition{
-				Type:    ocv1.TypeProgressing,
+				Type:    ocv1.ClusterExtensionTypeProgressing,
 				Status:  metav1.ConditionTrue,
-				Reason:  ocv1.ReasonSucceeded,
+				Reason:  ocv1.ClusterExtensionReasonSucceeded,
 				Message: "Desired state reached",
 			},
 		},
@@ -41,9 +41,9 @@ func TestSetStatusProgressing(t *testing.T) {
 			err:              errors.New("boom"),
 			clusterExtension: &ocv1.ClusterExtension{},
 			expected: metav1.Condition{
-				Type:    ocv1.TypeProgressing,
+				Type:    ocv1.ClusterExtensionTypeProgressing,
 				Status:  metav1.ConditionTrue,
-				Reason:  ocv1.ReasonRetrying,
+				Reason:  ocv1.ClusterExtensionReasonRetrying,
 				Message: "boom",
 			},
 		},
@@ -52,20 +52,20 @@ func TestSetStatusProgressing(t *testing.T) {
 			err:              reconcile.TerminalError(errors.New("boom")),
 			clusterExtension: &ocv1.ClusterExtension{},
 			expected: metav1.Condition{
-				Type:    ocv1.TypeProgressing,
+				Type:    ocv1.ClusterExtensionTypeProgressing,
 				Status:  metav1.ConditionFalse,
-				Reason:  ocv1.ReasonBlocked,
+				Reason:  ocv1.ClusterExtensionReasonBlocked,
 				Message: "boom",
 			},
 		},
 		{
 			name:             "non-nil ClusterExtension, terminal error with InvalidConfiguration reason, Progressing condition has status False with that reason",
-			err:              errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, errors.New("missing required field")),
+			err:              errorutil.NewTerminalError(ocv1.ClusterExtensionReasonInvalidConfiguration, errors.New("missing required field")),
 			clusterExtension: &ocv1.ClusterExtension{},
 			expected: metav1.Condition{
-				Type:    ocv1.TypeProgressing,
+				Type:    ocv1.ClusterExtensionTypeProgressing,
 				Status:  metav1.ConditionFalse,
-				Reason:  ocv1.ReasonInvalidConfiguration,
+				Reason:  ocv1.ClusterExtensionReasonInvalidConfiguration,
 				Message: "missing required field",
 			},
 		},
@@ -86,9 +86,9 @@ func TestSetStatusProgressing(t *testing.T) {
 			}),
 			clusterExtension: &ocv1.ClusterExtension{},
 			expected: metav1.Condition{
-				Type:    ocv1.TypeProgressing,
+				Type:    ocv1.ClusterExtensionTypeProgressing,
 				Status:  metav1.ConditionTrue,
-				Reason:  ocv1.ReasonRetrying,
+				Reason:  ocv1.ClusterExtensionReasonRetrying,
 				Message: "source catalog content: connect: connection refused",
 			},
 		},
@@ -107,16 +107,16 @@ func TestSetStatusProgressing(t *testing.T) {
 			}),
 			clusterExtension: &ocv1.ClusterExtension{},
 			expected: metav1.Condition{
-				Type:    ocv1.TypeProgressing,
+				Type:    ocv1.ClusterExtensionTypeProgressing,
 				Status:  metav1.ConditionTrue,
-				Reason:  ocv1.ReasonRetrying,
+				Reason:  ocv1.ClusterExtensionReasonRetrying,
 				Message: "source catalog content: dial tcp: lookup registry.example.com on 10.96.0.10:53: i/o timeout",
 			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			setStatusProgressing(tc.clusterExtension, tc.err)
-			progressingCond := meta.FindStatusCondition(tc.clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+			progressingCond := meta.FindStatusCondition(tc.clusterExtension.Status.Conditions, ocv1.ClusterExtensionTypeProgressing)
 			require.NotNil(t, progressingCond, "progressing condition should be set but was not")
 			diff := cmp.Diff(*progressingCond, tc.expected, cmpopts.IgnoreFields(metav1.Condition{}, "LastTransitionTime", "ObservedGeneration"))
 			require.Empty(t, diff, "difference between actual and expected Progressing conditions")
@@ -186,7 +186,7 @@ func TestSetStatusProgressingWithLongMessage(t *testing.T) {
 	err := errors.New(longError)
 	setStatusProgressing(ext, err)
 
-	cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+	cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeProgressing)
 	require.NotNil(t, cond)
 	require.LessOrEqual(t, len(cond.Message), maxConditionMessageLength)
 	require.Contains(t, cond.Message, truncationSuffix)
@@ -206,7 +206,7 @@ func TestClusterExtensionDeprecationMessageTruncation(t *testing.T) {
 	longDeprecationMsg := strings.Join(deprecationMessages, "\n")
 	setInstalledStatusConditionUnknown(ext, longDeprecationMsg)
 
-	cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+	cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeInstalled)
 	require.NotNil(t, cond)
 	require.LessOrEqual(t, len(cond.Message), maxConditionMessageLength)
 	require.Contains(t, cond.Message, truncationSuffix, "deprecation messages should be truncated when too long")
@@ -219,9 +219,9 @@ func TestClusterExtensionInstallationFailureTruncation(t *testing.T) {
 		strings.Repeat("resource 'deployments/argocd-server' missing required label 'app.kubernetes.io/name', resource 'services/argocd-server-metrics' has invalid port configuration, resource 'configmaps/argocd-cm' contains invalid YAML in data field 'application.yaml'\n", 400)
 
 	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "argocd-operator"}}
-	setInstalledStatusConditionFalse(ext, ocv1.ReasonFailed, installError)
+	setInstalledStatusConditionFalse(ext, ocv1.ClusterExtensionReasonFailed, installError)
 
-	cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+	cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeInstalled)
 	require.NotNil(t, cond)
 
 	// Verify message was truncated due to length
@@ -229,7 +229,7 @@ func TestClusterExtensionInstallationFailureTruncation(t *testing.T) {
 	require.Contains(t, cond.Message, truncationSuffix, "installation failure messages should be truncated when too long")
 	require.Contains(t, cond.Message, "failed to install ClusterExtension", "should preserve important context")
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1.ReasonFailed, cond.Reason)
+	require.Equal(t, ocv1.ClusterExtensionReasonFailed, cond.Reason)
 
 	// Verify original message was actually longer than the limit
 	require.Greater(t, len(installError), maxConditionMessageLength, "test should use a message that exceeds the limit")
@@ -311,9 +311,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 				RollingOut: nil,
 			},
 			expectedInstalledCond: metav1.Condition{
-				Type:   ocv1.TypeInstalled,
+				Type:   ocv1.ClusterExtensionTypeInstalled,
 				Status: metav1.ConditionFalse,
-				Reason: ocv1.ReasonFailed,
+				Reason: ocv1.ClusterExtensionReasonFailed,
 			},
 		},
 		{
@@ -335,9 +335,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 				},
 			},
 			expectedInstalledCond: metav1.Condition{
-				Type:   ocv1.TypeInstalled,
+				Type:   ocv1.ClusterExtensionTypeInstalled,
 				Status: metav1.ConditionFalse,
-				Reason: ocv1.ReasonFailed,
+				Reason: ocv1.ClusterExtensionReasonFailed,
 			},
 		},
 		{
@@ -351,7 +351,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 							{
 								Type:    ocv1.ClusterObjectSetTypeReady,
 								Status:  metav1.ConditionFalse,
-								Reason:  ocv1.ReasonRollingOut,
+								Reason:  ocv1.ClusterExtensionReasonRollingOut,
 								Message: "Revision is rolling out",
 							},
 						},
@@ -370,9 +370,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 				},
 			},
 			expectedInstalledCond: metav1.Condition{
-				Type:   ocv1.TypeInstalled,
+				Type:   ocv1.ClusterExtensionTypeInstalled,
 				Status: metav1.ConditionFalse,
-				Reason: ocv1.ReasonFailed,
+				Reason: ocv1.ClusterExtensionReasonFailed,
 			},
 		},
 		{
@@ -386,7 +386,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 							{
 								Type:    ocv1.ClusterObjectSetTypeReady,
 								Status:  metav1.ConditionFalse,
-								Reason:  ocv1.ReasonRollingOut,
+								Reason:  ocv1.ClusterExtensionReasonRollingOut,
 								Message: "Revision is rolling out",
 							},
 						},
@@ -394,9 +394,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 				},
 			},
 			expectedInstalledCond: metav1.Condition{
-				Type:   ocv1.TypeInstalled,
+				Type:   ocv1.ClusterExtensionTypeInstalled,
 				Status: metav1.ConditionFalse,
-				Reason: ocv1.ReasonAbsent,
+				Reason: ocv1.ClusterExtensionReasonAbsent,
 			},
 		},
 		{
@@ -421,7 +421,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 							{
 								Type:    ocv1.ClusterObjectSetTypeReady,
 								Status:  metav1.ConditionFalse,
-								Reason:  ocv1.ReasonRollingOut,
+								Reason:  ocv1.ClusterExtensionReasonRollingOut,
 								Message: "Latest revision is rolling out healthy",
 							},
 						},
@@ -429,9 +429,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 				},
 			},
 			expectedInstalledCond: metav1.Condition{
-				Type:   ocv1.TypeInstalled,
+				Type:   ocv1.ClusterExtensionTypeInstalled,
 				Status: metav1.ConditionFalse,
-				Reason: ocv1.ReasonAbsent,
+				Reason: ocv1.ClusterExtensionReasonAbsent,
 			},
 		},
 	}
@@ -447,7 +447,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 
 			setInstalledStatusFromRevisionStates(ext, tt.revisionStates)
 
-			cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+			cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeInstalled)
 			require.NotNil(t, cond)
 			require.Equal(t, tt.expectedInstalledCond.Status, cond.Status)
 			require.Equal(t, tt.expectedInstalledCond.Reason, cond.Reason)
@@ -464,47 +464,47 @@ func TestDetermineFailureReason(t *testing.T) {
 		rolling  []*RevisionMetadata
 		expected string
 	}{
-		{name: "no rolling revisions -> Failed", rolling: nil, expected: ocv1.ReasonFailed},
+		{name: "no rolling revisions -> Failed", rolling: nil, expected: ocv1.ClusterExtensionReasonFailed},
 		{
 			// First-reconcile transient error: the latest revision has no Ready condition
 			// yet. It must map to Absent, not Failed, so a transient COS error never
 			// surfaces as ClusterExtension Installed=Failed.
 			name:     "latest with no Ready condition -> Absent",
 			rolling:  []*RevisionMetadata{{Conditions: nil}},
-			expected: ocv1.ReasonAbsent,
+			expected: ocv1.ClusterExtensionReasonAbsent,
 		},
 		{
 			name:     "latest object collision -> Failed",
 			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonObjectCollision)}},
-			expected: ocv1.ReasonFailed,
+			expected: ocv1.ClusterExtensionReasonFailed,
 		},
 		{
 			name:     "latest rolling out -> Absent",
-			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ReasonRollingOut)}},
-			expected: ocv1.ReasonAbsent,
+			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterExtensionReasonRollingOut)}},
+			expected: ocv1.ClusterExtensionReasonAbsent,
 		},
 		{
 			name:     "latest preconditions not met -> Failed",
 			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonPreconditionsNotMet)}},
-			expected: ocv1.ReasonFailed,
+			expected: ocv1.ClusterExtensionReasonFailed,
 		},
 		{
 			name:     "latest invalid specification -> Failed",
 			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonInvalidSpecification)}},
-			expected: ocv1.ReasonFailed,
+			expected: ocv1.ClusterExtensionReasonFailed,
 		},
 		{
 			name:     "latest superseded -> Absent",
 			rolling:  []*RevisionMetadata{{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterObjectSetReasonSuperseded)}},
-			expected: ocv1.ReasonAbsent,
+			expected: ocv1.ClusterExtensionReasonAbsent,
 		},
 		{
 			name: "only the latest revision matters",
 			rolling: []*RevisionMetadata{
 				{Conditions: availCond(metav1.ConditionUnknown, ocv1.ClusterObjectSetReasonObjectCollision)},
-				{Conditions: availCond(metav1.ConditionFalse, ocv1.ReasonRollingOut)},
+				{Conditions: availCond(metav1.ConditionFalse, ocv1.ClusterExtensionReasonRollingOut)},
 			},
-			expected: ocv1.ReasonAbsent,
+			expected: ocv1.ClusterExtensionReasonAbsent,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

@@ -317,8 +317,8 @@ func nextPollResult(lastSuccessfulPoll time.Time, catalog *ocv1.ClusterCatalog) 
 
 func clearUnknownConditions(status *ocv1.ClusterCatalogStatus) {
 	knownTypes := sets.New[string](
-		ocv1.TypeServing,
-		ocv1.TypeProgressing,
+		ocv1.ClusterCatalogTypeServing,
+		ocv1.ClusterCatalogTypeProgressing,
 	)
 	status.Conditions = slices.DeleteFunc(status.Conditions, func(cond metav1.Condition) bool {
 		return !knownTypes.Has(cond.Type)
@@ -327,22 +327,22 @@ func clearUnknownConditions(status *ocv1.ClusterCatalogStatus) {
 
 func updateStatusProgressing(status *ocv1.ClusterCatalogStatus, generation int64, err error) {
 	progressingCond := metav1.Condition{
-		Type:               ocv1.TypeProgressing,
+		Type:               ocv1.ClusterCatalogTypeProgressing,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1.ReasonSucceeded,
+		Reason:             ocv1.ClusterCatalogReasonSucceeded,
 		Message:            "Successfully unpacked and stored content from resolved source",
 		ObservedGeneration: generation,
 	}
 
 	if err != nil {
 		progressingCond.Status = metav1.ConditionTrue
-		progressingCond.Reason = ocv1.ReasonRetrying
+		progressingCond.Reason = ocv1.ClusterCatalogReasonRetrying
 		progressingCond.Message = errorutil.SanitizeNetworkError(err)
 	}
 
 	if errors.Is(err, reconcile.TerminalError(nil)) {
 		progressingCond.Status = metav1.ConditionFalse
-		progressingCond.Reason = ocv1.ReasonBlocked
+		progressingCond.Reason = ocv1.ClusterCatalogReasonBlocked
 	}
 
 	meta.SetStatusCondition(&status.Conditions, progressingCond)
@@ -360,9 +360,9 @@ func updateStatusServing(status *ocv1.ClusterCatalogStatus, ref reference.Canoni
 	}
 	status.LastUnpacked = ptr.To(metav1.NewTime(modTime.Truncate(time.Second)))
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:               ocv1.TypeServing,
+		Type:               ocv1.ClusterCatalogTypeServing,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1.ReasonAvailable,
+		Reason:             ocv1.ClusterCatalogReasonAvailable,
 		Message:            "Serving desired content from resolved source",
 		ObservedGeneration: generation,
 	})
@@ -374,9 +374,9 @@ func updateStatusProgressingUserSpecifiedUnavailable(status *ocv1.ClusterCatalog
 	// availability mode and are ready to progress to any future
 	// desired state.
 	progressingCond := metav1.Condition{
-		Type:               ocv1.TypeProgressing,
+		Type:               ocv1.ClusterCatalogTypeProgressing,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1.ReasonSucceeded,
+		Reason:             ocv1.ClusterCatalogReasonSucceeded,
 		Message:            "Catalog availability mode is set to Unavailable",
 		ObservedGeneration: generation,
 	}
@@ -385,9 +385,9 @@ func updateStatusProgressingUserSpecifiedUnavailable(status *ocv1.ClusterCatalog
 	// so that users of this condition are aware that this catalog is
 	// intentionally not being served
 	servingCond := metav1.Condition{
-		Type:               ocv1.TypeServing,
+		Type:               ocv1.ClusterCatalogTypeServing,
 		Status:             metav1.ConditionFalse,
-		Reason:             ocv1.ReasonUserSpecifiedUnavailable,
+		Reason:             ocv1.ClusterCatalogReasonUserSpecifiedUnavailable,
 		Message:            "Catalog availability mode is set to Unavailable",
 		ObservedGeneration: generation,
 	}
@@ -401,9 +401,9 @@ func updateStatusNotServing(status *ocv1.ClusterCatalogStatus, generation int64)
 	status.URLs = nil
 	status.LastUnpacked = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:               ocv1.TypeServing,
+		Type:               ocv1.ClusterCatalogTypeServing,
 		Status:             metav1.ConditionFalse,
-		Reason:             ocv1.ReasonUnavailable,
+		Reason:             ocv1.ClusterCatalogReasonUnavailable,
 		ObservedGeneration: generation,
 	})
 }

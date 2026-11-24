@@ -80,9 +80,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonBlocked,
+							Reason: ocv1.ClusterCatalogReasonBlocked,
 						},
 					},
 				},
@@ -125,9 +125,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonRetrying,
+							Reason: ocv1.ClusterCatalogReasonRetrying,
 						},
 					},
 				},
@@ -170,9 +170,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonBlocked,
+							Reason: ocv1.ClusterCatalogReasonBlocked,
 						},
 					},
 				},
@@ -216,14 +216,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonAvailable,
+							Reason: ocv1.ClusterCatalogReasonAvailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 					},
 					ResolvedSource: &ocv1.ResolvedCatalogSource{
@@ -273,9 +273,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonRetrying,
+							Reason: ocv1.ClusterCatalogReasonRetrying,
 						},
 					},
 				},
@@ -345,14 +345,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonAvailable,
+							Reason: ocv1.ClusterCatalogReasonAvailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 					},
 				},
@@ -374,14 +374,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonUnavailable,
+							Reason: ocv1.ClusterCatalogReasonUnavailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 					},
 				},
@@ -412,14 +412,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonAvailable,
+							Reason: ocv1.ClusterCatalogReasonAvailable,
 						},
 					},
 				},
@@ -442,14 +442,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonRetrying,
+							Reason: ocv1.ClusterCatalogReasonRetrying,
 						},
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonAvailable,
+							Reason: ocv1.ClusterCatalogReasonAvailable,
 						},
 					},
 				},
@@ -478,14 +478,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonAvailable,
+							Reason: ocv1.ClusterCatalogReasonAvailable,
 						},
 					},
 				},
@@ -507,14 +507,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonRetrying,
+							Reason: ocv1.ClusterCatalogReasonRetrying,
 						},
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonUnavailable,
+							Reason: ocv1.ClusterCatalogReasonUnavailable,
 						},
 					},
 				},
@@ -550,14 +550,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonAvailable,
+							Reason: ocv1.ClusterCatalogReasonAvailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 					},
 				},
@@ -578,14 +578,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonUserSpecifiedUnavailable,
+							Reason: ocv1.ClusterCatalogReasonUserSpecifiedUnavailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 					},
 				},
@@ -622,14 +622,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonAvailable,
+							Reason: ocv1.ClusterCatalogReasonAvailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 					},
 				},
@@ -651,14 +651,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonUserSpecifiedUnavailable,
+							Reason: ocv1.ClusterCatalogReasonUserSpecifiedUnavailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: ocv1.ReasonSucceeded,
+							Reason: ocv1.ClusterCatalogReasonSucceeded,
 						},
 					},
 				},
@@ -694,14 +694,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonUnavailable,
+							Reason: ocv1.ClusterCatalogReasonUnavailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonUserSpecifiedUnavailable,
+							Reason: ocv1.ClusterCatalogReasonUserSpecifiedUnavailable,
 						},
 					},
 				},
@@ -730,14 +730,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 					Conditions: []metav1.Condition{
 						{
-							Type:   ocv1.TypeServing,
+							Type:   ocv1.ClusterCatalogTypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonUnavailable,
+							Reason: ocv1.ClusterCatalogReasonUnavailable,
 						},
 						{
-							Type:   ocv1.TypeProgressing,
+							Type:   ocv1.ClusterCatalogTypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: ocv1.ReasonUserSpecifiedUnavailable,
+							Reason: ocv1.ClusterCatalogReasonUserSpecifiedUnavailable,
 						},
 					},
 				},
@@ -877,8 +877,8 @@ func TestPollingRequeue(t *testing.T) {
 			ref := mustRef(t, "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 			tc.catalog.Status = ocv1.ClusterCatalogStatus{
 				Conditions: []metav1.Condition{
-					{Type: ocv1.TypeServing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonAvailable, Message: "Serving desired content from resolved source", LastTransitionTime: metav1.Now()},
-					{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonSucceeded, Message: "Successfully unpacked and stored content from resolved source", LastTransitionTime: metav1.Now()},
+					{Type: ocv1.ClusterCatalogTypeServing, Status: metav1.ConditionTrue, Reason: ocv1.ClusterCatalogReasonAvailable, Message: "Serving desired content from resolved source", LastTransitionTime: metav1.Now()},
+					{Type: ocv1.ClusterCatalogTypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ClusterCatalogReasonSucceeded, Message: "Successfully unpacked and stored content from resolved source", LastTransitionTime: metav1.Now()},
 				},
 				ResolvedSource: &ocv1.ResolvedCatalogSource{
 					Type:  ocv1.SourceTypeImage,
@@ -921,16 +921,16 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
 			Conditions: []metav1.Condition{
 				{
-					Type:               ocv1.TypeProgressing,
+					Type:               ocv1.ClusterCatalogTypeProgressing,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonSucceeded,
+					Reason:             ocv1.ClusterCatalogReasonSucceeded,
 					Message:            "Successfully unpacked and stored content from resolved source",
 					ObservedGeneration: successfulObservedGeneration,
 				},
 				{
-					Type:               ocv1.TypeServing,
+					Type:               ocv1.ClusterCatalogTypeServing,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonAvailable,
+					Reason:             ocv1.ClusterCatalogReasonAvailable,
 					Message:            "Serving desired content from resolved source",
 					ObservedGeneration: successfulObservedGeneration,
 				},
@@ -1102,7 +1102,7 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					},
 				},
 				Status: successfulUnpackStatus(func(status *ocv1.ClusterCatalogStatus) {
-					meta.FindStatusCondition(status.Conditions, ocv1.TypeProgressing).Status = metav1.ConditionTrue
+					meta.FindStatusCondition(status.Conditions, ocv1.ClusterCatalogTypeProgressing).Status = metav1.ConditionTrue
 				}),
 			},
 			storedCatalogData: successfulStoredCatalogData(time.Now()),

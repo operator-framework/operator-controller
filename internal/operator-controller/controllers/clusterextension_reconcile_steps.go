@@ -212,7 +212,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 		msg := fmt.Sprintf("failed to resolve bundle: %v", err)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
+		ensureFailureConditionsWithReason(ext, ocv1.ClusterExtensionReasonRetrying, msg)
 		return nil, err
 	}
 
@@ -231,7 +231,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 			"installedVersion", installedVersion)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
+		ensureFailureConditionsWithReason(ext, ocv1.ClusterExtensionReasonRetrying, msg)
 		return nil, err
 	}
 
@@ -250,7 +250,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 			"catalogName", catalogName)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
+		ensureFailureConditionsWithReason(ext, ocv1.ClusterExtensionReasonRetrying, msg)
 		return nil, err
 	}
 
@@ -267,7 +267,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 			"catalogName", catalogName)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
+		ensureFailureConditionsWithReason(ext, ocv1.ClusterExtensionReasonRetrying, msg)
 		return nil, err
 	}
 
@@ -477,9 +477,9 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 			return nil, err
 		} else if !rolloutSucceeded {
 			apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-				Type:               ocv1.TypeProgressing,
+				Type:               ocv1.ClusterExtensionTypeProgressing,
 				Status:             metav1.ConditionTrue,
-				Reason:             ocv1.ReasonRollingOut,
+				Reason:             ocv1.ClusterExtensionReasonRollingOut,
 				Message:            rolloutStatus,
 				ObservedGeneration: ext.GetGeneration(),
 			})

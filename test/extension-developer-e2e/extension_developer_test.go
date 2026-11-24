@@ -160,10 +160,10 @@ func TestExtensionDeveloper(t *testing.T) {
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		ext := &ocv1.ClusterExtension{}
 		require.NoError(ct, c.Get(context.Background(), client.ObjectKeyFromObject(clusterExtension), ext))
-		cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+		cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeInstalled)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
-		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Equal(ct, ocv1.ClusterExtensionReasonSucceeded, cond.Reason)
 	}, 2*time.Minute, time.Second)
 	require.NoError(t, c.Delete(context.Background(), catalog))
 	require.NoError(t, c.Delete(context.Background(), clusterExtension))

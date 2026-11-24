@@ -69,7 +69,7 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 	}
 
 	if ext.Spec.Namespace == "" && !r.IsNamespaceManagementEnabled {
-		return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("spec.namespace is required unless the BoxcutterRuntime feature gate is enabled"))
+		return nil, errorutil.NewTerminalError(ocv1.ClusterExtensionReasonInvalidConfiguration, fmt.Errorf("spec.namespace is required unless the BoxcutterRuntime feature gate is enabled"))
 	}
 
 	opts := []render.Option{
@@ -116,7 +116,7 @@ func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.Regi
 	bundleConfigBytes := extensionConfigBytes(ext)
 	bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, ext.Spec.Namespace)
 	if err != nil {
-		return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid ClusterExtension configuration: %w", err))
+		return nil, errorutil.NewTerminalError(ocv1.ClusterExtensionReasonInvalidConfiguration, fmt.Errorf("invalid ClusterExtension configuration: %w", err))
 	}
 
 	var opts []render.Option
@@ -128,7 +128,7 @@ func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.Regi
 	if r.IsDeploymentConfigEnabled {
 		deploymentConfig, err := bundleConfig.GetDeploymentConfig()
 		if err != nil {
-			return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid deploymentConfig: %w", err))
+			return nil, errorutil.NewTerminalError(ocv1.ClusterExtensionReasonInvalidConfiguration, fmt.Errorf("invalid deploymentConfig: %w", err))
 		}
 		if deploymentConfig != nil {
 			opts = append(opts, render.WithDeploymentConfig(deploymentConfig))

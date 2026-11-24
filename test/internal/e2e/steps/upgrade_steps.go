@@ -181,12 +181,12 @@ func clusterCatalogUnpackedAfterPodCreation(ctx context.Context, namespace, reso
 			return false
 		}
 
-		serving := CurrentCondition(catalog.Generation, catalog.Status.Conditions, catalogdv1.TypeServing)
-		if serving == nil || serving.Status != metav1.ConditionTrue || serving.Reason != catalogdv1.ReasonAvailable {
+		serving := CurrentCondition(catalog.Generation, catalog.Status.Conditions, catalogdv1.ClusterCatalogTypeServing)
+		if serving == nil || serving.Status != metav1.ConditionTrue || serving.Reason != catalogdv1.ClusterCatalogReasonAvailable {
 			return false
 		}
-		progressing := CurrentCondition(catalog.Generation, catalog.Status.Conditions, catalogdv1.TypeProgressing)
-		if progressing == nil || progressing.Status != metav1.ConditionTrue || progressing.Reason != catalogdv1.ReasonSucceeded {
+		progressing := CurrentCondition(catalog.Generation, catalog.Status.Conditions, catalogdv1.ClusterCatalogTypeProgressing)
+		if progressing == nil || progressing.Status != metav1.ConditionTrue || progressing.Reason != catalogdv1.ClusterCatalogReasonSucceeded {
 			return false
 		}
 

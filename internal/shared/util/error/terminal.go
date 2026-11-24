@@ -27,7 +27,7 @@ func (e *terminalErrorWithReason) Unwrap() error {
 //
 // Example usage:
 //
-//	return error.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("missing required field"))
+//	return error.NewTerminalError(ocv1.ClusterExtensionReasonInvalidConfiguration, fmt.Errorf("missing required field"))
 //
 // The reason can be extracted later using ExtractTerminalReason() when setting
 // status conditions to provide more specific feedback than just "Blocked".

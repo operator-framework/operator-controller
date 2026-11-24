@@ -27,7 +27,7 @@ func defaultCatalog() *ocv1.ClusterCatalog {
 	return &ocv1.ClusterCatalog{
 		ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"},
 		Status: ocv1.ClusterCatalogStatus{
-			Conditions: []metav1.Condition{{Type: ocv1.TypeServing, Status: metav1.ConditionTrue}},
+			Conditions: []metav1.Condition{{Type: ocv1.ClusterCatalogTypeServing, Status: metav1.ConditionTrue}},
 			ResolvedSource: &ocv1.ResolvedCatalogSource{Image: &ocv1.ResolvedImageSource{
 				Ref: "fake/catalog@sha256:fakesha",
 			}},
