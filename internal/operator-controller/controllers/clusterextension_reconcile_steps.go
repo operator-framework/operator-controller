@@ -437,8 +437,7 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 			revisionAnnotations[labels.BundleReleaseKey] = *state.resolvedRevisionMetadata.Release
 		}
 		objLbls := map[string]string{
-			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
-			labels.OwnerNameKey: ext.GetName(),
+			labels.ClusterExtensionNameKey: ext.GetName(),
 		}
 
 		l.Info("applying bundle contents")
