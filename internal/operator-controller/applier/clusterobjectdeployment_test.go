@@ -1,6 +1,7 @@
 package applier
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/fs"
 	"testing"
@@ -308,31 +309,50 @@ func assertPackedCODContent(
 ) {
 	t.Helper()
 	require.Len(t, secrets, expected.secretCount)
-	secret := secrets[0]
-	assert.Equal(t, expected.namespace, secret.Namespace)
-	assert.Equal(t, expected.labels, secret.Labels)
-	require.NotNil(t, secret.Immutable)
-	assert.Equal(t, expected.immutable, *secret.Immutable)
-	assert.Equal(t, expected.secretType, secret.Type)
-	assert.Len(t, secret.OwnerReferences, expected.ownerReferenceCount)
+	type packedSecret struct {
+		data           map[string][]byte
+		referencedKeys map[string]struct{}
+	}
+	packedSecrets := make(map[client.ObjectKey]packedSecret, len(secrets))
+	for _, secret := range secrets {
+		assert.Equal(t, expected.namespace, secret.Namespace)
+		assert.Equal(t, expected.labels, secret.Labels)
+		require.NotNil(t, secret.Immutable)
+		assert.Equal(t, expected.immutable, *secret.Immutable)
+		assert.Equal(t, expected.secretType, secret.Type)
+		assert.Len(t, secret.OwnerReferences, expected.ownerReferenceCount)
+		name := client.ObjectKeyFromObject(&secret)
+		require.NotContains(t, packedSecrets, name, "duplicate packed Secret %s", name)
+		require.NotEmpty(t, secret.Data, "packed Secret %s has no data", name)
+		packedSecrets[name] = packedSecret{data: secret.Data, referencedKeys: make(map[string]struct{}, len(secret.Data))}
+	}
+
 	require.Len(t, cod.Spec.Template.Spec.Phases, len(expected.phases))
-	objectCount := 0
 	for phaseIdx, phase := range cod.Spec.Template.Spec.Phases {
 		assert.Equal(t, expected.phases[phaseIdx].Name, phase.Name)
 		require.Len(t, phase.Objects, len(expected.phases[phaseIdx].Objects))
 		for objIdx, obj := range phase.Objects {
-			objectCount++
 			require.NotNil(t, obj.Type)
 			assert.Equal(t, expected.objectType, *obj.Type)
 			assert.Nil(t, obj.InlineManifest)
-			require.NotNil(t, obj.SecretRef)
-			assert.Equal(t, secret.Name, *obj.SecretRef.Name)
-			assert.Equal(t, secret.Namespace, *obj.SecretRef.Namespace)
+			ref := obj.SecretRef
+			require.NotNil(t, ref)
+			require.NotNil(t, ref.Name)
+			require.NotNil(t, ref.Namespace)
+			require.NotNil(t, ref.Key)
+			name := client.ObjectKey{Namespace: *ref.Namespace, Name: *ref.Name}
+			secret, ok := packedSecrets[name]
+			require.True(t, ok, "referenced Secret %s was not packed", name)
+			data, ok := secret.data[*ref.Key]
+			require.True(t, ok, "packed Secret %s does not contain key %q", name, *ref.Key)
 			raw, err := json.Marshal(expected.phases[phaseIdx].Objects[objIdx].InlineManifest.Object)
 			require.NoError(t, err)
-			assert.Equal(t, contentHash(raw), *obj.SecretRef.Key)
-			assert.Equal(t, raw, secret.Data[*obj.SecretRef.Key])
+			assert.Equal(t, contentHash(raw), *ref.Key)
+			assert.True(t, bytes.Equal(raw, data), "packed Secret %s has unexpected content at key %q", name, *ref.Key)
+			secret.referencedKeys[*ref.Key] = struct{}{}
 		}
 	}
-	assert.Len(t, secret.Data, objectCount)
+	for name, secret := range packedSecrets {
+		assert.Len(t, secret.referencedKeys, len(secret.data), "packed Secret %s has unreferenced data", name)
+	}
 }

@@ -123,7 +123,8 @@ func (r *SimpleRevisionGenerator) GenerateClusterObjectDeployment(
 
 // GenerateClusterObjectDeploymentFromHelmRelease converts stored Helm content into
 // a ClusterObjectDeployment and packed Secrets, allowing adoption of the release's
-// objects. Ownership and migration orchestration are left to the caller.
+// objects. The release must contain at least one object. Ownership and migration
+// orchestration are left to the caller.
 func (r *SimpleRevisionGenerator) GenerateClusterObjectDeploymentFromHelmRelease(
 	ctx context.Context,
 	helmRelease *release.Release,
@@ -133,6 +134,9 @@ func (r *SimpleRevisionGenerator) GenerateClusterObjectDeploymentFromHelmRelease
 	objs, annotations, err := renderHelmReleaseContent(ctx, helmRelease, objectLabels)
 	if err != nil {
 		return nil, nil, err
+	}
+	if len(objs) == 0 {
+		return nil, nil, fmt.Errorf("Helm release %q has no objects to migrate", helmRelease.Name)
 	}
 	cod := buildClusterObjectDeployment(objs, ext, annotations, ocv1.CollisionProtectionNone)
 	return r.packClusterObjectDeployment(cod)

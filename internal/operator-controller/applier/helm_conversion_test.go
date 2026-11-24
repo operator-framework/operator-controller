@@ -3,6 +3,7 @@ package applier
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -75,7 +76,6 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_Metadata(t *testing.T) {
 		annotationCount     int
 		templateLabels      map[string]string
 		templateAnnotations map[string]string
-		err                 error
 	}{
 		name: ext.Name,
 		labels: map[string]string{
@@ -90,7 +90,6 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_Metadata(t *testing.T) {
 			labels.OwnerNameKey: ext.Name,
 		},
 		templateAnnotations: expectedHelmBundleAnnotations(),
-		err:                 nil,
 	}
 	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
 
@@ -98,7 +97,7 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_Metadata(t *testing.T) {
 	cod, _, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
 
 	// Then bundle metadata belongs on the template, leaving ownership to the migrator.
-	require.ErrorIs(t, err, want.err)
+	require.NoError(t, err)
 	assert.Equal(t, want.name, *cod.Name)
 	assert.Equal(t, want.labels, cod.Labels)
 	assert.Len(t, cod.OwnerReferences, want.ownerReferenceCount)
@@ -113,7 +112,6 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_RolloutSettings(t *testi
 		deadline        int32
 	}
 	type expected struct {
-		err        error
 		deadline   *int32
 		protection ocv1.CollisionProtection
 		probes     []ocv1ac.ProgressionProbeApplyConfiguration
@@ -131,7 +129,6 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_RolloutSettings(t *testi
 				deadline:        0,
 			},
 			want: expected{
-				err:        nil,
 				deadline:   nil,
 				protection: ocv1.CollisionProtectionNone,
 				probes:     ocv1ac.ClusterObjectDeploymentTemplateSpec().WithProgressionProbes(defaultProgressionProbes...).ProgressionProbes,
@@ -144,7 +141,6 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_RolloutSettings(t *testi
 				deadline:        15,
 			},
 			want: expected{
-				err:        nil,
 				deadline:   ptr.To(int32(15)),
 				protection: ocv1.CollisionProtectionNone,
 				probes:     ocv1ac.ClusterObjectDeploymentTemplateSpec().WithProgressionProbes(defaultProgressionProbes...).ProgressionProbes,
@@ -163,7 +159,7 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_RolloutSettings(t *testi
 			cod, _, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
 
 			// Then rollout settings match the declared expectations.
-			require.ErrorIs(t, err, tc.want.err)
+			require.NoError(t, err)
 			spec := cod.Spec.Template.Spec
 			assert.Equal(t, tc.want.protection, *spec.CollisionProtection)
 			assert.Equal(t, tc.want.probes, spec.ProgressionProbes)
@@ -178,7 +174,6 @@ func TestHelmReleaseGeneration_BundleReleaseMetadata(t *testing.T) {
 		releaseLabels   map[string]string
 	}
 	type expected struct {
-		err     error
 		present bool
 		value   string
 	}
@@ -195,7 +190,6 @@ func TestHelmReleaseGeneration_BundleReleaseMetadata(t *testing.T) {
 				releaseLabels:   nil,
 			},
 			want: expected{
-				err:     nil,
 				present: false,
 				value:   "",
 			},
@@ -207,7 +201,6 @@ func TestHelmReleaseGeneration_BundleReleaseMetadata(t *testing.T) {
 				releaseLabels:   map[string]string{labels.BundleReleaseKey: ""},
 			},
 			want: expected{
-				err:     nil,
 				present: true,
 				value:   "",
 			},
@@ -219,7 +212,6 @@ func TestHelmReleaseGeneration_BundleReleaseMetadata(t *testing.T) {
 				releaseLabels:   map[string]string{labels.BundleReleaseKey: "2"},
 			},
 			want: expected{
-				err:     nil,
 				present: true,
 				value:   "2",
 			},
@@ -235,9 +227,9 @@ func TestHelmReleaseGeneration_BundleReleaseMetadata(t *testing.T) {
 
 			// When both generators convert the stored release.
 			revision, err := gen.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
-			require.ErrorIs(t, err, tc.want.err)
+			require.NoError(t, err)
 			cod, secrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
-			require.ErrorIs(t, err, tc.want.err)
+			require.NoError(t, err)
 			objects, err := objectsFromSecrets(secrets)
 			require.NoError(t, err)
 
@@ -276,21 +268,15 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_PacksSanitizedContent(t 
 		objectLabels:    objectLabels,
 		systemNamespace: "test-system",
 	}
-	want := struct {
-		content packedCODContentExpectation
-		err     error
-	}{
-		content: packedCODContentExpectation{
-			secretCount:         1,
-			namespace:           "test-system",
-			labels:              map[string]string{labels.OwnerNameKey: "test-ext"},
-			immutable:           true,
-			secretType:          labels.SecretTypeObjectData,
-			ownerReferenceCount: 0,
-			objectType:          ocv1.ObjectTypeSecretReference,
-			phases:              ocv1ac.ClusterObjectDeploymentTemplateSpec().WithPhases(expectedHelmPhases(t)...).Phases,
-		},
-		err: nil,
+	want := packedCODContentExpectation{
+		secretCount:         1,
+		namespace:           "test-system",
+		labels:              map[string]string{labels.OwnerNameKey: "test-ext"},
+		immutable:           true,
+		secretType:          labels.SecretTypeObjectData,
+		ownerReferenceCount: 0,
+		objectType:          ocv1.ObjectTypeSecretReference,
+		phases:              ocv1ac.ClusterObjectDeploymentTemplateSpec().WithPhases(expectedHelmPhases(t)...).Phases,
 	}
 	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
 
@@ -298,8 +284,55 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_PacksSanitizedContent(t 
 	cod, secrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
 
 	// Then the packed content matches the sanitized desired manifests and phase order.
-	require.ErrorIs(t, err, want.err)
-	assertPackedCODContent(t, cod, secrets, want.content)
+	require.NoError(t, err)
+	assertPackedCODContent(t, cod, secrets, want)
+}
+
+func TestGenerateClusterObjectDeploymentFromHelmRelease_PacksContentAcrossSecrets(t *testing.T) {
+	// Each ConfigMap fits on its own, but their combined data exceeds the packing limit.
+	payload := strings.Repeat("x", maxSecretDataSize/2+1)
+	const manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":%q,"namespace":"target"},"data":{"payload":%q}}`
+	input := struct {
+		release         *release.Release
+		extension       *ocv1.ClusterExtension
+		objectLabels    map[string]string
+		systemNamespace string
+	}{
+		release: &release.Release{
+			Name: "test-ext",
+			Manifest: strings.Join([]string{
+				fmt.Sprintf(manifest, "config-a", payload),
+				fmt.Sprintf(manifest, "config-b", payload),
+			}, "\n"),
+		},
+		extension:       &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext"}},
+		objectLabels:    map[string]string{"managed": "true"},
+		systemNamespace: "test-system",
+	}
+
+	phase := ocv1ac.ClusterObjectSetPhase().WithName("configuration")
+	for _, name := range []string{"config-a", "config-b"} {
+		configMap := testConfigMap(name, "target")
+		configMap.SetLabels(map[string]string{"managed": "true"})
+		configMap.Object["data"] = map[string]any{"payload": payload}
+		phase.WithObjects(ocv1ac.ClusterObjectSetObject().WithInlineManifest(configMap))
+	}
+	want := packedCODContentExpectation{
+		secretCount:         2,
+		namespace:           "test-system",
+		labels:              map[string]string{labels.OwnerNameKey: "test-ext"},
+		immutable:           true,
+		secretType:          labels.SecretTypeObjectData,
+		ownerReferenceCount: 0,
+		objectType:          ocv1.ObjectTypeSecretReference,
+		phases:              []ocv1ac.ClusterObjectSetPhaseApplyConfiguration{*phase},
+	}
+
+	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
+	cod, secrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
+
+	require.NoError(t, err)
+	assertPackedCODContent(t, cod, secrets, want)
 }
 
 func TestGenerateClusterObjectDeploymentFromHelmRelease_ManifestOrderDoesNotChangeOutput(t *testing.T) {
@@ -327,28 +360,19 @@ func TestGenerateClusterObjectDeploymentFromHelmRelease_ManifestOrderDoesNotChan
 
 	// The original ordering establishes the expected artifacts for this comparison.
 	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
-	cod, secrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), input.original.release, input.original.extension, input.original.objectLabels)
+	wantCOD, wantSecrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), input.original.release, input.original.extension, input.original.objectLabels)
 	require.NoError(t, err)
-	want := struct {
-		deployment *ocv1ac.ClusterObjectDeploymentApplyConfiguration
-		secrets    []corev1.Secret
-		err        error
-	}{
-		deployment: cod,
-		secrets:    secrets,
-		err:        nil,
-	}
 
 	// When the same content is generated with the reversed manifest ordering.
 	reorderedGen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
 	reorderedCOD, reorderedSecrets, err := reorderedGen.GenerateClusterObjectDeploymentFromHelmRelease(
 		t.Context(), input.reordered.release, input.reordered.extension, input.reordered.objectLabels,
 	)
-	require.ErrorIs(t, err, want.err)
+	require.NoError(t, err)
 
 	// Then manifest order changes neither the COD nor its content-addressed Secrets.
-	assert.Equal(t, want.deployment, reorderedCOD)
-	assert.Equal(t, want.secrets, reorderedSecrets)
+	assert.Equal(t, wantCOD, reorderedCOD)
+	assert.Equal(t, wantSecrets, reorderedSecrets)
 }
 
 func TestHelmReleaseGeneration_DoesNotMutateInputs(t *testing.T) {
@@ -365,7 +389,6 @@ func TestHelmReleaseGeneration_DoesNotMutateInputs(t *testing.T) {
 		release      release.Release
 		extension    *ocv1.ClusterExtension
 		objectLabels map[string]string
-		err          error
 	}
 	testCases := []struct {
 		name  string
@@ -385,7 +408,6 @@ func TestHelmReleaseGeneration_DoesNotMutateInputs(t *testing.T) {
 				release:      *helmRelease,
 				extension:    ext.DeepCopy(),
 				objectLabels: maps.Clone(objectLabels),
-				err:          nil,
 			},
 		},
 		{
@@ -401,7 +423,6 @@ func TestHelmReleaseGeneration_DoesNotMutateInputs(t *testing.T) {
 				release:      *helmRelease,
 				extension:    ext.DeepCopy(),
 				objectLabels: maps.Clone(objectLabels),
-				err:          nil,
 			},
 		},
 	}
@@ -424,7 +445,7 @@ func TestHelmReleaseGeneration_DoesNotMutateInputs(t *testing.T) {
 			}
 
 			// Then all caller-owned inputs retain their declared values.
-			require.ErrorIs(t, err, tc.want.err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.want.release, helmRelease)
 			assert.Equal(t, tc.want.extension, ext)
 			assert.Equal(t, tc.want.objectLabels, objectLabels)
@@ -432,7 +453,51 @@ func TestHelmReleaseGeneration_DoesNotMutateInputs(t *testing.T) {
 	}
 }
 
-func TestHelmReleaseGenerationMalformedManifest(t *testing.T) {
+func TestGenerateClusterObjectDeploymentFromHelmRelease_RejectsEmptyManifest(t *testing.T) {
+	type expected struct {
+		deployment *ocv1ac.ClusterObjectDeploymentApplyConfiguration
+		secrets    []corev1.Secret
+		errMessage string
+	}
+	testCases := []struct {
+		name    string
+		release release.Release
+		want    expected
+	}{
+		{
+			name:    "empty manifest",
+			release: release.Release{Name: "test-release", Manifest: ""},
+			want: expected{
+				deployment: nil,
+				secrets:    nil,
+				errMessage: `Helm release "test-release" has no objects to migrate`,
+			},
+		},
+		{
+			name:    "whitespace-only manifest",
+			release: release.Release{Name: "test-release", Manifest: " \n\t\r\n"},
+			want: expected{
+				deployment: nil,
+				secrets:    nil,
+				errMessage: `Helm release "test-release" has no objects to migrate`,
+			},
+		},
+	}
+	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "test-ext"}}
+	gen := &SimpleRevisionGenerator{SystemNamespace: "test-system"}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cod, secrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), &tc.release, ext, nil)
+
+			require.EqualError(t, err, tc.want.errMessage)
+			assert.Equal(t, tc.want.deployment, cod)
+			assert.Equal(t, tc.want.secrets, secrets)
+		})
+	}
+}
+
+func TestHelmReleaseGeneration_MalformedManifest(t *testing.T) {
 	// Given a Helm manifest with a malformed second document.
 	input := struct {
 		release         *release.Release
@@ -445,30 +510,23 @@ func TestHelmReleaseGenerationMalformedManifest(t *testing.T) {
 		objectLabels:    nil,
 		systemNamespace: "test-system",
 	}
-	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
-	// Preserve exact error parity with the existing COS conversion path.
-	revision, legacyErr := gen.GenerateRevisionFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
-	require.Error(t, legacyErr)
 	want := struct {
 		revision   *ocv1ac.ClusterObjectSetApplyConfiguration
-		errMessage string
-		hasError   bool
 		deployment *ocv1ac.ClusterObjectDeploymentApplyConfiguration
 		secrets    []corev1.Secret
 	}{
 		revision:   nil,
-		errMessage: legacyErr.Error(),
-		hasError:   true,
 		deployment: nil,
 		secrets:    nil,
 	}
 
-	// When generation encounters the invalid document.
+	gen := &SimpleRevisionGenerator{SystemNamespace: input.systemNamespace}
+	revision, legacyErr := gen.GenerateRevisionFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
 	cod, secrets, err := gen.GenerateClusterObjectDeploymentFromHelmRelease(t.Context(), input.release, input.extension, input.objectLabels)
 
-	// Then it reports an error without returning a partial deployment or content.
-	require.Equal(t, want.hasError, err != nil, "%v", err)
-	require.EqualError(t, err, want.errMessage)
+	// Both generators report the same error without returning partial content.
+	require.Error(t, legacyErr)
+	require.EqualError(t, err, legacyErr.Error())
 	assert.Equal(t, want.revision, revision)
 	assert.Equal(t, want.deployment, cod)
 	assert.Equal(t, want.secrets, secrets)
