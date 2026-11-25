@@ -345,9 +345,13 @@ func assertPackedCODContent(
 			require.True(t, ok, "referenced Secret %s was not packed", name)
 			data, ok := secret.data[*ref.Key]
 			require.True(t, ok, "packed Secret %s does not contain key %q", name, *ref.Key)
+			assert.Equal(t, contentHash(data), *ref.Key, "packed Secret %s has a wrong content hash at key %q", name, *ref.Key)
 			raw, err := json.Marshal(expected.phases[phaseIdx].Objects[objIdx].InlineManifest.Object)
 			require.NoError(t, err)
-			assert.Equal(t, contentHash(raw), *ref.Key)
+			if len(raw) > gzipThreshold {
+				data, err = gunzipData(data)
+				require.NoError(t, err, "decompressing packed Secret %s at key %q", name, *ref.Key)
+			}
 			assert.True(t, bytes.Equal(raw, data), "packed Secret %s has unexpected content at key %q", name, *ref.Key)
 			secret.referencedKeys[*ref.Key] = struct{}{}
 		}
