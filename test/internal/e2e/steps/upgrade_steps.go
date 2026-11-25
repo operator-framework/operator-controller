@@ -20,11 +20,15 @@ import (
 
 // WaitForUpgradeCheck retains the last failed assertion, including controller
 // conditions, so migration failures report their cause rather than just a timeout.
-func WaitForUpgradeCheck(ctx context.Context, check func() error) error {
+func WaitForUpgradeCheck(ctx context.Context, check func(context.Context) error) error {
 	var lastErr error
-	err := wait.PollUntilContextTimeout(ctx, Tick, Timeout, true, func(context.Context) (bool, error) {
-		lastErr = check()
-		return lastErr == nil, nil
+	err := wait.PollUntilContextTimeout(ctx, Tick, Timeout, true, func(ctx context.Context) (bool, error) {
+		checkErr := check(ctx)
+		// Keep any earlier diagnostic if the deadline interrupted this check.
+		if ctx.Err() == nil || lastErr == nil {
+			lastErr = checkErr
+		}
+		return checkErr == nil, nil
 	})
 	if err != nil {
 		return fmt.Errorf("upgrade assertion timed out: %w: %v", err, lastErr)
@@ -139,7 +143,7 @@ func ComponentIsReadyToReconcile(ctx context.Context, component string) error {
 	}
 
 	// Leader election can take up to LeaseDuration (137s) + RetryPeriod (26s) ≈ 163s in the worst case
-	if err := WaitForUpgradeCheck(ctx, func() error {
+	if err := WaitForUpgradeCheck(ctx, func(ctx context.Context) error {
 		output, err := K8sClient(ctx, "get", "lease", leaseName, "-n", ns,
 			"-o", "jsonpath={.spec.holderIdentity}")
 		if err != nil || output == "" {

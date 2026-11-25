@@ -36,7 +36,7 @@ func RememberHelmExtensionIdentities(ctx context.Context) error {
 		return fmt.Errorf("helm release has no managed resources")
 	}
 	for _, obj := range objects {
-		live, err := shared.GetResource(obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName(), obj.GetNamespace())
+		live, err := shared.GetResource(ctx, obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName(), obj.GetNamespace())
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func RememberHelmExtensionIdentities(ctx context.Context) error {
 	}
 	// Pods are not bundle manifests. Preserve their identities through migration,
 	// but allow a normal pod rollout when the bundle version changes afterward.
-	return shared.WaitForUpgradeCheck(ctx, func() error {
+	return shared.WaitForUpgradeCheck(ctx, func(ctx context.Context) error {
 		out, err := shared.K8sClient(ctx, "get", "pods", "-n", sc.Namespace, "-l", "app="+sc.ID, "-o", "json")
 		if err != nil {
 			return err
@@ -100,7 +100,7 @@ func checkExtensionIdentities(ctx context.Context, afterUpdate bool) error {
 	}
 	retained := map[string]bool{}
 	if afterUpdate {
-		objects, err := listExtensionResources(sc.ClusterExtensionName)
+		objects, err := listExtensionResources(ctx, sc.ClusterExtensionName)
 		if err != nil {
 			return err
 		}
@@ -116,7 +116,7 @@ func checkExtensionIdentities(ctx context.Context, afterUpdate bool) error {
 			!retained[fmt.Sprintf("%s/%s", before.GetKind(), client.ObjectKeyFromObject(before))] {
 			continue
 		}
-		after, err := shared.GetResource(before.GetKind(), before.GetName(), before.GetNamespace())
+		after, err := shared.GetResource(ctx, before.GetKind(), before.GetName(), before.GetNamespace())
 		if err != nil {
 			return err
 		}
@@ -164,12 +164,12 @@ func checkUpgradedExtensionStorage(ctx context.Context, want upgradeStorageExpec
 		protectionRevision int64 = 2
 		migratedVersion          = "1.0.0"
 	)
-	return shared.WaitForUpgradeCheck(ctx, func() error {
-		ext, err := shared.GetResource("clusterextension", sc.ClusterExtensionName, "")
+	return shared.WaitForUpgradeCheck(ctx, func(ctx context.Context) error {
+		ext, err := shared.GetResource(ctx, "clusterextension", sc.ClusterExtensionName, "")
 		if err != nil {
 			return err
 		}
-		obj, err := shared.GetResource("clusterobjectdeployment", sc.ClusterExtensionName, "")
+		obj, err := shared.GetResource(ctx, "clusterobjectdeployment", sc.ClusterExtensionName, "")
 		if err != nil {
 			return err
 		}
@@ -249,7 +249,7 @@ func checkUpgradedExtensionStorage(ctx context.Context, want upgradeStorageExpec
 			return err
 		}
 
-		objects, err := listExtensionRevisionResources(sc.ClusterExtensionName)
+		objects, err := listExtensionRevisionResources(ctx, sc.ClusterExtensionName)
 		if err != nil {
 			return err
 		}
@@ -257,7 +257,7 @@ func checkUpgradedExtensionStorage(ctx context.Context, want upgradeStorageExpec
 			return fmt.Errorf("active revision %s contains no objects", active.Name)
 		}
 		for _, desired := range objects {
-			live, err := shared.GetResource(desired.GetObjectKind().GroupVersionKind().Kind, desired.GetName(), desired.GetNamespace())
+			live, err := shared.GetResource(ctx, desired.GetObjectKind().GroupVersionKind().Kind, desired.GetName(), desired.GetNamespace())
 			if err != nil {
 				return err
 			}

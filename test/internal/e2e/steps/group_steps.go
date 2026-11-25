@@ -25,7 +25,7 @@ func ResourceWithNamespaceOwnerApplied(ctx context.Context, ownerName string, te
 	}
 	ownerName = SubstituteScenarioVars(ownerName, sc)
 	if ownerName != "" {
-		owner, err := GetResource("namespace", ownerName, "")
+		owner, err := GetResource(ctx, "namespace", ownerName, "")
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ func RememberResourceUID(ctx context.Context, resourceName string) error {
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resourceName)
 	}
-	obj, err := GetResource(kind, name, sc.Namespace)
+	obj, err := GetResource(ctx, kind, name, sc.Namespace)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func ResourceKeepsUID(ctx context.Context, resourceName string) error {
 		return fmt.Errorf("no UID remembered for resource %s", resourceName)
 	}
 	kind, name, _ := strings.Cut(resourceName, "/")
-	obj, err := GetResource(kind, name, sc.Namespace)
+	obj, err := GetResource(ctx, kind, name, sc.Namespace)
 	if err != nil {
 		return err
 	}

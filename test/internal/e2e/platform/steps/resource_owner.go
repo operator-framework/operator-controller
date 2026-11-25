@@ -20,11 +20,11 @@ func ResourceControlledByClusterObjectSet(ctx context.Context, resource, revisio
 	if !found {
 		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
-	obj, err := shared.GetResource(kind, name, sc.Namespace)
+	obj, err := shared.GetResource(ctx, kind, name, sc.Namespace)
 	if err != nil {
 		return err
 	}
-	cos, err := shared.GetResource("clusterobjectset", revision, "")
+	cos, err := shared.GetResource(ctx, "clusterobjectset", revision, "")
 	if err != nil {
 		return err
 	}
