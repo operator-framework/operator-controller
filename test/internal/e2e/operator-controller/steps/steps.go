@@ -22,6 +22,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 	shared "github.com/operator-framework/operator-controller/test/internal/e2e/steps"
 )
 
@@ -220,12 +221,22 @@ func ClusterExtensionReportsConditionWithoutReason(ctx context.Context, conditio
 	return waitForExtensionCondition(ctx, conditionType, metav1.ConditionStatus(conditionStatus), nil, nil)
 }
 
-// ClusterExtensionResourcesCreatedAndAreLabeled verifies each constituent resource has the expected OLM owner-kind
-// and owner-name labels. Polls with timeout per resource.
+// ClusterExtensionResourcesCreatedAndAreLabeled verifies each constituent resource has the
+// labels expected for its runtime. Helm resources carry the ClusterExtension name and no legacy
+// owner labels; Boxcutter resources carry owner-kind and owner-name. Polls with timeout per resource.
 func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
 	sc := shared.Scenario(ctx)
 	if len(sc.ExtensionObjects) == 0 {
 		return fmt.Errorf("extension objects not found in context")
+	}
+
+	boxcutterEnabled := shared.FeatureGates[features.BoxcutterRuntime]
+	expectedLabels := map[string]string{}
+	if boxcutterEnabled {
+		expectedLabels[labels.OwnerKindKey] = ocv1.ClusterExtensionKind
+		expectedLabels[labels.OwnerNameKey] = sc.ClusterExtensionName
+	} else {
+		expectedLabels[labels.ClusterExtensionNameKey] = sc.ClusterExtensionName
 	}
 
 	for _, obj := range sc.ExtensionObjects {
@@ -237,19 +248,24 @@ func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
 				return false
 			}
 
-			labels := clusterObj.GetLabels()
-			if labels == nil {
+			resourceLabels := clusterObj.GetLabels()
+			if resourceLabels == nil {
 				shared.Log().V(1).Info("no labels found for resource", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind)
 				return false
 			}
 
-			for key, expectedValue := range map[string]string{
-				"olm.operatorframework.io/owner-kind": "ClusterExtension",
-				"olm.operatorframework.io/owner-name": sc.ClusterExtensionName,
-			} {
-				if labels[key] != expectedValue {
-					shared.Log().V(1).Info("invalid resource label value", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind, "label", key, "expected", expectedValue, "actual", labels["olm.operatorframework.io/owner-kind"])
+			for key, expectedValue := range expectedLabels {
+				if resourceLabels[key] != expectedValue {
+					shared.Log().V(1).Info("invalid resource label value", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind, "label", key, "expected", expectedValue, "actual", resourceLabels[key])
 					return false
+				}
+			}
+			if !boxcutterEnabled {
+				for _, key := range []string{labels.OwnerKindKey, labels.OwnerNameKey} {
+					if value, exists := resourceLabels[key]; exists {
+						shared.Log().V(1).Info("legacy resource label found", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind, "label", key, "actual", value)
+						return false
+					}
 				}
 			}
 			return true
