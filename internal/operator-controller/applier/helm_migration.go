@@ -115,7 +115,11 @@ func (m *BoxcutterStorageMigrator) advance(ctx context.Context, ext *ocv1.Cluste
 		cod.Labels[labels.ManagedByKey] != labels.ManagedByOperatorController {
 		return nil, fmt.Errorf("migration deployment %q is not managed by operator-controller for ClusterExtension UID %q", cod.Name, ext.UID)
 	}
-	// The CRD requires collision protection, and adoption requires explicit None.
+	// The migration generator sets this field, and the CRD rejects empty
+	// values on create and update. An empty value on a stored deployment
+	// would indicate that normal validation was bypassed, for example by
+	// tampering with the stored object outside the API. The migrator treats
+	// a deployment as adopting only if the template explicitly specifies None.
 	protection := cod.Spec.Template.Spec.CollisionProtection
 	if protection != ocv1.CollisionProtectionNone && protection != ocv1.CollisionProtectionPrevent {
 		return nil, fmt.Errorf("migration deployment %q has unexpected collision protection %q", cod.Name, protection)
