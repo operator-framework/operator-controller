@@ -566,8 +566,7 @@ func newCacheOptions(systemNamespace string, boxcutterRuntime bool) crcache.Opti
 	options.ByObject[&ocv1.ClusterObjectDeployment{}] = crcache.ByObject{
 		// Keep all CODs visible to name-based reads in Boxcutter.checkAdoptable.
 		// Filtering by managed-by would hide unlabeled CODs, allowing force apply
-		// to bypass the adoption guard. The transform strips spec and status
-		// from CODs not managed by operator-controller.
+		// to bypass the adoption guard. Keep rollout data for managed CODs.
 		Label:     k8slabels.Everything(),
 		Transform: transformClusterObjectDeployment,
 	}
@@ -626,23 +625,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 	if err != nil {
 		return fmt.Errorf("unable to create core client: %w", err)
 	}
-	cfgGetter, err := helmclient.NewActionConfigGetter(c.mgr.GetConfig(), c.mgr.GetRESTMapper(),
-		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, c.mgr.GetAPIReader(), cfg.systemNamespace)),
-		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
-			ext := obj.(*ocv1.ClusterExtension)
-			return ext.Spec.Namespace, nil
-		}),
-	)
-	if err != nil {
-		return fmt.Errorf("unable to create helm action config getter: %w", err)
-	}
-
-	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
-		helmclient.WithFailureRollbacks(false),
-	)
-	if err != nil {
-		return fmt.Errorf("unable to create helm action client getter: %w", err)
-	}
+	releaseDriver := action.ChunkedStorageDriverMapper(coreClient, c.mgr.GetAPIReader(), cfg.systemNamespace)
 
 	// Register a no-op finalizer handler for cleanup-contentmanager-cache.
 	// This finalizer was added by the Helm applier for ClusterExtensions created
@@ -675,11 +658,13 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 	}
 	revisionStatesGetter := &controllers.BoxcutterRevisionStatesGetter{Reader: c.mgr.GetClient()}
 	storageMigrator := &applier.BoxcutterStorageMigrator{
-		Client:             c.mgr.GetClient(),
-		Scheme:             c.mgr.GetScheme(),
-		ActionClientGetter: acg,
-		RevisionGenerator:  rg,
-		FieldOwner:         fieldOwner,
+		Client:            c.mgr.GetClient(),
+		APIReader:         c.mgr.GetAPIReader(),
+		Scheme:            c.mgr.GetScheme(),
+		ReleaseDriver:     releaseDriver,
+		RevisionGenerator: rg,
+		SystemNamespace:   cfg.systemNamespace,
+		FieldOwner:        fieldOwner,
 	}
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),

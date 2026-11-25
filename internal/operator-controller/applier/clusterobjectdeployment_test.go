@@ -65,6 +65,7 @@ func TestBuildClusterObjectDeployment(t *testing.T) {
 		phaseCount     int
 		protection     ocv1.CollisionProtection
 		deadline       int32
+		hasProbes      bool
 	}{
 		name:        "ext",
 		annotations: map[string]string{"test-key": "test-value"},
@@ -80,6 +81,7 @@ func TestBuildClusterObjectDeployment(t *testing.T) {
 		phaseCount: 1,
 		protection: ocv1.CollisionProtectionPrevent,
 		deadline:   15,
+		hasProbes:  true,
 	}
 
 	// When rendered content is placed in a deployment template.
@@ -99,7 +101,7 @@ func TestBuildClusterObjectDeployment(t *testing.T) {
 	assert.Len(t, templateSpec.Phases, want.phaseCount)
 	assert.Equal(t, want.protection, *templateSpec.CollisionProtection)
 	assert.Equal(t, want.deadline, *result.Spec.ProgressDeadlineMinutes)
-	assert.NotEmpty(t, templateSpec.ProgressionProbes)
+	assert.Equal(t, want.hasProbes, len(templateSpec.ProgressionProbes) > 0)
 }
 
 func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
@@ -116,13 +118,17 @@ func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
 		annotations:  bundleAnnotations,
 	}
 	want := struct {
-		name         string
-		annotations  map[string]string
-		labels       map[string]string
-		protection   ocv1.CollisionProtection
-		secretPrefix string
-		secretLabels map[string]string
-		err          error
+		name              string
+		annotations       map[string]string
+		labels            map[string]string
+		protection        ocv1.CollisionProtection
+		minimumSecrets    int
+		minimumPhases     int
+		secretPrefix      string
+		secretLabels      map[string]string
+		hasInlineManifest bool
+		hasSecretRef      bool
+		err               error
 	}{
 		name: "test-ext",
 		annotations: map[string]string{
@@ -136,10 +142,14 @@ func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
 			labels.OwnerNameKey: "test-ext",
 			labels.ManagedByKey: labels.ManagedByOperatorController,
 		},
-		protection:   ocv1.CollisionProtectionPrevent,
-		secretPrefix: "test-ext-",
-		secretLabels: map[string]string{labels.OwnerNameKey: "test-ext"},
-		err:          nil,
+		protection:        ocv1.CollisionProtectionPrevent,
+		minimumSecrets:    1,
+		minimumPhases:     1,
+		secretPrefix:      "test-ext-",
+		secretLabels:      map[string]string{labels.OwnerNameKey: "test-ext"},
+		hasInlineManifest: false,
+		hasSecretRef:      true,
+		err:               nil,
 	}
 
 	// When the normal bundle path generates a deployment and content Secrets.
@@ -148,7 +158,7 @@ func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
 	// Then bundle identity is retained and phases reference the packed Secrets.
 	require.ErrorIs(t, err, want.err)
 	require.NotNil(t, cod)
-	require.NotEmpty(t, secrets)
+	require.GreaterOrEqual(t, len(secrets), want.minimumSecrets)
 	require.NotNil(t, cod.Spec.Template.Metadata)
 	for key, value := range want.annotations {
 		assert.Equal(t, value, cod.Spec.Template.Metadata.Annotations[key])
@@ -157,11 +167,11 @@ func TestGenerateClusterObjectDeployment_PacksAndRefs(t *testing.T) {
 	assert.Equal(t, want.labels, cod.Labels)
 	require.NotNil(t, cod.Spec.Template.Spec.CollisionProtection)
 	assert.Equal(t, want.protection, *cod.Spec.Template.Spec.CollisionProtection)
-	require.NotNil(t, cod.Spec.Template.Spec.Phases)
+	require.GreaterOrEqual(t, len(cod.Spec.Template.Spec.Phases), want.minimumPhases)
 	for _, phase := range cod.Spec.Template.Spec.Phases {
 		for _, obj := range phase.Objects {
-			assert.Nil(t, obj.InlineManifest, "phase %s should have no inline objects", *phase.Name)
-			assert.NotNil(t, obj.SecretRef, "phase %s should have refs", *phase.Name)
+			assert.Equal(t, want.hasInlineManifest, obj.InlineManifest != nil, "inline manifest in phase %s", *phase.Name)
+			assert.Equal(t, want.hasSecretRef, obj.SecretRef != nil, "Secret reference in phase %s", *phase.Name)
 		}
 	}
 	for _, secret := range secrets {
@@ -221,7 +231,9 @@ func TestGenerateClusterObjectDeployment_PacksExpectedContent(t *testing.T) {
 			secretType:          labels.SecretTypeObjectData,
 			ownerReferenceCount: 0,
 			objectType:          ocv1.ObjectTypeSecretReference,
+			hasInlineManifest:   false,
 			phases:              expectedPhases,
+			objectCount:         2,
 		},
 		err: nil,
 	}
@@ -296,7 +308,9 @@ type packedCODContentExpectation struct {
 	secretType          corev1.SecretType
 	ownerReferenceCount int
 	objectType          ocv1.ObjectType
+	hasInlineManifest   bool
 	phases              []ocv1ac.ClusterObjectSetPhaseApplyConfiguration
+	objectCount         int
 }
 
 // assertPackedCODContent resolves each reference by namespace, name and key and
@@ -314,6 +328,7 @@ func assertPackedCODContent(
 		referencedKeys map[string]struct{}
 	}
 	packedSecrets := make(map[client.ObjectKey]packedSecret, len(secrets))
+	objectCount := 0
 	for _, secret := range secrets {
 		assert.Equal(t, expected.namespace, secret.Namespace)
 		assert.Equal(t, expected.labels, secret.Labels)
@@ -325,7 +340,9 @@ func assertPackedCODContent(
 		require.NotContains(t, packedSecrets, name, "duplicate packed Secret %s", name)
 		require.NotEmpty(t, secret.Data, "packed Secret %s has no data", name)
 		packedSecrets[name] = packedSecret{data: secret.Data, referencedKeys: make(map[string]struct{}, len(secret.Data))}
+		objectCount += len(secret.Data)
 	}
+	assert.Equal(t, expected.objectCount, objectCount)
 
 	require.Len(t, cod.Spec.Template.Spec.Phases, len(expected.phases))
 	for phaseIdx, phase := range cod.Spec.Template.Spec.Phases {
@@ -334,7 +351,7 @@ func assertPackedCODContent(
 		for objIdx, obj := range phase.Objects {
 			require.NotNil(t, obj.Type)
 			assert.Equal(t, expected.objectType, *obj.Type)
-			assert.Nil(t, obj.InlineManifest)
+			assert.Equal(t, expected.hasInlineManifest, obj.InlineManifest != nil)
 			ref := obj.SecretRef
 			require.NotNil(t, ref)
 			require.NotNil(t, ref.Name)

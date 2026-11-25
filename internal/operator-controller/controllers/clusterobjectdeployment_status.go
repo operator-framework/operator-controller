@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	deploymentutil "github.com/operator-framework/operator-controller/internal/operator-controller/clusterobjectdeployment"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
@@ -127,11 +128,7 @@ func setInstalledFromClusterObjectDeployment(ext *ocv1.ClusterExtension, cod *oc
 // has finished successfully. ObservedGeneration is checked so a stale "progressed" condition from a
 // prior template generation is not mistaken for completion of the current one.
 func clusterObjectDeploymentRolloutComplete(cod *ocv1.ClusterObjectDeployment) bool {
-	prog := apimeta.FindStatusCondition(cod.Status.Conditions, ocv1.ClusterObjectDeploymentTypeProgressing)
-	return prog != nil &&
-		prog.Status == metav1.ConditionFalse &&
-		prog.Reason == ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed &&
-		prog.ObservedGeneration == cod.Generation
+	return deploymentutil.RolloutComplete(cod)
 }
 
 // bundleMetadataFromClusterObjectDeployment extracts the bundle identity the applier stamped onto the

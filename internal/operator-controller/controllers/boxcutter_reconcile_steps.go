@@ -23,6 +23,7 @@ import (
 	"io/fs"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/revisions"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
@@ -109,11 +111,51 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 			labels.OwnerNameKey: ext.GetName(),
 		}
 
-		if err := m.Migrate(ctx, ext, objLbls); err != nil {
-			return nil, fmt.Errorf("migrating storage: %w", err)
+		pending, err := m.Migrate(ctx, ext, objLbls)
+		if err != nil {
+			err = fmt.Errorf("migrating storage: %w", err)
+			setStatusProgressing(ext, err)
+			return nil, err
+		}
+		if pending != nil {
+			setMigrationStatus(ext, pending)
+			return &ctrl.Result{RequeueAfter: pending.RequeueAfter}, nil
 		}
 		return nil, nil
 	}
+}
+
+// The stored template identifies the already-deployed Helm bundle, independently
+// of readiness during adoption. Do not manufacture COS completion to preserve it.
+func setMigrationStatus(ext *ocv1.ClusterExtension, pending *applier.PendingMigration) {
+	cod := pending.Deployment
+	setInstallStatus(ext, &ocv1.ClusterExtensionInstallStatus{Bundle: bundleMetadataFromClusterObjectDeployment(cod)})
+	installed := cod.Spec.Template.Metadata.Annotations[labels.BundleReferenceKey]
+	if installed == "" {
+		installed = ext.Status.Install.Bundle.Name
+	}
+	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s from deployed Helm release", installed))
+	setAvailableFromClusterObjectDeployment(ext, cod)
+
+	progressing := apimeta.FindStatusCondition(cod.Status.Conditions, ocv1.ClusterObjectDeploymentTypeProgressing)
+	if progressing != nil && (progressing.ObservedGeneration != cod.Generation ||
+		progressing.Reason == ocv1.ClusterObjectDeploymentReasonNewClusterObjectSetProgressed) {
+		// Old completion must not surface as overall success during the stage
+		// transition, even before the new template generation reaches the cache.
+		progressing = nil
+	}
+	prog := progressingConditionFromClusterObjectDeployment(progressing)
+	prog.ObservedGeneration = ext.Generation
+	if pending.ProgressMessage != "" {
+		prog.Message = pending.ProgressMessage
+	} else {
+		stage := "Adopting"
+		if cod.Spec.Template.Spec.CollisionProtection == ocv1.CollisionProtectionPrevent {
+			stage = "Protecting"
+		}
+		prog.Message = fmt.Sprintf("Helm migration %s: %s", stage, prog.Message)
+	}
+	apimeta.SetStatusCondition(&ext.Status.Conditions, prog)
 }
 
 func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error)) ReconcileStepFunc {
