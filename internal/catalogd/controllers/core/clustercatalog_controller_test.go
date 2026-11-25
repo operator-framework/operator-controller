@@ -14,10 +14,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/docker/reference"
 	"go.uber.org/mock/gomock"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -1139,4 +1146,226 @@ func mustRef(t *testing.T, ref string) reference.Canonical {
 		t.Fatal(err)
 	}
 	return p.(reference.Canonical)
+}
+
+func TestClusterCatalogReconcilerRetiredCatalogs(t *testing.T) {
+	const retiredName = "openshift-redhat-marketplace"
+	clusterCatalogsResource := ocv1.GroupVersion.WithResource("clustercatalogs").GroupResource()
+	unexpectedPull := &imageutil.FakePuller{Error: errors.New("unexpected image pull")}
+	successfulPull := &imageutil.FakePuller{
+		ImageFS: &fstest.MapFS{},
+		Ref:     mustRef(t, "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+	}
+	rejectDelete := func(_ context.Context, _ client.WithWatch, obj client.Object, _ ...client.DeleteOption) error {
+		return fmt.Errorf("unexpected delete of %q", obj.GetName())
+	}
+	// noStorageCalls fails the test if the reconciler touches catalog storage at all.
+	noStorageCalls := func(c *gomock.Controller) storage.Instance { return mockstorage.NewMockInstance(c) }
+	servingStorage := func(c *gomock.Controller) storage.Instance { return newMockStore(c, false) }
+
+	for _, tc := range []struct {
+		name            string
+		retiredCatalogs sets.Set[string]
+		existing        *ocv1.ClusterCatalog
+		request         string
+		puller          imageutil.Puller
+		store           func(*gomock.Controller) storage.Instance
+		// onDelete intercepts client Delete calls; nil passes them through to the fake client.
+		onDelete       func(context.Context, client.WithWatch, client.Object, ...client.DeleteOption) error
+		wantErr        string
+		wantExists     bool
+		wantDeleting   bool
+		wantFinalizers []string
+		wantServing    bool
+	}{
+		{
+			name:            "retired catalog is deleted without being unpacked and keeps its finalizer for cleanup",
+			retiredCatalogs: sets.New(retiredName),
+			existing: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{Name: retiredName, Finalizers: []string{fbcDeletionFinalizer}},
+				Spec: ocv1.ClusterCatalogSpec{Source: ocv1.CatalogSource{
+					Type:  ocv1.SourceTypeImage,
+					Image: &ocv1.ImageSource{Ref: "my.org/someimage:latest"},
+				}},
+			},
+			request:        retiredName,
+			puller:         unexpectedPull,
+			store:          noStorageCalls,
+			wantExists:     true,
+			wantDeleting:   true,
+			wantFinalizers: []string{fbcDeletionFinalizer},
+		},
+		{
+			name:            "retired catalog that is already being deleted is finalized instead of deleted again",
+			retiredCatalogs: sets.New(retiredName),
+			existing: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              retiredName,
+					Finalizers:        []string{fbcDeletionFinalizer},
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+				},
+				Spec: ocv1.ClusterCatalogSpec{Source: ocv1.CatalogSource{
+					Type:  ocv1.SourceTypeImage,
+					Image: &ocv1.ImageSource{Ref: "my.org/someimage:latest"},
+				}},
+			},
+			request: retiredName,
+			puller:  unexpectedPull,
+			store: func(c *gomock.Controller) storage.Instance {
+				// The delete-server-cache finalizer must remove the stored content exactly once.
+				m := mockstorage.NewMockInstance(c)
+				m.EXPECT().Delete(retiredName).Return(nil)
+				return m
+			},
+			onDelete:   rejectDelete,
+			wantExists: false,
+		},
+		{
+			name:            "retired catalog removed by someone else before the delete request is not an error",
+			retiredCatalogs: sets.New(retiredName),
+			existing: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{Name: retiredName},
+				Spec: ocv1.ClusterCatalogSpec{Source: ocv1.CatalogSource{
+					Type:  ocv1.SourceTypeImage,
+					Image: &ocv1.ImageSource{Ref: "my.org/someimage:latest"},
+				}},
+			},
+			request: retiredName,
+			puller:  unexpectedPull,
+			store:   noStorageCalls,
+			onDelete: func(ctx context.Context, c client.WithWatch, obj client.Object, opts ...client.DeleteOption) error {
+				if err := c.Delete(ctx, obj, opts...); err != nil {
+					return err
+				}
+				return c.Delete(ctx, obj, opts...)
+			},
+			wantExists: false,
+		},
+		{
+			name:            "retired catalog that does not exist is ignored",
+			retiredCatalogs: sets.New(retiredName),
+			request:         retiredName,
+			puller:          unexpectedPull,
+			store:           noStorageCalls,
+			onDelete:        rejectDelete,
+			wantExists:      false,
+		},
+		{
+			name:            "failure to delete a retired catalog is returned for retry",
+			retiredCatalogs: sets.New(retiredName),
+			existing: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{Name: retiredName, Finalizers: []string{fbcDeletionFinalizer}},
+				Spec: ocv1.ClusterCatalogSpec{Source: ocv1.CatalogSource{
+					Type:  ocv1.SourceTypeImage,
+					Image: &ocv1.ImageSource{Ref: "my.org/someimage:latest"},
+				}},
+			},
+			request: retiredName,
+			puller:  unexpectedPull,
+			store:   noStorageCalls,
+			onDelete: func(_ context.Context, _ client.WithWatch, obj client.Object, _ ...client.DeleteOption) error {
+				return apierrors.NewForbidden(clusterCatalogsResource, obj.GetName(), errors.New("denied"))
+			},
+			wantErr:        `error deleting retired ClusterCatalog "openshift-redhat-marketplace"`,
+			wantExists:     true,
+			wantFinalizers: []string{fbcDeletionFinalizer},
+		},
+		{
+			name:            "unrelated catalog is reconciled normally",
+			retiredCatalogs: sets.New(retiredName),
+			existing: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{Name: "openshift-redhat-operators", Finalizers: []string{fbcDeletionFinalizer}},
+				Spec: ocv1.ClusterCatalogSpec{Source: ocv1.CatalogSource{
+					Type:  ocv1.SourceTypeImage,
+					Image: &ocv1.ImageSource{Ref: "my.org/someimage:latest"},
+				}},
+			},
+			request:        "openshift-redhat-operators",
+			puller:         successfulPull,
+			store:          servingStorage,
+			onDelete:       rejectDelete,
+			wantExists:     true,
+			wantFinalizers: []string{fbcDeletionFinalizer},
+			wantServing:    true,
+		},
+		{
+			name:            "catalog whose name only contains a retired name is reconciled normally",
+			retiredCatalogs: sets.New(retiredName),
+			existing: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{Name: "openshift-redhat-marketplace-mirror", Finalizers: []string{fbcDeletionFinalizer}},
+				Spec: ocv1.ClusterCatalogSpec{Source: ocv1.CatalogSource{
+					Type:  ocv1.SourceTypeImage,
+					Image: &ocv1.ImageSource{Ref: "my.org/someimage:latest"},
+				}},
+			},
+			request:        "openshift-redhat-marketplace-mirror",
+			puller:         successfulPull,
+			store:          servingStorage,
+			onDelete:       rejectDelete,
+			wantExists:     true,
+			wantFinalizers: []string{fbcDeletionFinalizer},
+			wantServing:    true,
+		},
+		{
+			name:            "catalog is reconciled normally when no catalogs are retired",
+			retiredCatalogs: nil,
+			existing: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{Name: retiredName, Finalizers: []string{fbcDeletionFinalizer}},
+				Spec: ocv1.ClusterCatalogSpec{Source: ocv1.CatalogSource{
+					Type:  ocv1.SourceTypeImage,
+					Image: &ocv1.ImageSource{Ref: "my.org/someimage:latest"},
+				}},
+			},
+			request:        retiredName,
+			puller:         successfulPull,
+			store:          servingStorage,
+			onDelete:       rejectDelete,
+			wantExists:     true,
+			wantFinalizers: []string{fbcDeletionFinalizer},
+			wantServing:    true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			require.NoError(t, ocv1.AddToScheme(scheme))
+			builder := fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithStatusSubresource(&ocv1.ClusterCatalog{}).
+				WithInterceptorFuncs(interceptor.Funcs{Delete: tc.onDelete})
+			if tc.existing != nil {
+				builder = builder.WithObjects(tc.existing)
+			}
+			cl := builder.Build()
+
+			reconciler := &ClusterCatalogReconciler{
+				Client:          cl,
+				ImagePuller:     tc.puller,
+				ImageCache:      &imageutil.FakeCache{},
+				Storage:         tc.store(gomock.NewController(t)),
+				RetiredCatalogs: tc.retiredCatalogs,
+				storedCatalogs:  map[string]storedCatalogData{},
+			}
+			require.NoError(t, reconciler.setupFinalizers())
+
+			ctx := context.Background()
+			res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tc.request}})
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.wantErr)
+			}
+			assert.Equal(t, ctrl.Result{}, res)
+
+			got := &ocv1.ClusterCatalog{}
+			getErr := cl.Get(ctx, types.NamespacedName{Name: tc.request}, got)
+			if !tc.wantExists {
+				require.True(t, apierrors.IsNotFound(getErr), "expected ClusterCatalog %q to be gone, got: %v", tc.request, getErr)
+				return
+			}
+			require.NoError(t, getErr)
+			assert.Equal(t, tc.wantDeleting, got.GetDeletionTimestamp() != nil, "deletion timestamp")
+			assert.Equal(t, tc.wantFinalizers, got.GetFinalizers(), "finalizers")
+			assert.Equal(t, tc.wantServing, meta.IsStatusConditionTrue(got.Status.Conditions, ocv1.ClusterCatalogTypeServing), "serving condition")
+		})
+	}
 }

@@ -34,6 +34,8 @@ import (
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/metadata"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -95,6 +97,7 @@ type config struct {
 	webhookPort          int
 	pullCasDir           string
 	globalPullSecret     string
+	retiredCatalogs      []string
 	// Generated config
 	globalPullSecretKey *k8stypes.NamespacedName
 }
@@ -136,6 +139,7 @@ func init() {
 	flags.IntVar(&cfg.webhookPort, "webhook-server-port", 9443, "Webhook server port")
 	flags.StringVar(&cfg.pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to image registries.")
 	flags.StringVar(&cfg.globalPullSecret, "global-pull-secret", "", "Global pull secret (<namespace>/<name>)")
+	flags.StringSliceVar(&cfg.retiredCatalogs, "retired-catalogs", nil, "Comma-separated names of ClusterCatalogs that are no longer provided by this deployment. A ClusterCatalog whose name exactly matches one of these names is deleted when it is reconciled.")
 
 	// adds version subcommand
 	catalogdCmd.AddCommand(versionCommand)
@@ -186,6 +190,14 @@ func validateConfig(cfg *config) error {
 			return err
 		}
 		cfg.globalPullSecretKey = &k8stypes.NamespacedName{Name: secretParts[1], Namespace: secretParts[0]}
+	}
+
+	for _, name := range cfg.retiredCatalogs {
+		if errs := validation.IsDNS1123Subdomain(name); len(errs) > 0 {
+			err := fmt.Errorf("invalid retired-catalogs value %q: %s", name, strings.Join(errs, "; "))
+			setupLog.Error(err, "invalid retired catalog name", "retiredCatalogs", cfg.retiredCatalogs)
+			return err
+		}
 	}
 
 	return nil
@@ -402,11 +414,15 @@ func run(ctx context.Context) error {
 		return err
 	}
 
+	if len(cfg.retiredCatalogs) > 0 {
+		setupLog.Info("retired ClusterCatalogs will be deleted", "names", cfg.retiredCatalogs)
+	}
 	if err = (&corecontrollers.ClusterCatalogReconciler{
-		Client:      mgr.GetClient(),
-		ImageCache:  imageCache,
-		ImagePuller: imagePuller,
-		Storage:     localStorage,
+		Client:          mgr.GetClient(),
+		ImageCache:      imageCache,
+		ImagePuller:     imagePuller,
+		Storage:         localStorage,
+		RetiredCatalogs: sets.New(cfg.retiredCatalogs...),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		return err

@@ -61,6 +61,13 @@ type ClusterCatalogReconciler struct {
 
 	Storage storage.Instance
 
+	// RetiredCatalogs holds the exact names of ClusterCatalogs that are no
+	// longer provided by the deployment that configured this reconciler. A
+	// ClusterCatalog whose name is in this set is deleted instead of being
+	// unpacked and served. Deletion is left to the regular finalizer flow so
+	// that any stored catalog content is still cleaned up.
+	RetiredCatalogs sets.Set[string]
+
 	finalizers crfinalizer.Finalizers
 
 	// TODO: The below storedCatalogs fields are used for a quick a hack that helps
@@ -93,6 +100,13 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	existingCatsrc := ocv1.ClusterCatalog{}
 	if err := r.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// A retired catalog that is not yet being deleted only needs a delete
+	// request. Once its deletion timestamp is set it goes through the regular
+	// reconcile below so that our finalizer still cleans up its stored content.
+	if r.RetiredCatalogs.Has(existingCatsrc.Name) && existingCatsrc.GetDeletionTimestamp() == nil {
+		return ctrl.Result{}, r.deleteRetiredCatalog(ctx, &existingCatsrc)
 	}
 
 	reconciledCatsrc := existingCatsrc.DeepCopy()
@@ -439,6 +453,17 @@ func (r *ClusterCatalogReconciler) setupFinalizers() error {
 		return err
 	}
 	r.finalizers = f
+	return nil
+}
+
+// deleteRetiredCatalog requests deletion of a ClusterCatalog listed in
+// RetiredCatalogs. A catalog that is already gone is treated as deleted; any
+// other error is returned so that the request is retried.
+func (r *ClusterCatalogReconciler) deleteRetiredCatalog(ctx context.Context, catalog *ocv1.ClusterCatalog) error {
+	log.FromContext(ctx).Info("deleting retired ClusterCatalog")
+	if err := r.Delete(ctx, catalog); client.IgnoreNotFound(err) != nil {
+		return fmt.Errorf("error deleting retired ClusterCatalog %q: %w", catalog.Name, err)
+	}
 	return nil
 }
 

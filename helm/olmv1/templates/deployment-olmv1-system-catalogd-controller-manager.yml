@@ -67,6 +67,9 @@ spec:
             - --v=${LOG_VERBOSITY}
             - --global-pull-secret=openshift-config/pull-secret
             {{- end }}
+            {{- if .Values.options.openshift.enabled }}
+            - --retired-catalogs={{ include "olmv1.openshift.retiredCatalog" . }}
+            {{- end }}
             {{- if .Values.options.e2e.enabled }}
             {{- /* This is effectively modern with the CHACHA cipher and secp384r1 curve removed */}}
             - --tls-profile=custom

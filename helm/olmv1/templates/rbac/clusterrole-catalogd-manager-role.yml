@@ -15,12 +15,25 @@ rules:
       - clustercatalogs
     verbs:
       - create
+      {{- if not .Values.options.openshift.enabled }}
       - delete
+      {{- end }}
       - get
       - list
       - patch
       - update
       - watch
+  {{- if .Values.options.openshift.enabled }}
+  {{- /* catalogd only deletes the ClusterCatalog it is told to retire */}}
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clustercatalogs
+    resourceNames:
+      - {{ include "olmv1.openshift.retiredCatalog" . }}
+    verbs:
+      - delete
+  {{- end }}
   - apiGroups:
       - olm.operatorframework.io
     resources:
