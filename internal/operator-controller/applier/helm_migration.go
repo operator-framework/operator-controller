@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 
 	"helm.sh/helm/v3/pkg/release"
 	corev1 "k8s.io/api/core/v1"
@@ -40,9 +41,13 @@ type BoxcutterStorageMigrator struct {
 	FieldOwner        string
 }
 
-// PendingMigration holds the deployment for CE status reporting.
+// PendingMigration holds the information needed to report and requeue migration.
 type PendingMigration struct {
 	Deployment *ocv1.ClusterObjectDeployment
+	// ProgressMessage describes the work still pending after the protected rollout.
+	ProgressMessage string
+	// RequeueAfter is zero while the deployment watch drives migration.
+	RequeueAfter time.Duration
 }
 
 // Migrate gates ordinary reconciliation while Helm history remains. Once the COD
@@ -110,6 +115,7 @@ func (m *BoxcutterStorageMigrator) advance(ctx context.Context, ext *ocv1.Cluste
 		cod.Labels[labels.ManagedByKey] != labels.ManagedByOperatorController {
 		return nil, fmt.Errorf("migration deployment %q is not managed by operator-controller for ClusterExtension UID %q", cod.Name, ext.UID)
 	}
+	// The CRD requires collision protection, and adoption requires explicit None.
 	protection := cod.Spec.Template.Spec.CollisionProtection
 	if protection != ocv1.CollisionProtectionNone && protection != ocv1.CollisionProtectionPrevent {
 		return nil, fmt.Errorf("migration deployment %q has unexpected collision protection %q", cod.Name, protection)
@@ -129,12 +135,17 @@ func (m *BoxcutterStorageMigrator) advance(ctx context.Context, ext *ocv1.Cluste
 	if err != nil {
 		return nil, err
 	}
-	if observed {
-		if err := m.deleteHelmHistory(ctx, indexes); err != nil {
-			return nil, err
-		}
+	// The deployment watch does not report revision cache updates or Helm Secret deletion.
+	pending.RequeueAfter = 10 * time.Second
+	if !observed {
+		pending.ProgressMessage = "Helm migration: waiting to observe the completed protected revision."
+		return pending, nil
+	}
+	if err := m.deleteHelmHistory(ctx, indexes); err != nil {
+		return nil, err
 	}
 	// A subsequent reconcile confirms that cleanup is complete.
+	pending.ProgressMessage = "Helm migration: waiting for Helm release history cleanup to finish."
 	return pending, nil
 }
 
@@ -265,7 +276,8 @@ func (m *BoxcutterStorageMigrator) getDeployedRelease(ctx context.Context, ext *
 	}
 	rel, err := driver.Get(latest.Name)
 	if err != nil {
-		return nil, fmt.Errorf("reading deployed Helm release from %q: %w", latest.Name, err)
+		// The driver can include Secret data in its errors, which would reach status and logs.
+		return nil, fmt.Errorf("could not read deployed Helm release from index Secret %q", client.ObjectKeyFromObject(latest))
 	}
 	if rel == nil || rel.Name != ext.Name || rel.Version != version || rel.Info == nil || rel.Info.Status != release.StatusDeployed {
 		return nil, fmt.Errorf("Helm release in Secret %q does not match the selected deployed revision", latest.Name)

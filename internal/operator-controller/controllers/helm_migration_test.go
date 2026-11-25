@@ -34,7 +34,12 @@ func TestMigrateStorageGatesFollowingSteps(t *testing.T) {
 		wantRequeue   time.Duration
 		wantErr       error
 	}{
-		{name: "migration pending", pending: &applier.PendingMigration{Deployment: cod}, wantRequeue: 10 * time.Second},
+		{name: "waiting for rollout", pending: &applier.PendingMigration{Deployment: cod}},
+		{
+			name:        "waiting after rollout",
+			pending:     &applier.PendingMigration{Deployment: cod, RequeueAfter: 10 * time.Second},
+			wantRequeue: 10 * time.Second,
+		},
 		{name: "migration failed", migrationErr: migrationErr, wantErr: migrationErr},
 		{name: "migration inactive", wantFollowing: true},
 	}
@@ -165,7 +170,7 @@ func TestMigrationStatusPreservesHelmIdentityWithoutReadiness(t *testing.T) {
 			ext.Status.Install = tc.input.previousInstall.DeepCopy()
 
 			// When migration status is reflected onto the CE; this function performs no I/O.
-			setMigrationStatus(ext, cod)
+			setMigrationStatus(ext, &applier.PendingMigration{Deployment: cod})
 
 			// Then installation provenance is retained without inventing availability.
 			require.NotNil(t, ext.Status.Install)
@@ -251,7 +256,7 @@ func TestMigrationStatusReportsRealAvailability(t *testing.T) {
 			cod.Status.Conditions = []metav1.Condition{tc.input.available}
 
 			// When migration status is reflected onto the CE.
-			setMigrationStatus(ext, cod)
+			setMigrationStatus(ext, &applier.PendingMigration{Deployment: cod})
 
 			// Then availability and migration progress match the expected results.
 			available := apimeta.FindStatusCondition(ext.Status.Conditions, tc.want.available.Type)
@@ -377,7 +382,7 @@ func TestMigrationStatusMapsCurrentFailures(t *testing.T) {
 			cod.Status.Conditions = []metav1.Condition{tc.input.progressing}
 
 			// When migration status is reflected onto the CE.
-			setMigrationStatus(ext, cod)
+			setMigrationStatus(ext, &applier.PendingMigration{Deployment: cod})
 
 			// Then the CE exposes the appropriate retry or terminal reason and blocking detail.
 			progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeProgressing)
@@ -454,7 +459,7 @@ func TestMigrationStatusIgnoresStaleProgress(t *testing.T) {
 			cod.Status.Conditions = []metav1.Condition{tc.input.progressing}
 
 			// When migration status is reflected onto the CE.
-			setMigrationStatus(ext, cod)
+			setMigrationStatus(ext, &applier.PendingMigration{Deployment: cod})
 
 			// Then stale completion or failure does not replace the current rollout progress.
 			progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeProgressing)
@@ -494,7 +499,7 @@ func TestMigrationTransitionReportsProgressInsteadOfSuccess(t *testing.T) {
 	cod.Status.Conditions = []metav1.Condition{input.progressing}
 
 	// When migration status is reflected before the COD controller observes the new protection.
-	setMigrationStatus(ext, cod)
+	setMigrationStatus(ext, &applier.PendingMigration{Deployment: cod})
 
 	// Then the CE reports ongoing migration rather than overall success between stages.
 	progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeProgressing)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/release"
@@ -358,16 +359,24 @@ func TestHelmMigrationWaitsForCachedProtectedRevision(t *testing.T) {
 	cod := migrationDeployment(ext, ocv1.CollisionProtectionPrevent)
 	cod.Status.Conditions = []metav1.Condition{*migrationProgress(cod.Generation)}
 	want := struct {
-		err            error
-		pending        bool
-		historyReadErr error
-	}{err: nil, pending: true, historyReadErr: nil}
+		err             error
+		progressMessage string
+		requeueAfter    time.Duration
+		historyReadErr  error
+	}{
+		err:             nil,
+		progressMessage: "Helm migration: waiting to observe the completed protected revision.",
+		requeueAfter:    10 * time.Second,
+		historyReadErr:  nil,
+	}
 	m := newMigrationTest(t, interceptor.Funcs{}, index, cod)
 
 	pending, err := m.Migrate(t.Context(), ext, nil)
 
 	require.ErrorIs(t, err, want.err)
-	require.Equal(t, want.pending, pending != nil)
+	require.NotNil(t, pending)
+	require.Equal(t, want.progressMessage, pending.ProgressMessage)
+	require.Equal(t, want.requeueAfter, pending.RequeueAfter)
 	require.ErrorIs(t, m.Client.Get(t.Context(), client.ObjectKeyFromObject(index), &corev1.Secret{}), want.historyReadErr)
 }
 
@@ -388,19 +397,23 @@ func TestHelmMigrationResumesPartialCleanup(t *testing.T) {
 	}
 	deleteErr := errors.New("delete unavailable")
 	want := struct {
-		initialErr      error
-		indexReadErr    error
-		retryErr        error
-		pendingOnRetry  []bool
-		removed         map[client.ObjectKey]types.UID
-		removedNotFound bool
-		kept            []*corev1.Secret
-		keptReadErr     error
+		initialErr        error
+		indexReadErr      error
+		firstChunkDeleted bool
+		retryChunkReadErr error
+		retryErr          error
+		pendingOnRetry    []bool
+		removed           map[client.ObjectKey]types.UID
+		removedNotFound   bool
+		kept              []*corev1.Secret
+		keptReadErr       error
 	}{
-		initialErr:     deleteErr,
-		indexReadErr:   nil,
-		retryErr:       nil,
-		pendingOnRetry: []bool{true, true, false},
+		initialErr:        deleteErr,
+		indexReadErr:      nil,
+		firstChunkDeleted: true,
+		retryChunkReadErr: nil,
+		retryErr:          nil,
+		pendingOnRetry:    []bool{true, true, false},
 		removed: map[client.ObjectKey]types.UID{
 			client.ObjectKeyFromObject(chunk):      chunk.UID,
 			client.ObjectKeyFromObject(retryChunk): retryChunk.UID,
@@ -429,6 +442,9 @@ func TestHelmMigrationResumesPartialCleanup(t *testing.T) {
 	_, err := m.Migrate(t.Context(), ext, nil)
 	require.ErrorIs(t, err, want.initialErr)
 	require.ErrorIs(t, m.Client.Get(t.Context(), client.ObjectKeyFromObject(index), &corev1.Secret{}), want.indexReadErr)
+	firstChunkErr := m.Client.Get(t.Context(), client.ObjectKeyFromObject(chunk), &corev1.Secret{})
+	require.Equal(t, want.firstChunkDeleted, apierrors.IsNotFound(firstChunkErr), "%v", firstChunkErr)
+	require.ErrorIs(t, m.Client.Get(t.Context(), client.ObjectKeyFromObject(retryChunk), &corev1.Secret{}), want.retryChunkReadErr)
 
 	fail = false
 	restarted := &applier.BoxcutterStorageMigrator{Client: m.Client, APIReader: m.APIReader, SystemNamespace: migrationNamespace}

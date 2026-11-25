@@ -276,12 +276,13 @@ func TestHelmMigrationRollsOutPendingUpgradeAfterRestart(t *testing.T) {
 		requestedVersion: requestedVersion,
 		installed:        &ocv1.BundleMetadata{Name: "test.v1.0.0", Version: "1.0.0", Release: ptr.To("")},
 	}}
-	wantRequeues := []time.Duration{10 * time.Second, 10 * time.Second, 10 * time.Second}
+	wantRequeues := []time.Duration{0, 0, 10 * time.Second}
 	wantDeploymentUID := staged.UID
 	wantBundleName := target.Name
 	wantResourceUID := e.resource.UID
 	wantResourceData := maps.Clone(manifest.Data)
 	wantHistoryGone := true
+	wantCleanupMessage := "Helm migration: waiting for Helm release history cleanup to finish."
 
 	scheme := e.live.Scheme()
 	provider := mockapplier.NewMockManifestProvider(mockCtrl)
@@ -329,6 +330,10 @@ func TestHelmMigrationRollsOutPendingUpgradeAfterRestart(t *testing.T) {
 	}
 	e.ce = &controllers.ClusterExtensionReconciler{Client: e.live, ReconcileSteps: append(controllers.ReconcileSteps{controllers.MigrateStorage(m)}, ordinarySteps...)}
 	reconcilePending()
+	require.NoError(t, e.live.Get(e.ctx, request.NamespacedName, &ext))
+	progress := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionTypeProgressing)
+	require.NotNil(t, progress)
+	require.Equal(t, wantCleanupMessage, progress.Message)
 	var protected ocv1.ClusterObjectDeployment
 	require.NoError(t, e.live.Get(e.ctx, request.NamespacedName, &protected))
 	e.checkHelmHistoryGone(t, wantHistoryGone)
@@ -365,7 +370,7 @@ type helmMigrationEnv struct {
 // not roll out a COS. COD/COS reconcilers use the production revision engine.
 func newHelmMigrationEnv(t *testing.T) *helmMigrationEnv {
 	t.Helper()
-	wantInitialRequeue := 10 * time.Second
+	wantInitialRequeue := time.Duration(0)
 	scheme := newScheme(t)
 	require.NoError(t, corev1.AddToScheme(scheme))
 	live, err := client.New(config, client.Options{Scheme: scheme})
@@ -513,13 +518,15 @@ func (e *helmMigrationEnv) protect(t *testing.T) (*ocv1.ClusterObjectSet, *ocv1.
 	protectingName := e.ext.Name + "-2"
 	request := ctrl.Request{NamespacedName: client.ObjectKeyFromObject(e.ext)}
 	want := struct {
-		pendingRequeue        time.Duration
+		rolloutRequeue        time.Duration
+		cleanupRequeue        time.Duration
 		afterCleanupRequeue   time.Duration
 		protection            ocv1.CollisionProtection
 		historyBeforeComplete error
 		historyGone           bool
 	}{
-		pendingRequeue:        10 * time.Second,
+		rolloutRequeue:        0,
+		cleanupRequeue:        10 * time.Second,
 		afterCleanupRequeue:   0,
 		protection:            ocv1.CollisionProtectionPrevent,
 		historyBeforeComplete: nil,
@@ -529,7 +536,7 @@ func (e *helmMigrationEnv) protect(t *testing.T) (*ocv1.ClusterObjectSet, *ocv1.
 	adopting := e.rollout(t, adoptingName)
 	result, err := e.ce.Reconcile(e.ctx, request)
 	require.NoError(t, err)
-	require.Equal(t, want.pendingRequeue, result.RequeueAfter)
+	require.Equal(t, want.rolloutRequeue, result.RequeueAfter)
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		cod := &ocv1.ClusterObjectDeployment{}
 		if assert.NoError(collect, e.cached.Get(e.ctx, client.ObjectKeyFromObject(e.ext), cod)) {
@@ -540,7 +547,7 @@ func (e *helmMigrationEnv) protect(t *testing.T) (*ocv1.ClusterObjectSet, *ocv1.
 	protecting := e.rollout(t, protectingName)
 	result, err = e.ce.Reconcile(e.ctx, request)
 	require.NoError(t, err)
-	require.Equal(t, want.pendingRequeue, result.RequeueAfter)
+	require.Equal(t, want.cleanupRequeue, result.RequeueAfter)
 	e.checkHelmHistoryGone(t, want.historyGone)
 	result, err = e.ce.Reconcile(e.ctx, request)
 	require.NoError(t, err)

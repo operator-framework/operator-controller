@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -32,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/revisions"
 	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
@@ -118,9 +118,8 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 			return nil, err
 		}
 		if pending != nil {
-			setMigrationStatus(ext, pending.Deployment)
-			// Also poll for Helm Secret cleanup, which is not covered by the COD owner watch.
-			return &ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			setMigrationStatus(ext, pending)
+			return &ctrl.Result{RequeueAfter: pending.RequeueAfter}, nil
 		}
 		return nil, nil
 	}
@@ -128,7 +127,8 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 
 // The stored template identifies the already-deployed Helm bundle, independently
 // of readiness during adoption. Do not manufacture COS completion to preserve it.
-func setMigrationStatus(ext *ocv1.ClusterExtension, cod *ocv1.ClusterObjectDeployment) {
+func setMigrationStatus(ext *ocv1.ClusterExtension, pending *applier.PendingMigration) {
+	cod := pending.Deployment
 	setInstallStatus(ext, &ocv1.ClusterExtensionInstallStatus{Bundle: bundleMetadataFromClusterObjectDeployment(cod)})
 	installed := cod.Spec.Template.Metadata.Annotations[labels.BundleReferenceKey]
 	if installed == "" {
@@ -146,11 +146,15 @@ func setMigrationStatus(ext *ocv1.ClusterExtension, cod *ocv1.ClusterObjectDeplo
 	}
 	prog := progressingConditionFromClusterObjectDeployment(progressing)
 	prog.ObservedGeneration = ext.Generation
-	stage := "Adopting"
-	if cod.Spec.Template.Spec.CollisionProtection == ocv1.CollisionProtectionPrevent {
-		stage = "Protecting"
+	if pending.ProgressMessage != "" {
+		prog.Message = pending.ProgressMessage
+	} else {
+		stage := "Adopting"
+		if cod.Spec.Template.Spec.CollisionProtection == ocv1.CollisionProtectionPrevent {
+			stage = "Protecting"
+		}
+		prog.Message = fmt.Sprintf("Helm migration %s: %s", stage, prog.Message)
 	}
-	prog.Message = fmt.Sprintf("Helm migration %s: %s", stage, prog.Message)
 	apimeta.SetStatusCondition(&ext.Status.Conditions, prog)
 }
 
