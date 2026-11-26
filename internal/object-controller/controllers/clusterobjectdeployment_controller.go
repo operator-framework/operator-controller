@@ -43,6 +43,14 @@ import (
 // defensively for callers (e.g. tests) that bypass API-server defaulting.
 const defaultRevisionHistoryLimit = 5
 
+// blockedVerdictRequeueInterval is how long the deployment controller waits
+// before re-evaluating a verdict that holds off revision creation (a foreign
+// owner, an unmanaged revision, or a stale same-name owner reference leading
+// the group). Group watch events remain the fast path to re-evaluation; this
+// requeue is a safety net for a verdict latched from a stale informer view
+// over a group with no further events.
+const blockedVerdictRequeueInterval = 10 * time.Second
+
 // ClusterObjectDeploymentReconciler reconciles ClusterObjectDeployment objects by
 // managing their owned ClusterObjectSet revisions.
 type ClusterObjectDeploymentReconciler struct {
@@ -96,7 +104,6 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
 	owned, adoptionErr := c.adoptOrphans(ctx, cod, revisions)
 
 	// Garbage collection is best-effort housekeeping and must not block rollout or
@@ -115,13 +122,20 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 	// cannot prove it created (missing the managed-by label), or a revision still
 	// referencing an older UID of this deployment (e.g. a restored revision), which we
 	// leave to garbage collection rather than racing it by rewriting its owner reference.
+	//
+	// Each blocked verdict below also requeues: these verdicts are computed from an
+	// informer snapshot, and watch delivery of group members can lag under API-server
+	// load or miss a quiet group entirely. Without a requeue, a verdict latched from a
+	// stale view would hold off revision creation indefinitely until an unrelated
+	// group event arrived. Watch events remain the fast path; the requeue is the
+	// safety net that re-evaluates the verdict against a fresh view.
 	if latest := latestActiveRevision(revisions); latest != nil {
 		owner := metav1.GetControllerOf(latest)
 		if hasForeignController(cod, latest) {
 			setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonOwnerConflict,
 				fmt.Sprintf("ClusterObjectSet %q (revision %d) is controlled by %s %s %q (UID %q); no higher revision will be created while this owner conflict persists",
 					latest.Name, latest.Spec.Revision, owner.APIVersion, owner.Kind, owner.Name, owner.UID))
-			return ctrl.Result{}, errors.Join(adoptionErr, gcErr)
+			return ctrl.Result{RequeueAfter: blockedVerdictRequeueInterval}, errors.Join(adoptionErr, gcErr)
 		}
 		if owner != nil && !metav1.IsControlledBy(latest, cod) {
 			// Stale same-name reference to an older UID of this deployment (e.g. a
@@ -130,14 +144,14 @@ func (c *ClusterObjectDeploymentReconciler) reconcile(ctx context.Context, cod *
 			// is transient and self-healing: the watch on group members re-reconciles us
 			// once GC removes it. We simply hold off creating a competing revision and
 			// leave the status untouched rather than flapping a condition for a momentary
-			// state.
-			return ctrl.Result{}, errors.Join(adoptionErr, gcErr)
+			// state. The requeue guards against the stale view described above.
+			return ctrl.Result{RequeueAfter: blockedVerdictRequeueInterval}, errors.Join(adoptionErr, gcErr)
 		}
 		if isUnmanagedRevision(cod, latest) {
 			setProgressing(cod, metav1.ConditionFalse, ocv1.ClusterObjectDeploymentReasonUnmanagedRevision,
 				fmt.Sprintf("ClusterObjectSet %q (revision %d) is not labeled %s=%s, so the object-controller cannot prove it created it; it is not adopted, and no higher revision will be created while this unmanaged revision persists",
 					latest.Name, latest.Spec.Revision, labels.ManagedByKey, labels.ManagedByObjectController))
-			return ctrl.Result{}, errors.Join(adoptionErr, gcErr)
+			return ctrl.Result{RequeueAfter: blockedVerdictRequeueInterval}, errors.Join(adoptionErr, gcErr)
 		}
 	}
 	if adoptionErr != nil {

@@ -1027,7 +1027,7 @@ func Test_ClusterObjectDeploymentReconciler_AdoptsGroupRevisions(t *testing.T) {
 			before, found := getCOS(t, c, cos.Name)
 			require.True(t, found)
 
-			_, err := reconcileCOD(t, c)
+			reconcileResult, err := reconcileCOD(t, c)
 			require.NoError(t, err)
 			result, found := getCOS(t, c, cos.Name)
 			require.True(t, found)
@@ -1055,6 +1055,11 @@ func Test_ClusterObjectDeploymentReconciler_AdoptsGroupRevisions(t *testing.T) {
 			// Not adopted: the revision's controller owner reference (if any) is unchanged.
 			require.False(t, metav1.IsControlledBy(result, cod), "an unmanaged revision must not be adopted by this deployment")
 			require.Equal(t, cos.OwnerReferences, result.OwnerReferences, "a refused revision's owner references are unchanged")
+			// Every refusal here is a blocked verdict (an unmanaged revision or a stale
+			// same-name owner reference leading the group). It must requeue so a verdict
+			// latched from a stale informer view is re-evaluated even when no further
+			// group events arrive; watch events remain the fast path to recovery.
+			require.NotZero(t, reconcileResult.RequeueAfter, "a blocked verdict must requeue")
 			if tc.wantUnmanaged {
 				// An ownerless, unlabeled revision is surfaced on Progressing while it
 				// leads the group, since it requires user action to resolve.
@@ -1210,7 +1215,10 @@ func Test_ClusterObjectDeploymentReconciler_OwnerConflict(t *testing.T) {
 			for range 2 {
 				result, err := reconcileCOD(t, c)
 				require.NoError(t, err)
-				require.Zero(t, result.RequeueAfter)
+				// The owner-conflict verdict requeues as a safety net so a verdict latched
+				// from a stale informer view is eventually re-evaluated; watch events on
+				// the group remain the fast path to recovery.
+				require.NotZero(t, result.RequeueAfter)
 				condition := progressing(t, c)
 				require.Equal(t, metav1.ConditionFalse, condition.Status)
 				require.Equal(t, ocv1.ClusterObjectDeploymentReasonOwnerConflict, condition.Reason)
