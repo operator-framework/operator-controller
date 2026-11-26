@@ -95,9 +95,17 @@ When a new revision is needed, the controller:
 3. Observes that revision's rollout while older revisions can remain Active.
 4. Reports completion once the new COS records `status.completedAt`.
 
-The COS controller handles ownership handoff between revisions and archives
-superseded revisions once handoff completes. The COD controller prunes excess
-archived history after teardown finishes.
+The COD controller archives its active, non-deleting predecessors below the
+highest completed, active, non-deleting revision it controls. Completion is
+historical (`status.completedAt`): a subsequent health regression or a newer
+pending rollout does not prevent this cleanup. Same-group revisions controlled
+by another owner are not archived, and ownerless revisions are eligible only
+after adoption under the [ownership rules](#revision-ownership).
+
+The COS controller handles object ownership handoff and executes teardown when
+its lifecycle is set to `Archived`. COD prunes excess archived history only after
+teardown finishes. Archival failures are retried independently of rollout and
+status reconciliation; a completed rollout can be reported while cleanup retries.
 
 Revision numbers range from 1 to 9999999999. Once that range is exhausted, the
 controller reports an error rather than allocating another revision.

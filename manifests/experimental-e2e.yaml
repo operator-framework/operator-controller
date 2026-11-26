@@ -2139,8 +2139,11 @@ spec:
           apply and manage on the cluster. Each revision contains objects organized into
           phases that roll out sequentially. The same object can only be managed by a
           single revision at a time. Ownership of objects is transitioned from one revision
-          to the next as new revisions are rolled out. Once the latest revision has rolled
-          out successfully, previous active revisions are archived for posterity.
+          to the next as new revisions are rolled out. A ClusterObjectDeployment requests
+          archival of its older active revisions after observing a completed, active
+          revision it owns. Standalone ClusterObjectSet producers must explicitly set
+          spec.lifecycleState to "Archived" on the older revisions they manage after a
+          successor completes.
           Set metadata.name explicitly to <spec.group>-<spec.revision>, using decimal
           notation without leading zeros. This ensures revision uniqueness within a group.
           Name generation through metadata.generateName is not supported.

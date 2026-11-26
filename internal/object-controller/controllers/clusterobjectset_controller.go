@@ -311,29 +311,12 @@ func (c *ClusterObjectSetReconciler) reconcile(ctx context.Context, cos *ocv1.Cl
 
 	// A revision whose objects have all been adopted by a newer sibling revision can
 	// report IsComplete() (progressed objects count as complete), but it is superseded,
-	// not successfully rolled out: skip the completion branch so it does not archive
-	// previous revisions, report AllObjectsReady, or record a first completion
+	// not successfully rolled out: skip the completion branch so it does not
+	// report AllObjectsReady or record a first completion
 	// (completedAt) that would identify it as the installed revision.
 	superseded := slices.ContainsFunc(rres.GetPhases(), status.HasSupersededObject)
-	//nolint:nestif
+	//nolint:nestif // Keep completion and per-phase readiness reporting together.
 	if rres.IsComplete() && !superseded {
-		// Archive previous revisions.
-		// TODO(COD): Move the decision to archive previous revisions to
-		// ClusterObjectDeployment reconciliation when that controller is introduced.
-		previous, err := c.listPreviousRevisions(ctx, cos)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("listing previous revisions: %v", err)
-		}
-		for _, a := range previous {
-			patch := []byte(`{"spec":{"lifecycleState":"Archived"}}`)
-			if err := c.Client.Patch(ctx, client.Object(a), client.RawPatch(types.MergePatchType, patch)); err != nil {
-				// TODO: It feels like an error here needs to propagate to a status _somewhere_.
-				//   Not sure the current COS makes sense? But it also feels off to set the CE
-				//   status from outside the CE reconciler.
-				return ctrl.Result{}, fmt.Errorf("archive previous Revision: %w", err)
-			}
-		}
-
 		markAsReady(cos, ocv1.ClusterObjectSetReasonAllObjectsReady, "All objects are at the desired state")
 
 		// Record the timestamp of the first time the revision was observed to be
@@ -522,21 +505,6 @@ func (c *ClusterObjectSetReconciler) removeFinalizer(ctx context.Context, obj cl
 // This includes both lower and higher revision numbers, enabling boxcutter to properly classify
 // sibling owners and avoid reporting false collisions during revision handover.
 func (c *ClusterObjectSetReconciler) listSiblingRevisions(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
-	return c.listOtherActiveRevisions(ctx, cos, func(*ocv1.ClusterObjectSet) bool { return true })
-}
-
-// listPreviousRevisions returns active revisions in the same group with lower revision numbers.
-func (c *ClusterObjectSetReconciler) listPreviousRevisions(ctx context.Context, cos *ocv1.ClusterObjectSet) ([]*ocv1.ClusterObjectSet, error) {
-	return c.listOtherActiveRevisions(ctx, cos, func(r *ocv1.ClusterObjectSet) bool {
-		return r.Spec.Revision < cos.Spec.Revision
-	})
-}
-
-func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
-	ctx context.Context,
-	cos *ocv1.ClusterObjectSet,
-	predicate func(*ocv1.ClusterObjectSet) bool,
-) ([]*ocv1.ClusterObjectSet, error) {
 	revList := &ocv1.ClusterObjectSetList{}
 	if err := c.Client.List(ctx, revList, client.MatchingFields{clusterObjectSetGroupIndex: cos.Spec.Group}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
@@ -550,9 +518,6 @@ func (c *ClusterObjectSetReconciler) listOtherActiveRevisions(
 		}
 		if r.Spec.LifecycleState != ocv1.ClusterObjectSetLifecycleStateActive ||
 			!r.DeletionTimestamp.IsZero() {
-			continue
-		}
-		if !predicate(r) {
 			continue
 		}
 		result = append(result, r)

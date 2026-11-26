@@ -192,9 +192,12 @@ for timing, timeout precedence, and recovery behavior.
 
 ## Inspect history and referenced content
 
-The COS controller archives superseded revisions after handoff and cleans up
+COD requests archival of its older active revisions once it observes a completed
+owned successor. The COS controller executes archival teardown, cleaning up
 objects that were removed from the desired content. COD prunes excess archived
 history after teardown completes. Active revisions are excluded from the limit.
+Standalone COS producers must request predecessor archival themselves; the COS
+controller does not change sibling lifecycle states.
 
 The sample retains two archived revisions with `spec.revisionHistoryLimit: 2`.
 See [Revision history and deletion](../concepts/clusterobjectdeployment.md#revision-history-and-deletion)

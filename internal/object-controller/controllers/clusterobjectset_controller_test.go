@@ -587,11 +587,11 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 			},
 		},
 		{
-			name: "archive same-group predecessors regardless of controller ownership",
+			name: "completion leaves same-group predecessor lifecycles unchanged regardless of ownership",
 			revisionResult: newMockRevisionResult(mockCtrl, revisionResultConfig{
 				isComplete: true,
 			}),
-			reconcilingRevisionName: "test-ext-3",
+			reconcilingRevisionName: "test-ext-4",
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				ownerlessPrevious := newTestClusterObjectSet(t, "test-ext-1", ext, testScheme)
@@ -599,11 +599,12 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 				differentOwnerPrevious := newTestClusterObjectSet(t, "test-ext-2", ext, testScheme)
 				differentOwnerPrevious.OwnerReferences[0].Name = "other-owner"
 				differentOwnerPrevious.OwnerReferences[0].UID = "other-uid"
-				rev := newTestClusterObjectSet(t, "test-ext-3", ext, testScheme)
+				sameOwnerPrevious := newTestClusterObjectSet(t, "test-ext-3", ext, testScheme)
+				rev := newTestClusterObjectSet(t, "test-ext-4", ext, testScheme)
 				// Sharing the current revision's owner must not cause another group to be archived.
 				otherGroup := newTestClusterObjectSet(t, "other-group-1", ext, testScheme)
 				otherGroup.Spec.Group = "other-group"
-				return []client.Object{ext, ownerlessPrevious, differentOwnerPrevious, rev, otherGroup}
+				return []client.Object{ext, ownerlessPrevious, differentOwnerPrevious, sameOwnerPrevious, rev, otherGroup}
 			},
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterObjectSet{}
@@ -611,19 +612,22 @@ func Test_ClusterObjectSetReconciler_Reconcile_RevisionReconciliation(t *testing
 					Name: "test-ext-1",
 				}, rev)
 				require.NoError(t, err)
-				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateArchived, rev.Spec.LifecycleState)
+				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState)
 
 				err = c.Get(t.Context(), client.ObjectKey{
 					Name: "test-ext-2",
 				}, rev)
 				require.NoError(t, err)
-				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateArchived, rev.Spec.LifecycleState)
+				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState)
 
 				err = c.Get(t.Context(), client.ObjectKey{
 					Name: "test-ext-3",
 				}, rev)
 				require.NoError(t, err)
 				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState)
+				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: "test-ext-4"}, rev))
+				require.False(t, rev.Status.CompletedAt.IsZero())
+				require.True(t, meta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterObjectSetTypeReady))
 				require.NoError(t, c.Get(t.Context(), client.ObjectKey{Name: "other-group-1"}, rev))
 				require.Equal(t, ocv1.ClusterObjectSetLifecycleStateActive, rev.Spec.LifecycleState)
 			},

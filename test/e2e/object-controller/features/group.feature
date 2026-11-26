@@ -80,7 +80,14 @@ Feature: Track ClusterObjectSet revisions by group
                 revision: "2"
       """
     Then ClusterObjectSet "${NAME}-2" reports Ready as True with Reason AllObjectsReady
-    And ClusterObjectSet "${NAME}-1" is archived
+    # Standalone producers request archival; successful handoff alone must not.
+    And resource "clusterobjectset/${NAME}-1" matches
+      """
+      spec:
+        lifecycleState: Active
+      """
+    When ClusterObjectSet "${NAME}-1" lifecycle is set to "Archived"
+    Then ClusterObjectSet "${NAME}-1" is archived
     And ClusterObjectSet "${NAME}-2" phase objects use SSA manager "cos-group/${NAME}"
     And resource "configmap/${NAME}-payload" matches
       """
