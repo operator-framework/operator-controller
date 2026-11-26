@@ -50,23 +50,12 @@ const (
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
 	// namespace specifies a Kubernetes namespace.
-	// <opcon:standard:description>It designates the default namespace where namespace-scoped resources for the extension are applied to the cluster.
-	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
-	// This namespace must exist.
-	//
-	// The namespace field is required, immutable, and follows the DNS label standard as defined in [RFC 1123].
-	// It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character,
-	// and be no longer than 63 characters.
-	//
-	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
-	// </opcon:standard:description>
-	// <opcon:experimental:description>
 	// It designates the default namespace where namespace-scoped resources for the extension
-	// are applied to.
+	// are applied.
 	//
-	// namespace is optional. When set, it must reference an existing namespace on the cluster.
+	// namespace is optional. When set, it must reference an existing namespace on the cluster.  This namespace is unmanaged and will not be affected by deleting the ClusterExtension.
 	// When omitted, operator-controller resolves and creates a managed namespace from the
-	// bundle's metadata. Whether namespace is set or omitted is fixed at creation time and
+	// bundle's metadata. This namespace will be deleted if the ClusterExtension is deleted. Whether namespace is set or omitted is fixed at creation time and
 	// cannot be changed afterwards.
 	//
 	// The namespace field follows the DNS label standard as defined in [RFC 1123].
@@ -74,22 +63,23 @@ type ClusterExtensionSpec struct {
 	// and be no longer than 63 characters.
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
-	// </opcon:experimental:description>
 	//
-	// <opcon:standard:validation:XValidation:rule="self == oldSelf",message="namespace is immutable">
-	// <opcon:standard:validation:XValidation:rule="self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">
-	// <opcon:experimental:validation:XValidation:rule="self == oldSelf",message="namespace is immutable">
-	// <opcon:experimental:validation:XValidation:rule="self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")",message="namespace must be a valid DNS1123 label">
-	// <opcon:experimental:validation:Optional>
-	//
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
 	// +kubebuilder:validation:MaxLength:=63
-	// +required
+	// +optional
 	Namespace string `json:"namespace,omitzero"`
 
 	// serviceAccount is a deprecated field and is completely ignored.
-	// OLMv1 is a single-tenant system where users with ClusterExtension write access are
-	// effectively delegated cluster-admin trust. The operator-controller runs with
-	// cluster-admin privileges and uses its own service account for all cluster interactions.
+	// Historically, serviceAccount specified the service account used to apply
+	// this extension's content, letting adopters scope installation privileges.
+	// It has no effect: ClusterExtension is a cluster-scoped resource where
+	// users with write access are effectively delegated cluster-admin trust,
+	// and the operator-controller runs with cluster-admin privileges and uses
+	// its own service account for all cluster interactions.
+	// Because the field is silently accepted, its presence must not be read as
+	// confirmation that an extension's content requires no additional
+	// privileges; it provides no signal either way.
 	//
 	// Deprecated: serviceAccount is no longer used and will be removed in a future release.
 	//
@@ -397,6 +387,8 @@ type CatalogFilter struct {
 }
 
 // ServiceAccountReference is a deprecated type and is completely ignored.
+// Historically, it selected the service account used to apply a
+// ClusterExtension's content.
 //
 // Deprecated: ServiceAccountReference is no longer used and will be removed in a future release.
 //
@@ -478,10 +470,10 @@ const (
 	ClusterExtensionReasonAbsent = "Absent"
 
 	// Progressing reasons
-	ClusterExtensionReasonRollingOut           = "RollingOut"
-	ClusterExtensionReasonRetrying             = "Retrying"
-	ClusterExtensionReasonBlocked              = "Blocked"
-	ClusterExtensionReasonInvalidConfiguration = "InvalidConfiguration"
+	ClusterExtensionReasonNewRevisionRollingOut = "NewRevisionRollingOut"
+	ClusterExtensionReasonRetrying              = "Retrying"
+	ClusterExtensionReasonBlocked               = "Blocked"
+	ClusterExtensionReasonInvalidConfiguration  = "InvalidConfiguration"
 
 	// Deprecation reasons
 	ClusterExtensionReasonDeprecated               = "Deprecated"
@@ -553,9 +545,15 @@ type ClusterExtensionStatus struct {
 	// When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.
 	// When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
 	// When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
-	// <opcon:experimental:description>
-	// When Progressing is True and Reason is RollingOut, the ClusterExtension has one or more ClusterObjectSets in active roll out.
-	// </opcon:experimental:description>
+	// When Progressing is True and Reason is NewRevisionRollingOut, a new revision of the
+	// ClusterExtension's content has been determined, for example for an initial installation,
+	// upgrade, or reconfiguration, and that revision is actively rolling out.
+	// The Ready condition reports whether the extension's content is rolled out and its objects are ready:
+	//   - True with reason RevisionReady: the extension's current content is rolled out and all of its objects are ready.
+	//   - False with reason RevisionNotReady: the extension's current content is rolled out, but one or more of its objects are not ready.
+	//   - False with reason NoActiveRevision: the extension has no content being rolled out.
+	//   - Unknown with reason MultipleActiveRevisions: a new version of the extension's content is rolling out; readiness is not evaluated until the rollout completes.
+	//   - Unknown with reason Unknown: the readiness of the extension's content is not yet determined.
 	//
 	// When the ClusterExtension is sourced from a catalog, it surfaces deprecation conditions based on catalog metadata.
 	// These are indications from a package owner to guide users away from a particular package, channel, or bundle:
@@ -607,8 +605,7 @@ type ClusterExtension struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec is an optional field that defines the desired state of the ClusterExtension.
-	//
-	// <opcon:experimental:validation:XValidation:rule="has(oldSelf.namespace) == has(self.namespace)",message="namespace presence is immutable; it cannot be added or removed after creation">
+	// +kubebuilder:validation:XValidation:rule="has(oldSelf.namespace) == has(self.namespace)",message="namespace presence is immutable; it cannot be added or removed after creation"
 	// +optional
 	Spec ClusterExtensionSpec `json:"spec,omitempty"`
 
