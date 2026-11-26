@@ -87,6 +87,16 @@ true
 {{- end -}}
 
 {{/*
+ClusterCatalog that was removed from the default OpenShift catalogs by
+operator-framework/operator-controller#2455. OpenShift renders tell catalogd to delete it
+from clusters upgraded from releases that created it, and grant delete for this name only.
+Drop this once no supported upgrade path includes such a release.
+*/}}
+{{- define "olmv1.openshift.retiredCatalog" -}}
+openshift-redhat-marketplace
+{{- end -}}
+
+{{/*
 When rendering with OpenShift, only one of the main components (catalogd, operatorController)
 should be enabled
 */}}
