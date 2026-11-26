@@ -78,7 +78,9 @@ func TestObjectControllerManifests(t *testing.T) {
 			}
 			require.Equal(t, tc.wantOperatorController, objects["CustomResourceDefinition/clusterextensions.olm.operatorframework.io"] != nil)
 			require.Equal(t, tc.wantCatalogd, objects["CustomResourceDefinition/clustercatalogs.olm.operatorframework.io"] != nil)
+			require.Equal(t, tc.wantObjectController, objects["CustomResourceDefinition/clusterobjectdeployments.olm.operatorframework.io"] != nil)
 			require.Equal(t, tc.wantObjectController, objects["CustomResourceDefinition/clusterobjectsets.olm.operatorframework.io"] != nil)
+			require.Equal(t, tc.wantObjectController, objects["CustomResourceDefinition/clusterobjectslices.olm.operatorframework.io"] != nil)
 			for _, resource := range []string{
 				"ServiceAccount/object-controller-controller-manager", "ClusterRoleBinding/object-controller-cluster-admin-rolebinding",
 				"Role/object-controller-leader-election-role", "RoleBinding/object-controller-leader-election-rolebinding",

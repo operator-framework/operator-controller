@@ -15,6 +15,8 @@ Package v1 contains API Schema definitions for the olm v1 API group
 - [ClusterExtensionList](#clusterextensionlist)
 - [ClusterObjectDeployment](#clusterobjectdeployment)
 - [ClusterObjectDeploymentList](#clusterobjectdeploymentlist)
+- [ClusterObjectSlice](#clusterobjectslice)
+- [ClusterObjectSliceList](#clusterobjectslicelist)
 
 
 
@@ -578,6 +580,106 @@ _Appears in:_
 | `name` _string_ | name is a required identifier for this phase.<br />phase names must follow the DNS label standard as defined in [RFC 1123].<br />They must contain only lowercase alphanumeric characters or hyphens (-),<br />start and end with an alphanumeric character, and be no longer than 63 characters.<br />Common phase names include: namespaces, policies, rbac, crds, storage, deploy, publish.<br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />MinLength: 1 <br />Required: \{\} <br /> |
 | `objects` _[ClusterObjectSetObject](#clusterobjectsetobject) array_ | objects is a required list of all Kubernetes objects that belong to this phase.<br />All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50. |  | MaxItems: 50 <br />Required: \{\} <br /> |
 | `collisionProtection` _[CollisionProtection](#collisionprotection)_ | collisionProtection specifies the default collision protection strategy for all objects<br />in this phase. Individual objects can override this value.<br />When set, this value is used as the default for any object in this phase that does not<br />explicitly specify its own collisionProtection.<br />When omitted, objects in this phase that do not specify their own collisionProtection inherit the<br />enclosing spec default: the ClusterObjectSet's .spec.collisionProtection or, for a<br />ClusterObjectDeployment, the .spec.template.spec.collisionProtection. |  | Enum: [Prevent IfNoController None] <br />Optional: \{\} <br /> |
+
+
+#### ClusterObjectSlice
+
+
+
+ClusterObjectSlice stores immutable, encoded Kubernetes manifests independently
+of rollout intent. It is an experimental, cluster-scoped API. Creating a slice
+stores content only; it does not apply objects or report rollout readiness.
+
+
+
+_Appears in:_
+- [ClusterObjectSliceList](#clusterobjectslicelist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `olm.operatorframework.io/v1` | | |
+| `kind` _string_ | `ClusterObjectSlice` | | |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `spec` _[ClusterObjectSliceSpec](#clusterobjectslicespec)_ | spec defines the required, immutable content of the slice. |  | Required: \{\} <br /> |
+
+
+#### ClusterObjectSliceEncoding
+
+_Underlying type:_ _string_
+
+ClusterObjectSliceEncoding identifies the representation of a stored manifest.
+
+_Validation:_
+- Enum: [JSON GzipJSON]
+
+_Appears in:_
+- [ClusterObjectSliceEntry](#clusterobjectsliceentry)
+
+| Field | Description |
+| --- | --- |
+| `JSON` | ClusterObjectSliceEncodingJSON stores a JSON-serialized manifest.<br /> |
+| `GzipJSON` | ClusterObjectSliceEncodingGzipJSON stores a gzip-compressed JSON manifest.<br /> |
+
+
+#### ClusterObjectSliceEntry
+
+
+
+ClusterObjectSliceEntry stores a manifest with an explicit target identity.
+Admission validates the envelope, not the encoded manifest. Publishers must
+ensure that the decoded manifest agrees with the declared identity.
+
+
+
+_Appears in:_
+- [ClusterObjectSliceSpec](#clusterobjectslicespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | apiVersion is the required API version of the stored object, for example<br />"v1" or "apps/v1". It must be 1 to 317 characters, with an optional<br />lowercase DNS group followed by "/" and a lowercase API version. |  | MaxLength: 317 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `kind` _string_ | kind is the required kind of the stored object, for example "ConfigMap".<br />It must be 1 to 63 characters, start with a letter, end with an<br />alphanumeric character, and contain only letters, digits, or hyphens. |  | MaxLength: 63 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `name` _string_ | name is the required metadata.name of the stored object. It must be<br />1 to 253 characters, cannot be "." or "..", and cannot contain "/" or "%".<br />Resource-specific naming constraints are checked when the object is applied. |  | MaxLength: 253 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `namespace` _string_ | namespace is the metadata.namespace of the stored object. When omitted,<br />it defaults to the empty string for a cluster-scoped object. Nonempty<br />values must be lowercase DNS labels of at most 63 characters.<br />Namespaced objects must declare their namespace explicitly. |  | MaxLength: 63 <br />Optional: \{\} <br /> |
+| `encoding` _[ClusterObjectSliceEncoding](#clusterobjectsliceencoding)_ | encoding is the required representation of content. "JSON" means one<br />JSON-serialized Kubernetes object; "GzipJSON" means gzip-compressed JSON.<br />Base64 wire encoding applies to both representations. |  | Enum: [JSON GzipJSON] <br />Required: \{\} <br /> |
+| `content` _integer array_ | content is the required manifest payload, base64-encoded in JSON and YAML.<br />Its base64 representation must contain 1 to 1048576 characters. The limit<br />does not bound expanded gzip content or the total serialized slice size.<br />Admission does not parse JSON, decompress gzip, or verify that the payload<br />matches apiVersion, kind, name, and namespace. |  | MaxLength: 1048576 <br />MinLength: 1 <br />Required: \{\} <br /> |
+
+
+#### ClusterObjectSliceList
+
+
+
+ClusterObjectSliceList contains ClusterObjectSlice objects.
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `olm.operatorframework.io/v1` | | |
+| `kind` _string_ | `ClusterObjectSliceList` | | |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `items` _[ClusterObjectSlice](#clusterobjectslice) array_ | items is the list of slices. |  | Required: \{\} <br /> |
+
+
+#### ClusterObjectSliceSpec
+
+
+
+ClusterObjectSliceSpec defines an immutable group of stored manifests.
+
+
+
+_Appears in:_
+- [ClusterObjectSlice](#clusterobjectslice)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `objects` _[ClusterObjectSliceEntry](#clusterobjectsliceentry) array_ | objects is a required list of 1 to 256 stored manifests. Each entry must<br />have a unique combination of apiVersion, kind, name, and namespace.<br />List order has no rollout meaning. Create a new slice to change content. |  | MaxItems: 256 <br />MinItems: 1 <br />Required: \{\} <br /> |
 
 
 #### CollisionProtection
