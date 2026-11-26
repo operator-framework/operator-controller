@@ -48,6 +48,11 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" owns (\d+) ClusterObjectSets?$`, ClusterExtensionOwnsClusterObjectSets)
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, NamedClusterExtensionReportsCondition)
 	sc.Step(`^(?i)ClusterExtension "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, NamedClusterExtensionReportsConditionWithMessageFragment)
+	sc.Step(`^(?i)Helm-backed extension resource identities are remembered$`, RememberHelmExtensionIdentities)
+	sc.Step(`^(?i)pre-existing ClusterExtension storage has transitioned after OLM upgrade$`, PreExistingExtensionStorageTransitioned)
+	sc.Step(`^(?i)updated ClusterExtension storage is healthy$`, UpdatedExtensionStorageIsHealthy)
+	sc.Step(`^(?i)extension resources keep their pre-upgrade identities$`, ExtensionKeepsPreUpgradeIdentities)
+	sc.Step(`^(?i)retained extension resources keep their pre-upgrade identities$`, RetainedExtensionKeepsPreUpgradeIdentities)
 	sc.Step(`^(?i)ClusterExtension is reconciled$`, shared.ClusterExtensionIsReconciled)
 }
 
@@ -112,7 +117,7 @@ func ClusterExtensionIsRolledOut(ctx context.Context) error {
 	}
 
 	// Save ClusterExtension resources to test context for posterior checks
-	if err := gatherClusterExtensionObjects(sc); err != nil {
+	if err := gatherClusterExtensionObjects(ctx, sc); err != nil {
 		return err
 	}
 	return nil
@@ -131,7 +136,7 @@ func ClusterExtensionOwnsClusterObjectSets(ctx context.Context, extName string, 
 		if len(revisions) != expectedCount {
 			return false
 		}
-		ext, err := shared.GetResource("clusterextension", extName, "")
+		ext, err := shared.GetResource(ctx, "clusterextension", extName, "")
 		if err != nil {
 			return false
 		}
@@ -231,7 +236,7 @@ func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
 	for _, obj := range sc.ExtensionObjects {
 		shared.WaitFor(ctx, func() bool {
 			kind := obj.GetObjectKind().GroupVersionKind().Kind
-			clusterObj, err := shared.GetResource(kind, obj.GetName(), obj.GetNamespace())
+			clusterObj, err := shared.GetResource(ctx, kind, obj.GetName(), obj.GetNamespace())
 			if err != nil {
 				shared.Log().V(1).Error(err, "error getting resource", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind)
 				return false
@@ -383,11 +388,18 @@ func helmReleaseFromSecret(secret *corev1.Secret) (*release.Release, error) {
 		return nil, err
 	}
 
-	var rel release.Release
-	if err = json.Unmarshal(releaseJsonBytes, &rel); err != nil {
+	// The chunked storage driver wraps release.Release because Helm excludes
+	// Labels from its JSON representation. Restore those labels explicitly so
+	// storage assertions can verify the persisted bundle metadata.
+	var wrapped struct {
+		release.Release
+		Labels map[string]string `json:"labels"`
+	}
+	if err = json.Unmarshal(releaseJsonBytes, &wrapped); err != nil {
 		return nil, err
 	}
-	return &rel, nil
+	wrapped.Release.Labels = wrapped.Labels
+	return &wrapped.Release, nil
 }
 
 // helmReleaseSecretForExtension returns the Helm release secret for the extension with name extName
@@ -398,23 +410,19 @@ func helmReleaseSecretForExtension(extName string) (*corev1.Secret, error) {
 	if err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(out) == "" {
-		return nil, err
-	}
-
 	var secretList corev1.SecretList
 	if err = json.Unmarshal([]byte(out), &secretList); err != nil {
 		return nil, err
 	}
 	if len(secretList.Items) != 1 {
-		return nil, err
+		return nil, fmt.Errorf("expected one deployed Helm release Secret for %q, found %d", extName, len(secretList.Items))
 	}
 	return &secretList.Items[0], nil
 }
 
 // latestActiveRevisionForExtension returns the latest active revision for the extension called extName
-func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterObjectSet, error) {
-	revisions, err := shared.ListClusterObjectSetsInGroup(context.Background(), extName)
+func latestActiveRevisionForExtension(ctx context.Context, extName string) (*ocv1.ClusterObjectSet, error) {
+	revisions, err := shared.ListClusterObjectSetsInGroup(ctx, extName)
 	if err != nil {
 		return nil, fmt.Errorf("error listing revisions for extension '%s': %w", extName, err)
 	}
@@ -439,16 +447,16 @@ func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterObjectSet, e
 // listExtensionResources returns a slice of client.Object containing all resources for a ClusterExtension
 // this method is best called when the extension has been installed successfully. An error is returned if there was
 // any issue in determining the extension's resources.
-func listExtensionResources(extName string) ([]client.Object, error) {
+func listExtensionResources(ctx context.Context, extName string) ([]client.Object, error) {
 	if enabled, found := shared.FeatureGates[features.BoxcutterRuntime]; found && enabled {
-		return listExtensionRevisionResources(extName)
+		return listExtensionRevisionResources(ctx, extName)
 	}
 	return listHelmReleaseResources(extName)
 }
 
 // listExtensionRevisionResources lists objects in the phases of the latest active revision
-func listExtensionRevisionResources(extName string) ([]client.Object, error) {
-	rev, err := latestActiveRevisionForExtension(extName)
+func listExtensionRevisionResources(ctx context.Context, extName string) ([]client.Object, error) {
+	rev, err := latestActiveRevisionForExtension(ctx, extName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest active revision for extension %s: %w", extName, err)
 	}
@@ -460,7 +468,7 @@ func listExtensionRevisionResources(extName string) ([]client.Object, error) {
 			specObj := &phase.Objects[j]
 			switch specObj.Type {
 			case ocv1.ObjectTypeSecretReference:
-				resolved, err := shared.ResolveSecretRef(specObj.SecretRef)
+				resolved, err := shared.ResolveSecretRef(ctx, specObj.SecretRef)
 				if err != nil {
 					return nil, fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
 				}
@@ -507,7 +515,7 @@ func NamespaceIsManagedByOLM(ctx context.Context, nsName string) error {
 	nsName = shared.SubstituteScenarioVars(nsName, sc)
 
 	shared.WaitFor(ctx, func() bool {
-		revision, err := latestActiveRevisionForExtension(sc.ClusterExtensionName)
+		revision, err := latestActiveRevisionForExtension(ctx, sc.ClusterExtensionName)
 		if err != nil {
 			shared.Log().V(1).Error(err, "failed to get active revision", "extension", sc.ClusterExtensionName)
 			return false
@@ -535,8 +543,8 @@ func NamespaceIsManagedByOLM(ctx context.Context, nsName string) error {
 // gatherClusterExtensionObjects collects all resources related to the ClusterExtension container in
 // either their Helm release Secret or ClusterObjectSet depending on the applier being used
 // and saves them into the context.
-func gatherClusterExtensionObjects(s *shared.World) error {
-	objs, err := listExtensionResources(s.ClusterExtensionName)
+func gatherClusterExtensionObjects(ctx context.Context, s *shared.World) error {
+	objs, err := listExtensionResources(ctx, s.ClusterExtensionName)
 	if err != nil {
 		return fmt.Errorf("failed to load extension resources into context: %w", err)
 	}

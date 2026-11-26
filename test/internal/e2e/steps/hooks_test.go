@@ -196,7 +196,7 @@ func TestResolveSecretRefNamespaceDefault(t *testing.T) {
 		{name: "explicit namespace", namespace: "objects", want: "objects"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			obj, err := ResolveSecretRef(ocv1.SecretSourceRef{Name: "manifest", Namespace: tc.namespace, Key: "object"})
+			obj, err := ResolveSecretRef(t.Context(), ocv1.SecretSourceRef{Name: "manifest", Namespace: tc.namespace, Key: "object"})
 			require.NoError(t, err)
 			require.Equal(t, "from-"+tc.want, obj.GetName())
 		})

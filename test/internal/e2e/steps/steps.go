@@ -1485,8 +1485,8 @@ func extendMap(m map[string]string, keyValue ...string) map[string]string {
 	return m
 }
 
-func GetResource(kind string, name string, namespace string) (*unstructured.Unstructured, error) {
-	out, err := K8sClient(context.Background(), "get", kind, name, "-n", namespace, "-o", "yaml")
+func GetResource(ctx context.Context, kind string, name string, namespace string) (*unstructured.Unstructured, error) {
+	out, err := K8sClient(ctx, "get", kind, name, "-n", namespace, "-o", "yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -1498,11 +1498,11 @@ func GetResource(kind string, name string, namespace string) (*unstructured.Unst
 }
 
 // ResolveSecretRef fetches an object from a Secret ref using kubectl.
-func ResolveSecretRef(ref ocv1.SecretSourceRef) (*unstructured.Unstructured, error) {
+func ResolveSecretRef(ctx context.Context, ref ocv1.SecretSourceRef) (*unstructured.Unstructured, error) {
 	if ref.Namespace == "" {
 		ref.Namespace = OLMNamespace
 	}
-	out, err := K8sClient(context.Background(), "get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
+	out, err := K8sClient(ctx, "get", "secret", ref.Name, "-n", ref.Namespace, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf("getting Secret %s/%s: %w", ref.Namespace, ref.Name, err)
 	}

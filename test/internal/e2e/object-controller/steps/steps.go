@@ -121,11 +121,11 @@ func ClusterObjectDeploymentIsOwnedByClusterExtension(ctx context.Context, codNa
 	codName = shared.SubstituteScenarioVars(codName, sc)
 	extName = shared.SubstituteScenarioVars(extName, sc)
 	shared.WaitFor(ctx, func() bool {
-		cod, err := shared.GetResource("clusterobjectdeployment", codName, "")
+		cod, err := shared.GetResource(ctx, "clusterobjectdeployment", codName, "")
 		if err != nil {
 			return false
 		}
-		ext, err := shared.GetResource("clusterextension", extName, "")
+		ext, err := shared.GetResource(ctx, "clusterextension", extName, "")
 		if err != nil {
 			return false
 		}
@@ -145,7 +145,7 @@ func ClusterObjectDeploymentOwnsClusterObjectSets(ctx context.Context, codName s
 		if err != nil || len(revisions) != expectedCount {
 			return false
 		}
-		cod, err := shared.GetResource("clusterobjectdeployment", codName, "")
+		cod, err := shared.GetResource(ctx, "clusterobjectdeployment", codName, "")
 		if err != nil {
 			return false
 		}
@@ -204,7 +204,7 @@ func ClusterObjectSetHasAnnotationWithValue(ctx context.Context, revisionName, a
 		expectedValue = annotationValue.Content
 	}
 	shared.WaitFor(ctx, func() bool {
-		obj, err := shared.GetResource("clusterobjectset", revisionName, "")
+		obj, err := shared.GetResource(ctx, "clusterobjectset", revisionName, "")
 		if err != nil {
 			shared.Log().V(1).Error(err, "failed to get clusterobjectset", "name", revisionName)
 			return false
@@ -224,7 +224,7 @@ func ClusterObjectSetHasLabelWithValue(ctx context.Context, revisionName, labelK
 	revisionName = shared.SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 	labelValue = shared.SubstituteScenarioVars(labelValue, sc)
 	shared.WaitFor(ctx, func() bool {
-		obj, err := shared.GetResource("clusterobjectset", revisionName, "")
+		obj, err := shared.GetResource(ctx, "clusterobjectset", revisionName, "")
 		if err != nil {
 			shared.Log().V(1).Error(err, "failed to get clusterobjectset", "name", revisionName)
 			return false
@@ -325,7 +325,7 @@ func ClusterObjectSetObjectsNotFoundOrNotOwned(ctx context.Context, revisionName
 			var obj *unstructured.Unstructured
 			switch phaseObj.Type {
 			case ocv1.ObjectTypeSecretReference:
-				resolved, err := shared.ResolveSecretRef(phaseObj.SecretRef)
+				resolved, err := shared.ResolveSecretRef(ctx, phaseObj.SecretRef)
 				if err != nil {
 					return fmt.Errorf("resolving ref in phase %q object %d: %w", phase.Name, j, err)
 				}
@@ -387,7 +387,7 @@ func ClusterObjectSetPhaseObjectsManagedInSecrets(ctx context.Context, revisionN
 	revisionName = shared.SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
 	shared.WaitFor(ctx, func() bool {
-		obj, err := shared.GetResource("clusterobjectset", revisionName, "")
+		obj, err := shared.GetResource(ctx, "clusterobjectset", revisionName, "")
 		if err != nil {
 			return false
 		}
@@ -487,7 +487,7 @@ func ClusterObjectSetReferredSecretsExist(ctx context.Context, revisionName, nam
 
 	for _, name := range secretNames {
 		shared.WaitFor(ctx, func() bool {
-			_, err := shared.GetResource("secret", name, namespace)
+			_, err := shared.GetResource(ctx, "secret", name, namespace)
 			return err == nil
 		})
 	}
@@ -524,7 +524,7 @@ func ClusterObjectSetReferredSecretsOwnedByClusterExtension(ctx context.Context,
 	revisionName = shared.SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 	extName = shared.SubstituteScenarioVars(strings.TrimSpace(extName), sc)
 
-	ext, err := shared.GetResource("clusterextension", extName, "")
+	ext, err := shared.GetResource(ctx, "clusterextension", extName, "")
 	if err != nil {
 		return fmt.Errorf("getting ClusterExtension %q: %w", extName, err)
 	}
@@ -561,7 +561,7 @@ func ClusterObjectSetReferredSecretsOwnedByObjectSet(ctx context.Context, revisi
 	sc := shared.Scenario(ctx)
 	revisionName = shared.SubstituteScenarioVars(strings.TrimSpace(revisionName), sc)
 
-	cosObj, err := shared.GetResource("clusterobjectset", revisionName, "")
+	cosObj, err := shared.GetResource(ctx, "clusterobjectset", revisionName, "")
 	if err != nil {
 		return fmt.Errorf("getting ClusterObjectSet %q: %w", revisionName, err)
 	}
@@ -619,7 +619,7 @@ func CollectReferredSecretNames(ctx context.Context, revisionName string) ([]str
 	var obj *unstructured.Unstructured
 	shared.WaitFor(ctx, func() bool {
 		var err error
-		obj, err = shared.GetResource("clusterobjectset", revisionName, "")
+		obj, err = shared.GetResource(ctx, "clusterobjectset", revisionName, "")
 		return err == nil
 	})
 
@@ -667,7 +667,7 @@ func collectReferredSecretRefs(ctx context.Context, revisionName string) ([]refe
 	var obj *unstructured.Unstructured
 	shared.WaitFor(ctx, func() bool {
 		var err error
-		obj, err = shared.GetResource("clusterobjectset", revisionName, "")
+		obj, err = shared.GetResource(ctx, "clusterobjectset", revisionName, "")
 		return err == nil
 	})
 
@@ -733,7 +733,7 @@ func ClusterObjectSetHasGroup(ctx context.Context, revisionName, group string) e
 	revisionName = shared.SubstituteScenarioVars(revisionName, sc)
 	group = shared.SubstituteScenarioVars(group, sc)
 	shared.WaitFor(ctx, func() bool {
-		obj, err := shared.GetResource("clusterobjectset", revisionName, "")
+		obj, err := shared.GetResource(ctx, "clusterobjectset", revisionName, "")
 		if err != nil {
 			return false
 		}
@@ -750,7 +750,7 @@ func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, man
 	revisionName = shared.SubstituteScenarioVars(revisionName, sc)
 	manager = shared.SubstituteScenarioVars(manager, sc)
 	shared.WaitFor(ctx, func() bool {
-		obj, err := shared.GetResource("clusterobjectset", revisionName, "")
+		obj, err := shared.GetResource(ctx, "clusterobjectset", revisionName, "")
 		if err != nil {
 			return false
 		}
@@ -763,7 +763,7 @@ func ClusterObjectSetObjectsUseSSAManager(ctx context.Context, revisionName, man
 			for _, phaseObj := range phase.Objects {
 				desired := &phaseObj.InlineManifest
 				if phaseObj.Type == ocv1.ObjectTypeSecretReference {
-					desired, err = shared.ResolveSecretRef(phaseObj.SecretRef)
+					desired, err = shared.ResolveSecretRef(ctx, phaseObj.SecretRef)
 					if err != nil {
 						return false
 					}

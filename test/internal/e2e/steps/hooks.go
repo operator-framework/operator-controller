@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +17,7 @@ import (
 	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -52,6 +52,9 @@ type World struct {
 	ExtensionObjects     []client.Object
 	RevisionSecrets      []Resource
 	ResourceUIDs         map[string]types.UID
+	UpgradeObjects       []*unstructured.Unstructured
+	UpgradePods          []corev1.Pod
+	UpgradeStorageUIDs   map[string]types.UID
 	CatalogAddr          string
 	CatalogCleanup       func()
 	LastApplyStderr      string
@@ -187,16 +190,19 @@ func configureControllerFeatures(deployments map[string]*appsv1.Deployment) {
 		logger.Info("operator-controller is absent; using independently detected components")
 		return
 	}
-	featureGatePattern := regexp.MustCompile(`--feature-gates=([[:alnum:]]+)=(true|false)`)
+	FeatureGates[features.BoxcutterRuntime] = false
 	for _, c := range olm.Spec.Template.Spec.Containers {
 		if c.Name == "manager" {
 			for _, arg := range c.Args {
-				if matches := featureGatePattern.FindStringSubmatch(arg); matches != nil {
-					v, err := strconv.ParseBool(matches[2])
-					if err != nil {
-						panic(fmt.Errorf("failed to parse feature gate %q=%q: %v", matches[1], matches[2], err))
+				if gates, found := strings.CutPrefix(arg, "--feature-gates="); found {
+					for _, gate := range strings.Split(gates, ",") {
+						name, value, _ := strings.Cut(gate, "=")
+						v, err := strconv.ParseBool(value)
+						if err != nil {
+							panic(fmt.Errorf("failed to parse feature gate %q: %w", gate, err))
+						}
+						FeatureGates[featuregate.Feature(name)] = v
 					}
-					FeatureGates[featuregate.Feature(matches[1])] = v
 				}
 			}
 		}

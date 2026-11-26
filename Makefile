@@ -524,13 +524,6 @@ test-upgrade-st2st-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-st2st-e
 test-upgrade-st2st-e2e: standard/install.sh kind-load-operator-controller-upgrade-st2st-e2e test-upgrade-e2e #HELP Run upgrade (standard -> standard) e2e tests on a local kind cluster
 	-$(KIND) delete cluster --name operator-controller-upgrade-st2st-e2e
 
-.PHONY: test-upgrade-ex2ex-e2e
-test-upgrade-ex2ex-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install-experimental.sh
-test-upgrade-ex2ex-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-ex2ex-e2e
-test-upgrade-ex2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
-test-upgrade-ex2ex-e2e: experimental/install.sh kind-load-operator-controller-upgrade-ex2ex-e2e test-upgrade-e2e #HELP Run upgrade (experimental -> experimental) e2e tests on a local kind cluster
-	-$(KIND) delete cluster --name operator-controller-upgrade-ex2ex-e2e
-
 .PHONY: test-upgrade-st2ex-e2e
 test-upgrade-st2ex-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh
 test-upgrade-st2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
