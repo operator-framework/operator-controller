@@ -339,9 +339,14 @@ this document's change.
 
 > **Implementation and migration note**
 >
-> Initially, the existing COS controller continues archiving predecessors.
-> Moving archival and adding `revisionHistoryLimit` are follow-up changes.
-> ClusterExtension continues creating COSs directly until it is migrated to use COD.
+> COD requests archival of its controlled, active, non-deleting predecessors
+> below its highest completed, active, non-deleting owned revision, independently
+> of the current rollout target. COD also enforces `revisionHistoryLimit` and is
+> used by ClusterExtension installations when the experimental `BoxcutterRuntime`
+> feature gate is enabled.
+>
+> COS performs object handoff and archival teardown; standalone producers must
+> request archival explicitly.
 
 [orb-poc]: https://github.com/joelanford/orb-operator/tree/76c7c2316efdacf9a3eeb8a68719df9781dacf1e
 [cos-types]: https://github.com/operator-framework/operator-controller/blob/53665b0a7926163a122de0f366da8924dfcdfdd2/api/v1/clusterobjectset_types.go

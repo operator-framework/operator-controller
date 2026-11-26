@@ -123,6 +123,14 @@ When transitioning from one revision to the next:
 3. Objects transition ownership from the old revision to the new one
 4. Once the new revision has rolled out successfully, the old revision can be archived
 
+The COS controller does not archive sibling revisions automatically. A COD
+requests archival of its controlled predecessors after observing a completed
+successor. For standalone COSs, the producer must observe successor completion
+and explicitly set the predecessors it manages to `Archived`. Until then, those
+predecessors remain `Active`, even when they report `Ready=False/Superseded`.
+Group-based handoff works across controller owners, but group membership alone
+does not authorize a COD to archive another owner's revisions.
+
 ### Archival
 
 When a revision's lifecycle state is set to `Archived`:
