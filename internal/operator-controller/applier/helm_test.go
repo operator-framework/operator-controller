@@ -3,14 +3,17 @@ package applier_test
 import (
 	"context"
 	"errors"
+	"io"
 	"io/fs"
 	"os"
 	"testing"
 	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +25,8 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
+	mockhelmclient "github.com/operator-framework/operator-controller/internal/testutil/mock/helmclient"
 )
 
 type mockTrackingCache struct {
@@ -479,4 +484,99 @@ var DummyHelmChartProvider = &FakeHelmChartProvider{
 	fn: func(fs fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 		return &chart.Chart{}, nil
 	},
+}
+
+func TestHelmApply_MigratesLabelsWithoutCatalog(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name         string
+		manifest     string
+		getErr       error
+		reconcile    bool
+		reconcileErr error
+		wantErr      string
+	}{
+		{
+			name:      "legacy labels are replaced",
+			reconcile: true,
+			manifest: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: managed
+  labels:
+    olm.operatorframework.io/owner-kind: ClusterExtension
+    olm.operatorframework.io/owner-name: test-ext
+    example.com/custom: keep
+`,
+		},
+		{
+			name:      "unlabelled resources are stamped",
+			reconcile: true,
+			manifest: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: managed
+`,
+		},
+		{
+			name:    "missing release is reported",
+			getErr:  driver.ErrReleaseNotFound,
+			wantErr: "catalog content unavailable and no release installed",
+		},
+		{
+			name:    "read failure is reported",
+			getErr:  errors.New("read failed"),
+			wantErr: "failed to get current release: read failed",
+		},
+		{
+			name:     "invalid stored manifest is reported",
+			manifest: "metadata: [",
+			wantErr:  "updating extension labels in release",
+		},
+		{
+			name:         "reconcile failure is reported",
+			manifest:     validManifest,
+			reconcile:    true,
+			reconcileErr: errors.New("write failed"),
+			wantErr:      "write failed",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			ac := mockhelmclient.NewMockActionClientGetterAndInterface(ctrl)
+			stored := &release.Release{Name: testCE.Name, Manifest: tc.manifest}
+			ac.EXPECT().ActionClientFor(gomock.Any(), testCE).Return(ac, nil)
+			ac.EXPECT().Get(testCE.Name).Return(stored, tc.getErr)
+			if tc.reconcile {
+				ac.EXPECT().Reconcile(gomock.Any()).DoAndReturn(func(rel *release.Release) error {
+					require.NotSame(t, stored, rel)
+					objs, err := (applier.HelmReleaseToObjectsConverter{}).GetObjectsFromRelease(rel)
+					require.NoError(t, err)
+					require.NotEmpty(t, objs)
+					for _, obj := range objs {
+						require.Equal(t, testCE.Name, obj.GetLabels()[labels.ClusterExtensionNameKey])
+						require.NotContains(t, obj.GetLabels(), "olm.operatorframework.io/owner-kind")
+						require.NotContains(t, obj.GetLabels(), "olm.operatorframework.io/owner-name")
+					}
+					return tc.reconcileErr
+				})
+				if tc.reconcileErr == nil {
+					ac.EXPECT().Config().Return(&action.Configuration{
+						KubeClient: &kubefake.PrintingKubeClient{Out: io.Discard},
+					})
+				}
+			}
+			h := &applier.Helm{ActionClientGetter: ac, TrackingCache: &mockTrackingCache{}}
+			complete, _, err := h.Apply(t.Context(), nil, testCE, nil, nil)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				require.False(t, complete)
+			} else {
+				require.NoError(t, err)
+				require.True(t, complete)
+			}
+			require.Equal(t, tc.manifest, stored.Manifest, "stored release history must remain untouched")
+		})
+	}
 }

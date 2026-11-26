@@ -3,10 +3,12 @@ package applier
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -15,10 +17,14 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -26,6 +32,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
+	"github.com/operator-framework/operator-controller/internal/shared/labels"
 )
 
 type trackingCache interface {
@@ -84,7 +91,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	values := chartutil.Values{}
 
 	post := &postrenderer{
-		labels: objectLabels,
+		labels: labels.ForClusterExtension(objectLabels, ext.Name),
 	}
 
 	ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
@@ -142,6 +149,9 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		if err := ac.Reconcile(rel); err != nil {
 			return false, "", err
 		}
+		if err := reconcileHelmLabels(ac, rel, ext.Name); err != nil {
+			return false, "", fmt.Errorf("updating managed resource labels: %w", err)
+		}
 	default:
 		return false, "", fmt.Errorf("unexpected release state %q", state)
 	}
@@ -177,11 +187,26 @@ func (h *Helm) reconcileExistingRelease(ctx context.Context, ac helmclient.Actio
 		return false, "", fmt.Errorf("failed to get current release: %w", err)
 	}
 
+	// Normalize a copy of the stored manifest as well: maintenance without
+	// catalog content must not keep reapplying the legacy labels. The stored
+	// release and historical releases remain unchanged.
+	post := &postrenderer{labels: labels.ForClusterExtension(nil, ext.Name)}
+	manifest, err := post.Run(bytes.NewBufferString(rel.Manifest))
+	if err != nil {
+		return false, "", fmt.Errorf("updating extension labels in release %q: %w", rel.Name, err)
+	}
+	current := *rel
+	current.Manifest = manifest.String()
+	rel = &current
+
 	// Reconcile the existing release to ensure resources are maintained
 	if err := ac.Reconcile(rel); err != nil {
 		// Reconcile failed - resources NOT maintained
 		// Return false (rollout failed) with error
 		return false, "", err
+	}
+	if err := reconcileHelmLabels(ac, rel, ext.Name); err != nil {
+		return false, "", fmt.Errorf("updating managed resource labels: %w", err)
 	}
 
 	// At this point: Reconcile succeeded - resources ARE maintained (applied to cluster via Server-Side Apply)
@@ -209,6 +234,48 @@ func (h *Helm) reconcileExistingRelease(ctx context.Context, ac helmclient.Actio
 	}
 
 	return true, "", nil
+}
+
+// reconcileHelmLabels removes legacy labels explicitly because the Helm action
+// client's drift reconciliation preserves fields absent from its manifest.
+// Use that action client's Kubernetes client to retain extension impersonation.
+func reconcileHelmLabels(ac helmclient.ActionInterface, rel *release.Release, name string) error {
+	infos, err := ac.Config().KubeClient.Build(bytes.NewBufferString(rel.Manifest), false)
+	if err != nil {
+		return err
+	}
+	return infos.Visit(func(info *resource.Info, err error) error {
+		if err != nil {
+			return err
+		}
+		helper := resource.NewHelper(info.Client, info.Mapping)
+		existing, err := helper.Get(info.Namespace, info.Name)
+		if err != nil {
+			return err
+		}
+		metadata, err := meta.Accessor(existing)
+		if err != nil {
+			return err
+		}
+		if maps.Equal(metadata.GetLabels(), labels.ForClusterExtension(metadata.GetLabels(), name)) {
+			return nil
+		}
+		patch, err := json.Marshal(map[string]any{
+			"metadata": map[string]any{
+				"resourceVersion": metadata.GetResourceVersion(),
+				"labels": map[string]any{
+					labels.ClusterExtensionNameKey:        name,
+					"olm.operatorframework.io/owner-kind": nil,
+					"olm.operatorframework.io/owner-name": nil,
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
+		_, err = helper.Patch(info.Namespace, info.Name, types.MergePatchType, patch, &metav1.PatchOptions{})
+		return err
+	})
 }
 
 func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
@@ -271,6 +338,9 @@ func (p *postrenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, erro
 			return nil, err
 		}
 		obj.SetLabels(util.MergeMaps(obj.GetLabels(), p.labels))
+		if name, ok := p.labels[labels.ClusterExtensionNameKey]; ok {
+			obj.SetLabels(labels.ForClusterExtension(obj.GetLabels(), name))
+		}
 		b, err := obj.MarshalJSON()
 		if err != nil {
 			return nil, err

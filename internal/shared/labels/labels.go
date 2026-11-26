@@ -1,7 +1,11 @@
 // Package labels defines metadata shared by content resolution and object management.
 package labels
 
-import corev1 "k8s.io/api/core/v1"
+import (
+	"maps"
+
+	corev1 "k8s.io/api/core/v1"
+)
 
 const (
 	// SecretTypeObjectData is the custom Secret type used for Secrets that store
@@ -21,6 +25,10 @@ const (
 	// a ClusterObjectDeployment's group was created by the object-controller and may
 	// therefore be adopted.
 	ManagedByObjectController = "object-controller"
+
+	// ClusterExtensionNameKey records the name of the ClusterExtension whose
+	// installation includes this resource.
+	ClusterExtensionNameKey = "olm.operatorframework.io/cluster-extension-name"
 
 	// OwnerKindKey is the label key used to record the kind of the owner
 	// resource responsible for creating or managing a ClusterObjectSet.
@@ -74,3 +82,17 @@ const (
 	// ClusterObjectSet revisions.
 	OLMPropertiesKey = "olm.properties"
 )
+
+// ForClusterExtension returns a copy of existing with the extension identity set.
+// The former owner-kind and owner-name labels are removed as resources are
+// reconciled; unrelated labels and the input map are preserved.
+func ForClusterExtension(existing map[string]string, name string) map[string]string {
+	result := maps.Clone(existing)
+	if result == nil {
+		result = make(map[string]string)
+	}
+	delete(result, "olm.operatorframework.io/owner-kind")
+	delete(result, "olm.operatorframework.io/owner-name")
+	result[ClusterExtensionNameKey] = name
+	return result
+}

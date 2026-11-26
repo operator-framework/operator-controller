@@ -21,10 +21,10 @@ This will list all available CRDs, and you can inspect individual CRDs for their
 kubectl get crd <crd-name> -o yaml
 ```
 
-A user can use label selectors to find CRDs owned by a specific cluster extension:
+For Helm-managed cluster extensions, use this label selector to find their CRDs:
 
 ```bash
-kubectl get crds -l 'olm.operatorframework.io/owner-kind=ClusterExtension,olm.operatorframework.io/owner-name=<clusterExtensionName>'
+kubectl get crds -l 'olm.operatorframework.io/cluster-extension-name=<clusterExtensionName>'
 ```
 
 ---
