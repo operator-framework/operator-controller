@@ -57,6 +57,12 @@ func TestExtractTerminalReason(t *testing.T) {
 			wantReason: "SomeReason",
 			wantOK:     true,
 		},
+		{
+			// ExtractTerminalReason only unwraps one level, so a terminal error
+			// hidden behind errors.Join is not found.
+			name: "terminal error with a reason joined with another error",
+			err:  errors.Join(errors.New("other"), NewTerminalError("SomeReason", errors.New("boom"))),
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -86,6 +92,19 @@ func TestWrapTerminal(t *testing.T) {
 		require.ErrorIs(t, err, reconcile.TerminalError(nil))
 		require.ErrorIs(t, err, inner)
 	})
+	t.Run("terminal wraps an error that already wraps another error", func(t *testing.T) {
+		wrapped := fmt.Errorf("context: %w", inner)
+		err := WrapTerminal(wrapped, true)
+		require.ErrorIs(t, err, reconcile.TerminalError(nil))
+		require.ErrorIs(t, err, inner)
+		require.Equal(t, "terminal error: context: boom", err.Error())
+	})
+	t.Run("non-terminal leaves a wrapped terminal error terminal", func(t *testing.T) {
+		wrapped := fmt.Errorf("context: %w", reconcile.TerminalError(inner))
+		err := WrapTerminal(wrapped, false)
+		require.Same(t, wrapped, err)
+		require.ErrorIs(t, err, reconcile.TerminalError(nil))
+	})
 }
 
 func TestUnwrapTerminal(t *testing.T) {
@@ -95,6 +114,9 @@ func TestUnwrapTerminal(t *testing.T) {
 		name string
 		err  error
 		want error
+		// wantTerminal is true when the returned error is expected to still be
+		// a terminal error.
+		wantTerminal bool
 	}{
 		{
 			name: "nil error",
@@ -116,6 +138,29 @@ func TestUnwrapTerminal(t *testing.T) {
 			err:  NewTerminalError("SomeReason", inner),
 			want: inner,
 		},
+		{
+			// UnwrapTerminal sees the terminal error through the wrapper, but
+			// only strips one level: the wrapper is removed and the terminal
+			// error underneath is returned as is.
+			name:         "error wrapping a terminal error returns the terminal error",
+			err:          fmt.Errorf("context: %w", reconcile.TerminalError(inner)),
+			want:         reconcile.TerminalError(inner),
+			wantTerminal: true,
+		},
+		{
+			name:         "error wrapping a terminal error with a reason returns the terminal error",
+			err:          fmt.Errorf("context: %w", NewTerminalError("SomeReason", inner)),
+			want:         NewTerminalError("SomeReason", inner),
+			wantTerminal: true,
+		},
+		{
+			// errors.Join has no single underlying error, so the joined error
+			// is returned unchanged.
+			name:         "joined error containing a terminal error is returned unchanged",
+			err:          errors.Join(errors.New("other"), reconcile.TerminalError(inner)),
+			want:         errors.Join(errors.New("other"), reconcile.TerminalError(inner)),
+			wantTerminal: true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -124,8 +169,12 @@ func TestUnwrapTerminal(t *testing.T) {
 				require.NoError(t, got)
 				return
 			}
-			require.Equal(t, tc.want.Error(), got.Error())
-			require.NotErrorIs(t, got, reconcile.TerminalError(nil))
+			require.EqualError(t, got, tc.want.Error())
+			if tc.wantTerminal {
+				require.ErrorIs(t, got, reconcile.TerminalError(nil))
+			} else {
+				require.NotErrorIs(t, got, reconcile.TerminalError(nil))
+			}
 		})
 	}
 }
